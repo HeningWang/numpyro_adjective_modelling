@@ -1,0 +1,1 @@
+This repo is intended to implement core models from Pyro to Numpyro using Colab notebook.
