@@ -8,15 +8,12 @@ import pyro.distributions as dist
 import pyro.poutine as poutine
 from pyro.infer import MCMC, NUTS, Predictive, TracePredictive
 import pandas as pd
-from siuba import *
 import math
-from plotnine import *
-import seaborn as sns
 import numpy as np
-from helper import *
+from helper_adjective import *
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
-from scipy.stats import beta
+
 
 # define lexicon
 colors = ["red", "blue"]
