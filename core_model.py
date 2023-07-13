@@ -1,18 +1,12 @@
 # import libraries
-import torch
-torch.set_default_dtype(torch.float32)  # double precision for numerical stability
-
-import matplotlib.pyplot as plt
-import pyro
-import pyro.distributions as dist
-import pyro.poutine as poutine
-from pyro.infer import MCMC, NUTS, Predictive, TracePredictive
-import pandas as pd
-import math
+import jax.numpy as jnp
 import numpy as np
-from helper_adjective import *
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, r2_score
+import pandas as pd
+import seaborn as sns
+import math
+
+import numpyro
+import numpyro.distributions as dist
 
 
 # define lexicon
@@ -67,17 +61,16 @@ def cost(utterance, color_cost=1, size_cost=1, form_cost=1, costWeight=0.5): # T
 
 
 def adjMeaning(word, obj, current_state_prior, color_semvalue=0.98, form_semvalue=0.98, wf=0.6, k=0.5):
-    # Define meaning function
+    colors = [0]  # Specify the color values
+    sizes = [1]  # Specify the size values
+
     if word in colors:
-        return pyro.sample("color", dist.Bernoulli(color_semvalue)) if word == obj[2][1] else pyro.sample("color", dist.Bernoulli(1 - color_semvalue))
-    elif word in forms:
-        return pyro.sample("form", dist.Bernoulli(form_semvalue)) if word == obj[3][1] else pyro.sample("form", dist.Bernoulli(1 - form_semvalue))
+        return numpyro.sample("color", dist.Bernoulli(color_semvalue) if word == obj[2][1] else dist.Bernoulli(1 - color_semvalue))
     elif word in sizes:
         threshold = get_threshold_kp(current_state_prior, k)
         size = obj[1][1]
-        prob_big = 1 - dist.Normal(size - threshold, wf * math.sqrt(size**2 + threshold **2)).cdf(torch.tensor(0))
-        #size = pyro.sample("size", perceptual_blurr(obj[1][1], wf))
-        return pyro.sample("size", dist.Bernoulli(prob_big))
+        prob_big = 1 - dist.Normal(size - threshold, wf * jnp.sqrt(size ** 2 + threshold ** 2)).cdf(jnp.array([0.0]))
+        return numpyro.sample("size", dist.Bernoulli(prob_big))
 
 
 @Marginal
