@@ -1,0 +1,151 @@
+left-right,id,missed_break_one,missed_break_two,missed_break_three,time_in_minutes,language,asses,age,gender,comments,fluent
+L,62404d78ef30e,False,False,False,31.337883333333334,Deutsch,Yes,35,Male,,Yes
+S,62408b8870553,False,False,False,25.526216666666667,deutsch,Yes,21,Female,,Yes
+S,62408e90eaa0f,False,False,False,26.721616666666666,deutsch,Yes,30,Male,,Yes
+L,624090b35114b,False,False,False,20.45565,deutsch,Yes,39,Male,,Yes
+S,62409129c9bb7,False,False,False,17.696716666666667,Deutsch,Yes,28,Male,,Yes
+S,6240928941ed7,False,False,False,26.679716666666668,Deutsch,Yes,37,Male,,No
+S,624093750baff,False,False,False,28.30785,"deutsch, russisch",Yes,28,Male,"Spreche deutsch und englisch fließend, russisch nicht so gut.",Yes
+S,624093f3c8419,False,False,False,30.097066666666667,deutsch,Yes,27,Male,,Yes
+L,6241ee95e86a3,False,False,False,31.28675,Deutsch,Yes,31,Female,,Yes
+L,6241eec9bf12f,False,False,False,32.65435,"deutsch, schwäbisch",Yes,46,Female,,Yes
+S,6241f3f13c93c,False,False,False,27.55175,"Deutsch, Englisch",Yes,30,Male,,Yes
+S,6241f580649f8,False,False,False,22.947583333333334,"Deutsche, English",Yes,47,Female,,Yes
+S,6241fb2e43727,False,False,False,30.331833333333332,deutsch,Yes,29,Female,,Yes
+L,6241fc4a4e8ee,True,False,False,43.15136666666667,Deutsch,Yes,44,Male,,No
+S,6241fe6a604b4,False,False,False,21.5022,deutsch,Yes,28,Female,,Yes
+S,6242014d42180,False,False,False,16.73143333333333,deutsch,Yes,52,Female,,Yes
+S,6242086e74a2b,False,False,False,22.823483333333332,Deutsch,Yes,29,Female,,Yes
+L,624209e50f64d,False,False,False,33.90351666666667,Deutsch,Yes,50,Female,,No
+S,62420a2570e66,False,False,False,20.2022,deutsch,Yes,25,Female,,Yes
+L,62420c944a01d,False,False,False,45.101733333333335,deutsch,Yes,41,Male,,Yes
+L,62420e37579a8,False,False,False,22.984716666666667,Deutsch,Yes,31,Male,,Yes
+S,624210319006a,False,False,False,17.89575,Deutsch,Yes,21,Male,/,Yes
+L,624210489a38d,False,False,False,30.930616666666666,Deutsch,Yes,29,Male,,Yes
+L,6242109e51f8b,False,False,False,19.592266666666667,deutsch,Confused,55,Female,"Ich habe geantwortet, was ich sagen würde, obwohl eine andere Antwort auch richtig gewesen wäre, ich hoffe, das war so richtig. Ich war auch nicht sicher, ob ich 'keine passt' hätte antworten sollen, wo eigentlich beide passen, aber nicht genug Information geben. Ich hab das einmal gemacht, aber dann gedacht die Beschreibung ist ja eigentlich nicht unpassend, halt nur nicht genug. Entschuldigung, wenn ich das jetzt falsch gemacht habe.",Yes
+L,624210c3007c6,False,False,False,31.016333333333332,Deutsch,Yes,35,Male,,Yes
+L,6242140018a74,False,False,False,19.1808,Deutsch,Yes,21,Male,,Yes
+L,6242147d7a8a0,False,False,True,18.408966666666668,Deutsch,Yes,24,Female,,Yes
+L,6242173eeab01,False,False,False,39.4845,Deutsch,Yes,22,Female,,Yes
+L,6242197550443,False,False,False,48.855783333333335,Deutsch,Yes,30,Male,,Yes
+S,6242b2ec69034,False,False,False,18.604133333333333,deutsch,Yes,39,Male,"bei 2 richtigen Antworten war ich eher versucht, die linke Antwort zu bevorzugen",Yes
+L,6242b3a9cf7c0,False,False,False,8.634383333333334,Deutsch,Yes,31,Male,,Yes
+L,6242b6ee87ee1,False,False,False,23.789683333333333,deutsch,Yes,22,Female,Nein,No
+L,6242bd7514401,False,False,False,54.55928333333333, Deutsch,Yes,30,Male,,Yes
+S,6242bf5d669ad,False,False,False,20.321,deutsch,Yes,21,Male,,Yes
+L,6242c24deca73,False,False,False,21.939316666666667,Deutsch,Yes,20,Female,,No
+L,6242c58b0c135,False,False,False,21.242366666666666,Deutsch,Yes,26,Female,,Yes
+L,6242c6ebdcebd,False,False,False,17.042433333333335,Deutsch Libanesisch,Yes,37,Male,,Yes
+S,6242c73bc7378,False,False,False,21.23635,Deutsch,Yes,28,Male,,Yes
+S,6242c7d0be1a4,False,False,False,17.002366666666667,Deutsch,Yes,30,Male,,Yes
+L,6242c8c170b8d,False,False,False,20.049383333333335,deutsch,Yes,19,Male,nein danke,Yes
+S,6242c8dbd34b9,False,False,False,21.5993,deutsch,Yes,,Female,,Yes
+S,6242c9a5256b1,False,False,False,20.9011,Deutsch,Yes,31,Male,,Yes
+S,6242cafc1a1cb,False,False,False,27.0039,deutsch,Yes,24,Female,,Yes
+L,6242cb3f2a1e0,False,False,False,27.613383333333335,Deutsch,Yes,19,Male,,Yes
+S,6242cbfc334ce,False,False,False,23.048966666666665,Deutsch,Yes,42,Male,,Yes
+L,6242cc346032c,False,False,False,44.38621666666667,Deutsch,Yes,20,Female,,Yes
+L,6242ccc920c88,False,False,False,22.38175,Deutsch,Yes,22,Female,,Yes
+S,6242cea6b79ac,False,False,False,20.96215,Deutsch,Yes,46,Male,Viel Erfolg!,Yes
+L,6242cec3de8c1,False,False,False,18.03605,Deutsch,Yes,24,Female,,No
+S,6242cf8268e0f,False,False,False,24.33813333333333,Deutsch,Yes,24,Female,,Yes
+S,6242cfd28783f,False,False,False,24.953683333333334,deutsch,Yes,47,Male,,No
+L,6242d016c0e11,False,False,False,34.36475,deutsch,Yes,23,Male,,Yes
+L,6242d064bb7ea,False,False,False,26.96765,Deutsch,Yes,32,Male,,Yes
+L,6242d0a7b3fe7,False,False,False,27.662516666666665,Deutsch,Yes,28,Female,,Yes
+L,6242d0c0e2653,False,False,False,20.839216666666665,Deutsch,Yes,29,Female,,Yes
+S,6242d0cc141b3,False,False,False,30.30205,deutsch,Yes,58,Female,,No
+L,6242d12b98919,False,False,False,27.900783333333333,deutsch,Yes,35,Female,,Yes
+L,6242d15bd9731,False,False,False,23.031383333333334,Deutsch,Yes,41,Male,,Yes
+L,6242d16cccd17,True,False,False,20.88545,"Deutsch, Russisch",Yes,27,Female,,Yes
+L,6242d18ed772f,False,True,False,23.476883333333333,deutsch,Yes,47,Female,,No
+S,6242d19d2d986,False,False,False,20.8331,deutsch,Yes,25,Female,,Yes
+L,6242d1a04ac59,False,False,False,31.7275,deutsch,Yes,34,Male,,Yes
+L,6242d1a5bc481,False,False,False,23.15973333333333,deutsch,Yes,37,Other,,Yes
+L,6242d1acab1f7,False,False,False,31.464366666666667,Deutsch,Yes,25,Male,,Yes
+L,6242d1bb48e2e,False,False,False,26.957416666666667,Deutsch,Yes,38,Male,,Yes
+S,6242d24a88e32,False,False,False,31.609516666666668,deutsch,Yes,33,Male,,No
+S,6242d2a1afd92,False,False,False,27.2499,Deutsch,Yes,25,Female,,Yes
+S,6242d2d2857b9,False,False,False,29.08325,deutsch,Yes,35,Male,,Yes
+S,6242d2eb4b4f4,False,False,True,38.239016666666664,deutsch,Yes,44,Male,,Yes
+S,6242d394f1bcf,True,False,False,35.6283,deutsch,Yes,39,Male,hat in Chrome erst nciht funktioniert,Yes
+S,6242d3a98daea,False,False,False,41.16663333333333,deutsch,Yes,36,Female,,Yes
+S,6242d452e418c,False,False,False,23.968066666666665,Deutsch,Yes,29,Male,,Yes
+S,6242d4f559668,False,False,False,35.27106666666667,Deutsch,Yes,29,Male,,Yes
+L,6242d6164d9ec,False,False,False,38.0158,Deutsch,Yes,27,Male,,Yes
+S,6242d6d0a74f6,False,False,False,42.22765,Deutsch,Yes,27,Male,,Yes
+L,6242d7b615bf4,True,False,False,24.681783333333332,Deutsch,Yes,34,Male,,Yes
+L,6242d82c12542,False,False,False,14.930366666666666,Deutsch,Yes,24,Female,,Yes
+S,6242e17269d84,False,False,False,25.796766666666667,deutsch,Yes,42,Female,,No
+S,6242e450b3b5c,False,False,False,41.4808,deutsch,Yes,25,Male,,Yes
+L,624b0affa1dad,False,False,False,23.559666666666665,Deutsch,Yes,27,Female,,Yes
+S,624b0b35b7990,False,True,True,25.60115,deutsch,Yes,36,Other,"braun und schwarz liessen sich nicht sehr gut unterscheiden; der Skalenmittelpunkt und das ""keins von beiden"" können etwas verwirren",Yes
+L,624b0dfb175bf,False,False,False,29.646433333333334,deutsch,Yes,27,Female,,Yes
+L,624b10a84ecda,False,False,False,28.345833333333335,Deutsch,Yes,24,Female,,No
+L,624b188c9f45e,False,False,False,22.914733333333334,Deutsch,Yes,38,Female,,Yes
+S,624b18f360c66,False,False,False,18.76585,Deutsch,Yes,21,Other,,Yes
+S,624b1a158a34d,False,False,False,28.613266666666668,German,Yes,45,Male,,Yes
+S,624b1a26a18f9,False,False,False,28.70235,Deutsch,Yes,38,Male,,Yes
+S,624b1a79c08d5,True,True,True,29.940666666666665,Deutsch/Amerikanisch,Yes,69,Female,,Yes
+S,624b1b6a96d1d,False,False,False,34.46178333333334,"Deutsch, Spanisch",Yes,43,Male,,Yes
+S,624b1bb71500e,False,False,False,35.28306666666667,Deutsch,Yes,30,Female,,Yes
+L,624b1ca0d07eb,False,False,False,26.387166666666666,Deutsch,Yes,22,Male,,Yes
+S,624b1d534ad52,False,False,True,42.02395,Deutsch,Yes,39,Female,,Yes
+L,624b22243fd06,False,False,False,61.85305,deutsch,Yes,43,Female,,Yes
+S,624b2dac2b8f9,False,False,False,33.4488,Deutsch,Yes,24,Other,,Yes
+L,624b2ebba9061,False,False,False,28.10675,deutsch,Yes,30,Male,,Yes
+L,624b2fa19e1d7,False,False,False,25.43685,deutsch,Yes,33,Male,,Yes
+L,624b30151c611,True,False,False,31.01985,Deutsch,Confused,28,Female,Ich hab ständig Paranoia irgendwelche Fangfragen zu übersehen vor lauter Fokus drauf keine Fangfragen zu übersehen?!,Yes
+S,624b303d6bbb7,False,False,False,18.046716666666665,Deutsch,Yes,27,Female,,Yes
+S,624b304e19726,False,False,False,20.302316666666666,Deutsch,Yes,27,Female,,Yes
+L,624b30c79d763,False,False,False,18.9964,Deutsch,Yes,20,Male,,Yes
+S,624b3113afba7,False,False,False,19.866383333333335,Deutsch,Yes,27,Male,,Yes
+S,624b319ca046a,False,False,False,23.1499,Deutsch,Yes,24,Male,,Yes
+S,624d6959898a9,False,False,False,23.056166666666666,Deutsch,Yes,34,Male,,No
+L,624d6af77ae58,False,False,False,20.632066666666667,deutsch,Yes,37,Female,,Yes
+L,624d6d5567caf,False,False,False,28.09861666666667,deutsch,Yes,52,Female,,Yes
+L,624d710db494a,False,False,False,45.46646666666667,Deutsch,Yes,28,Female,,Yes
+S,624d73312be1e,False,False,False,28.0631,Deutsch,Yes,32,Female,,Yes
+S,624d80a5bdbf2,False,False,False,20.987266666666667,Deutsch,Yes,20,Female,,Yes
+L,624d81be9718e,False,False,False,29.608983333333335,Deutsch,Yes,19,Female,,Yes
+L,624d830f775f3,True,False,False,21.82505,deutsch,Yes,25,Female,,Yes
+S,624d832146380,False,False,False,24.725166666666667,"Deutsch, Vietnamesisch",Yes,24,Female,,Yes
+L,624d832d7766f,False,False,False,32.171216666666666,deutsch,Yes,37,Female,Sehr interessantes Experiment. Neben der Reihenfolge ist sicherlich auch die Betonung der Adjektive hier sehr wichtig.,Yes
+L,624d94a33c1bb,False,False,False,23.91545,"deutsch, russisch",Yes,21,Male,,Yes
+L,624d95a634e40,False,False,False,18.06586666666667,Deutsch,Yes,37,Female,,Yes
+L,624d961f76355,False,False,False,22.498466666666666,Deutsch,Yes,33,Male,,Yes
+L,624d96adb9d14,True,True,False,34.37425,deutsch,Yes,58,Male,,Yes
+L,624d97f01402b,False,False,False,18.707333333333334,Deutsch,Yes,22,Male,,Yes
+S,624d988a93f1e,False,False,False,23.94755,deutsch,Yes,22,Female,,Yes
+S,624d9a8805e42,False,True,False,35.182183333333334,Deutsch,Yes,36,Male,,Yes
+S,624da2cd1ef0b,False,False,False,59.562983333333335,Deutsch,Yes,54,Male,"Statt ""keine passende Beschreibung"" wäre es besser gewesen, ""keine zur eindeutigen Zuordnung geeignete Beschreibung"" anzubieten. Auch war ich mir nicht sicher, wie ich Redundanz zu behandeln habe, oder eine für mehrere identische Aufkleber passende Beschreibung. ",Yes
+S,62557f3d79780,False,False,False,13.792083333333334,Deutsch,Yes,20,Female,,Yes
+S,6255803065967,False,False,False,23.7679,Deutsch,Yes,24,Female,,No
+S,6255835d0336c,False,False,False,25.75,deutsch,Yes,25,Male,,No
+L,62558670bdd00,False,False,False,32.95623333333333,Deutsch,Yes,21,Male,,Yes
+L,625591e31647c,False,False,False,19.800166666666666,Deutsch,Yes,20,Female,,Yes
+S,6255943c71cb5,False,False,False,26.484483333333333,"Urdu, Deutsch",Yes,24,Female,,Yes
+S,6255968bf1119,False,False,False,34.8125,Deutsch,Yes,31,Female,,Yes
+S,625596dfdfa50,False,False,False,34.91263333333333,deutsch,Yes,51,Male,,No
+S,62611d228e7c6,False,False,False,21.529033333333334,deutsch,Yes,29,Female,"ich war mir im ersten Block nicht sicher, wann eine Beschreibung nicht passt, da das Gegenüber ja immer noch eine Ratechance gehabt hätte",Yes
+L,62616580b1912,False,False,False,17.240816666666667,Deutsch,Yes,44,Female,,Yes
+S,626165e018778,False,False,False,20.430333333333333,deutsch,Yes,32,Male,,Yes
+S,626166dd4332d,True,True,False,21.599316666666667,Deutsch,Yes,22,Male,,No
+S,6261676c0eb2b,False,False,False,24.757566666666666,Deutsch,Yes,29,Female,,Yes
+L,6261678588d5f,False,False,False,28.609516666666668,Deutsch,Yes,20,Male,,Yes
+S,626167b76e314,False,False,False,29.11306666666667,deutsch,Yes,30,Male,,Yes
+L,626168378ca1c,False,False,False,30.662133333333333,Deutsch,Yes,24,Male,,Yes
+S,626168d1bbb1a,False,False,False,33.759083333333336,Deutsch,Yes,19,Female,,Yes
+S,62616d5ec325d,False,False,False,53.40983333333333,Deutsch,Yes,25,Male,,Yes
+L,626179bd7e471,False,False,True,23.793516666666665,Deutsch,Yes,24,Female,,Yes
+S,62617afc9181b,False,False,False,19.7309,Deutsch,Yes,24,Male,,Yes
+L,62617b3c28227,False,False,False,20.047816666666666,Deutsch,Yes,31,Female,,Yes
+S,6262aec89f4db,False,False,False,16.913,Deutsch,Yes,21,Male,,No
+L,6262af0c7d2b6,False,False,False,31.32135,Deutsch,Yes,25,Male,,Yes
+S,6262af792c457,False,False,False,32.801,Deutsch,Yes,39,Female,,Yes
+S,6262af82d93e4,False,False,False,24.277783333333332,Deutsch,Yes,28,Female,,Yes
+S,6262b04e13777,False,False,False,26.8829,Deutsch,Yes,32,Female,Ich spreche noch Englisch fließend. Es war super den Fortschritt unten sehen zu können - danke! :),Yes
+L,6262b076e9c0f,False,False,False,26.547416666666667,deutsch,Yes,33,Female,,Yes
+L,6262b121ba321,False,False,False,26.984233333333332,Deutsch,Yes,21,Male,,Yes
+S,6262b1276bb8d,False,False,False,34.57321666666667,deutsch,Yes,37,Male,,Yes
+L,6262b1924daca,False,False,False,50.26618333333333,deutsch,Yes,47,Male,,Yes
