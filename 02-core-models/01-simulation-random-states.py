@@ -16,6 +16,7 @@ import numpy as np
 import scipy
 import core_rsa
 import argparse
+import os
 
 @dataclass
 class Object:
@@ -229,7 +230,7 @@ if __name__ == "__main__":
     parser.add_argument('--alpha', type=float, default=1, help='Rationality parameter for speaker.')
     parser.add_argument('--bias', type=float, default=0, help='Bias for subjective first ordering parameter for speaker.')
     parser.add_argument('--world_length', type=int, default=2, help='World length for RSA.')
-
+    parser.add_argument('--size_distribution', type=str, default="normal", help='Size distribution used to generate states.')
     # Parse the arguments
     args = parser.parse_args()
 
@@ -268,6 +269,7 @@ if __name__ == "__main__":
     sum_communicative_success = jnp.sum(communicative_success)
 
     # Flatten the states_train array
+    communicative_success = communicative_success.tolist()
     states_train = states_train.tolist()
     modified_states = modified_states.tolist()
     results = results.tolist()
@@ -283,15 +285,25 @@ if __name__ == "__main__":
         "results_pragmatic_listener": results,
         "alpha": args.alpha,
         "bias": args.bias,
+        "nobj": args.nobj,
         "color_semvalue": args.color_semvalue,
         "form_semvalue": args.form_semvalue,
         "wf": args.wf,
         "k": args.k,
         "speaker": args.speaker,
+        "size_distribution": args.size_distribution,
+        "sample_size": args.sample_size,
         "world_length": args.world_length
     })
 
     # Save the DataFrame as a csv file
-    output_filename = f"../04-simulation-w-randomstates/sim_{args.speaker}_nobj{args.nobj}_samplesize{args.sample_size}_alpha{args.alpha}_bias{args.bias}_color{args.color_semvalue}_form{args.form_semvalue}_wf{args.wf}_k{args.k}.csv"
-    df.to_csv(output_filename, index=False)
+    output_filename = f"../04-simulation-w-randomstates/simulation_test_run_fewer_parameters.csv"
+
+    # Check if the file exists
+    if not os.path.isfile(output_filename):
+    # If the file does not exist, create it with the header
+        df.to_csv(output_filename, index=False)
+    else:
+        # If the file exists, append without the header
+        df.to_csv(output_filename, mode='a', header=False, index=False)
 

@@ -1,0 +1,26 @@
+---
+title: "Analysis"
+author: "Your Name"
+output:
+    html_document:
+        toc: true
+        toc_float: true
+---
+# Introduction
+
+This is an analysis of the data.
+
+
+Load the data.
+```{r}
+filename <- "simulation_test_run.csv"
+data <- read.csv(filename)
+```
+
+# Plot the propotion of sucess again parameters
+
+```{r}
+library(ggplot2)
+ggplot(data, aes(x=color_semvalue, y=proportion_success)) + geom_smooth()
+
+```
