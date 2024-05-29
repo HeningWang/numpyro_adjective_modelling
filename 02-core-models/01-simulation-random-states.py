@@ -273,7 +273,6 @@ if __name__ == "__main__":
     modified_states = modified_states.tolist()
     results = results.tolist()
 
-    print(results)
     # Output the results as csv
     # Create a DataFrame
     df = pd.DataFrame({
