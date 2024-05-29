@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import math
+import scipy
 
 import numpyro
 from numpyro.diagnostics import hpdi
@@ -76,7 +77,7 @@ def normalize(arr, axis=1):
     """
     Normalize arr along axis
     """
-    return arr / arr.sum(axis, keepdims=True)
+    return arr / jnp.sum(arr, axis=axis, keepdims=True)
 
 def get_threshold_kp(states, k=0.5):
     min_val = jnp.min(states[:,0])
@@ -95,13 +96,27 @@ def get_threshold_kp_weighted(states, states_prior, k=0.5):
     return weighted_threshold
 
 def get_threshold_kp_sample(states, states_prior, k=0.5):
-    sample_indices = jnp.unique(dist.Categorical(probs=states_prior).sample(random.PRNGKey(0),(1,10)), size = 6)
+    
+    xk = states[:, 0] # The values of size of all objects in a given context, shape (nobj,) 
+    pk = states_prior # The prior probabilities of the objects in a given context, shape (nobj,)
+    dist = scipy.stats.rv_discrete(values=(xk, pk)) # Create a discrete distribution
+    sample_size = int(round(states.shape[0] / 2)) # Sample size is half of the number of objects in a given context
+    samples = jnp.array(dist.rvs(size= sample_size)) # Sample from the distribution
+    min_val = jnp.min(samples) # Get the minimum value of the samples
+    max_val = jnp.max(samples) # Get the maximum value of the samples
+    threshold = max_val - k * (max_val - min_val) # Compute the threshold
+
+    return threshold
+
+def get_threshold_kp_sample_jax(states, states_prior, k=0.5):
+    sample_size = int(round(states.shape[0] / 2)) # Sample size is half of the number of objects in a given context
+    costum_dist = dist.Categorical(probs=states_prior)
+    sample_indices = jnp.unique(costum_dist.sample(random.PRNGKey(0),(1,sample_size)), size= sample_size)
     sorted_states = states[sample_indices][:,0]
     min_val = jnp.min(sorted_states)
     max_val = jnp.max(sorted_states)
 
     weighted_threshold = max_val - k * (max_val - min_val)
-
     return weighted_threshold
 
 
@@ -127,18 +142,24 @@ def literal_listener_one_word(states, color_semvalue = 0.98, form_semvalue = 0.9
   probs = normalize(jnp.array([probs_big,probs_blue]))
   return probs
 
-def literal_listener_recursive(word_length, states, color_semvalue = 0.98, form_semvalue = 0.98, wf = 0.6, k = 0.5, weighted = False):
-  if word_length <= 1:
-    current_states_prior = jnp.ones((2,6))
+def literal_listener_recursive(word_length, states, color_semvalue = 0.90, form_semvalue = 0.98, wf = 0.6, k = 0.5, sample_based = True):
+  '''
+  Input: word_length: int, states: jnp.array(nobj, 3), color_semvalue: float, form_semvalue: float, wf: float, k: float
+  return: jnp.array(2 * nobj) where the first row corresponds to big blue, the second row corresponds to blue big
+  '''
+  if word_length <= 1: # Base case
+    current_states_prior = normalize(jnp.ones((2,states.shape[0]))) # Create a uniform prior of shape (2, nobj)
   else:
     current_states_prior = literal_listener_recursive(word_length - 1, states, color_semvalue = 0.98, form_semvalue = 0.98, wf = 0.6, k = 0.5)
     current_states_prior = jnp.flip(current_states_prior, axis = 0)
-  probs_blue = jnp.where((1. == states[:, 1]), color_semvalue, 1 - color_semvalue)
-  if weighted:
-    threshold = get_threshold_kp(states, current_states_prior[0,:], k)
+
+  probs_blue = jnp.where((1. == states[:, 1]), color_semvalue, 1 - color_semvalue) # Apply the meaning function for color adjective
+  # Get the threshold for the size adjective
+  if sample_based:
+    threshold = get_threshold_kp_sample_jax(states, current_states_prior[0,:], k)
   else:
     threshold = get_threshold_kp(states, k)
-  probs_big = jax.vmap(get_size_semval, in_axes = (0, None, None))(states[:,0], threshold, wf)
+  probs_big = jax.vmap(get_size_semval, in_axes = (0, None, None))(states[:,0], threshold, wf) # Apply the meaning function for size adjective
   probs = normalize(jnp.multiply(jnp.array([probs_big,probs_blue]), current_states_prior))
   return probs
 
@@ -152,7 +173,7 @@ def speaker_one_word(states, alpha = 1, bias = 0, color_semvalue = 0.98, form_se
 
 def speaker_recursive(word_length, states, alpha = 1, bias = 0, color_semvalue = 0.98, form_semvalue = 0.98, wf = 0.6, k = 0.5):
   if word_length <= 1:
-    current_utt_prior = jnp.array([0, 1]) * bias
+    current_utt_prior = jnp.array([0, 1]) * bias # the bias is applied to the second utterance (blue big)
   else:
     current_utt_prior = speaker_recursive(word_length - 1, states, alpha, bias, color_semvalue, form_semvalue, wf, k)
     current_utt_prior = jnp.flip(current_utt_prior, axis = 1)
@@ -169,12 +190,22 @@ def global_speaker(states, alpha = 1, bias = 0, color_semvalue = 0.98, form_semv
   softmax_result = jax.nn.softmax(alpha * util_speaker)
   return softmax_result
 
-def import_dataset(file_path = "../dataset/01-slider-data-preprocessed.csv"):
-   # Import the data
-    df = pd.read_csv(file_path)
-
-    # Define a function to encode the states of the objects
-    def encode_states(line):
+def pragmatic_listener(states, alpha = 1, bias = 0, color_semvalue = 0.98, form_semvalue = 0.98, wf = 0.6, k = 0.5, speaker = "global_speaker", word_length = 2):
+  prior_probs = jnp.ones((2,states.shape[0])) # Create a uniform prior of shape (2, nobj)
+  if speaker == "global_speaker":
+    softmax_result = global_speaker(states, alpha, bias, color_semvalue, form_semvalue, wf, k)
+    # Apply Bayes' rule
+    bayes_result = normalize(jnp.transpose(softmax_result) * prior_probs)
+    return bayes_result
+  
+  if speaker == "incremental_speaker":
+    softmax_result = speaker_recursive(word_length, states, alpha, bias, color_semvalue, form_semvalue, wf, k)
+    # Apply Bayes' rule
+    bayes_result = normalize(jnp.transpose(softmax_result) * prior_probs)
+    return bayes_result
+   
+# Define a function to encode the states of the objects
+def encode_states(line):
       states = []
       for i in range(6):
         color = 1 if line.iloc[10 + i] == "blue" else 0
@@ -182,6 +213,10 @@ def import_dataset(file_path = "../dataset/01-slider-data-preprocessed.csv"):
         new_obj = (line.iloc[4 + i], color, form) # size, color, form
         states.append(new_obj)
       return jnp.array(states)
+
+def import_dataset(file_path = "../01-dataset/01-slider-data-preprocessed.csv"):
+   # Import the data
+    df = pd.read_csv(file_path)
 
     # Subset data to only include combination dimension_color
     df = df[df['combination'] == 'dimension_color']
@@ -210,7 +245,7 @@ def import_dataset(file_path = "../dataset/01-slider-data-preprocessed.csv"):
 
 def test_core_rsa():
     # Import the data
-    file_path = "../dataset/dataset_slider.csv"
+    file_path = "../01-dataset/01-slider-data-preprocessed.csv"
     df = pd.read_csv(file_path)
 
     # subset data to only include combination dimension_color
@@ -234,7 +269,7 @@ def test_core_rsa():
 
     index = 15
     states_manuell = jnp.array([[10., 1., 1.],
-                    [3., 1., 1.],
+                    [10., 1., 1.],
                     [3., 1., 1.],
                     [3., 1., 0.],
                     [3., 1., 0.],
@@ -249,15 +284,15 @@ def test_core_rsa():
     print(condition + " " + distribution)
     print(preference)
     print(f"literal listener one word: {literal_listener_one_word(states_example)}")
-    #print(dist.Normal(0, 1).cdf(0.0))
     print(f"literal listener two words: {literal_listener_recursive(2,states_example)}")
-    #print(f"model_prediction: {model_speaker[0][0]}")
     print(f"speaker one word: {speaker_one_word(states_example)}")
     print(f"speaker two words global: {global_speaker(states_example)}")
     print("________________________________________")
     print(f"speaker two words incremental: {speaker_recursive(2,states_example)}")
     print("________________________________________")
-    print(f"speaker two words incremental: {speaker_recursive(2,states_example, k = 0.1)}")
+    print(f"pragmatic listener of a global speaker: {pragmatic_listener(states_example)}")
+    print("________________________________________")
+    print(f"pragmatic listener of a incremental speaker: {pragmatic_listener(states_example, speaker= 'incremental_speaker')}")
 
 def link_logit(p,s):
     x0 = 1 / (jnp.exp(1 / (-2 * s)) + 1)
@@ -295,8 +330,6 @@ def run_inference():
     slider_predict = jnp.clip(slider_predict, 1e-5, 1 - 1e-5)
     print(jnp.shape(slider_predict))
 
-
-
     # define the MCMC kernel and the number of samples
     rng_key = random.PRNGKey(11)
     rng_key, rng_key_ = random.split(rng_key)
@@ -316,5 +349,5 @@ def run_inference():
     df_inc.to_csv('../posterior_samples/02_inc_normal_logit_sample.csv', index=False)
 
 if __name__ == "__main__":
-    #test_core_rsa()
-    run_inference()
+    test_core_rsa()
+    #run_inference()
