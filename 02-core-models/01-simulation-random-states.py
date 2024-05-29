@@ -270,19 +270,19 @@ if __name__ == "__main__":
 
     # Flatten the states_train array
     communicative_success = communicative_success.tolist()
-    states_train = states_train.tolist()
     modified_states = modified_states.tolist()
     results = results.tolist()
 
+    print(results)
     # Output the results as csv
     # Create a DataFrame
     df = pd.DataFrame({
-        "array_success": communicative_success,
+        #"array_success": communicative_success,
         "sum_success": sum_communicative_success,
         "proportion_success": sum_communicative_success/args.sample_size,
-        "full_states": states_train,
-        "modified_states": modified_states,
-        "results_pragmatic_listener": results,
+        #"full_states": states_train,
+        #"modified_states": modified_states,
+        #"results_pragmatic_listener": results,
         "alpha": args.alpha,
         "bias": args.bias,
         "nobj": args.nobj,
@@ -294,7 +294,7 @@ if __name__ == "__main__":
         "size_distribution": args.size_distribution,
         "sample_size": args.sample_size,
         "world_length": args.world_length
-    })
+    }, index = [0])
 
     # Save the DataFrame as a csv file
     output_filename = f"../04-simulation-w-randomstates/simulation_test_run_fewer_parameters.csv"
