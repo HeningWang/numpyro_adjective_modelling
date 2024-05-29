@@ -6,3 +6,4 @@ analysis/regression/production/.DS_Store
 analysis/.DS_Store
 analysis/regression/production/.Rhistory
 .Rproj.user
+02-core-models/__pycache__/
