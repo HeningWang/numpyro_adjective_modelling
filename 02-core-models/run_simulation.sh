@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Set the locale to ensure decimal points are interpreted correctly
+export LC_NUMERIC="en_US.UTF-8"
+
 # Define values for arguments
 nobj_list=$(seq 2 4 20)  # Generates a sequence from 2 to 20 with a step of 4, five values in total
 speaker_list=("incremental_speaker" "global_speaker")  # List of speaker models, two values in total
