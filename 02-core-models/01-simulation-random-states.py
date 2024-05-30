@@ -235,7 +235,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Generate the states
-    states_train = AllContext(sample_size= args.sample_size, nobj = args.nobj).generate() # this is a 3D array of shape: (sample_size, nobj, 3)
+    states_train = AllContext(sample_size= args.sample_size, 
+                              nobj = args.nobj, 
+                              size_distribution = args.size_distribution).generate() # this is a 3D array of shape: (sample_size, nobj, 3)
 
     # Define a vectorized version of the global speaker, pragmatic listener, and modify_referent functions
     pragmatic_listener_vmap = jax.vmap(core_rsa.pragmatic_listener, in_axes=(0, # states
