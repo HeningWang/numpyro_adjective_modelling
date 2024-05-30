@@ -9,7 +9,7 @@ speaker_list=("incremental_speaker" "global_speaker")  # List of speaker models,
 color_semvalue_list=$(seq 0.90 0.02 0.99)  # Generates a sequence from 0.90 to 0.99 with a step of 0.02, six values in total
 k_list=$(seq 0.2 0.2 0.8)  # Generates a sequence from 0.2 to 0.8 with a step of 0.2, four values in total
 wf_list=$(seq 0.2 0.2 1.0)  # Generates a sequence from 0.2 to 1.0 with a step of 0.2, five values in total
-size_distribution_list=("normal" "left_skewed" "right_skewed")  # List of size distributions, three values in total
+size_distribution_list=("normal" "left-skewed" "right-skewed")  # List of size distributions, three values in total
 # Total iterations: 5 (nobj) * 2 (speaker) * 6 (color_semvalue) * 4 (k) * 5 (wf) * 3 (size_distribution) = 1800 * 10000 (sample_size) = 18000000
 
 # Define other arguments with default values
