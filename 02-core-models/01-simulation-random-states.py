@@ -44,7 +44,7 @@ class Object:
             mean = mean / 2
             a = (self.lower - mean) / sd
             b = (self.upper - mean) / sd
-            return np.random.truncnorm(loc=mean, scale=sd, a=self.lower, b=self.upper)
+            return scipy.stats.truncnorm.rvs(loc=mean, scale=sd, a=self.lower, b=self.upper)
         
         if self.size_distribution == "flat":
             return np.random.uniform(low=self.lower, high=self.upper)
