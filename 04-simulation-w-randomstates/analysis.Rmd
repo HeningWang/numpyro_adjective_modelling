@@ -6,21 +6,106 @@ output:
         toc: true
         toc_float: true
 ---
-# Introduction
+## Introduction
 
 This is an analysis of the data.
 
 
 Load the data.
 ```{r}
-filename <- "simulation_test_run.csv"
+filename <- "simulation_test_run_fewer_parameters.csv"
 data <- read.csv(filename)
+
+```
+Set up the theme for plot.
+```{r}
+library(tidyverse)
+library(aida)   # custom helpers: https://github.com/michael-franke/aida-package
+theme_set(theme_aida())
+
+##################################################
+## CSP-colors
+##################################################
+CSP_colors = c(
+  "#7581B3", "#99C2C2", "#C65353", "#E2BA78", "#5C7457", "#575463",
+  "#B0B7D4", "#66A3A3", "#DB9494", "#D49735", "#9BB096", "#D4D3D9",
+  "#414C76", "#993333"
+  )
+# setting theme colors globally
+scale_colour_discrete <- function(...) {
+  scale_colour_manual(..., values = CSP_colors)
+}
+scale_fill_discrete <- function(...) {
+  scale_fill_manual(..., values = CSP_colors)
+}
+CSP_color_names = c("glaucous", "opal", "shimmer", "crayola", "fern", "independence",
+           "glaucous light 2", "opal dark 2", "shimmer light 2", "crayola dark 2", "fern light 3", "independence light 4",
+           "glaucous dark 3", "shimmer dark 2"
+           )
 ```
 
-# Plot the propotion of sucess again parameters
+## Plot the propotion of sucess again color_semvalue & speaker
+
+```{r}
+data %>% 
+  ggplot(aes(x=speaker, y=proportion_success)) + 
+  #geom_point(stat="identity", position=position_dodge()) + 
+  stat_summary(fun.data = "mean_cl_boot") +
+  theme_aida()
+```
+```{r}
+data %>%
+  ggplot(aes(x=size_distribution, y=proportion_success)) + 
+  #geom_point(stat="identity", position=position_dodge()) + 
+  stat_summary(fun.data = "mean_cl_boot") +
+  facet_wrap(~speaker) + 
+  theme_aida()
+```
+
+To gain a basic understanding of the data and the impact of parameter values.
+```{r}
+data %>% filter(size_distribution == "normal") %>%
+  ggplot(aes(x=color_semvalue, y=proportion_success)) + 
+  #geom_point(stat="identity", position=position_dodge()) + 
+  stat_summary(fun.data = "mean_cl_boot") +
+  facet_wrap(~speaker) + 
+  theme_aida()
+```
+## Plot the propotion of sucess again nobj & speaker
+```{r}
+data %>% filter(size_distribution == "normal") %>%
+  ggplot(aes(x=nobj, y=proportion_success)) + 
+  #geom_point(stat="identity", position=position_dodge()) + 
+  stat_summary(fun.data = "mean_cl_boot") +
+  facet_wrap(~speaker) + 
+  theme_aida()
+```
+```{r}
+data %>% filter(size_distribution == "normal") %>%
+  ggplot(aes(x=wf, y=proportion_success)) + 
+  #geom_point(stat="identity", position=position_dodge()) + 
+  stat_summary(fun.data = "mean_cl_boot") +
+  facet_wrap(~speaker) + 
+  theme_aida()
+```
+```{r}
+data %>% filter(size_distribution == "normal") %>%
+  ggplot(aes(x=k, y=proportion_success)) + 
+  #geom_point(stat="identity", position=position_dodge()) + 
+  stat_summary(fun.data = "mean_cl_boot") +
+  facet_wrap(~speaker) + 
+  theme_aida()
+```
 
 ```{r}
 library(ggplot2)
-ggplot(data, aes(x=color_semvalue, y=proportion_success)) + geom_smooth()
+#ggplot(data, aes(x=color_semvalue, y=proportion_success)) + geom_smooth()
+data %>% filter(wf == 0.6 & k == 0.6 & size_distribution == "normal" & nobj == 10) %>%
+  ggplot(aes(x=nobj, y=proportion_success)) + 
+  #geom_point(stat="identity", position=position_dodge()) + 
+  stat_summary(fun.data = "mean_cl_boot") + 
+  #facet_wrap(~speaker) + 
+  facet_grid(speaker~color_semvalue) +
+  theme_aida()
 
 ```

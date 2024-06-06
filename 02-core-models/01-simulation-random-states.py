@@ -95,19 +95,22 @@ def determine_referent(context):
     int or None: The index of the first row that meets the criteria, or None if no such row is found.
     """
     # Compute the mean of the first elements of all rows
-    mean = jnp.mean(context[:, 0])
+    # Context is a 3D array,
+    size_array = context[:,:,0]
+    print(size_array.shape)
+    print(size_array)
+    k = 80
+    percentile = jnp.percentile(size_array[0,:], k)
+    print(percentile)
+    top_k_percent = size_array >= percentile
+    print(top_k_percent)
+    index_array = jnp.nonzero(top_k_percent)[0]
+    print(index_array)
+    print(index_array.shape)
+    pass
+    #referent_index = np.random.choice(index_array)
+    #return referent_index 
 
-    # Create a boolean array where each element is True if the corresponding row in context meets the criteria, and False otherwise
-    criteria_met = jnp.where((context[:, 1] == 1) & (context[:, 2] == 1), True, False)
-    print(criteria_met)
-    # Find the index of the first True element in criteria_met
-    index = jnp.argmax(criteria_met)
-
-    # If no element in criteria_met is True, index will be 0, so check the first element of criteria_met to see if it's True
-    if criteria_met[0]:
-        return index
-    else:
-        return None
     
 def modify_referent(context):
     """
@@ -123,11 +126,27 @@ def modify_referent(context):
     array (jnp.ndarray): A 2D array where each row has at least 3 elements
     """
     modified_context = context
+    # print(context.shape)
+    # # 1. Size array is context[:, 0]
+    # # 2. Find the top 10% of the size array as an index array
+    # # 3. Uniformly Sample the index of referent from the index array
+    # size_array = context[:, 0]
+    # print(size_array.shape)
+    # k = 80
+    # percentile = jnp.percentile(size_array, k)
+    # print(percentile)
+    # top_k_percent = size_array >= percentile
+    # print(top_k_percent)
+    # index_array = jnp.nonzero(top_k_percent)
+    # print(index_array)
+    # referent_index = np.random.choice(index_array)
+    # print(referent_index)
     # Swap the value of 0,0 with the max value of the first column
     # Find the index of max value of the first column
     max_index = jnp.argmax(context[:, 0])
     modified_context = context.at[0, 0].set(context[max_index, 0])
     modified_context = modified_context.at[max_index, 0].set(context[0, 0])
+
     # Set the second and third elements of the first row to 1
     modified_context = modified_context.at[0, 1].set(1)
     modified_context = modified_context.at[0, 2].set(1)
@@ -148,8 +167,10 @@ def record_communicative_success(pragmatic_listener_matrix):
     int: 1 if the value at index i in the first row is greater than the value at index i in the second row, otherwise 0.
     """
     # Check if the value at index i in the first row is greater than the value at index i in the second row
-    success_array = jnp.where(pragmatic_listener_matrix[0, 0] > pragmatic_listener_matrix[1, 0], 1, 0)
-    return success_array
+    #success_array = jnp.where(pragmatic_listener_matrix[0, 0] > pragmatic_listener_matrix[1, 0], 1, 0)
+    probs_big_blue = pragmatic_listener_matrix[0, 0]
+    probs_blue_big = pragmatic_listener_matrix[1, 0]
+    return probs_big_blue, probs_blue_big
 
 
 @dataclass
@@ -207,7 +228,7 @@ def main():
     #print(states_train.shape)
     single_state = states_train[0, :, :]
     #print(single_state)
-    modified_states = modify_referent_vmap(states_train)
+    modified_states = modify_referent(states_train)
     results = pragmatic_listener_vmap(modified_states, alpha, bias, color_semvalue, form_semvalue, wf, k, speaker, world_length)
     #print(results)
     record_communicative_success_vmap = jax.vmap(record_communicative_success, in_axes=0)
@@ -249,6 +270,7 @@ if __name__ == "__main__":
                                                                              None, # k
                                                                              None, # speaker
                                                                              None)) # world_length
+    
     modify_referent_vmap = jax.vmap(modify_referent, in_axes=0) # The input is a 3D array, so we vectorize the function along the first axis: a single context of nobj objects
     record_communicative_success_vmap = jax.vmap(record_communicative_success, in_axes=0) # Same as above
 
@@ -267,38 +289,41 @@ if __name__ == "__main__":
                                       args.world_length)
     
     # Record the communicative success
-    communicative_success = record_communicative_success_vmap(results)
-    sum_communicative_success = jnp.sum(communicative_success)
+    probs_big_blue, probs_blue_big = record_communicative_success_vmap(results)
+    #sum_communicative_success = jnp.sum(communicative_success)
 
     # Flatten the states_train array
-    communicative_success = communicative_success.tolist()
+    #communicative_success = communicative_success.tolist()
     modified_states = modified_states.tolist()
     results = results.tolist()
+    probs_big_blue = probs_big_blue.tolist()
+    probs_blue_big = probs_blue_big.tolist()
 
     # Output the results as csv
     # Create a DataFrame
     df = pd.DataFrame({
-        #"array_success": communicative_success,
-        "sum_success": sum_communicative_success,
-        "proportion_success": sum_communicative_success/args.sample_size,
+        "probs_big_blue": probs_big_blue,
+        "probs_blue_big": probs_blue_big,
+        #"sum_success": sum_communicative_success,
+        #"proportion_success": sum_communicative_success/args.sample_size,
         #"full_states": states_train,
         #"modified_states": modified_states,
         #"results_pragmatic_listener": results,
-        "alpha": args.alpha,
-        "bias": args.bias,
-        "nobj": args.nobj,
-        "color_semvalue": args.color_semvalue,
-        "form_semvalue": args.form_semvalue,
-        "wf": args.wf,
-        "k": args.k,
-        "speaker": args.speaker,
-        "size_distribution": args.size_distribution,
-        "sample_size": args.sample_size,
-        "world_length": args.world_length
-    }, index = [0])
+        "alpha": [args.alpha] * args.sample_size,
+        "bias": [args.bias] * args.sample_size,
+        "nobj": [args.nobj * len(states_train)] * args.sample_size,
+        "color_semvalue": [args.color_semvalue] * args.sample_size,
+        "form_semvalue": [args.form_semvalue] * args.sample_size,
+        "wf": [args.wf] * args.sample_size,
+        "k": [args.k] * args.sample_size,
+        "speaker": [args.speaker] * args.sample_size,
+        "size_distribution": [args.size_distribution] * args.sample_size,
+        "sample_size": [args.sample_size] * args.sample_size,
+        "world_length": [args.world_length] * args.sample_size
+    })
 
     # Save the DataFrame as a csv file
-    output_filename = f"../04-simulation-w-randomstates/simulation_test_run_fewer_parameters.csv"
+    output_filename = f"../04-simulation-w-randomstates/simulation_full_run_2.csv"
 
     # Check if the file exists
     if not os.path.isfile(output_filename):
