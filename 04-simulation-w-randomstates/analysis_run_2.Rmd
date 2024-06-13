@@ -1,0 +1,109 @@
+---
+title: "Analysis"
+author: "Your Name"
+output:
+    html_document:
+        toc: true
+        toc_float: true
+---
+## Introduction
+
+This is an analysis of the data.
+
+
+Load the data.
+```{r}
+rm(list=ls())
+filename <- "simulation_full_run_2.csv"
+data <- read.csv(filename)
+```
+
+
+```{r}
+data$nobj <- data$nobj / 10000
+```
+Set up the theme for plot.
+```{r}
+library(tidyverse)
+library(aida)   # custom helpers: https://github.com/michael-franke/aida-package
+theme_set(theme_aida())
+
+##################################################
+## CSP-colors
+##################################################
+CSP_colors = c(
+  "#7581B3", "#99C2C2", "#C65353", "#E2BA78", "#5C7457", "#575463",
+  "#B0B7D4", "#66A3A3", "#DB9494", "#D49735", "#9BB096", "#D4D3D9",
+  "#414C76", "#993333"
+  )
+# setting theme colors globally
+scale_colour_discrete <- function(...) {
+  scale_colour_manual(..., values = CSP_colors)
+}
+scale_fill_discrete <- function(...) {
+  scale_fill_manual(..., values = CSP_colors)
+}
+CSP_color_names = c("glaucous", "opal", "shimmer", "crayola", "fern", "independence",
+           "glaucous light 2", "opal dark 2", "shimmer light 2", "crayola dark 2", "fern light 3", "independence light 4",
+           "glaucous dark 3", "shimmer dark 2"
+           )
+```
+Display the difference between two speakers and two ordering.
+
+```{r}
+
+
+data %>% 
+  ggplot(aes(x=speaker, y=probs_big_blue)) + 
+  #geom_point(stat="identity", position=position_dodge()) + 
+  stat_summary(fun.data = "mean_cl_boot", aes(y = probs_big_blue), color = CSP_colors[1]) +
+  stat_summary(fun.data = "mean_cl_boot", aes(y = probs_blue_big), color = CSP_colors[3]) +
+  scale_y_continuous(sec.axis = sec_axis(~ .)) +
+  theme_aida()
+```
+Display the error bar for big blue.
+```{r}
+data %>% 
+  ggplot(aes(x=speaker)) + 
+  #geom_point(stat="identity", position=position_dodge()) + 
+  stat_summary(fun.data = "mean_cl_boot", aes(y = probs_big_blue), color = CSP_colors[1]) +
+  scale_y_continuous(sec.axis = sec_axis(~ .)) +
+  theme_aida()
+```
+
+```{r}
+data %>% 
+  ggplot(aes(x=nobj, y=probs_big_blue)) + 
+  #geom_point(stat="identity", position=position_dodge()) + 
+  stat_summary(fun.data = "mean_cl_boot", aes(y = probs_big_blue), color = CSP_colors[1]) +
+  stat_summary(fun.data = "mean_cl_boot", aes(y = probs_blue_big), color = CSP_colors[3]) +
+  scale_y_continuous(sec.axis = sec_axis(~ .)) +
+  facet_wrap(~speaker) +
+  theme_aida()
+```
+
+```{r}
+data %>% 
+  ggplot(aes(x=color_semvalue, y=probs_big_blue)) + 
+  #geom_point(stat="identity", position=position_dodge()) + 
+  stat_summary(fun.data = "mean_cl_boot", aes(y = probs_big_blue), color = CSP_colors[1]) +
+  stat_summary(fun.data = "mean_cl_boot", aes(y = probs_blue_big), color = CSP_colors[3]) +
+  scale_y_continuous(sec.axis = sec_axis(~ .)) +
+  facet_grid(nobj~speakerl) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  theme_aida()
+```
+
+
+```{r}
+# descriptive statistics
+data %>% 
+  group_by(speaker, nobj) %>% 
+  summarise(
+    mean = mean(probs_big_blue),
+    sd = sd(probs_big_blue),
+    n = n()
+  )
+```
+
+
