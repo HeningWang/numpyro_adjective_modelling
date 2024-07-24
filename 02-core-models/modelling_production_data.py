@@ -289,7 +289,7 @@ def run_inference():
     df_inc = pd.DataFrame(posterior_inc)
 
     # Save the DataFrame to a CSV file
-    df_inc.to_csv('../posterior_samples/production_posterior_test_2.csv', index=False)
+    df_inc.to_csv('../posterior_samples/production_posterior_test_3.csv', index=False)
 
 
 def test_threshold():
