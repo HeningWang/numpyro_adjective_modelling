@@ -1,0 +1,577 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={Analysis},
+  pdfauthor={Your Name},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Analysis}
+\author{Your Name}
+\date{}
+
+\begin{document}
+\maketitle
+
+{
+\setcounter{tocdepth}{2}
+\tableofcontents
+}
+\hypertarget{simulation-with-random-states}{%
+\section{Simulation with Random
+States}\label{simulation-with-random-states}}
+
+\textbf{Single object \(O\):}
+
+A single object is a tuple of \(<s, c, f>\), where:
+
+\begin{itemize}
+\item
+  The size \(s\) is sampled from a size distribution. There are three
+  types of distributions: Normal, Left-Skewed, and Right-Skewed. All
+  distributions are truncated within the range \([1, 30]\).
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Normal: \(s \sim N(\mu = 15, \sigma = 7.5)\)
+  \item
+    Left-Skewed: \(s \sim N(\mu = 22.5, \sigma = 7.5)\)
+  \item
+    Right-Skewed: \(s \sim N(\mu = 7.5, \sigma = 7.5)\)
+  \end{itemize}
+\item
+  Both color \(c\) and form \(f\) are sampled from a Bernoulli
+  distribution:
+
+  \(c\) or \(f\) \(\sim Bern(p = 0.5)\)
+\end{itemize}
+
+\textbf{Single context \(C\):}
+
+A single context consists of \(nobj\) objects, which serve as the input
+for the model to assess. It is analogous to a single trial in a
+behavioral experiment.
+
+\textbf{A referent \(r\)} is defined as follows:
+
+\[
+<s_r, c_r, f_r>: s_r = \arg\max s \in C; c_r = f_r = 1.
+\]
+
+\textbf{Modification on the core model:}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  The method for computing the threshold is now sample-based.
+\item
+  We added a pragmatic listener model.
+\end{enumerate}
+
+\textbf{A communicative success} is defined as follows:
+
+Variant 1: \[
+1 \iff L_1(r|u_1, C) > L_1(r|u_2, C), r \in C
+\] where \(u_1\) is ``big blue'' and \(u_2\) is ``blue big''. \(L_1\),
+the pragmatic listener, is defined as: \[
+L_1(r|u,C) \propto S_1(u|r,C) \cdot P(r)
+\]
+
+This is equivalent to variant 2: \[
+1 \iff S_1(u_1|r, C) > S_1(u_2|r, C), r \in C
+\]
+
+Variant 3: \[
+1 \iff \operatorname*{argmax}_r L_1(r|u_1,C)
+\]
+
+\textbf{Single simulation run:}
+
+With one unique parameter setting, the sample size is 10,000 (1e4). This
+corresponds to the number of all single contexts (trials). The parameter
+values vary across different simulation runs and are described as
+follows:
+
+\begin{itemize}
+\tightlist
+\item
+  nobj - {[}2,6,\ldots,18{]}, step = 4. Number of objects in a single
+  context, 5 values in total.
+\item
+  speaker - incremental speaker or global speaker. List of speaker
+  models, 2 values in total.
+\item
+  color semval - {[}0.90,0.92,\ldots,0.99{]}, step = 0.02. Semantic
+  values for color adjectives, 6 values in total.
+\item
+  k - {[}0.2,0.4,\ldots,0.8{]}, step = 0.2. Percentage for determining
+  the threshold for size semantics, four values in total.
+\item
+  wf - {[}0.2,0.4,\ldots,1{]}, step = 0.2. Parameter for perceptual
+  blur, five values in total.
+\item
+  size distribution - normal, left-skewed, and right-skewed. Size
+  distribution for sampling size for a single object, 3 values in total.
+\end{itemize}
+
+This results in a total of 1800 iterations, and 18 million samples.
+
+\textbf{Initial results:}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Incremental speaker generally leads to less communicative success with
+  size-first ordering.
+\item
+  The intention of manipulating the size distribution is to manipulate
+  the scale of communicative efficiency of size adjectives, from low to
+  high: right-skewed, normal, left-skewed. This manipulation seems not
+  very effective. The intended communicative success is the deviation of
+  the real size value from the threshold. The real value is max. The
+  threshold is a function of max, min, and k. Given a fixed k, to
+  achieve a low threshold, we must maximize max and the difference
+  between max and min. The current manipulation does not effectively
+  achieve this. Currently, left-skewed is the lowest, and normal and
+  right-skewed are almost equal.
+\item
+  The higher the wf, k, and color semval are, the lower the
+  communicative success.
+\end{enumerate}
+
+\hypertarget{introduction}{%
+\subsection{Introduction}\label{introduction}}
+
+This is an analysis of the data.
+
+Load the data.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{rm}\NormalTok{(}\AttributeTok{list=}\FunctionTok{ls}\NormalTok{())}
+\NormalTok{filename }\OtherTok{\textless{}{-}} \StringTok{"simulation\_full\_run\_2.csv"}
+\NormalTok{data }\OtherTok{\textless{}{-}} \FunctionTok{read.csv}\NormalTok{(filename)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data}\SpecialCharTok{$}\NormalTok{nobj }\OtherTok{\textless{}{-}}\NormalTok{ data}\SpecialCharTok{$}\NormalTok{nobj }\SpecialCharTok{/} \DecValTok{10000}
+\end{Highlighting}
+\end{Shaded}
+
+Set up the theme for plot.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(tidyverse)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## -- Attaching core tidyverse packages ------------------------ tidyverse 2.0.0 --
+## v dplyr     1.1.1     v readr     2.1.4
+## v forcats   1.0.0     v stringr   1.5.0
+## v ggplot2   3.5.1     v tibble    3.2.1
+## v lubridate 1.9.2     v tidyr     1.3.0
+## v purrr     1.0.1     
+## -- Conflicts ------------------------------------------ tidyverse_conflicts() --
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()
+## i Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(aida)   }\CommentTok{\# custom helpers: https://github.com/michael{-}franke/aida{-}package}
+\FunctionTok{theme\_set}\NormalTok{(}\FunctionTok{theme\_aida}\NormalTok{())}
+
+\DocumentationTok{\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#}
+\DocumentationTok{\#\# CSP{-}colors}
+\DocumentationTok{\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#}
+\NormalTok{CSP\_colors }\OtherTok{=} \FunctionTok{c}\NormalTok{(}
+  \StringTok{"\#7581B3"}\NormalTok{, }\StringTok{"\#99C2C2"}\NormalTok{, }\StringTok{"\#C65353"}\NormalTok{, }\StringTok{"\#E2BA78"}\NormalTok{, }\StringTok{"\#5C7457"}\NormalTok{, }\StringTok{"\#575463"}\NormalTok{,}
+  \StringTok{"\#B0B7D4"}\NormalTok{, }\StringTok{"\#66A3A3"}\NormalTok{, }\StringTok{"\#DB9494"}\NormalTok{, }\StringTok{"\#D49735"}\NormalTok{, }\StringTok{"\#9BB096"}\NormalTok{, }\StringTok{"\#D4D3D9"}\NormalTok{,}
+  \StringTok{"\#414C76"}\NormalTok{, }\StringTok{"\#993333"}
+\NormalTok{  )}
+\CommentTok{\# setting theme colors globally}
+\NormalTok{scale\_colour\_discrete }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(...) \{}
+  \FunctionTok{scale\_colour\_manual}\NormalTok{(..., }\AttributeTok{values =}\NormalTok{ CSP\_colors)}
+\NormalTok{\}}
+\NormalTok{scale\_fill\_discrete }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(...) \{}
+  \FunctionTok{scale\_fill\_manual}\NormalTok{(..., }\AttributeTok{values =}\NormalTok{ CSP\_colors)}
+\NormalTok{\}}
+\NormalTok{CSP\_color\_names }\OtherTok{=} \FunctionTok{c}\NormalTok{(}\StringTok{"glaucous"}\NormalTok{, }\StringTok{"opal"}\NormalTok{, }\StringTok{"shimmer"}\NormalTok{, }\StringTok{"crayola"}\NormalTok{, }\StringTok{"fern"}\NormalTok{, }\StringTok{"independence"}\NormalTok{,}
+           \StringTok{"glaucous light 2"}\NormalTok{, }\StringTok{"opal dark 2"}\NormalTok{, }\StringTok{"shimmer light 2"}\NormalTok{, }\StringTok{"crayola dark 2"}\NormalTok{, }\StringTok{"fern light 3"}\NormalTok{, }\StringTok{"independence light 4"}\NormalTok{,}
+           \StringTok{"glaucous dark 3"}\NormalTok{, }\StringTok{"shimmer dark 2"}
+\NormalTok{           )}
+\end{Highlighting}
+\end{Shaded}
+
+Display the difference between two speakers and two ordering.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x=}\NormalTok{speaker, }\AttributeTok{y=}\NormalTok{probs\_big\_blue)) }\SpecialCharTok{+} 
+  \CommentTok{\#geom\_point(stat="identity", position=position\_dodge()) + }
+  \FunctionTok{stat\_summary}\NormalTok{(}\AttributeTok{fun.data =} \StringTok{"mean\_cl\_boot"}\NormalTok{, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{y =}\NormalTok{ probs\_big\_blue), }\AttributeTok{color =}\NormalTok{ CSP\_colors[}\DecValTok{1}\NormalTok{]) }\SpecialCharTok{+}
+  \FunctionTok{stat\_summary}\NormalTok{(}\AttributeTok{fun.data =} \StringTok{"mean\_cl\_boot"}\NormalTok{, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{y =}\NormalTok{ probs\_blue\_big), }\AttributeTok{color =}\NormalTok{ CSP\_colors[}\DecValTok{3}\NormalTok{]) }\SpecialCharTok{+}
+  \FunctionTok{scale\_y\_continuous}\NormalTok{(}\AttributeTok{sec.axis =} \FunctionTok{sec\_axis}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ .)) }\SpecialCharTok{+}
+  \FunctionTok{theme\_aida}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{analysis_run_2_files/figure-latex/unnamed-chunk-4-1.pdf}
+Display the error bar for big blue.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x=}\NormalTok{speaker)) }\SpecialCharTok{+} 
+  \CommentTok{\#geom\_point(stat="identity", position=position\_dodge()) + }
+  \FunctionTok{stat\_summary}\NormalTok{(}\AttributeTok{fun.data =} \StringTok{"mean\_cl\_boot"}\NormalTok{, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{y =}\NormalTok{ probs\_big\_blue), }\AttributeTok{color =}\NormalTok{ CSP\_colors[}\DecValTok{1}\NormalTok{]) }\SpecialCharTok{+}
+  \FunctionTok{scale\_y\_continuous}\NormalTok{(}\AttributeTok{sec.axis =} \FunctionTok{sec\_axis}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ .)) }\SpecialCharTok{+}
+  \FunctionTok{theme\_aida}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{analysis_run_2_files/figure-latex/unnamed-chunk-5-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x=}\NormalTok{nobj, }\AttributeTok{y=}\NormalTok{probs\_big\_blue)) }\SpecialCharTok{+} 
+  \CommentTok{\#geom\_point(stat="identity", position=position\_dodge()) + }
+  \FunctionTok{stat\_summary}\NormalTok{(}\AttributeTok{fun.data =} \StringTok{"mean\_cl\_boot"}\NormalTok{, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{y =}\NormalTok{ probs\_big\_blue), }\AttributeTok{color =}\NormalTok{ CSP\_colors[}\DecValTok{1}\NormalTok{]) }\SpecialCharTok{+}
+  \FunctionTok{stat\_summary}\NormalTok{(}\AttributeTok{fun.data =} \StringTok{"mean\_cl\_boot"}\NormalTok{, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{y =}\NormalTok{ probs\_blue\_big), }\AttributeTok{color =}\NormalTok{ CSP\_colors[}\DecValTok{3}\NormalTok{]) }\SpecialCharTok{+}
+  \FunctionTok{scale\_y\_continuous}\NormalTok{(}\AttributeTok{sec.axis =} \FunctionTok{sec\_axis}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ .)) }\SpecialCharTok{+}
+  \FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{speaker) }\SpecialCharTok{+}
+  \FunctionTok{theme\_aida}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{analysis_run_2_files/figure-latex/unnamed-chunk-6-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x=}\NormalTok{color\_semvalue, }\AttributeTok{y=}\NormalTok{probs\_big\_blue)) }\SpecialCharTok{+} 
+  \CommentTok{\#geom\_point(stat="identity", position=position\_dodge()) + }
+  \FunctionTok{stat\_summary}\NormalTok{(}\AttributeTok{fun.data =} \StringTok{"mean\_cl\_boot"}\NormalTok{, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{y =}\NormalTok{ probs\_big\_blue), }\AttributeTok{color =}\NormalTok{ CSP\_colors[}\DecValTok{1}\NormalTok{]) }\SpecialCharTok{+}
+  \FunctionTok{stat\_summary}\NormalTok{(}\AttributeTok{fun.data =} \StringTok{"mean\_cl\_boot"}\NormalTok{, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{y =}\NormalTok{ probs\_blue\_big), }\AttributeTok{color =}\NormalTok{ CSP\_colors[}\DecValTok{3}\NormalTok{]) }\SpecialCharTok{+}
+  \FunctionTok{scale\_y\_continuous}\NormalTok{(}\AttributeTok{sec.axis =} \FunctionTok{sec\_axis}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ .)) }\SpecialCharTok{+}
+  \FunctionTok{facet\_grid}\NormalTok{(nobj}\SpecialCharTok{\textasciitilde{}}\NormalTok{speaker) }\SpecialCharTok{+}
+  \FunctionTok{theme}\NormalTok{(}\AttributeTok{axis.text.x =} \FunctionTok{element\_text}\NormalTok{(}\AttributeTok{angle =} \DecValTok{90}\NormalTok{, }\AttributeTok{hjust =} \DecValTok{1}\NormalTok{)) }\SpecialCharTok{+}
+  \FunctionTok{theme\_aida}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{analysis_run_2_files/figure-latex/unnamed-chunk-7-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# descriptive statistics}
+\NormalTok{data }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{group\_by}\NormalTok{(speaker, nobj) }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{summarise}\NormalTok{(}
+    \AttributeTok{mean =} \FunctionTok{mean}\NormalTok{(probs\_big\_blue),}
+    \AttributeTok{sd =} \FunctionTok{sd}\NormalTok{(probs\_big\_blue),}
+    \AttributeTok{n =} \FunctionTok{n}\NormalTok{()}
+\NormalTok{  )}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## `summarise()` has grouped output by 'speaker'. You can override using the
+## `.groups` argument.
+\end{verbatim}
+
+\begin{verbatim}
+## # A tibble: 10 x 5
+## # Groups:   speaker [2]
+##    speaker              nobj   mean     sd     n
+##    <chr>               <dbl>  <dbl>  <dbl> <int>
+##  1 global_speaker          2 0.600  0.104  50000
+##  2 global_speaker          6 0.226  0.0499 50000
+##  3 global_speaker         10 0.136  0.0244 50000
+##  4 global_speaker         14 0.100  0.0179 50000
+##  5 global_speaker         18 0.0752 0.0128 50000
+##  6 incremental_speaker     2 0.567  0.0938 50000
+##  7 incremental_speaker     6 0.201  0.0389 50000
+##  8 incremental_speaker    10 0.124  0.0227 50000
+##  9 incremental_speaker    14 0.0893 0.0167 50000
+## 10 incremental_speaker    18 0.0670 0.0123 50000
+\end{verbatim}
+
+\hypertarget{legacy-first-test-run-with-coded-comminicative-sucess}{%
+\subsection{Legacy: First test run with coded comminicative
+sucess}\label{legacy-first-test-run-with-coded-comminicative-sucess}}
+
+Load the data.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{filename }\OtherTok{\textless{}{-}} \StringTok{"simulation\_test\_run\_fewer\_parameters.csv"}
+\NormalTok{data }\OtherTok{\textless{}{-}} \FunctionTok{read.csv}\NormalTok{(filename)}
+\end{Highlighting}
+\end{Shaded}
+
+Set up the theme for plot.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(tidyverse)}
+\FunctionTok{library}\NormalTok{(aida)   }\CommentTok{\# custom helpers: https://github.com/michael{-}franke/aida{-}package}
+\FunctionTok{theme\_set}\NormalTok{(}\FunctionTok{theme\_aida}\NormalTok{())}
+
+\DocumentationTok{\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#}
+\DocumentationTok{\#\# CSP{-}colors}
+\DocumentationTok{\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#}
+\NormalTok{CSP\_colors }\OtherTok{=} \FunctionTok{c}\NormalTok{(}
+  \StringTok{"\#7581B3"}\NormalTok{, }\StringTok{"\#99C2C2"}\NormalTok{, }\StringTok{"\#C65353"}\NormalTok{, }\StringTok{"\#E2BA78"}\NormalTok{, }\StringTok{"\#5C7457"}\NormalTok{, }\StringTok{"\#575463"}\NormalTok{,}
+  \StringTok{"\#B0B7D4"}\NormalTok{, }\StringTok{"\#66A3A3"}\NormalTok{, }\StringTok{"\#DB9494"}\NormalTok{, }\StringTok{"\#D49735"}\NormalTok{, }\StringTok{"\#9BB096"}\NormalTok{, }\StringTok{"\#D4D3D9"}\NormalTok{,}
+  \StringTok{"\#414C76"}\NormalTok{, }\StringTok{"\#993333"}
+\NormalTok{  )}
+\CommentTok{\# setting theme colors globally}
+\NormalTok{scale\_colour\_discrete }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(...) \{}
+  \FunctionTok{scale\_colour\_manual}\NormalTok{(..., }\AttributeTok{values =}\NormalTok{ CSP\_colors)}
+\NormalTok{\}}
+\NormalTok{scale\_fill\_discrete }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(...) \{}
+  \FunctionTok{scale\_fill\_manual}\NormalTok{(..., }\AttributeTok{values =}\NormalTok{ CSP\_colors)}
+\NormalTok{\}}
+\NormalTok{CSP\_color\_names }\OtherTok{=} \FunctionTok{c}\NormalTok{(}\StringTok{"glaucous"}\NormalTok{, }\StringTok{"opal"}\NormalTok{, }\StringTok{"shimmer"}\NormalTok{, }\StringTok{"crayola"}\NormalTok{, }\StringTok{"fern"}\NormalTok{, }\StringTok{"independence"}\NormalTok{,}
+           \StringTok{"glaucous light 2"}\NormalTok{, }\StringTok{"opal dark 2"}\NormalTok{, }\StringTok{"shimmer light 2"}\NormalTok{, }\StringTok{"crayola dark 2"}\NormalTok{, }\StringTok{"fern light 3"}\NormalTok{, }\StringTok{"independence light 4"}\NormalTok{,}
+           \StringTok{"glaucous dark 3"}\NormalTok{, }\StringTok{"shimmer dark 2"}
+\NormalTok{           )}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{plot-the-propotion-of-sucess-again-color_semvalue-speaker}{%
+\subsection{Plot the propotion of sucess again color\_semvalue \&
+speaker}\label{plot-the-propotion-of-sucess-again-color_semvalue-speaker}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x=}\NormalTok{speaker, }\AttributeTok{y=}\NormalTok{proportion\_success)) }\SpecialCharTok{+} 
+  \CommentTok{\#geom\_point(stat="identity", position=position\_dodge()) + }
+  \FunctionTok{stat\_summary}\NormalTok{(}\AttributeTok{fun.data =} \StringTok{"mean\_cl\_boot"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{theme\_aida}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{analysis_run_2_files/figure-latex/unnamed-chunk-11-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x=}\NormalTok{size\_distribution, }\AttributeTok{y=}\NormalTok{proportion\_success)) }\SpecialCharTok{+} 
+  \CommentTok{\#geom\_point(stat="identity", position=position\_dodge()) + }
+  \FunctionTok{stat\_summary}\NormalTok{(}\AttributeTok{fun.data =} \StringTok{"mean\_cl\_boot"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{speaker) }\SpecialCharTok{+} 
+  \FunctionTok{theme\_aida}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{analysis_run_2_files/figure-latex/unnamed-chunk-12-1.pdf}
+
+To gain a basic understanding of the data and the impact of parameter
+values.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{filter}\NormalTok{(size\_distribution }\SpecialCharTok{==} \StringTok{"normal"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x=}\NormalTok{color\_semvalue, }\AttributeTok{y=}\NormalTok{proportion\_success)) }\SpecialCharTok{+} 
+  \CommentTok{\#geom\_point(stat="identity", position=position\_dodge()) + }
+  \FunctionTok{stat\_summary}\NormalTok{(}\AttributeTok{fun.data =} \StringTok{"mean\_cl\_boot"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{speaker) }\SpecialCharTok{+} 
+  \FunctionTok{theme\_aida}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{analysis_run_2_files/figure-latex/unnamed-chunk-13-1.pdf}
+\#\# Plot the propotion of sucess again nobj \& speaker
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{filter}\NormalTok{(size\_distribution }\SpecialCharTok{==} \StringTok{"normal"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x=}\NormalTok{nobj, }\AttributeTok{y=}\NormalTok{proportion\_success)) }\SpecialCharTok{+} 
+  \CommentTok{\#geom\_point(stat="identity", position=position\_dodge()) + }
+  \FunctionTok{stat\_summary}\NormalTok{(}\AttributeTok{fun.data =} \StringTok{"mean\_cl\_boot"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{speaker) }\SpecialCharTok{+} 
+  \FunctionTok{theme\_aida}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{analysis_run_2_files/figure-latex/unnamed-chunk-14-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{filter}\NormalTok{(size\_distribution }\SpecialCharTok{==} \StringTok{"normal"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x=}\NormalTok{wf, }\AttributeTok{y=}\NormalTok{proportion\_success)) }\SpecialCharTok{+} 
+  \CommentTok{\#geom\_point(stat="identity", position=position\_dodge()) + }
+  \FunctionTok{stat\_summary}\NormalTok{(}\AttributeTok{fun.data =} \StringTok{"mean\_cl\_boot"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{speaker) }\SpecialCharTok{+} 
+  \FunctionTok{theme\_aida}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{analysis_run_2_files/figure-latex/unnamed-chunk-15-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{filter}\NormalTok{(size\_distribution }\SpecialCharTok{==} \StringTok{"normal"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x=}\NormalTok{k, }\AttributeTok{y=}\NormalTok{proportion\_success)) }\SpecialCharTok{+} 
+  \CommentTok{\#geom\_point(stat="identity", position=position\_dodge()) + }
+  \FunctionTok{stat\_summary}\NormalTok{(}\AttributeTok{fun.data =} \StringTok{"mean\_cl\_boot"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{speaker) }\SpecialCharTok{+} 
+  \FunctionTok{theme\_aida}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{analysis_run_2_files/figure-latex/unnamed-chunk-16-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(ggplot2)}
+\CommentTok{\#ggplot(data, aes(x=color\_semvalue, y=proportion\_success)) + geom\_smooth()}
+\NormalTok{data }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{filter}\NormalTok{(wf }\SpecialCharTok{==} \FloatTok{0.6} \SpecialCharTok{\&}\NormalTok{ k }\SpecialCharTok{==} \FloatTok{0.6} \SpecialCharTok{\&}\NormalTok{ size\_distribution }\SpecialCharTok{==} \StringTok{"normal"} \SpecialCharTok{\&}\NormalTok{ nobj }\SpecialCharTok{==} \DecValTok{10}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x=}\NormalTok{nobj, }\AttributeTok{y=}\NormalTok{proportion\_success)) }\SpecialCharTok{+} 
+  \CommentTok{\#geom\_point(stat="identity", position=position\_dodge()) + }
+  \FunctionTok{stat\_summary}\NormalTok{(}\AttributeTok{fun.data =} \StringTok{"mean\_cl\_boot"}\NormalTok{) }\SpecialCharTok{+} 
+  \CommentTok{\#facet\_wrap(\textasciitilde{}speaker) + }
+  \FunctionTok{facet\_grid}\NormalTok{(speaker}\SpecialCharTok{\textasciitilde{}}\NormalTok{color\_semvalue) }\SpecialCharTok{+}
+  \FunctionTok{theme\_aida}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning: Removed 1 row containing missing values or values outside the scale range
+## (`geom_segment()`).
+## Removed 1 row containing missing values or values outside the scale range
+## (`geom_segment()`).
+## Removed 1 row containing missing values or values outside the scale range
+## (`geom_segment()`).
+## Removed 1 row containing missing values or values outside the scale range
+## (`geom_segment()`).
+## Removed 1 row containing missing values or values outside the scale range
+## (`geom_segment()`).
+## Removed 1 row containing missing values or values outside the scale range
+## (`geom_segment()`).
+## Removed 1 row containing missing values or values outside the scale range
+## (`geom_segment()`).
+## Removed 1 row containing missing values or values outside the scale range
+## (`geom_segment()`).
+## Removed 1 row containing missing values or values outside the scale range
+## (`geom_segment()`).
+## Removed 1 row containing missing values or values outside the scale range
+## (`geom_segment()`).
+\end{verbatim}
+
+\includegraphics{analysis_run_2_files/figure-latex/unnamed-chunk-17-1.pdf}
+
+\end{document}

@@ -150,17 +150,18 @@ def literal_listener_recursive(word_length, states, color_semvalue = 0.90, form_
   if word_length <= 1: # Base case
     current_states_prior = normalize(jnp.ones((2,states.shape[0]))) # Create a uniform prior of shape (2, nobj)
   else:
-    current_states_prior = literal_listener_recursive(word_length - 1, states, color_semvalue = 0.98, form_semvalue = 0.98, wf = 0.6, k = 0.5)
-    current_states_prior = jnp.flip(current_states_prior, axis = 0)
+    current_states_prior = literal_listener_recursive(word_length - 1, states, color_semvalue = 0.98, form_semvalue = 0.98, wf = 0.6, k = 0.5) # Recursive call
+    current_states_prior = jnp.flip(current_states_prior, axis = 0) # Flip the prior, axis = 0 means flip along the rows
+    # At first, first row is probs for big, second row is probs for blue
 
-  probs_blue = jnp.where((1. == states[:, 1]), color_semvalue, 1 - color_semvalue) # Apply the meaning function for color adjective
+  probs_blue = jnp.where((1. == states[:, 1]), color_semvalue, 1 - color_semvalue) # Apply the meaning function of color to objects to get probs
   # Get the threshold for the size adjective
   if sample_based:
     threshold = get_threshold_kp_sample_jax(states, current_states_prior[0,:], k)
   else:
     threshold = get_threshold_kp(states, k)
-  probs_big = jax.vmap(get_size_semval, in_axes = (0, None, None))(states[:,0], threshold, wf) # Apply the meaning function for size adjective
-  probs = normalize(jnp.multiply(jnp.array([probs_big,probs_blue]), current_states_prior))
+  probs_big = jax.vmap(get_size_semval, in_axes = (0, None, None))(states[:,0], threshold, wf) # Apply the meaning function of size to objects to get probs
+  probs = normalize(jnp.multiply(jnp.array([probs_big,probs_blue]), current_states_prior)) # Apply Bayes' rule
   return probs
 
 
@@ -172,15 +173,17 @@ def speaker_one_word(states, alpha = 1, bias = 0, color_semvalue = 0.98, form_se
   return softmax_result
 
 def speaker_recursive(word_length, states, alpha = 1, bias = 0, color_semvalue = 0.98, form_semvalue = 0.98, wf = 0.6, k = 0.5):
-  if word_length <= 1:
-    current_utt_prior = jnp.array([0, 1]) * bias # the bias is applied to the second utterance (blue big)
+  # At first, first col is probs for big blue, second col is probs for blue big
+  # Create a biased prior of shape (2,)
+  if word_length <= 1: # Base case
+    current_utt_prior = jnp.array([0, 1]) * bias # the negative bias is applied to the second utterance (blue big)
   else:
-    current_utt_prior = speaker_recursive(word_length - 1, states, alpha, bias, color_semvalue, form_semvalue, wf, k)
-    current_utt_prior = jnp.flip(current_utt_prior, axis = 1)
-  listener = literal_listener_recursive(word_length, states, color_semvalue, form_semvalue, wf, k)
-  #print(listener)
-  util_speaker = jnp.log(jnp.transpose(listener)) - current_utt_prior
-  softmax_result = jax.nn.softmax(alpha * util_speaker)
+    current_utt_prior = speaker_recursive(word_length - 1, states, alpha, bias, color_semvalue, form_semvalue, wf, k) # Recursive call
+    current_utt_prior = jnp.flip(current_utt_prior, axis = 1) # Flip the prior, axis = 1 means flip along the columns
+
+  listener = literal_listener_recursive(word_length, states, color_semvalue, form_semvalue, wf, k) # Get the listener probs given the current states
+  util_speaker = jnp.log(jnp.transpose(listener)) - current_utt_prior # Compute the utility of the speaker
+  softmax_result = jax.nn.softmax(alpha * util_speaker) # Compute the softmax of the utility
   return softmax_result
 
 def global_speaker(states, alpha = 1, bias = 0, color_semvalue = 0.98, form_semvalue = 0.98, wf = 0.6, k = 0.5):
@@ -348,6 +351,23 @@ def run_inference():
     # Save the DataFrame to a CSV file
     df_inc.to_csv('../posterior_samples/02_inc_normal_logit_sample.csv', index=False)
 
+def test_threshold():
+    states_train, empirical_train, df = import_dataset()
+    states_example = states_train[46]
+    empirical_example = empirical_train[46]
+    def uniform_state_prior(nobj=6):
+        """
+        Input: number of objects
+        Output: list of prior probabilities for each object
+        """
+        prior=normalize(jnp.ones((2,nobj)))
+        return prior
+    stt_prior = uniform_state_prior()
+    print(stt_prior)
+    threshold = get_threshold_kp_sample_jax(states_example, stt_prior[0,:])
+    print(threshold)
+
 if __name__ == "__main__":
-    test_core_rsa()
+    #test_core_rsa()
+    test_threshold()
     #run_inference()
