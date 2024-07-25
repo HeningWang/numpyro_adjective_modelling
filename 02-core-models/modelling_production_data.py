@@ -252,19 +252,19 @@ def global_speaker(states, alpha = 1, color_semval = 0.95, k = 0.5):
 
 
 
-def likelihood_function_test(states, alpha, color_semval, k, empirical = "D"):
+def likelihood_function_map(states, alpha, color_semval, k):
     utt_probs_conditionedReferent = global_speaker(states, alpha, color_semval, k)[0,:] # Get the probs of utterances given the first state, referent is always the first state
-    with numpyro.handlers.seed(rng_seed=0):
-        x = numpyro.sample("obs", dist.Categorical(probs=utt_probs_conditionedReferent), sample_shape= (10,), obs=empirical)
-    return x
+    with numpyro.plate("data", len(states)):
+        map_predictions = numpyro.sample("obs", dist.Categorical(probs=utt_probs_conditionedReferent))
+    return map_predictions
 
 def likelihood_function(states, empirical):
-    alpha = numpyro.sample("gamma", dist.HalfNormal(5))
+    #alpha = numpyro.sample("gamma", dist.HalfNormal(5))
     alpha = 1
     color_semval = numpyro.sample("color_semvalue", dist.Uniform(0,1))
     #color_semval = 0.8
-    k = numpyro.sample("k", dist.Uniform(0, 1))
-    #k = 0.5
+    #k = numpyro.sample("k", dist.Uniform(0, 1))
+    k = 0.5
     utt_probs_conditionedReferent = global_speaker(states, alpha, color_semval, k)[0,:] # Get the probs of utterances given the first state, referent is always the first state
     with numpyro.plate("data", len(empirical)):
         numpyro.sample("obs", dist.Categorical(probs=utt_probs_conditionedReferent), obs=empirical)
