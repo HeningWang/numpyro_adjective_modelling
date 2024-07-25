@@ -38,7 +38,7 @@ def posterior_analysis():
     rng_key, rng_key_ = random.split(rng_key)
 
     result_dict = {}
-    filename = '../posterior_samples/production_posterior_test_1.csv'
+    filename = '../posterior_samples/production_posterior_test_2.csv'
     csv_data = read_csv_to_dict(filename)
     df_inc = pd.DataFrame(csv_data)
 
@@ -55,7 +55,7 @@ def posterior_analysis():
     df_pred["mean_predictions"] = jnp.mean(predictions, axis=0)
     df_pred["std_predictions"] = jnp.std(predictions, axis=0)
     
-    df_pred.to_csv('../posterior_samples/production_posteriorPredictive_test1.csv', index=False)
+    df_pred.to_csv('../posterior_samples/production_posteriorPredictive_test2.csv', index=False)
 
 if __name__ == "__main__":
     posterior_analysis()
