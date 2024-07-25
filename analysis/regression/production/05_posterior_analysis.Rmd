@@ -1,0 +1,19 @@
+```{r}
+# Load the data
+data <- read.csv("../../../posterior_samples/production_posteriorPredictive_test2.csv")
+```
+```{r}
+library(ggplot2)
+```
+```{r}
+ggplot(data, aes(x = production)) +
+  geom_density(fill = "blue", alpha = 0.5) +
+  labs(title = "Posterior predictive distribution of production",
+       x = "Production",
+       y = "Density")
+```
+```{r}
+```
+
+
+

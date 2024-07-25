@@ -259,12 +259,12 @@ def likelihood_function_test(states, alpha, color_semval, k, empirical = "D"):
     return x
 
 def likelihood_function(states, empirical):
-    #alpha = numpyro.sample("gamma", dist.HalfNormal(10))
+    alpha = numpyro.sample("gamma", dist.HalfNormal(5))
     alpha = 1
-    color_semval = numpyro.sample("color_semvalue", dist.Uniform(0.01, 0.1))
+    color_semval = numpyro.sample("color_semvalue", dist.Uniform(0,1))
     #color_semval = 0.8
-    #k = numpyro.sample("k", dist.Uniform(0, 1))
-    k = 0.5
+    k = numpyro.sample("k", dist.Uniform(0, 1))
+    #k = 0.5
     utt_probs_conditionedReferent = global_speaker(states, alpha, color_semval, k)[0,:] # Get the probs of utterances given the first state, referent is always the first state
     with numpyro.plate("data", len(empirical)):
         numpyro.sample("obs", dist.Categorical(probs=utt_probs_conditionedReferent), obs=empirical)
@@ -278,7 +278,7 @@ def run_inference():
     rng_key, rng_key_ = random.split(rng_key)
 
     kernel = NUTS(likelihood_function)
-    mcmc_inc = MCMC(kernel, num_warmup=100,num_samples=100,num_chains=1)
+    mcmc_inc = MCMC(kernel, num_warmup=10000,num_samples=10000,num_chains=1)
     mcmc_inc.run(rng_key_, states_train, empirical_train)
 
     # print the summary of the posterior distribution
@@ -289,7 +289,7 @@ def run_inference():
     df_inc = pd.DataFrame(posterior_inc)
 
     # Save the DataFrame to a CSV file
-    df_inc.to_csv('../posterior_samples/production_posterior_test_3.csv', index=False)
+    df_inc.to_csv('../posterior_samples/production_posterior_test_4.csv', index=False)
 
 
 def test_threshold():
