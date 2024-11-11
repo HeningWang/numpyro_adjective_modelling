@@ -16,7 +16,9 @@ import numpyro
 from numpyro.diagnostics import hpdi
 import numpyro.distributions as dist
 from numpyro import handlers
-from numpyro.infer import MCMC, NUTS
+from numpyro.infer import MCMC, NUTS, HMC, MixedHMC
+from numpyro.infer import Predictive
+from numpyro.contrib.funsor.infer_util import config_enumerate, infer_discrete
 from sklearn.model_selection import train_test_split
 numpyro.set_platform("cpu")
 
@@ -250,8 +252,6 @@ def global_speaker(states, alpha = 1, color_semval = 0.95, k = 0.5):
     softmax_result = jax.nn.softmax(alpha * util_speaker)
     return softmax_result
 
-
-
 def likelihood_function_map(states, alpha, color_semval, k):
     utt_probs_conditionedReferent = global_speaker(states, alpha, color_semval, k)[0,:] # Get the probs of utterances given the first state, referent is always the first state
     with numpyro.plate("data", len(states)):
@@ -270,6 +270,34 @@ def likelihood_function(states, empirical):
         numpyro.sample("obs", dist.Categorical(probs=utt_probs_conditionedReferent), obs=empirical)
     return utt_probs_conditionedReferent
 
+@infer_discrete(first_available_dim=-1, temperature=0)
+@config_enumerate
+def likelihood_function_mixed(states, empirical):
+    #alpha = numpyro.sample("gamma", dist.HalfNormal(5))
+    alpha = 1
+    color_semval = numpyro.sample("color_semvalue", dist.Uniform(0,1))
+    #color_semval = 0.8
+    #k = numpyro.sample("k", dist.Uniform(0, 1))
+    k = 0.5
+    utt_probs_conditionedReferent = global_speaker(states, alpha, color_semval, k)[0,:] # Get the probs of utterances given the first state, referent is always the first state
+    with numpyro.plate("data", len(empirical)):
+        cat = numpyro.sample("obs", dist.Categorical(probs=utt_probs_conditionedReferent))
+        utt_cat = numpyro.sample("utt_cat", dist.Normal(cat,0.01), obs=empirical)
+    #return utt_probs_conditionedReferent
+
+def likelihood_function_perturbed(states, empirical):
+    #alpha = numpyro.sample("gamma", dist.HalfNormal(5))
+    alpha = 1
+    color_semval = numpyro.sample("color_semvalue", dist.Uniform(0,1))
+    #color_semval = 0.8
+    #k = numpyro.sample("k", dist.Uniform(0, 1))
+    k = 0.5
+    sigma = 0.5
+    utt_probs_conditionedReferent = global_speaker(states, alpha, color_semval, k)[0,:] # Get the probs of utterances given the first state, referent is always the first state
+    with numpyro.plate("data", len(empirical)):
+        noise = numpyro.sample("noise", dist.Normal(utt_probs_conditionedReferent,sigma))
+    #return utt_probs_conditionedReferent
+
 def run_inference():
     states_train, empirical_train, df = import_dataset()
 
@@ -277,8 +305,9 @@ def run_inference():
     rng_key = random.PRNGKey(11)
     rng_key, rng_key_ = random.split(rng_key)
 
-    kernel = NUTS(likelihood_function)
-    mcmc_inc = MCMC(kernel, num_warmup=10000,num_samples=10000,num_chains=1)
+    #kernel = NUTS(likelihood_function)
+    kernel = MixedHMC(HMC(likelihood_function_mixed, trajectory_length=1.2), num_discrete_updates=20)
+    mcmc_inc = MCMC(kernel, num_warmup=10,num_samples=10,num_chains=1)
     mcmc_inc.run(rng_key_, states_train, empirical_train)
 
     # print the summary of the posterior distribution
@@ -289,7 +318,7 @@ def run_inference():
     df_inc = pd.DataFrame(posterior_inc)
 
     # Save the DataFrame to a CSV file
-    df_inc.to_csv('../posterior_samples/production_posterior_test_4.csv', index=False)
+    df_inc.to_csv('../posterior_samples/production_posterior_test_5.csv', index=False)
 
 
 def test_threshold():
@@ -319,14 +348,7 @@ def test_threshold():
     # print(stt_prior)
     # utt_prior = utterance_prior(utterances)
     # print(utt_prior)
-
-    # threshold = get_threshold_kp_sample_jax(states_manuell, stt_prior[0,:])
-    # print(threshold)
-    # print(meaning("D", states_manuell, stt_prior))
-    # print(meaning("C", states_manuell, stt_prior))
-    # print(meaning("F", states_manuell, stt_prior))
-    #print(incremental_literal_listener(states_manuell))
-    #result = global_speaker(states_manuell, 1)
+  
     #print(result)
     states_train, empirical_train, df = import_dataset()
     #result = likelihood_function(states_train)
