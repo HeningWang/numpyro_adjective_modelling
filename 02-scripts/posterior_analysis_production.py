@@ -13,7 +13,7 @@ from numpyro.infer import MCMC, NUTS
 numpyro.set_platform("cpu")
 import csv
 from numpyro.infer import Predictive
-from modelling_production_data import likelihood_function, import_dataset, likelihood_function_map
+from modelling_production_data import likelihood_function, import_dataset
 
 def read_csv_to_dict(filename):
     data_dict = {}
@@ -38,28 +38,22 @@ def posterior_analysis():
     rng_key, rng_key_ = random.split(rng_key)
 
     result_dict = {}
-    filename = '../posterior_samples/production_posterior_test_2.csv'
-    csv_data = read_csv_to_dict(filename)
-    df_inc = pd.DataFrame(csv_data)
-
-    # Access the data dictionary
-    for key, values in csv_data.items():
-        print(key)
+    filename = '../posterior_samples/production_posterior_test_4.csv'
+    posterior_samples = read_csv_to_dict(filename)
+    df_inc = pd.DataFrame(posterior_samples)
     
     states_train, empirical_train, df_experiment = import_dataset()
-    color_semval = csv_data["color_semvalue"]
+    color_semval = posterior_samples["color_semvalue"]
     # Compute map of color_semval
     color_semval_map = jnp.mean(color_semval)
-    predictive = Predictive(likelihood_function, csv_data)
-    predictions = predictive(rng_key_, states_train, empirical_train)["obs"]
-    with numpyro.handlers.seed(rng_seed=0):
-        predictions_map = likelihood_function_map(states_train, 1, color_semval_map, 0.5)
+    predictive = Predictive(likelihood_function, posterior_samples)
+    predictions = predictive(rng_key_, states_train)["obs"]
     df_pred = df_experiment
     df_pred["mean_predictions"] = jnp.mean(predictions, axis=0)
     df_pred["std_predictions"] = jnp.std(predictions, axis=0)
-    df_pred["mean_predictions_map"] = predictions_map
+    df_pred["predictions"] = predictions
     
-    df_pred.to_csv('../posterior_samples/production_posteriorPredictive_test2.csv', index=False)
+    df_pred.to_csv('../posterior_samples/production_posteriorPredictive_test4_empiricalNone.csv', index=False)
 
 if __name__ == "__main__":
     posterior_analysis()

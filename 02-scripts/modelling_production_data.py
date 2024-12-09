@@ -18,7 +18,6 @@ import numpyro.distributions as dist
 from numpyro import handlers
 from numpyro.infer import MCMC, NUTS, HMC, MixedHMC
 from numpyro.infer import Predictive
-from numpyro.contrib.funsor.infer_util import config_enumerate, infer_discrete
 from sklearn.model_selection import train_test_split
 numpyro.set_platform("cpu")
 
@@ -207,13 +206,13 @@ def incremental_literal_listener(states, color_semval = 0.95, k = 0.5):
     # D
     probs_D = normalize(meaning("D", states, uniformStateprior, color_semval, k), axis = 0)
     # C
-    probs_C = normalize(meaning("C", states, uniformStateprior, color_semval, k), axis=0)
+    probs_C = normalize(meaning("C", states, uniformStateprior, color_semval, k), axis = 0)
     # F
     probs_F = normalize(meaning("F", states, uniformStateprior, color_semval, k), axis = 0)
     #CD
-    probs_CD = normalize(jnp.multiply(probs_C,probs_D), axis=0)
+    probs_CD = normalize(jnp.multiply(probs_C,probs_D), axis = 0)
     #CF
-    probs_CF = normalize(jnp.multiply(probs_C,probs_F), axis=0)
+    probs_CF = normalize(jnp.multiply(probs_C,probs_F), axis = 0)
     #DC
     probs_D_after_C = meaning("D", states, probs_C, color_semval, k)
     probs_DC = normalize(jnp.multiply(probs_D_after_C,probs_C), axis=0)
@@ -252,51 +251,19 @@ def global_speaker(states, alpha = 1, color_semval = 0.95, k = 0.5):
     softmax_result = jax.nn.softmax(alpha * util_speaker)
     return softmax_result
 
-def likelihood_function_map(states, alpha, color_semval, k):
+def likelihood_function(states = None, empirical = None):
+    #alpha = numpyro.sample("gamma", dist.HalfNormal(5))
+    alpha = 1
+    color_semval = numpyro.sample("color_semvalue", dist.Uniform(0,1))
+    #color_semval = 0.8
+    #k = numpyro.sample("k", dist.Uniform(0, 1))
+    k = 0.5
     utt_probs_conditionedReferent = global_speaker(states, alpha, color_semval, k)[0,:] # Get the probs of utterances given the first state, referent is always the first state
     with numpyro.plate("data", len(states)):
-        map_predictions = numpyro.sample("obs", dist.Categorical(probs=utt_probs_conditionedReferent))
-    return map_predictions
-
-def likelihood_function(states, empirical):
-    #alpha = numpyro.sample("gamma", dist.HalfNormal(5))
-    alpha = 1
-    color_semval = numpyro.sample("color_semvalue", dist.Uniform(0,1))
-    #color_semval = 0.8
-    #k = numpyro.sample("k", dist.Uniform(0, 1))
-    k = 0.5
-    utt_probs_conditionedReferent = global_speaker(states, alpha, color_semval, k)[0,:] # Get the probs of utterances given the first state, referent is always the first state
-    with numpyro.plate("data", len(empirical)):
-        numpyro.sample("obs", dist.Categorical(probs=utt_probs_conditionedReferent), obs=empirical)
-    return utt_probs_conditionedReferent
-
-@infer_discrete(first_available_dim=-1, temperature=0)
-@config_enumerate
-def likelihood_function_mixed(states, empirical):
-    #alpha = numpyro.sample("gamma", dist.HalfNormal(5))
-    alpha = 1
-    color_semval = numpyro.sample("color_semvalue", dist.Uniform(0,1))
-    #color_semval = 0.8
-    #k = numpyro.sample("k", dist.Uniform(0, 1))
-    k = 0.5
-    utt_probs_conditionedReferent = global_speaker(states, alpha, color_semval, k)[0,:] # Get the probs of utterances given the first state, referent is always the first state
-    with numpyro.plate("data", len(empirical)):
-        cat = numpyro.sample("obs", dist.Categorical(probs=utt_probs_conditionedReferent))
-        utt_cat = numpyro.sample("utt_cat", dist.Normal(cat,0.01), obs=empirical)
-    #return utt_probs_conditionedReferent
-
-def likelihood_function_perturbed(states, empirical):
-    #alpha = numpyro.sample("gamma", dist.HalfNormal(5))
-    alpha = 1
-    color_semval = numpyro.sample("color_semvalue", dist.Uniform(0,1))
-    #color_semval = 0.8
-    #k = numpyro.sample("k", dist.Uniform(0, 1))
-    k = 0.5
-    sigma = 0.5
-    utt_probs_conditionedReferent = global_speaker(states, alpha, color_semval, k)[0,:] # Get the probs of utterances given the first state, referent is always the first state
-    with numpyro.plate("data", len(empirical)):
-        noise = numpyro.sample("noise", dist.Normal(utt_probs_conditionedReferent,sigma))
-    #return utt_probs_conditionedReferent
+        if empirical is None:
+            numpyro.sample("obs", dist.Categorical(probs=utt_probs_conditionedReferent))
+        else:
+            numpyro.sample("obs", dist.Categorical(probs=utt_probs_conditionedReferent), obs=empirical)
 
 def run_inference():
     states_train, empirical_train, df = import_dataset()
@@ -306,7 +273,7 @@ def run_inference():
     rng_key, rng_key_ = random.split(rng_key)
 
     #kernel = NUTS(likelihood_function)
-    kernel = MixedHMC(HMC(likelihood_function_mixed, trajectory_length=1.2), num_discrete_updates=20)
+    kernel = MixedHMC(HMC(likelihood_function, trajectory_length=1.2), num_discrete_updates=20)
     mcmc_inc = MCMC(kernel, num_warmup=10,num_samples=10,num_chains=1)
     mcmc_inc.run(rng_key_, states_train, empirical_train)
 

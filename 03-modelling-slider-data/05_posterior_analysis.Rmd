@@ -1,0 +1,42 @@
+```{r}
+library(ggplot2)
+library(dplyr)
+# Load the data
+data <- read.csv("../posterior_samples/production_posteriorPredictive_test4_empiricalNone.csv")
+```
+
+Correlation plot between MAP predictions and empirical data
+```{r}
+# correlation plot
+data %>% 
+  group_by(sharpness, combination, relevant_property) %>%
+  summarise(mean_predictions_by_condition = mean(mean_predictions),
+            mean_annotations = mean(annotation_encoded)) %>%
+  mutate(n = n())-> data_aggregated
+
+```
+```{r}
+ggplot(data_aggregated, aes(x = mean_annotations, y = mean_predictions_by_condition)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Correlation between annotation and mean predictions",
+       x = "Annotation",
+       y = "Mean predictions")
+```
+
+Correlation plot between posterior predictive samples and empirical data
+```{r}
+ggplot(data, aes(x = , y = mean_predictions)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Correlation between annotation and mean predictions",
+       x = "Annotation",
+       y = "Mean predictions")
+```
+```{r}
+cor.test(data_aggregated$mean_predictions_by_condition, data_aggregated$mean_annotations, alternative = "greater")
+```
+
+
+
+
