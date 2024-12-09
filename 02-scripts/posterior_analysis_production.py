@@ -53,7 +53,7 @@ def posterior_analysis():
     df_pred["std_predictions"] = jnp.std(predictions, axis=0)
     df_pred["predictions"] = predictions
     
-    df_pred.to_csv('../posterior_samples/production_posteriorPredictive_test4_empiricalNone.csv', index=False)
+    df_pred.to_csv('../posterior_samples/production_posteriorPredictive_test5_savedpred.csv', index=False)
 
 if __name__ == "__main__":
     posterior_analysis()
