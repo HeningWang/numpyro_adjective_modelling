@@ -254,7 +254,10 @@ def global_speaker(states, alpha = 1, color_semval = 0.95, k = 0.5):
 def likelihood_function(states = None, empirical = None):
     #alpha = numpyro.sample("gamma", dist.HalfNormal(5))
     alpha = 1
-    color_semval = numpyro.sample("color_semvalue", dist.Uniform(0,1))
+    # Create a dirchlet prior for 100 
+    concentration = jnp.ones(3)
+    color_semval = numpyro.sample("color_semvalue", dist.Dirichlet(concentration))
+    #color_semval = numpyro.sample("color_semvalue", dist.Uniform(0, 1))
     #color_semval = 0.8
     #k = numpyro.sample("k", dist.Uniform(0, 1))
     k = 0.5
@@ -268,12 +271,16 @@ def likelihood_function(states = None, empirical = None):
 def run_inference():
     states_train, empirical_train, df = import_dataset()
 
+    # subset 100 empirical data for testing
+    #states_train = states_train[:1000]
+    #empirical_train = empirical_train[:1000]
+
     # define the MCMC kernel and the number of samples
     rng_key = random.PRNGKey(11)
     rng_key, rng_key_ = random.split(rng_key)
 
-    #kernel = NUTS(likelihood_function)
-    kernel = MixedHMC(HMC(likelihood_function, trajectory_length=1.2), num_discrete_updates=20)
+    kernel = NUTS(likelihood_function)
+    #kernel = MixedHMC(HMC(likelihood_function, trajectory_length=1.2), num_discrete_updates=20)
     mcmc_inc = MCMC(kernel, num_warmup=10,num_samples=10,num_chains=1)
     mcmc_inc.run(rng_key_, states_train, empirical_train)
 
