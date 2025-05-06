@@ -27,6 +27,16 @@ jax.devices()
 def import_dataset(file_path = "../01-dataset/01-production-data-preprocessed.csv"):
 
     def encode_states(line):
+      '''
+        Input: line of the dataset
+        Output: jnp.array of states
+        For a single object, it has the dimensions of (size, color, form).
+        For a line of the dataset, it has the dimensions of (6, 3).
+        Given the line of the dataset, extract the states of the objects
+        The states are defined as a tuple of (size, color, form)
+        The color is 1 if the color is blue, 0 if the color is red.
+        The form is 1 if the form is circle, 0 if the form is square.
+      '''
       states = []
       for i in range(6):
         color = 1 if line.iloc[12 + i] == "blue" else 0
@@ -35,29 +45,29 @@ def import_dataset(file_path = "../01-dataset/01-production-data-preprocessed.cs
         states.append(new_obj)
       return jnp.array(states)
 
-    def encode_empirical(utterances_list):
+    def encode_empirical(column):
         """
-        Input: list of strings of 15 categories
+        Input: column of the dataset containing the utterances
         Output: jnp.array of indices
-        Given the ordering of utterances, encode the strings into indices.
+        Given the utterances, find unique utterances, and convert them into indices.
+        Work with numeric values instead of strings to avoid the problem of having to deal with strings in the model.
         """
-        # Define the fixed ordering of utterances
-        utterances_order = [
-            "D", "C", "F", "CD", "CF", "DC", "DF",
-            "FC", "FD", "DCF", "DFC", "CDF", "CFD", "FCD", "FDC"
-        ]
+        # Extract the unique utterances from the input
+        utterances_order = list(set(column))
         
         # Create a dictionary that maps each utterance to its index
         utterance_to_index = {utterance: idx for idx, utterance in enumerate(utterances_order)}
         
         # Encode the input list of strings into indices
-        indices = [utterance_to_index[utterance] for utterance in utterances_list]
-        
+        indices = [utterance_to_index[utterance] for utterance in column]
+
         # Return the indices as a jnp.array
         return jnp.array(indices)
 
     # Import the data
     df = pd.read_csv(file_path)
+    # Subset the data
+    df = df[df["conditions"].isin(["erdc", "erdf"])]
 
     # Mutate the dataset to include the states of the objects
     df["states"] = df.apply(lambda row: encode_states(row), axis=1)
@@ -251,18 +261,33 @@ def global_speaker(states, alpha = 1, color_semval = 0.95, k = 0.5):
     softmax_result = jax.nn.softmax(alpha * util_speaker)
     return softmax_result
 
+vectorized_global_speaker = jax.vmap(global_speaker, in_axes=(0,None,None,None))
+
+def incremental_speaker(states, alpha = 1, color_semval = 0.95, k = 0.5):
+    """
+    Output: probs for each state
+    """
+    current_utt_prior = jnp.log(utterance_prior(utterances))
+    meaning_matrix = incremental_literal_listener(states, color_semval = color_semval, k = k)
+    util_speaker = jnp.log(jnp.transpose(meaning_matrix)) + current_utt_prior
+    softmax_result = jax.nn.softmax(alpha * util_speaker)
+    return softmax_result
+
+
 def likelihood_function(states = None, empirical = None):
-    #alpha = numpyro.sample("gamma", dist.HalfNormal(5))
-    alpha = 1
+    alpha = numpyro.sample("alpha", dist.HalfNormal(5))
+    #alpha = 1
     # Create a dirchlet prior for 100 
     concentration = jnp.ones(3)
-    color_semval = numpyro.sample("color_semvalue", dist.Dirichlet(concentration))
-    #color_semval = numpyro.sample("color_semvalue", dist.Uniform(0, 1))
+    #color_semval = numpyro.sample("color_semvalue", dist.Dirichlet(concentration))
+    color_semval = numpyro.sample("color_semvalue", dist.Uniform(0, 1))
     #color_semval = 0.8
-    #k = numpyro.sample("k", dist.Uniform(0, 1))
-    k = 0.5
-    utt_probs_conditionedReferent = global_speaker(states, alpha, color_semval, k)[0,:] # Get the probs of utterances given the first state, referent is always the first state
+    k = numpyro.sample("k", dist.Uniform(0, 1))
+    #k = 0.5
+    # Get the probs of utterances given the first state, referent is always the first state
     with numpyro.plate("data", len(states)):
+        utt_probs_conditionedReferent = vectorized_global_speaker(states, alpha, color_semval, k)[0,:]
+        print(utt_probs_conditionedReferent)
         if empirical is None:
             numpyro.sample("obs", dist.Categorical(probs=utt_probs_conditionedReferent))
         else:
@@ -281,7 +306,7 @@ def run_inference():
 
     kernel = NUTS(likelihood_function)
     #kernel = MixedHMC(HMC(likelihood_function, trajectory_length=1.2), num_discrete_updates=20)
-    mcmc_inc = MCMC(kernel, num_warmup=10,num_samples=10,num_chains=1)
+    mcmc_inc = MCMC(kernel, num_warmup=1000,num_samples=1000,num_chains=1)
     mcmc_inc.run(rng_key_, states_train, empirical_train)
 
     # print the summary of the posterior distribution
@@ -292,7 +317,7 @@ def run_inference():
     df_inc = pd.DataFrame(posterior_inc)
 
     # Save the DataFrame to a CSV file
-    df_inc.to_csv('../posterior_samples/production_posterior_test_5.csv', index=False)
+    df_inc.to_csv('../posterior_samples/production_posterior_full_2.csv', index=False)
 
 
 def test_threshold():
@@ -325,9 +350,15 @@ def test_threshold():
   
     #print(result)
     states_train, empirical_train, df = import_dataset()
+    example_state = states_train[0]
+    print("Example state:", example_state)
+    M = incremental_literal_listener(example_state)
+    G = global_speaker(example_state)
+    print("Meaning matrix:", M)
+    #print("Global speaker:", G)
     #result = likelihood_function(states_train)
-    print(states_train[1:5])
-    print(empirical_train[1:5])
+    # print(states_train[1:5])
+    # print(empirical_train[1:5])
 
 if __name__ == "__main__":
     run_inference()
