@@ -120,7 +120,15 @@ def import_dataset(
     df["annotation_seq_mask"] = seq_mask.tolist()  # shape (N, max_len)
     df["annotation_seq_flat"] = empirical_seq_flat.tolist()  # shape (N,)
 
-    return states_train, empirical_flat, empirical_seq, seq_mask, df, unique_utterances, empirical_seq_flat
+    return {
+        "states_train": states_train,
+        "empirical_flat": empirical_flat,
+        "empirical_seq": empirical_seq,
+        "seq_mask": seq_mask,
+        "df": df,
+        "unique_utterances": unique_utterances,
+        "empirical_seq_flat": empirical_seq_flat,
+    }
 
 def build_utterance_prior(utterance_list: List[str],
                         costParam_length: float = 1.0,
@@ -176,7 +184,7 @@ def build_utterance_prior(utterance_list: List[str],
 # ========================
 # Global Variables (Setup)
 # ========================
-utterance_list = import_dataset()[5]
+utterance_list = import_dataset()["unique_utterances"]  # shape (U,3)
 utterance_prior = build_utterance_prior(utterance_list)
 
 
@@ -409,42 +417,44 @@ def global_speaker(
     alpha: float = 1.0,
     color_semval: float = 0.95,
     k: float = 0.5,
-    utterance_prior: jnp.ndarray = None
+    utt_prior: jnp.ndarray = None
 ):
     """
     Output: probs for each state
     """
+
     current_utt_prior = jnp.log(utterance_prior)
     meaning_matrix = incremental_semantics_jax(states, color_semval, k)
     util_speaker = jnp.log(jnp.transpose(meaning_matrix)) + current_utt_prior
     softmax_result = jax.nn.softmax(alpha * util_speaker)
     return softmax_result
 
+vectorized_global_speaker = jax.vmap(global_speaker, in_axes=(0, None, None, None, None))
+
 def incremental_speaker(
     states: jnp.ndarray,
     alpha: float = 1.0,
     color_semval: float = 0.95,
     k: float = 0.5,
-    utterance_prior: jnp.ndarray = None
+    utt_prior: jnp.ndarray = None
 ):
     """
-    Output: probs for each state
-    """
-    utterances = utterance_list
-    n_objs = states.shape[0]
-    M = []
-    # state_prior = jnp.ones(n_objs) / n_objs  # uniform prior over objects
+    Output: P(utterance | referent) using incremental RSA semantics:
+    for each utterance, process one token at a time, updating the utterance
+    prior using global_speaker after each step.
     
-    # meaning_matrix = incremental_semantics_jax(states, color_semval, k)
-    # util_speaker = jnp.log(jnp.transpose(meaning_matrix)) + utt_prior
-    # softmax_result = jax.nn.softmax(alpha * util_speaker)
-    # utt_posterior = softmax_result
-    if utterance_prior is None:
+    Returns:
+        Matrix of shape (n_utt, n_obj) with utterance probabilities.
+    """
+    utterances = utterance_list  # assumed global
+    n_objs = states.shape[0]
+    if utt_prior is None:
         utt_prior = jnp.log(utterance_prior)
+
     def apply_tokens(tokens: jnp.ndarray) -> jnp.ndarray:
         """
         Given a single utterance (shape (3,)), compute posterior distribution over objects.
-        Applies meaning(...) recursively from right to left using lax.scan.
+        Applies global_speaker(...) incrementally from left to right using lax.scan.
         """
 
         def step(utt_prior, token):
@@ -453,36 +463,67 @@ def incremental_speaker(
                 return utt_prior
 
             def apply(_):
-                return global_speaker(states, alpha, color_semval, k)[0,:] # Get the probs of utterances given the first state, referent is always the first state
+                logits = global_speaker(states, alpha, color_semval, k, utt_prior)
+                posterior = logits[0, :]  # assume referent is the first object
+                return jnp.log(posterior)
 
-            posterior = lax.cond(token < 0, skip, apply, operand=None)
-            utt_prior = jnp.log(posterior)
-            return posterior, None  # carry only prior forward
-        
-        # Loop over the tokens in conventional order (left to right)
-        final_prior, _ = lax.scan(step, utt_prior, tokens[::1])
-        return final_prior
-    
+            new_prior = lax.cond(token < 0, skip, apply, operand=None)
+            return new_prior, None  # carry prior forward
+
+        final_log_prior, _ = lax.scan(step, utt_prior, tokens)
+        final_probs = jax.nn.softmax(final_log_prior)
+        return final_probs
+
     # Apply over all utterances using vmap
     M = jax.vmap(apply_tokens)(utterances)  # shape (n_utt, n_obj)
     return M
 
+vectorized_incremental_speaker = jax.vmap(incremental_speaker, in_axes=(0, None, None, None, None))
+
+
 def likelihood_function_global_speaker(states = None, empirical = None):
-    alpha = numpyro.sample("gamma", dist.HalfNormal(5))
+    alpha = numpyro.sample("alpha", dist.HalfNormal(5))
     # alpha = 1
     color_semval = numpyro.sample("color_semvalue", dist.Uniform(0, 1))
     #color_semval = 0.8
-    #k = numpyro.sample("k", dist.Uniform(0, 1))
-    k = 0.5
-    utt_probs_conditionedReferent = global_speaker(states, alpha, color_semval, k)[0,:] # Get the probs of utterances given the first state, referent is always the first state
+    k = numpyro.sample("k", dist.Uniform(0, 1))
+    #k = 0.5
+    #utt_probs_conditionedReferent = global_speaker(states, alpha, color_semval, k)[0,:][0,:] # Get the probs of utterances given the first state, referent is always the first state
     with numpyro.plate("data", len(states)):
+        # probs: array of shape (nbatch_size, n_utt)
+        # it should be one slice of the matrix of the results of vectorized_global_speaker (n_states, nobj, n_utt)
+        results_vectorized_global_speaker = vectorized_global_speaker(states, alpha, color_semval, k, utterance_prior)
+        # Build a new probs vector of shape (n_states, n_utt), where the matix is reduced to the first row (referent index 0) along the second axis (n_obj)
+        utt_probs_conditionedReferent = results_vectorized_global_speaker[:,0,:] # Get the probs of utterances given the first state, referent is always the first state
+        if empirical is None:
+            numpyro.sample("obs", dist.Categorical(probs=utt_probs_conditionedReferent))
+        else:
+            numpyro.sample("obs", dist.Categorical(probs=utt_probs_conditionedReferent), obs=empirical)
+
+def likelihood_function_incremental_speaker(states = None, empirical = None):
+    alpha = numpyro.sample("alpha", dist.HalfNormal(5))
+    # alpha = 1
+    color_semval = numpyro.sample("color_semvalue", dist.Uniform(0, 1))
+    #color_semval = 0.8
+    k = numpyro.sample("k", dist.Uniform(0, 1))
+    #k = 0.5
+    with numpyro.plate("data", len(states)):
+        # probs: array of shape (nbatch_size, n_utt)
+        results_vectorized_incremental_speaker = vectorized_incremental_speaker(states, alpha, color_semval, k, utterance_prior)
+        # Build a new probs vector of shape (n_states, n_utt), where the matix is reduced to the first row (referent index 0) along the second axis (n_obj)
+        utt_probs_conditionedReferent = results_vectorized_incremental_speaker[:,0,:] # Get the probs of utterances given the first state, referent is always the first state
         if empirical is None:
             numpyro.sample("obs", dist.Categorical(probs=utt_probs_conditionedReferent))
         else:
             numpyro.sample("obs", dist.Categorical(probs=utt_probs_conditionedReferent), obs=empirical)
 
 def run_inference():
-    states_train, empirical_train_flat, empirical_train_seq, _, _, _ = import_dataset()
+    #states_train, empirical_train_flat, empirical_train_seq, _, _, _, empirical_train_seq_flat = import_dataset()
+    data = import_dataset()
+    states_train = data["states_train"]
+    empirical_train_seq = data["empirical_seq"]
+    empirical_train_flat = data["empirical_flat"]
+    empirical_train_seq_flat = data["empirical_seq_flat"]
     print("States train shape:", states_train.shape)
     print("Empirical train shape:", empirical_train_seq.shape)
     print("Empirical train flat shape:", empirical_train_flat.shape)
@@ -490,10 +531,10 @@ def run_inference():
     rng_key = random.PRNGKey(11)
     rng_key, rng_key_ = random.split(rng_key)
 
-    kernel = NUTS(likelihood_function_global_speaker)
+    kernel = NUTS(likelihood_function_incremental_speaker)
     #kernel = MixedHMC(HMC(likelihood_function, trajectory_length=1.2), num_discrete_updates=20)
-    mcmc_inc = MCMC(kernel, num_warmup=100,num_samples=100,num_chains=1)
-    mcmc_inc.run(rng_key_, states_train, empirical_train_flat)
+    mcmc_inc = MCMC(kernel, num_warmup=100,num_samples=1000,num_chains=1)
+    mcmc_inc.run(rng_key_, states_train, empirical_train_seq_flat)
 
     # print the summary of the posterior distribution
     mcmc_inc.print_summary()
@@ -511,14 +552,18 @@ def test():
     Main function to run the script.
     """
     # Import dataset
-    states_train, empirical_flat, empirical_seq, seq_mask, df, _, empirical_seq_flat  = import_dataset()
-    uttSeq_list = jnp.unique(empirical_seq, axis=0)  # shape (U, L), U ≤ N
+    data = import_dataset()
+    states_train = data["states_train"]
+    empirical_train_seq = data["empirical_seq"]
+    empirical_train_flat = data["empirical_flat"]
+    empirical_train_seq_flat = data["empirical_seq_flat"]
+    uttSeq_list = jnp.unique(empirical_train_seq, axis=0)  # shape (U, L), U ≤ N
 
     # Get example state and utterance
     example_index = 2
-    example_state = states_train[0:2]
-    example_empirical = empirical_seq_flat[example_index]
-    example_empirical_seq = empirical_seq[example_index]
+    example_state = states_train[2]
+    example_empirical = empirical_train_seq_flat[example_index]
+    example_empirical_seq = empirical_train_seq[example_index]
 
     # Print example state and utterance
     print("Example state:", example_state)
@@ -536,9 +581,12 @@ def test():
     example_incremental_speaker = incremental_speaker(example_state, 1.0, 0.95, 0.5)
     print("Example incremental speaker:", example_incremental_speaker)
 
-    # Print the out of the likelihood function
-    print("Likelihood function output:", likelihood_function_global_speaker(states_train, empirical_flat))
-    
+    example_states_array = states_train[0:2]
+    # Test the vectorized global speaker
+    example_vectorized_global_speaker = vectorized_global_speaker(example_states_array, 1.0, 0.95, 0.5, utterance_prior)
+    utt_probs_conditionedReferent = example_vectorized_global_speaker[:,0,:] # Get the probs of utterances given the first state, referent is always the first state
+    print("Example vectorized global speaker:", utt_probs_conditionedReferent)
+
 if __name__ == "__main__":
-    #run_inference()
-    test()
+    run_inference()
+    #test()
