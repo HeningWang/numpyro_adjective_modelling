@@ -3,3 +3,50 @@ title: "posterior_analysis"
 output: html_document
 ---
 
+```{r}
+rm(list=ls())
+library(ggplot2)
+library(dplyr)
+```
+
+
+```{r}
+data <- read.csv("../posterior_samples/production_posteriorPredictive_full_gb1.csv")
+```
+
+```{r}
+# Extract unique statesArray in data and corresponding annotation_seq_flat
+unique_states <- unique(data$statesArray)
+
+# Create a new data frame with unique states and their corresponding annotation_seq_flat (can be a list given each unique state)
+unique_states_df <- data.frame(statesArray = unique_states)
+unique_states_df$annotation_seq_flat <- sapply(unique_states, function(x) {
+  # Extract the annotation_seq_flat for each unique state
+  annotations <- data$annotation_seq_flat[data$statesArray == x]
+  # Return the first value (or you can choose to summarize in another way)
+  return(annotations)
+})
+unique_states_df$predictions <- sapply(unique_states, function(x) {
+  # Extract the annotation_seq_flat for each unique state
+  predictions <- data$predictions[data$statesArray == x]
+  # Return the first value (or you can choose to summarize in another way)
+  return(predictions)
+})
+```
+```{r}
+cor.test(data$annotation_seq_flat, data$mean_predictions)
+```
+
+```{r}
+# Compute by condition mean
+data %>%
+  group_by(conditions) %>%
+  summarise(mean_annotation = mean(annotation_seq_flat),
+            mean_predictions = mean(mean_predictions)) -> by_condition_mean
+
+ggplot(by_condition_mean, aes(x = mean_annotation, y = mean_predictions)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  theme_minimal()
+```
+

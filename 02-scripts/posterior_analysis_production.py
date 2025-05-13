@@ -40,7 +40,7 @@ def posterior_analysis():
 
     # Import the posterior samples
     result_dict = {}
-    filename = '../posterior_samples/production_posterior_test_5.csv'
+    filename = '../posterior_samples/production_posterior_full_gb1.csv'
     posterior_samples = read_csv_to_dict(filename)
     df_inc = pd.DataFrame(posterior_samples)
     
@@ -69,7 +69,7 @@ def posterior_analysis():
     df_pred["mean_predictions"] = jnp.mean(predictions, axis=0)
     df_pred["std_predictions"] = jnp.std(predictions, axis=0)
         
-    df_pred.to_csv('../posterior_samples/production_posteriorPredictive_test5_savedpred.csv', index=False)
+    df_pred.to_csv('../posterior_samples/production_posteriorPredictive_full_gb1.csv', index=False)
 
 if __name__ == "__main__":
     posterior_analysis()
