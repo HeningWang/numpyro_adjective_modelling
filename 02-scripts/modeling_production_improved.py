@@ -16,10 +16,10 @@ from numpyro import handlers
 from numpyro.infer import MCMC, NUTS, HMC, MixedHMC
 from numpyro.infer import Predictive
 from sklearn.model_selection import train_test_split
-numpyro.set_platform("cpu")
+numpyro.set_platform("gpu")
 
 print(jax.__version__)
-jax.devices()
+print(jax.devices())
 
 # ========================
 # Global Variables (placeholders)
