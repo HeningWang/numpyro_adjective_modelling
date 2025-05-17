@@ -16,7 +16,7 @@ from numpyro import handlers
 from numpyro.infer import MCMC, NUTS, HMC, MixedHMC
 from numpyro.infer import Predictive
 from sklearn.model_selection import train_test_split
-numpyro.set_platform("gpu")
+numpyro.set_platform("cpu")
 
 print(jax.__version__)
 print(jax.devices())
@@ -589,9 +589,9 @@ def run_inference():
     rng_key = random.PRNGKey(11)
     rng_key, rng_key_ = random.split(rng_key)
 
-    kernel = NUTS(likelihood_function_incremental_speaker)
+    kernel = NUTS(likelihood_function_global_speaker)
     #kernel = MixedHMC(HMC(likelihood_function, trajectory_length=1.2), num_discrete_updates=20)
-    mcmc_inc = MCMC(kernel, num_warmup=1000,num_samples=1500,num_chains=4)
+    mcmc_inc = MCMC(kernel, num_warmup=1000,num_samples=1500, num_chains=4)
     mcmc_inc.run(rng_key_, states_train, empirical_train_seq_flat)
 
     # print the summary of the posterior distribution
@@ -602,7 +602,7 @@ def run_inference():
     df_inc = pd.DataFrame(posterior_inc)
 
     # Save the DataFrame to a CSV file
-    df_inc.to_csv('../posterior_samples/production_posterior_full_inc1.csv', index=False)
+    df_inc.to_csv('../posterior_samples/production_posterior_full_gb_10k_4p.csv', index=False)
 
 
 def test():
