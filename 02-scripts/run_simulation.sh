@@ -17,7 +17,7 @@ sample_size=10000
 form_semvalue=0.98
 alpha=1.0
 bias=0.0
-wf =0.5
+wf=0.5
 world_length=2
 size_distribution="normal"
 
