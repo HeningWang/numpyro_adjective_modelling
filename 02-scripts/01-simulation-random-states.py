@@ -178,7 +178,7 @@ class AllContext:
     sample_size: int = 10
     nobj: int = 6
     size_distribution: str = "normal"
-    upper: int = 30
+    upper: int = 50
     lower: int = 1
     p: float = 0.5
 
@@ -191,12 +191,6 @@ class AllContext:
                    p = self.p).generate() 
                    for _ in range(self.sample_size)
                    ])
-
-def simulation_run():
-    # 1. first generate AllContext
-    # 2. determin referent for each Context
-    # 3. Apply the global speaker  
-    pass
 
 def main():
     #obj1 = Object(size_distribution = "flat", upper=1, lower=1, p = 0.9).generate()
@@ -323,7 +317,7 @@ if __name__ == "__main__":
     })
 
     # Save the DataFrame as a csv file
-    output_filename = f"../04-simulation-w-randomstates/simulation_full_run_2.csv"
+    output_filename = f"../04-simulation-w-randomstates/simulation_full_run_3.csv"
 
     # Check if the file exists
     if not os.path.isfile(output_filename):
