@@ -585,6 +585,8 @@ def run_inference():
     empirical_train_seq_flat = data["empirical_seq_flat"]
     print("States train shape:", states_train.shape)
     print("Empirical train flat shape:", empirical_train_flat.shape)
+    output_file_name = "../posterior_samples/production_posterior_full_gb_10k_4p.csv"
+    print("Output file name:" , output_file_name)
     # define the MCMC kernel and the number of samples
     rng_key = random.PRNGKey(11)
     rng_key, rng_key_ = random.split(rng_key)
