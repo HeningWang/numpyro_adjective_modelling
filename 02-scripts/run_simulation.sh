@@ -20,12 +20,15 @@ bias=0.0
 wf=0.5
 world_length=2
 size_distribution="normal"
-
+# 10000 * 7 nobj * 2 speaker * 6 color_semvalue * 5 k = 4200000
+n_total=42000000
+counter=0
 # Loop over speaker_list, nobj_list, color_semvalue_list, k_list, and wf_list to run the Python script for each combination
 for speaker in "${speaker_list[@]}"; do 
     for nobj in $nobj_list; do
         for color_semvalue in $color_semvalue_list; do
             for k in $k_list; do
+                        ((counter++))
                         python 01-simulation-random-states.py --nobj $nobj \
                             --sample_size $sample_size \
                             --color_semvalue $color_semvalue \
@@ -37,7 +40,10 @@ for speaker in "${speaker_list[@]}"; do
                             --bias $bias \
                             --world_length $world_length \
                             --size_distribution $size_distribution
+                        echo -ne "Progress: $counter / $n_total \r"
             done
         done
     done
 done
+
+echo -e "\nSimulation complete!"
