@@ -292,7 +292,8 @@ if __name__ == "__main__":
     results = results.tolist()
     probs_big_blue = probs_big_blue.tolist()
     probs_blue_big = probs_blue_big.tolist()
-
+    # print("Big blue results length ", len(probs_big_blue))
+    # print("Blue big results length ", len(probs_blue_big))
     # Output the results as csv
     # Create a DataFrame
     df = pd.DataFrame({
@@ -305,7 +306,7 @@ if __name__ == "__main__":
         #"results_pragmatic_listener": results,
         "alpha": [args.alpha] * args.sample_size,
         "bias": [args.bias] * args.sample_size,
-        "nobj": [args.nobj] * len(states_train) * args.sample_size,
+        "nobj": [args.nobj] * args.sample_size,
         "color_semvalue": [args.color_semvalue] * args.sample_size,
         "form_semvalue": [args.form_semvalue] * args.sample_size,
         "wf": [args.wf] * args.sample_size,
