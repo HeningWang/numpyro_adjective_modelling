@@ -1,0 +1,15 @@
+---
+title: "OminiAnalysisProjectSummary"
+output: html_document
+---
+
+```{r}
+data_slider <- read_csv("../01-dataset/01-slider-data-preprocessed.csv")
+# N = 134
+data_production <- read_csv("../01-dataset/01-production-data-preprocessed.csv")
+```
+
+```{r}
+sum(data_production$annotation == "CD")
+```
+

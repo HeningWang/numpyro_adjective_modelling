@@ -15,26 +15,32 @@ data <- read.csv("../posterior_samples/production_posteriorPredictive_full_gb1.c
 ```
 
 ```{r}
-# Extract unique statesArray in data and corresponding annotation_seq_flat
-unique_states <- unique(data$statesArray)
+x <- data$predictions[1]
 
-# Create a new data frame with unique states and their corresponding annotation_seq_flat (can be a list given each unique state)
-unique_states_df <- data.frame(statesArray = unique_states)
-unique_states_df$annotation_seq_flat <- sapply(unique_states, function(x) {
-  # Extract the annotation_seq_flat for each unique state
-  annotations <- data$annotation_seq_flat[data$statesArray == x]
-  # Return the first value (or you can choose to summarize in another way)
-  return(annotations)
-})
-unique_states_df$predictions <- sapply(unique_states, function(x) {
-  # Extract the annotation_seq_flat for each unique state
-  predictions <- data$predictions[data$statesArray == x]
-  # Return the first value (or you can choose to summarize in another way)
-  return(predictions)
-})
+# X is a vector of predictions stored in strings, we need to convert it to a list of numbers first
+# first, get rid of [ at the beginning and ] at the end
+convert_to_list <- function(x) {
+  x <- gsub("\\[|\\]", "", x)
+  # then split the string by comma
+  x <- strsplit(x, ",")[[1]]
+  # convert to numeric
+  x <- as.numeric(x)
+  return(x)
+}
+
+# apply to every row in data$predictions and store the results in a new dataframe called predictions
+data$predictions %>% sapply(convert_to_list)
+# with row now the values, and column the index
+
 ```
+
 ```{r}
-cor.test(data$annotation_seq_flat, data$mean_predictions)
+# Extract unique statesArray in data and corresponding annotation_seq_flat
+data %>% group_by(annotation) %>% ggplot(aes(x = annotation, fill = conditions)) +
+  geom_bar()
+
+data %>% group_by(annotation) %>% ggplot(aes(x = predictions, fill = conditions)) +
+  geom_density()
 ```
 
 ```{r}
