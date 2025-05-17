@@ -542,7 +542,7 @@ def likelihood_function_global_speaker(states = None, empirical = None):
     # Initialize the parameter priors
     alpha = numpyro.sample("alpha", dist.HalfNormal(5))
     color_semval = numpyro.sample("color_semvalue", dist.Uniform(0, 1))
-    k = numpyro.sample("k", dist.Uniform(0, 1))
+    k = numpyro.sample("k", dist.Uniform(0.01, 1))
     bias = numpyro.sample("bias", dist.HalfNormal(5))
 
     # Define the likelihood function
