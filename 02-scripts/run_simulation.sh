@@ -21,7 +21,7 @@ wf=0.5
 world_length=2
 size_distribution="normal"
 # 10000 * 7 nobj * 2 speaker * 6 color_semvalue * 5 k = 4200000
-n_total=42000000
+n_total=400
 counter=0
 # Loop over speaker_list, nobj_list, color_semvalue_list, k_list, and wf_list to run the Python script for each combination
 for speaker in "${speaker_list[@]}"; do 
