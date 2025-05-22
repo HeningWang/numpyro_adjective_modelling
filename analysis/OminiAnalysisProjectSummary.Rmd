@@ -10,6 +10,10 @@ data_production <- read_csv("../01-dataset/01-production-data-preprocessed.csv")
 ```
 
 ```{r}
-sum(data_production$annotation == "CD")
+data_production %>% filter(annotation == "CD" | annotation == "CDF" | annotation == "CFD" | annotation == "FD" | annotation == "FDC" | annotation == "FCD") %>% nrow() -> reversed_production_count
+
+reversed_production_count / data_production %>% nrow() -> reversed_production_ratio
+
+data_production %>% filter(annotation == "FCD") %>% nrow()
 ```
 
