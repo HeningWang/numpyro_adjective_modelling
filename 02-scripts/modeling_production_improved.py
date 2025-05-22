@@ -563,7 +563,7 @@ def likelihood_function_incremental_speaker(states = None, empirical = None):
     alpha = numpyro.sample("alpha", dist.HalfNormal(5))
     color_semval = numpyro.sample("color_semvalue", dist.Uniform(0, 1))
     k = numpyro.sample("k", dist.Uniform(0, 1))
-    bias = numpyro.sample("bias", dist.HalfNormal(5))
+    bias = numpyro.sample("bias", dist.Normal(0,10))
     # Define the likelihood function
     with numpyro.plate("data", len(states)):
         # Get vectorized incremental speaker output for all states
@@ -593,7 +593,7 @@ def run_inference():
 
     kernel = NUTS(likelihood_function_incremental_speaker)
     #kernel = MixedHMC(HMC(likelihood_function, trajectory_length=1.2), num_discrete_updates=20)
-    mcmc_inc = MCMC(kernel, num_warmup=1000,num_samples=1500, num_chains=4)
+    mcmc_inc = MCMC(kernel, num_warmup=1000,num_samples=1500)
     mcmc_inc.run(rng_key_, states_train, empirical_train_seq_flat)
 
     # print the summary of the posterior distribution
