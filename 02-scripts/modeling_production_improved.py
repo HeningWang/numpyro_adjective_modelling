@@ -560,10 +560,12 @@ def likelihood_function_global_speaker(states = None, empirical = None):
 
 def likelihood_function_incremental_speaker(states = None, empirical = None):
     # Initialize the parameter priors
-    alpha = numpyro.sample("alpha", dist.HalfNormal(5))
+    mu = jnp.array([1.0, 1.0])  # prior means for alpha and bias
+    cov = jnp.array([[0.25, -0.15], [-0.15, 0.25]])  # prior cov matrix, tuned to your correlation
+    z = numpyro.sample("alpha_bias", dist.MultivariateNormal(mu, covariance_matrix=cov))
+    alpha, bias = z[0], z[1]
     color_semval = numpyro.sample("color_semvalue", dist.Uniform(0, 1))
     k = numpyro.sample("k", dist.Uniform(0, 1))
-    bias = numpyro.sample("bias", dist.Normal(0,10))
     # Define the likelihood function
     with numpyro.plate("data", len(states)):
         # Get vectorized incremental speaker output for all states
@@ -585,7 +587,7 @@ def run_inference():
     empirical_train_seq_flat = data["empirical_seq_flat"]
     print("States train shape:", states_train.shape)
     print("Empirical train flat shape:", empirical_train_flat.shape)
-    output_file_name = "../posterior_samples/production_posterior_full_inc_10k_4p.csv"
+    output_file_name = "../posterior_samples/production_posterior_full_inc_10k_4p_alphabiasdependent.csv"
     print("Output file name:" , output_file_name)
     # define the MCMC kernel and the number of samples
     rng_key = random.PRNGKey(11)
@@ -593,7 +595,7 @@ def run_inference():
 
     kernel = NUTS(likelihood_function_incremental_speaker)
     #kernel = MixedHMC(HMC(likelihood_function, trajectory_length=1.2), num_discrete_updates=20)
-    mcmc_inc = MCMC(kernel, num_warmup=1000,num_samples=1500)
+    mcmc_inc = MCMC(kernel, num_warmup=1000,num_samples=6000)
     mcmc_inc.run(rng_key_, states_train, empirical_train_seq_flat)
 
     # print the summary of the posterior distribution
