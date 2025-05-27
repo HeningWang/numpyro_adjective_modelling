@@ -600,7 +600,7 @@ def run_inference():
 
     kernel = NUTS(likelihood_function_incremental_speaker)
     #kernel = MixedHMC(HMC(likelihood_function, trajectory_length=1.2), num_discrete_updates=20)
-    mcmc_inc = MCMC(kernel, num_warmup=1000,num_samples=2500, acceptance_rate_target=0.9, num_chains=4)
+    mcmc_inc = MCMC(kernel, num_warmup=1000,num_samples=2500, num_chains=4, target_accept_prob=0.9)
     mcmc_inc.run(rng_key_, states_train, empirical_train_seq_flat)
 
     # print the summary of the posterior distribution
