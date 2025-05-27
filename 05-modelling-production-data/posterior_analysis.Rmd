@@ -7,12 +7,48 @@ output: html_document
 rm(list=ls())
 library(ggplot2)
 library(dplyr)
+library(coda)
 ```
 
-
+# Import data
 ```{r}
-data <- read.csv("../posterior_samples/production_posteriorPredictive_full_gb1.csv")
+posteriorSamples_gb <- read.csv("production_posterior_full_gb_10k_4p.csv")
+posteriorSamples_inc <- read.csv("production_posterior_full_inc_10k_4p.csv")
+
+posteriorPredictive_gb <- read.csv("production_posteriorPredictive_full_gb_10k_4p.csv")
+posteriorPredictive_inc <- read.csv("production_posteriorPredictive_full_inc_10k_4p.csv")
 ```
+
+Convert posterior samples to MCMC object
+```{r}
+posteriorSamples_gb_mcmc <- as.mcmc(posteriorSamples_gb)
+posteriorSamples_inc_mcmc <- as.mcmc(posteriorSamples_inc)
+```
+
+# Posterior analysis
+
+## Global Speaker
+```{r}
+plot(posteriorSamples_gb)
+summary(posteriorSamples_gb_mcmc)
+traceplot(posteriorSamples_gb_mcmc)
+autocorr.plot(posteriorSamples_gb_mcmc)
+effectiveSize(posteriorSamples_gb_mcmc)
+```
+## Incremental Speaker
+```{r}
+plot(posteriorSamples_inc)
+summary(posteriorSamples_inc_mcmc)
+traceplot(posteriorSamples_inc_mcmc)
+autocorr.plot(posteriorSamples_inc_mcmc)
+effectiveSize(posteriorSamples_inc_mcmc)
+```
+Look into the correlation between parameters
+```{r}
+cor_matrix <- cor(posteriorSamples_inc)
+print(cor_matrix)
+```
+
 
 ```{r}
 x <- data$predictions[1]
