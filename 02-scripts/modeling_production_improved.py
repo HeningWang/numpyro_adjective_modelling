@@ -564,6 +564,11 @@ def likelihood_function_incremental_speaker(states = None, empirical = None):
     cov = jnp.array([[0.25, -0.15], [-0.15, 0.25]])  # prior cov matrix, tuned to your correlation
     z = numpyro.sample("alpha_bias", dist.MultivariateNormal(mu, covariance_matrix=cov))
     alpha, bias = z[0], z[1]
+
+    # Dropping alpha as constant and use bias as free parameter
+    # alpha = 1.0  # constant alpha
+    # bias = numpyro.sample("bias", dist.Normal(0, 10))
+
     color_semval = numpyro.sample("color_semvalue", dist.Uniform(0, 1))
     k = numpyro.sample("k", dist.Uniform(0, 1))
     # Define the likelihood function
