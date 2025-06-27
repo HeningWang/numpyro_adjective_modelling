@@ -8,6 +8,39 @@ rm(list=ls())
 library(ggplot2)
 library(dplyr)
 library(coda)
+library(aida)
+```
+
+```{r}
+theme_set(theme_aida())
+
+##################################################
+## CSP-colors
+##################################################
+CSP_colors = c(
+  "#7581B3", "#99C2C2", "#C65353", "#E2BA78", "#5C7457", "#575463",
+  "#B0B7D4", "#66A3A3", "#DB9494", "#D49735", "#9BB096", "#D4D3D9",
+  "#414C76", "#993333", "#A0A0A0"
+  )
+# setting theme colors globally
+scale_colour_discrete <- function(...) {
+  scale_colour_manual(..., values = CSP_colors)
+}
+scale_fill_discrete <- function(...) {
+  scale_fill_manual(..., values = CSP_colors)
+}
+```
+
+Helper functions.
+```{r}
+entropy <- function(p) {
+  p <- p[p > 0]  # Avoid log(0)
+  -sum(p * log2(p))
+}
+
+compute_log_lik <- function(true, predicted, epsilon = 1e-10) {
+  ifelse(true == predicted, log(1), log(epsilon))
+}
 ```
 
 # Import data
@@ -16,9 +49,42 @@ posteriorSamples_gb <- read.csv("production_posterior_full_gb_10k_4p.csv")
 posteriorSamples_inc <- read.csv("production_posterior_full_inc_10k_4p.csv")
 
 posteriorPredictive_gb <- read.csv("production_posteriorPredictive_full_gb_10k_4p.csv")
+posteriorPredictive_gb_svi_soft <- read.csv("production_posterior_gb_relevanceXsharpness_SVI_long_soft.csv")
+posteriorPredictive_inc_svi_soft <- read.csv("production_posterior_inc_relevanceXsharpness_SVI_long_soft.csv")
 posteriorPredictive_inc <- read.csv("production_posteriorPredictive_full_inc_10k_4p.csv")
 ```
 
+```{r}
+posteriorPredictive_gb_svi_soft$relevant_property <- as.factor(posteriorPredictive_gb_svi_soft$relevant_property)
+posteriorPredictive_gb_svi_soft$annotation_category <- as.factor(posteriorPredictive_gb_svi_soft$annotation_category)
+posteriorPredictive_gb_svi_soft$sharpness <- as.factor(posteriorPredictive_gb_svi_soft$sharpness)
+
+posteriorPredictive_inc_svi_soft$relevant_property <- as.factor(posteriorPredictive_inc_svi_soft$relevant_property)
+posteriorPredictive_inc_svi_soft$annotation_category <- as.factor(posteriorPredictive_inc_svi_soft$annotation_category)
+posteriorPredictive_inc_svi_soft$sharpness <- as.factor(posteriorPredictive_inc_svi_soft$sharpness)
+
+posteriorPredictive_gb_svi_soft %>%
+ggplot(aes(x = annotation_category, y = probability, fill = source)) +
+  geom_bar(stat= "identity", position = "dodge") +
+  facet_wrap(sharpness ~ relevant_property, scales = "free_y") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+posteriorPredictive_inc_svi_soft %>% filter(source == "model") %>%
+ggplot(aes(x = annotation_category, y = probability, fill = source)) +
+  geom_bar(stat= "identity", position = "dodge") +
+  #geom_errorbar(aes(ymin = mean_probability - sd_probability, ymax = mean_probability + sd_probability)) +
+  facet_wrap(sharpness ~ relevant_property, scales = "free_y") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplot(posteriorPredictive_inc_svi_soft, aes(x = probability, y = source)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  facet_wrap(sharpness ~ relevant_property, scales = "free_y")
+```
+
+
+
+# Old stuff
 Convert posterior samples to MCMC object
 ```{r}
 posteriorSamples_gb_mcmc <- as.mcmc(posteriorSamples_gb)
@@ -35,6 +101,201 @@ traceplot(posteriorSamples_gb_mcmc)
 autocorr.plot(posteriorSamples_gb_mcmc)
 effectiveSize(posteriorSamples_gb_mcmc)
 ```
+Density Plot of Productions with empirical data, facet by conditions, they should normalise to 1 and stack up together on y-axis
+```{r}
+library(ggridges)
+
+posteriorPredictive_gb %>%
+  count(conditions, annotation, sharpness) %>%
+  group_by(conditions) %>%
+  mutate(prop = n / sum(n)) %>%
+  ggplot(aes(x = annotation, y = prop, fill = annotation)) +
+  geom_bar(stat = "identity", position = "stack") +
+  facet_wrap(conditions~sharpness) +
+  labs(title = "Normalized Production Distributions by Condition",
+       y = "Proportion", x = "Production (Annotation)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+```{r}
+library(ggridges)
+library(forcats)
+
+# Step 1: Prepare and normalize
+summary_empirical <- posteriorPredictive_gb %>%
+  count(conditions, annotation, sharpness) %>%
+  group_by(conditions) %>%
+  mutate(prop = n / sum(n)) %>%
+  ungroup()
+
+# Step 2: Reorder annotation within each condition by prop
+summary_empirical <- summary_empirical %>%
+  group_by(conditions, sharpness) %>%
+  mutate(annotation_reordered = fct_reorder(annotation, prop, .desc = TRUE)) %>%
+  ungroup()
+
+# Step 3: Plot
+ggplot(summary_empirical, aes(x = prop, y = annotation_reordered, fill = annotation)) +
+  #geom_density_ridges(stat = "identity", scale = 0.9, height = 10 * prop) +
+  geom_col() + 
+  facet_wrap(conditions~sharpness, scales = "free_y") +
+  labs(
+    title = "Normalized Production Distributions by Condition",
+    x = "Proportion of Posterior Samples",
+    y = "Production Category (ordered by frequency)"
+  ) +
+  scale_fill_manual(values = rev(CSP_colors)) +
+  theme(
+    legend.position = "none",
+    axis.text.y = element_text(size = 8)
+  )
+
+# Step 4: compute entropy
+empirical_entropy_by_condition <- summary_empirical %>%
+  group_by(conditions, sharpness) %>%
+  summarise(entropy = entropy(prop), .groups = "drop")
+```
+
+Unlist the predictions and convert them to strings.
+
+```{r}
+library(tidyr)
+library(purrr)
+
+# String-to-index mapping (from your previous conversion)
+converted_dict <- c(
+  "D" = 0, "DC" = 1, "DCF" = 2, "DF" = 3, "DFC" = 4,
+  "C" = 5, "CD" = 6, "CDF" = 7, "CF" = 8, "CFD" = 9,
+  "F" = 10, "FD" = 11, "FDC" = 12, "FC" = 13, "FCD" = 14
+)
+
+# Reverse it: index (as character) → string
+index_to_string <- setNames(names(converted_dict), as.character(converted_dict))
+
+# Unnest predictions (creates 2101 * 6000 rows)
+pred_wide <- posteriorPredictive_gb %>%
+  select(sharpness, conditions, predictions, annotation) %>%
+  # Get rid of "[" and "]"
+  mutate(
+  predictions = gsub("\\[|\\]", "", predictions),      # remove [ and ]
+  predictions = gsub("^\\s+|\\s+$", "", predictions), # remove leading/trailing whitespace
+  predictions = strsplit(predictions, ",\\s*"),
+  predictions = map(predictions, as.numeric)
+) %>%
+  unnest_wider(predictions, names_sep = "_draw") %>%
+  mutate(across(-c(sharpness, conditions), ~ index_to_string[as.character(.)]))
+
+# Add posteriorPredictive_gb$annotation as a col to pred_wide, called empirical
+pred_wide <- pred_wide %>%
+  mutate(empirical = posteriorPredictive_gb$annotation) %>%
+  select(sharpness, conditions, starts_with("predictions"), empirical)
+```
+
+Compute the probs of categorical distribution per draw and per sharpness. 
+
+```{r}
+# 1. Pivot prediction draws to long format
+pred_long <- pred_wide %>%
+  pivot_longer(
+    cols = starts_with("predictions"),
+    names_to = "draw",
+    values_to = "prediction"
+  )
+
+# 2. Count frequency of each predicted category per condition x annotation x draw
+pred_probs <- pred_long %>%
+  group_by(sharpness, conditions, draw, prediction) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  group_by(sharpness, conditions, draw) %>%
+  mutate(prob = n / sum(n)) %>%
+  ungroup()
+
+# 3. Ensure all 15 categories are present (fill missing ones with 0)
+all_categories <- sort(unique(pred_long$prediction))  # or supply manually
+
+pred_probs_complete <- pred_probs %>%
+  complete(
+    sharpness,
+    conditions,
+    draw,
+    prediction = all_categories,
+    fill = list(prob = 0)
+  )
+```
+
+Aggragate the probs by sharpness and draw.
+```{r}
+se <- function(x) sd(x) / sqrt(length(x))
+
+pred_probs_agg <- pred_probs_complete %>%
+  group_by(sharpness, conditions, prediction) %>%
+  summarise(mean_prob = mean(prob), se_prob = se(prob), .groups = "drop") %>%
+  arrange(sharpness, prediction)
+
+ggplot(pred_probs_agg, aes(x = mean_prob, y = prediction, fill = prediction)) +
+  #geom_density_ridges(stat = "identity", scale = 0.9, height = 10 * prop) +
+  geom_col() + 
+  # add error bars
+  geom_errorbarh(aes(xmin = mean_prob - se_prob, xmax = mean_prob + se_prob), width = 0.02) +
+  facet_wrap(conditions~sharpness, scales = "free_y") +
+  labs(
+    title = "Normalized Production Distributions by Condition",
+    x = "Proportion of Posterior Samples",
+    y = "Production Category (ordered by frequency)"
+  ) +
+  scale_fill_manual(values = rev(CSP_colors)) +
+  theme(
+    legend.position = "none",
+    axis.text.y = element_text(size = 8)
+  )
+```
+Compute Entropy of the distribution given each draw, conditions, sharpness.
+```{r}
+
+
+entropy_by_draw <- pred_probs_complete %>%
+  group_by(sharpness, conditions, draw) %>%
+  summarise(entropy = entropy(prob), .groups = "drop")
+
+entropy_by_draw %>% group_by(sharpness, conditions) %>%
+  # Compute mean and standard deviation of entropy for each condition and sharpness)
+summarise(
+  mean_entropy = mean(entropy),
+  sd_entropy = sd(entropy),
+  .groups = "drop"
+) -> entropy_predictions_summary
+
+entropy_predictions_summary %>% mutate(empirical_entropy = empirical_entropy_by_condition$entropy) -> entropy_predictions_summary
+
+ggplot(entropy_predictions_summary, aes(x = sharpness, y = mean_entropy, color = conditions)) +
+  geom_line() +
+  geom_point() +
+  geom_errorbar(aes(ymin = mean_entropy - sd_entropy, ymax = mean_entropy + sd_entropy), width = 0.2) +
+  labs(
+    title = "Entropy of Predictions",
+    x = "Sharpness",
+    y = "Mean Entropy"
+  ) +
+  geom_point(aes(y = empirical_entropy), shape = 4, size = 3) +
+  scale_color_manual(values = CSP_colors)
+```
+
+Compute LOO.
+```{r}
+library(loo)
+# Step 1: Compute matrix of log-lik per sample
+log_lik_matrix <- pred_wide %>%
+  select(starts_with("predictions")) %>%
+  as.data.frame() %>%
+  map_df(~ compute_log_lik(pred_wide$empirical, .x)) %>%
+  as.matrix() %>%
+  t()  # transpose to: draws x data points
+
+loo_result <- loo(log_lik_matrix)
+print(loo_result)
+```
+
+
 ## Incremental Speaker
 ```{r}
 plot(posteriorSamples_inc)
