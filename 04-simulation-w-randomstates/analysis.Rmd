@@ -13,14 +13,20 @@ This is an analysis of the data.
 
 Load the data.
 ```{r}
-filename <- "simulation_test_run_fewer_parameters.csv"
+rm(list=ls())  # Clear the workspace
+filename <- "../../RSAadj_simulation_results/simulation_full_run_3.csv"
 data <- read.csv(filename)
 
 ```
-Set up the theme for plot.
+Import packages.
 ```{r}
 library(tidyverse)
-library(aida)   # custom helpers: https://github.com/michael-franke/aida-package
+library(aida)
+library(ggplot2)
+```
+
+Set up the theme for plot.
+```{r}
 theme_set(theme_aida())
 
 ##################################################
@@ -42,6 +48,12 @@ CSP_color_names = c("glaucous", "opal", "shimmer", "crayola", "fern", "independe
            "glaucous light 2", "opal dark 2", "shimmer light 2", "crayola dark 2", "fern light 3", "independence light 4",
            "glaucous dark 3", "shimmer dark 2"
            )
+```
+Transform the data into long format for plotting.
+```{r}
+data.plot <- data %>% 
+  select("probs_big_blue","probs_blue_big") %>% 
+  pivot_longer(, names_to = "variable", values_to = "value")
 ```
 
 ## Plot the propotion of sucess again color_semvalue & speaker
