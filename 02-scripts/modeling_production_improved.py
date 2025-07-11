@@ -181,30 +181,32 @@ def import_dataset(
         }
     else:
         # If flag_output_empiricaldist_by_condition is True, return the empirical distribution by condition
-        empirical_dist_by_condition = df.groupby(["item", "list",  "relevant_property", "sharpness"])["annotation_seq_flat"].value_counts(normalize=True).unstack(fill_value=0)
+        empirical_dist_by_condition = df.groupby(["item", "list"])["annotation_seq_flat"].value_counts(normalize=True).unstack(fill_value=0)
         empirical_dist_by_condition = jnp.array(empirical_dist_by_condition.values, dtype=jnp.float32)
-        grouped_states = df.groupby(["item", "list", "relevant_property", "sharpness"])["statesArray"].first().reset_index(drop=True)
+        grouped_states = df.groupby(["item", "list"])["statesArray"].first().reset_index(drop=True)
         states_array_by_condition = jnp.array(np.stack(grouped_states.values), dtype=jnp.float32)
         print("Empirical distribution by condition shape:", empirical_dist_by_condition.shape)
         #print("Empirical distribution by condition:", empirical_dist_by_condition)
-        # Modify to return new grouped dataframe
 
-        # Select only item, list, relevevance_property, sharpness and than group by item and list
-        df_grouped = df[["relevant_property", "sharpness", "item", "list"]].copy()
+        # Modify to return new grouped dataframe
+        df_grouped = df[["relevant_property", "sharpness", "item", "list", "statesArray", "annotation_seq_flat"]].copy()
         df_grouped = df_grouped.sort_values(by=["item", "list"])
         # Reduce df_grouped to unique rows
         df_grouped = (
-            df_grouped.groupby(["item", "list", "relevant_property", "sharpness"], sort=False)
+            df_grouped.groupby(["item", "list"], sort=False)
             .apply(lambda x: x.iloc[0])
             .reset_index(drop=True)
         )
+
+        # Select only item, list, relevevance_property, sharpness and than group by item and list
+        
         df_grouped["statesArray"] = states_array_by_condition.tolist()  # shape (n_conditions, 6, 3)
         # empirical_dist_by_condition is (54, 15)
         # Store empirical_dist_by_condition in long format, with one col for empirical_annotation and one for probability, add to df_grouped
         # First give it semantic names for each column
 
         print("Grouped DataFrame:")
-        print(df_grouped)
+        print(df_grouped.head())
         
         empirical_dist_df = pd.DataFrame(empirical_dist_by_condition, columns=[flat2categories[str(i)] for i in range(empirical_dist_by_condition.shape[1])])
         df_full = pd.concat([df_grouped.reset_index(drop=True), empirical_dist_df], axis=1)
@@ -224,66 +226,6 @@ def import_dataset(
             "df": df_grouped,
             "df_long": df_long,  # long format DataFrame
         }
-
-def build_utterance_prior(utterance_list: List[str],
-                        costParam_length: float = 1.0,
-                        costParam_bias: float = 1.0,
-                        costParam_subjectivity: float = 1.0
-                          ) -> jnp.ndarray:
-    """
-    Build a prior over utterances based on their length and specific biases.
-    The utility values are computed as a linear combination of:
-    - Length-based utility
-    - Bias-based utility
-    - Subjectivity-based utility
-    The final utility is then transformed into a probability distribution using softmax.
-    The higher the utility, the higher the probability of selecting that utterance. 
-    A penalization is applied with negative values, and a boost is applied with positive values.
-    Args:
-        utterance_list: list of unique utterances
-        costParam_length: weight for length-based utility
-        costParam_bias: weight for bias-based utility
-        costParam_subjectivity: weight for subjectivity-based utility
-    Returns:
-        jnp.ndarray: prior over utterances
-    """
-    # 1) Base utils by length
-    base_utils = jnp.array([3 if len(u)==1 else 2 if len(u)==2 else 1
-                            for u in utterance_list], dtype=jnp.float32)
-
-    # 2) Penalty for specific utterances
-    penalized = jnp.array([
-        [1, 0, -1], #"CD"
-        [2, 1, -1], # "FD"
-        [1, 2, 0],  # "CFD"
-        [2, 1, 0],  # "FCD"
-        [2, 0, 1]   # "FDC"
-    ])
-
-    def is_penalized(u, penalized):
-    # u has shape (3,)
-    # penalized_seq has shape (5,3)
-        match = jnp.all(u == penalized, axis=1)  # shape (5,), True where matches
-        return jnp.any(match)  # True if any row matches
-
-    # Assume utterance_list is a list or array of (N,3)
-    penalty = jnp.array([
-        -0.5 if is_penalized(u, penalized) else 0.0
-        for u in utterance_list
-    ], dtype=jnp.float32)
-
-    # penalty = jnp.array([ -0.5 if u in penalized_seq else 0.0
-    #                       for u in utterance_list], dtype=jnp.float32)
-
-    # 3) Boost for utterances starting with 'D'
-    boost = jnp.array([ 1.0 if u[0] == 0 else 0.0
-                        for u in utterance_list], dtype=jnp.float32)
-
-    # 4) Combine utilities
-    utils = costParam_length * base_utils + costParam_bias * penalty + costParam_subjectivity * boost    # shape (U,)
-
-    # 5) Softmax into a proper prior
-    return jax.nn.softmax(utils, axis=0)
 
 def build_utterance_prior_jax(
     utterance_list: jnp.ndarray,  # shape (U, 3)
@@ -337,7 +279,7 @@ def build_utterance_prior_jax(
 # Global Variables (Setup)
 # ========================
 utterance_list = import_dataset()["unique_utterances"]  # shape (U,3)
-utterance_prior = build_utterance_prior(utterance_list)
+utterance_prior = build_utterance_prior_jax(utterance_list)
 
 
 def size_semantic_value(
@@ -779,8 +721,8 @@ def run_svi(model = "gb"):
     kernel = numpyro.infer.NUTS(model, target_accept_prob=0.9, max_tree_depth=10)
     mcmc = MCMC(
         kernel,
-        num_warmup=100,
-        num_samples=250,
+        num_warmup=1000,
+        num_samples=2500,
         num_chains=4,
         progress_bar=True
     )
@@ -824,9 +766,7 @@ def run_svi(model = "gb"):
         columns=[flat2categories[str(i)] for i in range(sd_utterance_probs.shape[1])]
     )
     # Copy the relevant columns from df_long
-    df_long_copy = df_long[["item", "list","relevant_property", "sharpness"]].copy()
-
-    print("df_long_copy", df_long_copy)
+    df_long_copy = df_long[["item", "list"]].copy()
 
     # Convert to long format
     # Melt mean
@@ -835,7 +775,7 @@ def run_svi(model = "gb"):
         axis=1
     )
     df_mean_long = df_mean_long.melt(
-        id_vars=["item", "list", "relevant_property", "sharpness"],
+        id_vars=["item", "list"],
         value_vars=list(flat2categories.values()),
         var_name="utterance_category",
         value_name="probability"
@@ -1054,8 +994,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.test:
-        run_svi("inc")
-        #test()
+        #run_svi("inc")
+        test()
         #test_import_dataset()
     else:
         run_inference(

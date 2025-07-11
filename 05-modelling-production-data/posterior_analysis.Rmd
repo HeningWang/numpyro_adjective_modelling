@@ -80,6 +80,11 @@ ggplot(posteriorPredictive_inc_svi_soft, aes(x = probability, y = source)) +
   geom_point() +
   geom_smooth(method = "lm") +
   facet_wrap(sharpness ~ relevant_property, scales = "free_y")
+
+
+posteriorPredictive_inc_svi_soft %>% filter(source == "model") %>% select(probability) -> model_probs
+posteriorPredictive_inc_svi_soft %>% filter(source == "empirical") %>% select(probability) -> empirical_probs
+
 ```
 
 

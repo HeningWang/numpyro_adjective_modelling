@@ -123,18 +123,30 @@ Display the difference between two speakers and two ordering.
 
 ```{r}
 
+data %>% group_by(speaker) %>%
+  summarise(
+    mean_probs_big_blue = mean(probs_big_blue),
+    mean_probs_blue_big = mean(probs_blue_big),
+    se_probs_big_blue = sd(probs_big_blue)/sqrt(n()),
+    se_probs_blue_big = sd(probs_blue_big)/sqrt(n())
+  ) %>%
+ pivot_longer(
+  cols = -speaker,
+  names_to = c(".value", "utterance"),
+  names_pattern = "(mean|se)_probs_(.*)"
+  ) -> data_long_speaker_aggregated
 
-p <- data %>% 
-  ggplot(aes(x=speaker, utt.probs)) + 
-  #geom_point(stat="identity", position=position_dodge()) + 
-  stat_summary(fun.data = "mean_cl_boot", aes(y = probs_big_blue), color = CSP_colors[1], show.legend=TRUE) +
-  stat_summary(fun.data = "mean_cl_boot", aes(y = probs_blue_big), color = CSP_colors[3], show.legend=TRUE) +
-  scale_y_continuous(sec.axis = sec_axis(~ .)) +
-  scale_color_manual(
-                     name = "Probability of recovering r") +
-  theme_aida()
 
-ggsave("sim_speaker_plot.png", p, width = 8, height = 6, dpi = 300)
+ggplot(data_long_speaker_aggregated, aes(x=speaker, y=mean, color=utterance)) +
+geom_point(size = 5) +
+geom_errorbar(aes(ymin=mean - 2 * se, ymax=mean + 2 * se), width=0.2) +
+  ylab("Probs. of Referent Identification") +
+theme_aida() -> p
+    
+
+p
+
+ggsave("sim_speaker_plot.png", p)
 ```
 Display the error bar for big blue.
 ```{r}
@@ -144,6 +156,8 @@ p <- data %>%
   stat_summary(fun.data = "mean_cl_boot", aes(y = probs_big_blue), color = CSP_colors[1]) +
   scale_y_continuous(sec.axis = sec_axis(~ .)) +
   theme_aida()
+
+p
 
 ggsave("sim_speaker_uncertainty_plot.png", p, width = 8, height = 6, dpi = 300)
 ```
@@ -162,17 +176,28 @@ ggsave("sim_nobj_plot.png", p, width = 8, height = 6, dpi = 300)
 ```
 
 ```{r}
-p <- data %>% 
-  ggplot(aes(x=color_semvalue, utt.probs)) + 
-  #geom_point(stat="identity", position=position_dodge()) + 
-  stat_summary(fun.data = "mean_cl_boot", aes(y = probs_big_blue), color = CSP_colors[1]) +
-  stat_summary(fun.data = "mean_cl_boot", aes(y = probs_blue_big), color = CSP_colors[3]) +
-  scale_y_continuous(sec.axis = sec_axis(~ .)) +
-  facet_grid(~speaker) +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  theme_aida()
+data %>% group_by(speaker, color_semvalue) %>%
+  summarise(
+    mean_probs_big_blue = mean(probs_big_blue),
+    mean_probs_blue_big = mean(probs_blue_big),
+    se_probs_big_blue = sd(probs_big_blue)/sqrt(n()),
+    se_probs_blue_big = sd(probs_blue_big)/sqrt(n())
+  ) %>%
+ pivot_longer(
+  cols = -c(speaker, color_semvalue),
+  names_to = c(".value", "utterance"),
+  names_pattern = "(mean|se)_probs_(.*)"
+  ) -> data_long_color_semvalue_aggregated
 
-ggsave("sim_colorsemval_plot.png", p, width = 8, height = 6, dpi = 300)
+ggplot(data_long_color_semvalue_aggregated, aes(x=color_semvalue, y=mean, color=utterance)) +
+geom_point(size = 2) +
+geom_errorbar(aes(ymin=mean - 2 * se, ymax=mean + 2 * se), width=0.01) +
+facet_wrap(~speaker) +
+  ylab("Probs. of Referent Identification") +
+theme_aida() -> p
+p
+
+ggsave("sim_colorsemval_plot.png", p)
 ```
 
 ```{r}
