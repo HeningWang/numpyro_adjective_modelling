@@ -1,0 +1,126 @@
+---
+title: "plot_productionPredictive"
+output: html_document
+---
+
+```{r}
+rm(list=ls())
+library(ggplot2)
+library(dplyr)
+library(coda)
+library(aida)
+```
+
+```{r}
+theme_set(theme_aida())
+
+##################################################
+## CSP-colors
+##################################################
+CSP_colors = c(
+  "#7581B3", "#99C2C2", "#C65353", "#E2BA78", "#5C7457", "#575463",
+  "#B0B7D4", "#66A3A3", "#DB9494", "#D49735", "#9BB096", "#D4D3D9",
+  "#414C76", "#993333", "#A0A0A0"
+  )
+# setting theme colors globally
+scale_colour_discrete <- function(...) {
+  scale_colour_manual(..., values = CSP_colors)
+}
+scale_fill_discrete <- function(...) {
+  scale_fill_manual(..., values = CSP_colors)
+}
+```
+
+```{r}
+data <- read.csv("summary_incremental_soft_productionPredictive.csv")
+```
+
+```{r}
+cor_result <- cor.test(data$probs_exp, data$mean_probs_model, method = "pearson")
+
+r_val <- round(cor_result$estimate, 3)
+p_val <- ifelse(cor_result$p.value < 0.001, "< .001", paste0("= ", round(cor_result$p.value, 3)))
+ci <- round(cor_result$conf.int, 3)
+
+label_text <- paste0(
+  "Pearson's r = ", r_val,
+  ", p ", p_val, 
+  "\n95% CI [", ci[1], ", ", ci[2], "]"
+)
+
+flat2categories <- c(
+  "0" = "D",     "1" = "DC",   "2" = "DCF",
+  "3" = "DF",    "4" = "DFC",  "5" = "C",
+  "6" = "CD",    "7" = "CDF",  "8" = "CF",
+  "9" = "CFD",   "10" = "F",   "11" = "FD",
+  "12" = "FDC",  "13" = "FC",  "14" = "FCD"
+)
+
+data$annotation <- flat2categories[as.character(data$annotation)]
+
+p <- ggplot(data, aes( x = probs_exp,
+                  y = mean_probs_model,
+                  color = conditions,
+                  shape = as.factor(annotation))) +
+  geom_point(size = 3) + 
+  geom_errorbar(aes(ymin = mean_probs_model - se_model,
+                    ymax = mean_probs_model + se_model),
+                width = 0.01, alpha = 0.5) +
+  geom_errorbarh(aes(xmin = probs_exp - se_exp,
+                     xmax = probs_exp + se_exp),
+                 height = 0.01, alpha = 0.5) + 
+  scale_shape_manual(values = 0:14) +
+  geom_smooth(
+  aes(x = probs_exp, y = mean_probs_model),
+  method = "lm",
+  se = TRUE,
+  linetype = "dashed",
+  color = "blue",
+  inherit.aes = FALSE
+) +
+  annotate("text", 
+           x = 0.3, y = 0.4, 
+           label = label_text,
+           hjust = 0, vjust = 1,
+           size = 3) +
+  labs(
+    x = "Empirical Probability",
+    y = "Model Predicted Probability",
+    color = "Condition",
+    shape = "Annotation"
+  ) + theme_aida() + theme(
+    legend.position = "right",
+    legend.box = "vertical",
+    legend.title = element_text(size = 10),
+    legend.text = element_text(size = 9),
+    legend.key.size = unit(0.6, "lines"),
+    legend.spacing.y = unit(0.3, "lines")
+  ) +
+  guides(
+    color = guide_legend(ncol = 2),
+    shape = guide_legend(ncol = 3)
+  )
+
+p
+
+ggsave("plot_productionPredictive.png", p, width = 8, height = 6, dpi = 300)
+  #theme_aida()
+```
+
+We found a significant correlation between empirical and model probabilities, 
+$r(88) = .31$, $p = .003$, 95\% CI $[.11, .48]$. 
+This corresponds to $R^2 = .094$.
+
+```{r}
+# 
+# Pearson correlation
+cor_result <- cor.test(data$probs_exp, data$mean_probs_model, method = "pearson")
+print(cor_result)
+print(cor_result$estimate)
+print(cor_result$p.value)
+
+# R-squared (coefficient of determination)
+model_lm <- lm(mean_probs_model ~ probs_exp, data = data)
+summary(model_lm)$r.squared
+```
+
