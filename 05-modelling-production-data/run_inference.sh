@@ -13,9 +13,6 @@ NUM_SAMPLES=250
 NUM_WARMUP=750
 NUM_CHAINS=4
 
-# Optional: set threads (important for NumPyro / JAX)
-export XLA_FLAGS=--xla_force_host_platform_device_count=${NUM_CHAINS}
-export OMP_NUM_THREADS=1
 
 # =====================
 # Run
