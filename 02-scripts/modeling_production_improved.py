@@ -978,6 +978,28 @@ def test_import_dataset():
     result_incremental_speaker = vectorized_incremental_speaker(example_states, 1.0, 0.95, 0.5, 1.0, 1.0)
     print("Result incremental speaker:", result_incremental_speaker)
 
+def parameter_recovery():
+    """
+    Test parameter recovery using synthetic data.
+    # Model params:     
+    states: jnp.ndarray,
+    alpha: float = 1.0,
+    color_semval: float = 0.95,
+    k: float = 0.5,
+    bias_subjectivity: float = 1.0,
+    bias_length: float = 1.0,
+    utt_prior: jnp.ndarray = None
+    """
+    # Forward pass to generate synthetic data
+    data = import_dataset()
+    states_train = data["states_train"]
+    posterior_predictive_path = "../05-modelling-production-data/production_posteriorPredictive_full_inc_10k_4p.csv"
+    posteior_samples_path = "../05-modelling-production-data/production_posterior_full_inc_10k_4p.csv"
+
+    df_posterior_predictive = pd.read_csv(posterior_predictive_path)
+    print("Posterior predictive DF head:", df_posterior_predictive.head())
+
+    
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run speaker inference with NumPyro.")
     parser.add_argument("--speaker_type", type=str, choices=["global", "incremental"], default="global",
@@ -995,7 +1017,7 @@ if __name__ == "__main__":
 
     if args.test:
         #run_svi("inc")
-        test()
+        parameter_recovery()
         #test_import_dataset()
     else:
         run_inference(
