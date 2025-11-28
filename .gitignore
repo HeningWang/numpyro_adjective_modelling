@@ -13,3 +13,5 @@ analysis/regression/.DS_Store
 analysis/regression/production/.DS_Store
 09-presentation/20250710_LMBayes/posteriorSamples_global_soft_production.csv
 09-presentation/20250710_LMBayes/posteriorSamples_incremental_soft_production.csv
+__pycache__/
+*.pyc
