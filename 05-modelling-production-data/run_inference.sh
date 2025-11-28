@@ -13,7 +13,11 @@ NUM_SAMPLES=250
 NUM_WARMUP=750
 NUM_CHAINS=4
 
-
+# =====================
+# Environment setup
+# =====================
+export JAX_PLATFORM_NAME=cpu
+export XLA_FLAGS="--xla_force_host_platform_device_count=4"
 # =====================
 # Run
 # =====================
