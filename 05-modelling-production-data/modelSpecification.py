@@ -671,7 +671,7 @@ if __name__ == "__main__":
 
     numpyro.set_platform("cpu")
     numpyro.set_host_device_count(args.num_chains)
-    
+    jax.local_device_count()
 
     if args.test:
         test()
