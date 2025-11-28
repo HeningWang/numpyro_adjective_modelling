@@ -1,3 +1,7 @@
+# Set jax to cpu
+import os
+os.environ["JAX_PLATFORM_NAME"] = "cpu"
+
 import argparse
 import pandas as pd
 import numpy as np
@@ -22,6 +26,7 @@ from numpyro.infer import MCMC, NUTS, HMC, MixedHMC
 from numpyro.infer import Predictive
 from sklearn.model_selection import train_test_split
 from helper import import_dataset, normalize, build_utterance_prior_jax
+
 numpyro.set_platform("cpu")
 numpyro.set_host_device_count(4)
 print(jax.__version__)
