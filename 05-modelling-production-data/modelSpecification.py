@@ -553,7 +553,7 @@ def run_inference(speaker_type: str = "global",
                     num_chains: int = 4,
                   ):
     # Numpyro setup for remote server on GPU
-    numpyro.set_platform("gpu")
+    numpyro.set_platform("cpu")
     numpyro.set_host_device_count(num_chains)
 
     # Setup output file name
