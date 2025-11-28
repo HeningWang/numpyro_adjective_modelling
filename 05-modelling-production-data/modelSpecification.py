@@ -552,7 +552,7 @@ def run_inference(speaker_type: str = "global",
                     num_samples: int = 250,
                     num_chains: int = 4,
                   ):
-    # Numpyro setup for remote server on GPU
+    # Numpyro setup for remote server on CPU
     numpyro.set_platform("cpu")
     numpyro.set_host_device_count(num_chains)
 
@@ -666,7 +666,12 @@ if __name__ == "__main__":
     parser.add_argument("--num_chains", type=int, default=4, help="Number of MCMC chains.")
     parser.add_argument("--test", action="store_true", help="Run test function and exit.")
 
+
     args = parser.parse_args()
+
+    numpyro.set_platform("cpu")
+    numpyro.set_host_device_count(args.num_chains)
+    
 
     if args.test:
         test()
