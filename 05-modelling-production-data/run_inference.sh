@@ -9,8 +9,8 @@ PYTHON=python
 SCRIPT=modelSpecification.py
 
 SPEAKER_TYPE=global        # global | incremental
-NUM_SAMPLES=250
-NUM_WARMUP=750
+NUM_SAMPLES=500
+NUM_WARMUP=500
 NUM_CHAINS=4
 
 # =====================
