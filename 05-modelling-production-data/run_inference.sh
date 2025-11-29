@@ -8,9 +8,9 @@ set -e  # stop immediately if a command fails
 PYTHON=python
 SCRIPT=modelSpecification.py
 
-SPEAKER_TYPE=global        # global | incremental
-NUM_SAMPLES=500
-NUM_WARMUP=500
+SPEAKER_TYPE=incremental        # global | incremental
+NUM_SAMPLES=100
+NUM_WARMUP=100
 NUM_CHAINS=4
 
 # =====================
