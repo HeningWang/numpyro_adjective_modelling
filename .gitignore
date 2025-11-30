@@ -17,3 +17,4 @@ __pycache__/
 *.pyc
 05-modelling-production-data/__pycache__/
 05-modelling-production-data/__pycache__/helper.cpython-311.pyc
+05-modelling-production-data/__pycache__/modelSpecification.cpython-311.pyc
