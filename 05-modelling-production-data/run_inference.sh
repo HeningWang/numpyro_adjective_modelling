@@ -11,7 +11,7 @@ SCRIPT=modelSpecification.py
 SPEAKER_TYPE=global        # global | incremental
 NUM_SAMPLES=100
 NUM_WARMUP=100
-NUM_CHAINS=1
+NUM_CHAINS=4
 
 # =====================
 # Environment setup
