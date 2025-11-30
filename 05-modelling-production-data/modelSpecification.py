@@ -1,7 +1,3 @@
-# Set jax to cpu
-import os
-os.environ["JAX_PLATFORM_NAME"] = "cpu"
-
 import argparse
 import pandas as pd
 import numpy as np
@@ -556,13 +552,11 @@ def run_inference(speaker_type: str = "global",
                     num_warmup: int = 100,
                     num_samples: int = 250,
                     num_chains: int = 4,
+                    device: str = "cpu",
                   ):
-    # Numpyro setup for remote server on CPU
-    numpyro.set_platform("cpu")
-    numpyro.set_host_device_count(num_chains)
 
     # Setup output file name
-    output_file_name = f"./inference_data/mcmc_results_{speaker_type}_speaker_warmup{num_warmup}_samples{num_samples}_chains{num_chains}"
+    output_file_name = f"./inference_data/mcmc_results_{speaker_type}_speaker_warmup{num_warmup}_samples{num_samples}_chains{num_chains}.nc"
 
     # Import dataset
     data = import_dataset()
