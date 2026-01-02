@@ -1,0 +1,83 @@
+---
+title: "plot"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(aida)
+library(tidyr)
+library(purrr)
+```
+
+```{r}
+# load data
+data <- read.csv("../01-dataset/01-production-data-preprocessed.csv")
+
+dat <- data %>%
+  filter(combination == "dimension_color") %>%
+  filter(!is.na(annotation), trimws(annotation) != "")
+```
+
+```{r}
+# compute proportion
+
+dat_summary <- dat %>%
+  group_by(annotation, sharpness, relevant_property) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  mutate(proportion = count / sum(count))
+```
+
+```{r}
+set.seed(1)
+B <- 2000
+
+# Bootstrap distribution of proportions
+boot_props <- dat %>%
+  group_by(annotation, sharpness) %>%
+  group_modify(function(df, key) {
+    n <- nrow(df)
+
+    map_dfr(seq_len(B), function(b) {
+      s <- df %>% slice_sample(n = n, replace = TRUE)
+
+      s %>%
+        count(relevant_property, name = "count") %>%
+        mutate(
+          proportion = count / sum(count),
+          boot = b
+        )
+    })
+  }) %>%
+  ungroup()
+
+# Summarise bootstrap into CIs + point estimate from original data
+dat_ci <- boot_props %>%
+  group_by(annotation, sharpness, relevant_property) %>%
+  summarise(
+    lo = quantile(proportion, 0.025),
+    hi = quantile(proportion, 0.975),
+    .groups = "drop"
+  ) %>%
+  left_join(dat_summary, by = c("annotation", "sharpness", "relevant_property"))
+
+```
+```{r}
+ggplot(dat_ci, aes(x = annotation, y = proportion, fill = annotation)) +
+  geom_col() +
+  #geom_errorbar(aes(ymin = lo, ymax = hi), width = 0.2) +
+  facet_grid( sharpness ~ relevant_property) +
+  labs(y = "Proportion", x = "Relevant property") +
+    theme_aida() +
+theme(
+  axis.text.x = element_text(angle = 60, hjust = 1),
+  legend.text  = element_text(size = 7),
+  legend.title = element_text(size = 8),
+  legend.key.height = unit(0.3, "cm"),
+  legend.key.width  = unit(0.3, "cm")
+) +
+  guides(fill = guide_legend(title = "Annotation"))
+
+```
+
