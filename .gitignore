@@ -20,3 +20,8 @@ __pycache__/
 05-modelling-production-data/__pycache__/modelSpecification.cpython-311.pyc
 05-modelling-production-data/__pycache__/helper.cpython-311.pyc
 05-modelling-production-data/__pycache__/modelSpecification.cpython-311.pyc
+# everthing in the inference_data folder, which contains large MCMC result files
+# 05-modelling-production-data/inference_data/
+05-modelling-production-data/__pycache__/helper.cpython-311.pyc
+05-modelling-production-data/__pycache__/modelSpecification.cpython-311.pyc
+05-modelling-production-data/__pycache__/helper.cpython-311.pyc
