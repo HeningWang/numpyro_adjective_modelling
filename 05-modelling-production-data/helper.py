@@ -55,6 +55,9 @@ def import_dataset(
     df = pd.read_csv(dataset_path).dropna(subset=["annotation"]).copy()
     df = df[df["conditions"].isin(CONDITIONS_OF_INTEREST)].copy()
 
+    sharpness_idx_np = (df["sharpness"].astype(str) == "sharp").to_numpy(dtype=np.int32)
+    sharpness_idx = jnp.array(sharpness_idx_np, dtype=jnp.float32)
+
     # Encode states via vectorised slicing.
     sizes = df.iloc[:, 6:12].to_numpy(dtype=float)  # (N, 6)
     colors = (df.iloc[:, 12:18] == "blue").to_numpy(dtype=int)
@@ -108,7 +111,8 @@ def import_dataset(
         "df": df,
         "unique_utterances": unique_utterances,
         "empirical_seq_flat": empirical_seq_flat,
-        "empirical_dist_by_condition": empirical_dist_by_condition
+        "empirical_dist_by_condition": empirical_dist_by_condition,
+        "sharpness_idx": sharpness_idx,
     }
 
 def build_utterance_prior_jax(

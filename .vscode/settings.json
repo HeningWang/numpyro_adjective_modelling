@@ -1,0 +1,13 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^strings '/Users/heningwang/Documents/GitHub/numpyro_adjective_modelling/05-modelling-production-data/writing/\\[RSAop\\] Progress report on modeling with production data\\.pdf' \\| sed -n '1,260p'$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^/Users/heningwang/Documents/GitHub/numpyro_adjective_modelling/jax-metal/bin/python -c \"from pathlib import Path; from pypdf import PdfReader; pdf=Path\\('/Users/heningwang/Documents/GitHub/numpyro_adjective_modelling/05-modelling-production-data/writing/\\[RSAop\\] Progress report on modeling with production data\\.pdf'\\); out=Path\\('/Users/heningwang/Documents/GitHub/numpyro_adjective_modelling/05-modelling-production-data/writing/progress_report_extracted\\.txt'\\); r=PdfReader\\(str\\(pdf\\)\\); txt='\\\\n'\\.join\\(\\[f'===== PAGE \\{i\\+1\\} =====\\\\n'\\+\\(\\(p\\.extract_text\\(\\) or ''\\)\\.strip\\(\\)\\) for i,p in enumerate\\(r\\.pages\\)\\]\\); out\\.write_text\\(txt, encoding='utf-8'\\); print\\('WROTE', out, 'PAGES', len\\(r\\.pages\\), 'CHARS', len\\(txt\\)\\)\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/Users/heningwang/Documents/GitHub/numpyro_adjective_modelling/jax-metal/bin/python": true
+    }
+}

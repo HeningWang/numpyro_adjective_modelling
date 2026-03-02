@@ -1,3 +1,9 @@
+import os
+os.environ["JAX_PLATFORMS"] = "cpu"        # ← force CPU before JAX init  
+os.environ["JAX_TRACEBACK_FILTERING"] = "off"  # optional: full tracebacks  
+os.environ["XLA_FLAGS"] = "--xla_force_host_platform_device_count=4"  
+
+
 import argparse
 import pandas as pd
 import numpy as np
@@ -7,7 +13,7 @@ from jax import jit, vmap
 import jax
 from jax import lax
 from jax import random
-from jax.random import PRNGKey, split
+from jax.random import PRNGKey, beta, split
 from functools import partial
 import matplotlib.pyplot as plt
 import numpyro
@@ -18,13 +24,12 @@ from numpyro import param, sample
 from numpyro.distributions import constraints, HalfNormal, Normal, Uniform
 
 from numpyro import handlers
-from numpyro.infer import MCMC, NUTS, HMC, MixedHMC
+from numpyro.infer import MCMC, NUTS, HMC, MixedHMC, init_to_value
 from numpyro.infer import Predictive
 from sklearn.model_selection import train_test_split
 from helper import import_dataset, normalize, build_utterance_prior_jax
 
-numpyro.set_platform("cpu")
-numpyro.set_host_device_count(4)
+
 print(jax.__version__)
 print(jax.devices())
 
@@ -33,515 +38,648 @@ import arviz as az
 # ========================
 # Global Variables (Setup)
 # ========================
+# Utterance list shape: (15, 3), int-coded; -1 = padding, 0=D, 1=C, 2=F
 utterance_list = import_dataset()["unique_utterances"]  # shape (U,3)
 
+UTTERANCE_LABELS = [  
+    "D", "DC", "DCF", "DF", "DFC",  
+    "C", "CD", "CDF", "CF", "CFD",  
+    "F", "FD", "FDC", "FC", "FCD",  
+]  
+
+# LM prior over the 15 utterances in the same order as utterance_list  
+# Order: D, DC, DCF, DF, DFC, C, CD, CDF, CF, CFD, F, FD, FDC, FC, FCD 
 LM_PRIOR_15 = jnp.array([
     0.1669514, 0.16733019, 0.12160929, 0.11005973, 0.09253279,
     0.07532827, 0.02494562, 0.03780574, 0.05690099, 0.02470998,
     0.02651604, 0.01232579, 0.03122547, 0.0363892, 0.01536951
 ])
 
-# ========================
-def utterance_cost_jax(beta: float = 1.0) -> jnp.ndarray:
-    """
-    Utterance-level cost derived from an external LM prior.
-    
-    Args:
-        beta: temperature parameter controlling strength of LM cost.
-              beta = 0 -> uniform (no cost)
-              beta = 1 -> original LM prior
-              beta > 1 -> sharper LM preferences
-    
-    Returns:
-        costs: jnp.ndarray of shape (15,) with utterance costs
-    """
+# Fixed sharpness-conditioned size gain (Option B, non-inferred start values)
+GAMMA_BLURRED = 1.0
+GAMMA_SHARP = 1.6
 
-    eps = 1e-12  # numerical stability
+# =============================================================================  
+# 2. UTTERANCE COST  (LM-derived, temperature-scaled)  
+# =============================================================================  
 
-    # Temperature-scaled prior: P_beta(u) ∝ P_LM(u)^beta
-    scaled_prior = jnp.power(jnp.clip(LM_PRIOR_15, eps), beta)
-    scaled_prior = scaled_prior / jnp.sum(scaled_prior)
+def utterance_cost_jax(beta: float = 1.0) -> jnp.ndarray:  
+    """  
+    Utterance cost = −log P_LM(u)^β (normalised).  
 
-    # Cost = negative log probability
-    costs = -jnp.log(jnp.clip(scaled_prior, eps))
+    β = 0  → uniform cost (no LM influence)  
+    β = 1  → raw LM prior  
+    β > 1  → sharper LM preference (D-family cheaper, F-family costlier)  
 
-    return costs
+    Returns  
+    -------  
+    costs : (15,)  positive floats; lower = cheaper utterance  
+    """  
+    eps = 1e-12  
+    scaled = jnp.power(jnp.clip(LM_PRIOR_15, eps), beta)  
+    scaled = scaled / jnp.sum(scaled)  
+    return -jnp.log(jnp.clip(scaled, eps))          # (15,)  
 
-def get_midrange_extrema_from_context(
-    states: jnp.ndarray,
-    state_prior: jnp.ndarray,
-    q_low: float = 0.2,
-    q_high: float = 0.8,
-) -> tuple[float, float]:
-    """
-    Compute mid-range extrema x_min^mid(C), x_max^mid(C) from the context C.
+# =============================================================================  
+# 3. SIZE SEMANTICS  (context-sensitive, graded)  
+# =============================================================================  
 
-    Args:
-        states:      (n_obj, 3) array; size is states[:, 0].
-        state_prior: (n_obj,) array; contextual distribution C(s).
-        q_low:       lower quantile for mid-range band (0 < q_low < q_high < 1).
-        q_high:      upper quantile for mid-range band.
+def compute_size_semantics(  
+    states:      jnp.ndarray,   # (n_obj, 3)  
+    state_prior: jnp.ndarray,   # (n_obj,)  sums to 1  
+    k:           float,         # threshold interpolation ∈ (0, 1)  
+    wf:          float,         # sigmoid width / slack > 0  
+    gamma:       float = 1.0,   # size gain / discriminability
+    q_low:       float = 0.2,  
+    q_high:      float = 0.8,  
+) -> jnp.ndarray:  
+    """  
+    Graded size semantics ⟦D⟧_C(s) via prior-weighted CDF thresholding.  
 
-    Returns:
-        x_min_mid, x_max_mid: floats defining the mid-range band.
-    """
-    sizes = states[:, 0]  # shape (n_obj,)
+    Steps  
+    -----  
+    1. Sort objects by size; compute prior-weighted CDF.  
+    2. Identify mid-range band [x_min_mid, x_max_mid] at quantiles  
+       (q_low, q_high).  
+    3. Threshold  θ_k = x_max_mid − k·(x_max_mid − x_min_mid)  
+         k = 0  →  θ_k = x_max_mid  (only largest objects are "big")  
+         k = 1  →  θ_k = x_min_mid  (most objects qualify as "big")  
+    4. Graded membership  Φ((x − θ_k) / (wf·√(x² + θ_k²))).  
 
-    # Sort by size
-    idx = jnp.argsort(sizes)
-    sizes_sorted = sizes[idx]
-    prior_sorted = state_prior[idx]
+    Returns  
+    -------  
+    m_size : (n_obj,)  ∈ (0, 1)  
+    """  
+    sizes        = states[:, 0]  
+    idx          = jnp.argsort(sizes)  
+    sizes_sorted = sizes[idx]  
+    cdf          = jnp.cumsum(state_prior[idx])  
 
-    # CDF of the contextual prior over sorted sizes
-    cdf = jnp.cumsum(prior_sorted)
+    x_min_mid = sizes_sorted[jnp.argmax(cdf >= q_low)]  
+    x_max_mid = sizes_sorted[jnp.argmax(cdf >= q_high)]  
+    theta_k   = x_max_mid - k * (x_max_mid - x_min_mid)  
 
-    def quantile_index(q):
-        # First index where CDF >= q
-        # (works because cdf[-1] = 1, so mask is True somewhere)
-        mask = cdf >= q
-        return jnp.argmax(mask)
-
-    i_low = quantile_index(q_low)
-    i_high = quantile_index(q_high)
-
-    x_min_mid = sizes_sorted[i_low]
-    x_max_mid = sizes_sorted[i_high]
-
-    return x_min_mid, x_max_mid
-
-def get_threshold_k_midrange_jax(
-    states: jnp.ndarray,
-    state_prior: jnp.ndarray,
-    k: float,
-    q_low: float = 0.2,
-    q_high: float = 0.8,
-) -> float:
-    """
-    Compute the context-dependent mid-range max-min threshold θ_k(C).
-
-    θ_k(C) = x_max^mid(C) - k * (x_max^mid(C) - x_min^mid(C))
-
-    Args:
-        states:      (n_obj, 3)
-        state_prior: (n_obj,)
-        k:           interpolation parameter in [0, 1]
-        q_low:       lower quantile for mid-range band
-        q_high:      upper quantile for mid-range band
-
-    Returns:
-        theta_k: scalar threshold.
-    """
-    x_min_mid, x_max_mid = get_midrange_extrema_from_context(
-        states, state_prior, q_low=q_low, q_high=q_high
-    )
-    theta_k = x_max_mid - k * (x_max_mid - x_min_mid)
-    return theta_k
-
-def size_semantic_value_midrange(
-    size: jnp.ndarray,      # scalar or array
-    theta_k: float,
-    w_f: float,
-) -> jnp.ndarray:
-    """
-    Graded size semantics with mid-range threshold θ_k(C) and noise w_f.
-
-    ⟦size⟧_C(s) = 1 - Φ( (x - θ_k) / (w_f * sqrt(x^2 + θ_k^2)) )
-    """
-    # Avoid zero division; eps not strictly necessary but helps numerics.
-    eps = 1e-8
-    denom = w_f * jnp.sqrt(size**2 + theta_k**2 + eps)
-    z = (size - theta_k) / denom
-    # Standard normal CDF at z
-    return 1.0 - dist.Normal(0.0, 1.0).cdf(z)
-
-def _size_meaning_vector(
-    states: jnp.ndarray,   # (n_obj, 3)
-    prior: jnp.ndarray,    # (n_obj,)
-    k: float,
-    wf: float,
-    q_low: float = 0.2,
-    q_high: float = 0.8,
-) -> jnp.ndarray:
-    """Compute the size meaning vector for all objects in the current context.
-
-    Given a contextual prior C over states ("prior"), we first compute the
-    mid-range extrema x_min^mid(C), x_max^mid(C) and the corresponding
-    threshold θ_k(C), and then apply the graded size semantics with slack wf
-    to each object size.
-    """
-    # Extract sizes (first dimension of the state tuple)
-    sizes = states[:, 0]  # (n_obj,)
-
-    # Context-dependent mid-range threshold θ_k(C)
-    theta_k = get_threshold_k_midrange_jax(
-        states=states,
-        state_prior=prior,
-        k=k,
-        q_low=q_low,
-        q_high=q_high,
-    )
-
-    # Graded size semantics relative to θ_k(C)
-    m_size = size_semantic_value_midrange(
-        size=sizes,
-        theta_k=theta_k,
-        w_f=wf,
-    )  # (n_obj,)
-
-    return m_size
+    eps   = 1e-8  
+    denom = wf * jnp.sqrt(sizes ** 2 + theta_k ** 2 + eps)  
+    z     = gamma * (sizes - theta_k) / denom  
+    return 0.5 * (1.0 + lax.erf(z / jnp.sqrt(2.0)))    # (n_obj,) 
 
 
-def incremental_semantics_jax(
-    states:       jnp.ndarray,   # (n_obj, 3)
-    color_sem:    float = 0.95,
-    form_sem:     float = 0.8,
-    k:            float = 0.5,
-    wf:           float = 0.5,
-    state_prior:  jnp.ndarray = None,
-    utterances:   jnp.ndarray = None,  # (n_utt, T)
-) -> jnp.ndarray:
-    """
-    Compute M_listener[u, s] = P(s | u) for all utterances using backward
-    functional (right-to-left) semantics, optimized so that only size
-    depends on the evolving context.
+# ── Pre compute size semantic values ──────────────────────────────────────────────────────  
+# Precompute sizes as a JAX constant — avoids re-slicing inside vmap  
+states = import_dataset()["states_train"]  # (N, 3)
+SIZES = jnp.array(np.array(states)[:, :, 0])   # (N, n_obj) — fixed at trace time  
 
-    Args:
-        states:       (n_obj, 3) array of object states.
-                      columns: [size, color, form].
-        color_sem:    semantic sharpness for color.
-        form_sem:     semantic sharpness for form.
-        k:            size-threshold parameter.
-        wf:           slack parameter for size semantics.
-        state_prior:  (n_obj,) prior over states (optional).
-        utterances:   (n_utt, T) int-coded utterances; -1 = padding,
-                      0 = size, 1 = color, 2 = form.
+def compute_size_semantics_fast(
+    sizes:     jnp.ndarray,        # (n_obj,)
+    posterior: jnp.ndarray,        # (n_obj,)  current per-utt posterior
+    k:         float,              # threshold interpolation ∈ (0, 1)
+    wf:        float,              # sigmoid width > 0
+    gamma:     float = 1.0,        # size gain / discriminability
+    q_low:     float = 0.2,
+    q_high:    float = 0.8,
+) -> jnp.ndarray:                  # (n_obj,) ∈ (0, 1)
 
-    Returns:
-        M: (n_utt, n_obj) array, each row normalized: P(s | u_i).
-    """
-    if utterances is None:
-        global utterance_list
-        utterances = utterance_list  # (n_utt, T)
-
-    n_utt, T = utterances.shape
-    n_obj = states.shape[0]
-
-    # -------------------------
-    # Precompute color/form semantics (context-independent)
-    # -------------------------
-    colors = states[:, 1]
-    forms  = states[:, 2]
-
-    color_vec = jnp.where(colors == 1, color_sem, 1.0 - color_sem)  # (n_obj,)
-    form_vec  = jnp.where(forms  == 1, form_sem,  1.0 - form_sem)   # (n_obj,)
-
-    # -------------------------
-    # Prior P_T(s) shared across utterances
-    # -------------------------
-    if state_prior is None:
-        state_prior = jnp.ones(n_obj) / n_obj  # (n_obj,)
-    # Broadcast prior over utterances: (n_utt, n_obj)
-    prior0 = jnp.broadcast_to(state_prior, (n_utt, n_obj))
-
-    # -------------------------
-    # Scan over tokens from right to left.
-    # tokens_rev: (T, n_utt)
-    # -------------------------
-    tokens_rev = jnp.flip(utterances, axis=1).T
-
-    def update_one_utterance(prior_i, token_i):
-        """
-        Update for a single utterance i at one token position.
-        prior_i : (n_obj,)
-        token_i : scalar int (0=size, 1=color, 2=form, -1=padding)
-        """
-        def skip(_):
-            # padding: no-op
-            return prior_i
-
-        def apply(_):
-            # token_i in {0,1,2}: choose size/color/form branch
-            def size_branch(_):
-                m = _size_meaning_vector(states, prior_i, k, wf)  # (n_obj,)
-                return prior_i * m
-
-            def color_branch(_):
-                return prior_i * color_vec
-
-            def form_branch(_):
-                return prior_i * form_vec
-
-            # token_i is 0,1,2 here
-            return lax.switch(
-                token_i,
-                (size_branch, color_branch, form_branch),
-                operand=None
-            )
-
-        # if token_i < 0 → padding → skip
-        return lax.cond(token_i < 0, skip, apply, operand=None)
-
-    def step(prior_all, tokens_t):
-        """
-        prior_all: (n_utt, n_obj) = beliefs for all utterances at current step
-        tokens_t:  (n_utt,)      = token at this position for each utterance
-        """
-        posterior_all = jax.vmap(update_one_utterance)(prior_all, tokens_t)
-        return posterior_all, None
-
-    # -------------------------
-    # Scan over token positions (right -> left)
-    # -------------------------
-    final, _ = lax.scan(step, prior0, tokens_rev)
-    # final_beliefs has shape (T, n_utt, n_obj);
-
-    # Normalize rows to get P(s | u)
-    row_sums = jnp.clip(jnp.sum(final, axis=1, keepdims=True), 1e-20)
-    M = final / row_sums
-    return M
-
-def global_speaker(
-    states: jnp.ndarray,               # shape (n_objs,3)
-    alpha: float = 1.0,
-    color_semval: float = 0.95,
-    wf: float = 1.0,
-    beta: float = 1.0,
-):
-    """
-    Output: P(utterance | referent) using global RSA semantics with LM-based cost.
-
-    For each context (set of states), we first compute the incremental literal
-    listener M_listener[u, s] = P(s | u) using context-dependent semantics.
-    The global speaker then combines informativeness with an utterance-level
-    cost derived from an external language-model prior.
-
-    Args:
-        states:           array of object states, shape (n_obj, 3).
-        alpha:            RSA rationality parameter scaling informativeness.
-        color_semval:     semantic sharpness for color.
-        k:                size-threshold parameter.
-        bias_subjectivity: (currently unused; kept for API compatibility).
-        bias_length:      real-valued parameter, interpreted as log-temperature
-                          for the LM-based cost (beta = exp(bias_length)).
-        utt_prior:        deprecated / ignored (kept for API compatibility).
-
-    Returns:
-        M_speaker: jnp.ndarray of shape (n_obj, n_utt) with P(u | s_j).
-    """
     eps = 1e-8
 
-    # ----- 1) LM-based utterance cost -----
-    # Interpret bias_length as log-temperature: beta = exp(bias_length) > 0
-    costs = utterance_cost_jax(beta=beta)  # shape (n_utt,)
+    # ── Step 1: sort by size, compute posterior-weighted CDF ──────────────────
+    idx          = jnp.argsort(sizes)            # (n_obj,)
+    sizes_sorted = sizes[idx]                    # (n_obj,)
+    post_sorted  = posterior[idx]                # (n_obj,)
 
-    # ----- 2) Incremental literal listener matrix M_listener: (n_utt, n_obj) -----
-    # Only size semantics depend on context; color/form are context-independent.
-    M_listener = incremental_semantics_jax(
-        states=states,
-        color_sem=color_semval,
-        wf=wf,
-    )  # rows = u, cols = s
+    # Normalise posterior in case it doesn't sum to exactly 1.0
+    post_sorted  = post_sorted / (jnp.sum(post_sorted) + eps)
+    cdf          = jnp.cumsum(post_sorted)       # (n_obj,) ∈ (0, 1]
 
-    # ----- 3) Utilities per state (row) and utterance (col) -----
-    log_L = jnp.log(jnp.clip(M_listener.T, eps, 1.0))  # (n_obj, n_utt)
+    # ── Step 2: find x_min_mid, x_max_mid via first-crossing ─────────────────
+    # "First index where cdf >= q" as a differentiable dot product
+    #
+    # above[i]      = 1 if cdf[i] >= q  else 0
+    # prev_above[i] = above[i-1]         (0 for i=0)
+    # first[i]      = above[i] * (1 - prev_above[i])
+    #               = 1 only at the FIRST crossing
+    #
+    # Then x_at_q   = dot(first, sizes_sorted)
 
-    # Utility: U(s, u) = alpha * log L(s | u) - cost(u)
-    util = alpha * log_L - costs[None, :]              # broadcast costs over states
+    def first_crossing_value(q):
+        above      = (cdf >= q).astype(jnp.float32)          # (n_obj,)
+        prev_above = jnp.concatenate([
+            jnp.zeros(1), above[:-1]
+        ])                                                    # (n_obj,)
+        first      = above * (1.0 - prev_above)              # (n_obj,)
 
-    # ----- 4) Softmax over utterances for each state row -----
-    M_speaker = jax.nn.softmax(util, axis=-1)          # (n_obj, n_utt)
+        # Edge case: q > all cdf values → use last element
+        no_cross = jnp.sum(first) < 0.5
+        first    = jnp.where(
+            no_cross,
+            jnp.zeros_like(first).at[-1].set(1.0),
+            first,
+        )
+        return jnp.dot(first, sizes_sorted)                  # scalar
 
-    # Referent is always index 0; return only P(u | s_referent)
-    referent_index = 0
-    probs = M_speaker[referent_index, :]
-    return probs
+    x_min_mid = first_crossing_value(q_low)     # size at q_low  quantile
+    x_max_mid = first_crossing_value(q_high)    # size at q_high quantile
 
-vectorized_global_speaker = jax.vmap(global_speaker, in_axes=(0, # states, along the first axis, i.e. one trial of the experiment
-                                                              None, # alpha,
-                                                              None, # color_semval
-                                                              None, # k
-                                                              None, # beta
-                                                              )) 
+    # ── Step 3: context-dependent threshold ───────────────────────────────────
+    #   k = 0  →  θ_k = x_max_mid  (only the largest objects are "big")
+    #   k = 0.5→  θ_k = midpoint   (medium threshold)
+    #   k = 1  →  θ_k = x_min_mid  (even small objects qualify as "big")
+    theta_k = x_max_mid - k * (x_max_mid - x_min_mid)       # scalar
 
+    # ── Step 4: graded membership (original scale-adaptive denominator) ───────
+    #   denom = wf · √(x² + θ_k²)   ← NOT wf·σ_context
+    #   This scales with the absolute magnitudes of sizes and threshold
+    denom = wf * jnp.sqrt(sizes ** 2 + theta_k ** 2 + eps)  # (n_obj,)
+    z     = gamma * (sizes - theta_k) / denom                # (n_obj,)
+
+    return 0.5 * (1.0 + lax.erf(z / jnp.sqrt(2.0)))         # (n_obj,) ∈ (0,1)
+
+
+
+# =============================================================================  
+# 4. INCREMENTAL LITERAL LISTENER  (right-to-left scan)  
+# =============================================================================  
+
+def incremental_semantics_jax(  
+    states:      jnp.ndarray,          # (n_obj, 3)  
+    color_sem:   float = 0.95,         # ∈ (0.5, 1)  
+    form_sem:    float = 0.80,         # ∈ (0.5, 1)  
+    k:           float = 0.5,          # ∈ (0, 1)  
+    wf:          float = 0.5,          # > 0  
+    gamma:       float = 1.0,          # size gain / discriminability
+    state_prior: jnp.ndarray = None,   # (n_obj,)  
+    utterances:  jnp.ndarray = None,   # (n_utt, T)  
+) -> jnp.ndarray:  
+    """  
+    Literal listener matrix M[u, s] = P(s | u).  
+
+    The scan processes tokens right-to-left so that each successive word  
+    narrows the posterior in a psycholinguistically plausible order.  
+    Only size semantics depend on the running posterior (context); color  
+    and form are pre-computed once.  
+
+    Returns  
+    -------  
+    M : (n_utt, n_obj)  each row sums to 1  
+    """  
+    if utterances is None:  
+        utterances = utterance_list                     # (15, 3)  
+
+    n_utt, T = utterances.shape  
+    n_obj    = states.shape[0]  
+
+    if state_prior is None:  
+        state_prior = jnp.ones(n_obj) / n_obj  
+
+    # ------------------------------------------------------------------  
+    # Pre-compute context-INDEPENDENT semantics once  
+    # ------------------------------------------------------------------  
+    colors    = states[:, 1]  
+    forms     = states[:, 2]  
+    color_vec = jnp.where(colors == 1, color_sem, 1.0 - color_sem)  # (n_obj,)  
+    form_vec  = jnp.where(forms  == 1, form_sem,  1.0 - form_sem)   # (n_obj,)  
+    size_vec  = compute_size_semantics(states, state_prior, k, wf, gamma=gamma)   # (n_obj,)  
+
+    # ------------------------------------------------------------------  
+    # Scan: process tokens right → left  
+    # ------------------------------------------------------------------  
+    prior0     = jnp.broadcast_to(state_prior, (n_utt, n_obj))      # (n_utt, n_obj)  
+    tokens_rev = jnp.flip(utterances, axis=1).T                      # (T, n_utt)  
+
+    def update_one(prior_i, token_i):  
+        """Update a single utterance's running posterior by one token."""  
+        def skip(_):   return prior_i  
+        def apply(_):  
+            return lax.switch(  
+                token_i,  
+                [lambda _: prior_i * size_vec,  
+                 lambda _: prior_i * color_vec,  
+                 lambda _: prior_i * form_vec],  
+                operand=None,  
+            )  
+        return lax.cond(token_i < 0, skip, apply, operand=None)  
+
+    def step(prior_all, tokens_t):  
+        """Apply one token position across all utterances in parallel."""  
+        return jax.vmap(update_one)(prior_all, tokens_t), None  
+
+    final, _ = lax.scan(step, prior0, tokens_rev)   # (n_utt, n_obj)  
+
+    row_sums = jnp.clip(final.sum(axis=1, keepdims=True), 1e-20)  
+    return final / row_sums                          # (n_utt, n_obj)  
+
+# =============================================================================  
+# 5. GLOBAL RSA SPEAKER  
+# =============================================================================  
+
+def global_speaker(  
+    states:       jnp.ndarray,   # (n_obj, 3)  one trial  
+    alpha:        float = 3.0,   # rationality  
+    color_sem:    float = 0.95,  # ∈ (0.5, 1)  
+    form_sem:     float = 0.80,  # ∈ (0.5, 1)  
+    k:            float = 0.5,   # ∈ (0, 1)  
+    wf:           float = 0.5,   # > 0  
+    beta:         float = 1.0,   # LM cost temperature  
+    gamma:        float = 1.0,   # size gain / discriminability
+) -> jnp.ndarray:  
+    """  
+    P(u | s_referent) under global RSA with LM-based utterance cost.  
+
+    Utility:  U(u, s) = α · log L(s | u) − cost(u)  
+    Speaker:  P(u | s) ∝ exp U(u, s)  
+
+    The referent is always states[0].  
+
+    Returns  
+    -------  
+    probs : (n_utt,)  probability over utterances for the referent  
+    """  
+    eps = 1e-8  
+
+    costs      = utterance_cost_jax(beta=beta)           # (n_utt,)  
+    M_listener = incremental_semantics_jax(              # (n_utt, n_obj)  
+        states      = states,  
+        color_sem   = color_sem,  
+        form_sem    = form_sem,  
+        k           = k,  
+        wf          = wf,  
+        gamma       = gamma,
+    )  
+
+    log_L = jnp.log(jnp.clip(M_listener.T, eps))        # (n_obj, n_utt)  
+    util  = alpha * log_L - costs[None, :]               # (n_obj, n_utt)  
+    M_speaker = jax.nn.softmax(util, axis=-1)            # (n_obj, n_utt)  
+
+    return M_speaker[0, :]                               # referent = index 0  
+
+# Vectorise over trials (axis 0 of states batch)  
+vectorized_global_speaker = jax.vmap(  
+    global_speaker,  
+    in_axes=(0,    # states  — one trial per row  
+             None, # alpha  
+             None, # color_sem  
+             None, # form_sem  
+             None, # k  
+             None, # wf  
+             None, # beta  
+             0,    # gamma (per-trial sharpness-conditioned gain)
+             ),  
+)  
+
+# ── Pre JIT ──────────────────────────────────────────────────────  
+@jax.jit  
+def jitted_global_speaker(states, alpha, color_semval, form_semval, k, wf, beta, gamma):  
+    return vectorized_global_speaker(  
+        states, alpha, color_semval, form_semval, k, wf, beta, gamma  
+    )  
+def likelihood_function_global_speaker(states = None, empirical = None, sharpness_idx = None):
+    # # ── Semantic parameters ──────────────────────────────────────────────────  
+    # phi_color = numpyro.sample("phi_color", dist.HalfNormal(2.0))  
+    # color_sem = jax.nn.sigmoid(phi_color)          # ∈ (0.5, 1)  
+
+    # phi_form  = numpyro.sample("phi_form",  dist.HalfNormal(1.0))  
+    # form_sem  = jax.nn.sigmoid(phi_form)           # ∈ (0.5, 1)  
+
+    # fixed color and form semantics
+    color_sem = 0.8
+    form_sem  = 0.7
+
+    # Infer k
+    # phi_k     = numpyro.sample("phi_k",     dist.Normal(0.0, 1.0))  
+    # k         = jax.nn.sigmoid(phi_k)             # ∈ (0, 1), prior mean 0.5  
+
+    # Fixed k
+    k = 0.5
+
+    # Infer wf
+    # log_wf = numpyro.sample("log_wf", dist.TruncatedNormal(0.0, 0.5, low=-1.0, high=1.0))
+    # wf     = jnp.exp(log_wf)                   # prior mean ≈ 1.0
+
+    # Fixed wf
+    wf        = 1.0
+
+    # Infe beta
+    log_beta  = numpyro.sample("log_beta",  dist.Normal(0.0, 0.5))  
+    beta      = jnp.exp(log_beta)                  # prior mean ≈ 1.0
+
+    if sharpness_idx is None:
+        sharpness_idx = jnp.zeros((len(states),), dtype=jnp.float32)
+    gamma = jnp.where(sharpness_idx > 0.5, GAMMA_SHARP, GAMMA_BLURRED)
+
+    # Infer alpha
+    alpha = numpyro.sample("alpha", dist.HalfNormal(5.0))  # prior mean ≈ 4.0, but with long tail
+
+    #  ── Fixed parameters ─────────────────────────────────
+    # beta      = 1.0
+    # alpha     = 3.0     
+
+    # Define the likelihood function
+    with numpyro.plate("data", len(states)):
+        # Get vectorized global speaker output for all states
+        # For single output, it is shape (n_utt, n_obj)
+        probs = jitted_global_speaker(  
+            states,  
+            alpha,  
+            color_sem,  
+            form_sem,  
+            k,  
+            wf,  
+            beta,  
+            gamma,
+        )  
+        if empirical is None:
+            numpyro.sample("obs", dist.Categorical(probs=probs))
+        else:
+            numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
 # ========================
 # Incremental Speaker
 # ========================
-# ========================
-# Prefix helpers for incremental speaker
-# ========================
-# Vocabulary indices for adjectives: 0=size (D), 1=color (C), 2=form (F)
+# =============================================================================
+# PRECOMPUTED STATIC STRUCTURES (run once, CPU, before any JAX tracing)
+# =============================================================================
 VOCAB_SIZE = 3
-n_utt, T = utterance_list.shape
+n_utt, T   = utterance_list.shape
 
-# We build:
-#  PREFIX_UTTS[t, u, a, :]  = utterance encoding prefix(u,<t) + a at position t, padded with -1
-#  CANDIDATE_MASK[t, u, a]  = True iff a is an admissible next token at step t for utterance u
-#  ACTIVE_POS[t, u]         = True iff position t is actually used (no padding) in utterance u
-
+# ── Original prefix helpers (unchanged) ──────────────────────────────────────
 prefix_utts_np = np.full((T, n_utt, VOCAB_SIZE, T), -1, dtype=np.int32)
-cand_mask_np   = np.zeros((T, n_utt, VOCAB_SIZE), dtype=bool)
-active_np      = np.zeros((T, n_utt), dtype=bool)
+cand_mask_np   = np.zeros((T, n_utt, VOCAB_SIZE),    dtype=bool)
+active_np      = np.zeros((T, n_utt),                dtype=bool)
 
 for t in range(T):
     for u in range(n_utt):
-        tokens = np.array(utterance_list[u])
+        tokens  = np.array(utterance_list[u])
         token_t = tokens[t]
-        # If padding at this position, nothing happens here
         if token_t < 0:
             continue
-
         active_np[t, u] = True
-
-        # Tokens already used in the prefix u_{<t}
         used = set(int(x) for x in tokens[:t] if x >= 0)
-
-        # Candidates: any vocab item not yet used
         for a in range(VOCAB_SIZE):
             if a in used:
                 continue
             cand_mask_np[t, u, a] = True
-
-            # Build prefix+candidate sequence (truncate after t)
             seq = np.full(T, -1, dtype=np.int32)
             if t > 0:
                 seq[:t] = tokens[:t]
             seq[t] = a
             prefix_utts_np[t, u, a, :] = seq
 
-PREFIX_UTTS    = jnp.asarray(prefix_utts_np)   # (T, n_utt, 3, T)
-CANDIDATE_MASK = jnp.asarray(cand_mask_np)     # (T, n_utt, 3)
-ACTIVE_POS     = jnp.asarray(active_np)        # (T, n_utt)
-# ========================
+PREFIX_UTTS    = jnp.asarray(prefix_utts_np)    # (T, n_utt, 3, T)
+CANDIDATE_MASK = jnp.asarray(cand_mask_np)      # (T, n_utt, 3)
+ACTIVE_POS     = jnp.asarray(active_np)         # (T, n_utt)
+
+# ── NEW: token presence masks → replaces inner lax.scan ───────────────────────
+# TOKEN_PRESENT[t, u, a, v] = True iff vocab item v appears in PREFIX_UTTS[t,u,a,:]
+# Lets us replace scan-over-tokens with a vectorised dot product
+token_present_np = np.zeros((T, n_utt, VOCAB_SIZE, VOCAB_SIZE), dtype=np.float32)
+for t in range(T):
+    for u in range(n_utt):
+        for a in range(VOCAB_SIZE):
+            seq = prefix_utts_np[t, u, a, :]
+            valid = seq[seq >= 0]
+            for v in range(VOCAB_SIZE):
+                token_present_np[t, u, a, v] = float(v in valid)
+
+TOKEN_PRESENT = jnp.asarray(token_present_np)   # (T, n_utt, 3, 3)
+# TOKEN_PRESENT[t, u, a, :] = which vocab items are in prefix+candidate sequence
+# replaces the inner scan(apply_tok) with a single einsum
+
+# ── Actual tokens at each position for posterior update ───────────────────────
+# ACTUAL_TOK[t, u] = tokens_t[u], clamped
+actual_tok_np = np.clip(np.array(utterance_list).T, 0, VOCAB_SIZE - 1).astype(np.int32)
+ACTUAL_TOK    = jnp.asarray(actual_tok_np)       # (T, n_utt)
+
+# ── One-hot for actual tokens → used in posterior update ─────────────────────
+# ACTUAL_TOK_ONEHOT[t, u, v] = 1 if tokens_t[u] == v else 0
+actual_onehot_np = np.zeros((T, n_utt, VOCAB_SIZE), dtype=np.float32)
+for t in range(T):
+    for u in range(n_utt):
+        tok = int(utterance_list[u, t])
+        if tok >= 0:
+            actual_onehot_np[t, u, tok] = 1.0
+ACTUAL_TOK_ONEHOT = jnp.asarray(actual_onehot_np)   # (T, n_utt, 3)
+
+# =============================================================================  
+# INCREMENTAL SPEAKER  
+# =============================================================================  
+
 def incremental_speaker(
-    states: jnp.ndarray,
-    alpha: float = 1.0,
+    states:       jnp.ndarray,
+    alpha:        float = 3.0,
     color_semval: float = 0.95,
-    wf: float = 1.0,
-    beta: float = 1.0,
+    form_semval:  float = 0.80,
+    k:            float = 0.50,
+    wf:           float = 1.00,
+    beta:         float = 1.00,
+    gamma:        float = 1.00,
 ) -> jnp.ndarray:
-    """
-    Incremental RSA speaker S_inc(u | s*).
 
-    For a given context (states) and intended referent s* (always index 0),
-    this returns a distribution over utterances using a token-by-token
-    chain-rule construction:
-
-        S_inc(u | s*) ∝ P_beta(u) · ∏_t S_t(w_t | u_{<t}, s*)
-
-    where:
-      - P_beta(u) is a temperature-scaled LM prior derived from LM_PRIOR_15,
-      - S_t(w_t | u_{<t}, s*) is a local softmax over admissible next tokens,
-        driven purely by incremental informativeness.
-    """
-    eps = 1e-8
+    eps            = 1e-8
     referent_index = 0
+    n_obj          = states.shape[0]
 
-    n_utt, T = utterance_list.shape
+    # ── NEW: extract sizes once here ──────────────────────────────────────────
+    # states[:, 0] would be re-executed inside every vmap call without this
+    sizes = states[:, 0]                                              # (n_obj,)
+    # ─────────────────────────────────────────────────────────────────────────
 
-    # ---- LM-based utterance prior P_beta(u) ----
-    lm = jnp.clip(LM_PRIOR_15, eps, 1.0)
-    scaled = lm ** beta
-    P_beta = scaled / jnp.sum(scaled)  # (n_utt,)
+    # ── LM utterance prior ────────────────────────────────────────────────────
+    lm_scaled  = jnp.power(jnp.clip(LM_PRIOR_15, eps), beta)
+    log_P_beta = jnp.log(lm_scaled / jnp.sum(lm_scaled))            # (n_utt,)
 
-    def step(scores: jnp.ndarray, t: jnp.ndarray):
-        """
-        One incremental step over position t (0 .. T-1).
+    # ── Context-independent log-semantics (color, form) ───────────────────────
+    colors = states[:, 1]
+    forms  = states[:, 2]
 
-        scores : (n_utt,) — cumulative product of local probabilities so far.
-        t      : scalar int — current position.
-        """
-        # Precomputed prefix+candidate utterances for this position
-        prefix_utts_t = PREFIX_UTTS[t]     # (n_utt, 3, T)
-        cand_mask_t   = CANDIDATE_MASK[t]  # (n_utt, 3)
-        active_t      = ACTIVE_POS[t]      # (n_utt,)
-        tokens_t      = utterance_list[:, t]  # (n_utt,)
+    log_color_sem = jnp.log(
+        jnp.where(colors == 1, color_semval, 1.0 - color_semval) + eps
+    )                                                                  # (n_obj,)
+    log_form_sem  = jnp.log(
+        jnp.where(forms  == 1, form_semval,  1.0 - form_semval)  + eps
+    )                                                                  # (n_obj,)
 
-        # Build candidate utterances as a flat batch: (n_utt*3, T)
-        cand_utts_flat = prefix_utts_t.reshape(-1, T)
+    # ── Scan carry ────────────────────────────────────────────────────────────
+    uniform     = jnp.ones(n_obj) / n_obj
+    init_scores = jnp.zeros(n_utt)
+    init_posts  = jnp.broadcast_to(uniform, (n_utt, n_obj))          # (n_utt, n_obj)
 
-        # Literal listener for all candidate prefixes
-        # M_flat: (n_utt*3, n_obj), rows = utterances, cols = states
-        M_flat = incremental_semantics_jax(
-            states=states,
-            color_sem=color_semval,
-            wf=wf,
-            utterances=cand_utts_flat,
+    def step(carry, t):
+        log_scores, per_utt_posts = carry
+
+        cand_mask_t = CANDIDATE_MASK[t]    # (n_utt, 3)
+        active_t    = ACTIVE_POS[t]        # (n_utt,)
+
+        # ── Step 1: size log-semantics per utterance ───────────────────────────
+        def size_log_sem_for_utt(post):
+            sv = compute_size_semantics_fast(
+                sizes,    # ← pre-extracted (n_obj,), no slicing inside vmap
+                post,
+                k,
+                wf,
+                gamma,
+            )
+            return jnp.log(jnp.clip(sv, eps))                        # (n_obj,)
+
+        size_log_sems = jax.vmap(size_log_sem_for_utt)(per_utt_posts) # (n_utt, n_obj)
+
+        # ── Step 2: full log-sem table  (n_utt, 3, n_obj) ────────────────────
+        log_sem_static = jnp.stack(
+            [log_color_sem, log_form_sem], axis=0                    # (2, n_obj)
         )
-        L_flat = M_flat[:, referent_index]           # (n_utt*3,)
-        L_vals = L_flat.reshape(n_utt, VOCAB_SIZE)   # (n_utt,3)
+        log_sem_table = jnp.concatenate([
+            size_log_sems[:, None, :],                               # (n_utt, 1, n_obj)
+            jnp.broadcast_to(
+                log_sem_static[None, :, :], (n_utt, 2, n_obj)
+            ),                                                        # (n_utt, 2, n_obj)
+        ], axis=1)                                                    # (n_utt, 3, n_obj)
 
-        # Masked softmax over candidates a in {0,1,2}
-        logits = jnp.where(
+        # ── Step 3: candidate scores via TOKEN_PRESENT einsum ─────────────────
+        token_pres_t = TOKEN_PRESENT[t]                              # (n_utt, 3, 3)
+
+        log_prod_sem = jnp.einsum(
+            "uav, uvo -> uao",
+            token_pres_t,      # (n_utt, 3, 3)
+            log_sem_table,     # (n_utt, 3, n_obj)
+        )                                                             # (n_utt, 3, n_obj)
+
+        log_prior = jnp.log(
+            per_utt_posts / jnp.clip(
+                jnp.sum(per_utt_posts, axis=-1, keepdims=True), 1e-20
+            )
+        )                                                             # (n_utt, n_obj)
+
+        log_updated = log_prior[:, None, :] + log_prod_sem           # (n_utt, 3, n_obj)
+
+        log_Z    = jax.scipy.special.logsumexp(log_updated, axis=-1) # (n_utt, 3)
+        log_norm = log_updated - log_Z[:, :, None]                   # (n_utt, 3, n_obj)
+        L_vals   = jnp.exp(log_norm[:, :, referent_index])           # (n_utt, 3)
+
+        # ── Step 4: masked softmax ─────────────────────────────────────────────
+        logits      = jnp.where(
             cand_mask_t,
-            alpha * jnp.log(jnp.clip(L_vals, eps, 1.0)),
-            -1e9,  # effectively exclude non-candidates
+            alpha * jnp.log(jnp.clip(L_vals, eps)),
+            -1e9,
         )
-        local_probs = jax.nn.softmax(logits, axis=-1)  # (n_utt,3)
+        local_probs = jax.nn.softmax(logits, axis=-1)                # (n_utt, 3)
 
-        # Probability of the actually realized token at position t
-        # (clamp -1 to 0; inactive rows are handled with active_t)
-        token_idx = jnp.clip(tokens_t, 0, VOCAB_SIZE - 1)
-        chosen = jnp.take_along_axis(
-            local_probs,
-            token_idx[:, None],
-            axis=1,
-        )[:, 0]  # (n_utt,)
+        # ── Step 5: probability of actual token ───────────────────────────────
+        chosen = jnp.sum(
+            local_probs * ACTUAL_TOK_ONEHOT[t], axis=-1
+        )                                                             # (n_utt,)
+        chosen     = jnp.where(active_t, chosen, 1.0)
+        log_chosen = jnp.where(active_t, jnp.log(jnp.clip(chosen, eps)), 0.0)
 
-        # For padded positions, we do not update the score (multiply by 1)
-        chosen = jnp.where(active_t, chosen, 1.0)
+        # ── Step 6: posterior update ───────────────────────────────────────────
+        selected_log_sem = jnp.einsum(
+            "uv, uvo -> uo",
+            ACTUAL_TOK_ONEHOT[t],    # (n_utt, 3)
+            log_sem_table,           # (n_utt, 3, n_obj)
+        )                                                             # (n_utt, n_obj)
 
-        new_scores = scores * chosen
-        return new_scores, None
+        log_updated_post = jnp.log(jnp.clip(per_utt_posts, eps)) + jnp.where(
+            active_t[:, None],
+            selected_log_sem,
+            0.0,
+        )
+        log_Z_post        = jax.scipy.special.logsumexp(
+            log_updated_post, axis=-1, keepdims=True
+        )
+        new_per_utt_posts = jnp.exp(log_updated_post - log_Z_post)  # (n_utt, n_obj)
 
-    # Scan over positions t = 0 .. T-1
-    init_scores = jnp.ones((n_utt,))
-    final_scores, _ = lax.scan(step, init_scores, jnp.arange(T))  # final_scores: (n_utt,)
+        return (log_scores + log_chosen, new_per_utt_posts), None
+    
+    step_checkpointed = jax.checkpoint(step)   # ← wrap step  
+    (log_final_scores, _), _ = lax.scan(
+        step_checkpointed,
+        (init_scores, init_posts),
+        jnp.arange(T),
+    )
 
-    # ---- Combine utterance-level LM prior and incremental score ----
-    unnorm = P_beta * final_scores
-    probs = unnorm / jnp.clip(jnp.sum(unnorm), eps, None)  # (n_utt,)
-    return probs
+    log_unnorm = log_P_beta + log_final_scores                        # (n_utt,)
+    return jax.nn.softmax(log_unnorm)                                 # (n_utt,)
 
-vectorized_incremental_speaker = jax.vmap(incremental_speaker, in_axes=(0, # states, along the first axis, i.e. one trial of the experiment
-                                                              None, # alpha,
-                                                              None, # color_semval
-                                                              None, # wf
-                                                            None, # beta
-                                                              )) 
+# ── Vectorise over trials ──────────────────────────────────────────────────────  
+vectorized_incremental_speaker = jax.vmap(  
+    incremental_speaker,  
+    in_axes=(0,    # states      — one trial per row  
+             None, # alpha  
+             None, # color_semval  
+             None, # form_semval  
+             None, # k  
+             None, # wf  
+             None, # beta  
+             0,    # gamma (per-trial sharpness-conditioned gain)
+             ),  
+)  
 
-def likelihood_function_global_speaker(states = None, empirical = None):
-    # Initialize the parameter priors
-    alpha = numpyro.sample("alpha", dist.HalfNormal(1.0))
-    color_semval = numpyro.sample("color_semvalue", dist.Beta(4, 1))
-    size_semval = numpyro.sample("size_semval", dist.Normal(0, 1))
-    gamma = 2.0  # fixed scaling hyperparameter (tune if needed)
-    wf = numpyro.deterministic("wf", jnp.exp(-gamma * size_semval))
-    beta  = numpyro.sample("beta", dist.HalfNormal(0.5))
+# ── Pre JIT ──────────────────────────────────────────────────────  
+@jax.jit  
+def jitted_speaker(states, alpha, color_semval, form_semval, k, wf, beta, gamma):  
+    return vectorized_incremental_speaker(  
+        states, alpha, color_semval, form_semval, k, wf, beta, gamma  
+    )  
 
-    # Define the likelihood function
-    with numpyro.plate("data", len(states)):
-        # Get vectorized global speaker output for all states
-        # For single output, it is shape (n_utt, n_obj)
-        probs = vectorized_global_speaker(states, alpha, color_semval, wf, beta) #shape (nbatch_size, n_utt, n_obj)
-        if empirical is None:
-            numpyro.sample("obs", dist.Categorical(probs=probs))
-        else:
-            numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+# Warm it up with dummy values matching your actual shapes/dtypes  
+_dummy_states = jnp.ones((len(states), 6, 3))  
+_dummy_gamma = jnp.ones((len(states),), dtype=jnp.float32)
+_ = jitted_speaker(_dummy_states, 3.0, 0.95, 0.80, 0.5, 1.0, 1.0, _dummy_gamma)  
+_.block_until_ready()  
 
-def likelihood_function_incremental_speaker(states = None, empirical = None):
-    # Initialize the parameter priors
-    alpha = numpyro.sample("alpha", dist.HalfNormal(1.0))
-    color_semval = numpyro.sample("color_semvalue", dist.Beta(4, 1))
-    size_semval = numpyro.sample("size_semval", dist.Normal(0, 1))
-    gamma = 2.0  # fixed scaling hyperparameter (tune if needed)
-    wf = numpyro.deterministic("wf", jnp.exp(-gamma * size_semval))
-    beta  = numpyro.sample("beta", dist.HalfNormal(0.5))
+
+
+def likelihood_function_incremental_speaker(states = None, empirical = None, sharpness_idx = None):
+    # ── Semantic parameters ───────────────────────────────────────────────────  
+    # # Infer color and form semantics; size semantics are computed from these via the
+    # phi_color  = numpyro.sample("phi_color", dist.HalfNormal(2.0))  
+    # color_semval = jax.nn.sigmoid(phi_color)           # ∈ (0.5, 1)  
+
+    # phi_form   = numpyro.sample("phi_form",  dist.HalfNormal(1.0))  
+    # form_semval  = jax.nn.sigmoid(phi_form)            # ∈ (0.5, 1)  
+
+    # Fixed color and form semantics
+    color_semval = 0.8
+    form_semval  = 0.7
+    # Infer k
+    # k    = numpyro.sample("k",     dist.Beta(2.0, 2.0))
+    # Fixed k
+    k = 0.5
+
+    # Infer wf 
+    # log_wf = numpyro.sample("log_wf", dist.TruncatedNormal(0.0, 0.5,  low=-1.0,  high=1.0))  
+    # wf        = jnp.exp(log_wf)                   # prior mean ≈ 1.0  
+    # Fixed wf
+    wf = 1.0
+
+    # Infer alpha
+    alpha = numpyro.sample("alpha", dist.HalfNormal(5.0))  # prior mean ≈ 4.0, but with long tail
+    
+    # Fixed alpha
+    #alpha  = 3.0    # fixed 
+
+    # Infer beta
+    log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
+    beta     = jnp.exp(log_beta)                 # prior mean ≈ 1.0 
+
+    if sharpness_idx is None:
+        sharpness_idx = jnp.zeros((len(states),), dtype=jnp.float32)
+    gamma = jnp.where(sharpness_idx > 0.5, GAMMA_SHARP, GAMMA_BLURRED)
+
+    # Fixed beta
+    #beta   = 1.0    # fixed: posterior was ~ exp(-0.03) ≈ 1.0  
 
     # Define the likelihood function
     with numpyro.plate("data", len(states)):
         # Get vectorized incremental speaker output for all states
         # For single output, it is shape (n_utt, n_obj)
-        probs = vectorized_incremental_speaker(states, alpha, color_semval, wf, beta) #shape (nbatch_size, n_utt, n_obj)
+        probs = jitted_speaker(  
+            states,  
+            alpha,  
+            color_semval,  
+            form_semval,  
+            k,  
+            wf,  
+            beta,  
+            gamma,
+        )                                              # (N, n_utt) 
         if empirical is None:
             numpyro.sample("obs", dist.Categorical(probs=probs))
         else:
@@ -558,16 +696,27 @@ def run_inference(speaker_type: str = "global",
     # Setup output file name
     output_file_name = f"./inference_data/mcmc_results_{speaker_type}_speaker_warmup{num_warmup}_samples{num_samples}_chains{num_chains}.nc"
 
+    # Delete if exists  
+    if os.path.exists(output_file_name):  
+        os.remove(output_file_name)  
+        print(f"Deleted existing file: {output_file_name}")  
+
+     
     # Import dataset
     data = import_dataset()
     states_train = data["states_train"]
     empirical_train_seq_flat = data["empirical_seq_flat"]
+    sharpness_idx = data["sharpness_idx"]
 
     # Some printing for debugging
     print("States train shape:", states_train.shape)
     print("Empirical train flat shape:", empirical_train_seq_flat.shape)
+    print("Sharpness index shape:", sharpness_idx.shape)
     print("Output file name:" , output_file_name)
-
+    
+    # run_from_map
+    MAP_GLOBAL = {"phi_color": 1.25, "phi_form": 1.0}  
+    MAP_INC    = {"phi_color": 1.20, "phi_form": 0.7} 
     # Define the MCMC kernel and the number of samples
     rng_key = random.PRNGKey(4711)
     rng_key, rng_key_ = random.split(rng_key)
@@ -578,9 +727,12 @@ def run_inference(speaker_type: str = "global",
     elif speaker_type == "incremental":
         # Use the incremental speaker likelihood function
         model = likelihood_function_incremental_speaker
-    kernel = NUTS(model, target_accept_prob=0.9, max_tree_depth=10)
-    mcmc = MCMC(kernel, num_warmup=num_warmup,num_samples=num_samples, num_chains=num_chains)
-    mcmc.run(rng_key_, states_train, empirical_train_seq_flat)
+    
+    kernel = NUTS(model, target_accept_prob=0.9, max_tree_depth=3)
+    mcmc = MCMC(kernel, num_warmup=num_warmup,num_samples=num_samples, num_chains=num_chains,
+                    chain_method="vectorized",           # ← vectorized chains for speed
+                    )
+    mcmc.run(rng_key_, states_train, empirical_train_seq_flat, sharpness_idx)
 
     # print the summary of the posterior distribution
     mcmc.print_summary()
@@ -588,10 +740,10 @@ def run_inference(speaker_type: str = "global",
     # Get the MCMC samples and convert to a numpyro ArviZ InferenceData object
     posterior_samples = mcmc.get_samples() 
     posterior_predictive = Predictive(model, posterior_samples)(
-    PRNGKey(1), states_train
+    PRNGKey(1), states_train, None, sharpness_idx
     )
     prior = Predictive(model, num_samples=500)(
-        PRNGKey(2), states_train
+        PRNGKey(2), states_train, None, sharpness_idx
     )   
 
     N = states_train.shape[0]  # 3196
@@ -607,6 +759,120 @@ def run_inference(speaker_type: str = "global",
     # Write the inference data to a netcdf file
     az.to_netcdf(numpyro_data, output_file_name)
 
+def profile_likelihood_function(speaker_type: str = "global"):
+        # ── Run this BEFORE the full inference ───────────────────────────────────────
+    # Grid search over (phi_color, phi_k) to visualise the log-posterior surface
+
+    phi_color_grid = np.linspace(0.5, 3.5, 40)
+    phi_k_grid     = np.linspace(-3.0, 5.0, 40)
+    phi_form_fixed = 0.85   # fix phi_form at plausible value
+    states_jnp = import_dataset()["states_train"].astype(jnp.float32)
+    empirical_all = import_dataset()["empirical_seq_flat"].astype(jnp.int32)
+    log_post = np.zeros((40, 40))
+
+    for i, pc in enumerate(phi_color_grid):
+        for j, pk in enumerate(phi_k_grid):
+
+            color_sv = float(jax.nn.sigmoid(pc))
+            form_sv  = float(jax.nn.sigmoid(phi_form_fixed))
+            k_val    = float(jax.nn.sigmoid(pk))
+
+            if speaker_type == "global":
+                speaker = vectorized_global_speaker
+            elif speaker_type == "incremental":
+                speaker = jitted_speaker
+            probs    = np.array(speaker(
+                states_jnp, 3.0, color_sv, form_sv, k_val, 1.0, 1.0
+            ))
+
+            # Log likelihood
+            ll = np.sum(np.log(probs[np.arange(len(empirical_all)),
+                                    empirical_all] + 1e-8))
+
+            # Log prior (Normal(2.0, 0.75) for phi_color, Normal(0, 1) for phi_k)
+            lp = (
+                -0.5 * ((pc - 2.0) / 0.75)**2
+                - 0.5 * ((pk - 0.0) / 1.0)**2
+            )
+            log_post[i, j] = ll + lp
+
+    # ── Plot ──────────────────────────────────────────────────────────────────────
+    fig, ax = plt.subplots(figsize=(9, 7))
+    cf = ax.contourf(
+        phi_k_grid, phi_color_grid, log_post,
+        levels=40, cmap="viridis"
+    )
+    plt.colorbar(cf, ax=ax, label="Log posterior")
+    ax.set_xlabel("phi_k  (→ k = sigmoid(phi_k))", fontsize=11)
+    ax.set_ylabel("phi_color  (→ color_semval = sigmoid(phi_color))", fontsize=11)
+    ax.set_title(
+        "Log-posterior surface: phi_color × phi_k\n"
+        "(phi_form fixed at 0.85)\n"
+        "Multiple peaks = true multimodality,  single ridge = sampler issue",
+        fontsize=10
+    )
+
+    # Annotate k values on x-axis
+    ax2 = ax.twiny()
+    ax2.set_xlim(ax.get_xlim())
+    k_ticks = [-2, -1, 0, 1, 2, 3, 4]
+    ax2.set_xticks(k_ticks)
+    ax2.set_xticklabels([f"{jax.nn.sigmoid(jnp.array(float(v))):.2f}" for v in k_ticks])
+    ax2.set_xlabel("k = sigmoid(phi_k)", fontsize=10)
+
+    plt.tight_layout()
+    plt.savefig("./figures/log_posterior_surface_global.png", dpi=150, bbox_inches="tight")
+    plt.show()
+def profile_likelihood_function_color_form(speaker_type: str = "global"):
+        # ── Confirm bimodality BEFORE fixing sampler ──────────────────────────────────
+    phi_color_grid = np.linspace(0.5, 3.5, 50)
+    phi_form_grid  = np.linspace(-2.0, 3.0, 50)
+    log_post_2d    = np.zeros((50, 50))
+    states_jnp = import_dataset()["states_train"].astype(jnp.float32)
+    empirical_all = import_dataset()["empirical_seq_flat"].astype(jnp.int32)
+    if speaker_type == "global":
+        speaker = vectorized_global_speaker
+    elif speaker_type == "incremental":
+        speaker = jitted_speaker
+
+    for i, pc in enumerate(phi_color_grid):
+        for j, pf in enumerate(phi_form_grid):
+            color_sv = float(jax.nn.sigmoid(pc))
+            form_sv  = float(jax.nn.sigmoid(pf))
+
+            probs = np.array(speaker(
+                states_jnp, 3.0, color_sv, form_sv, 1.0, 1.0, 1.0
+            ))
+            ll = np.sum(np.log(
+                probs[np.arange(len(empirical_all)), empirical_all] + 1e-8
+            ))
+            lp = (
+                -0.5 * ((pc - 2.0) / 0.75)**2
+            + -0.5 * ((pf - 1.0) / 0.75)**2
+            )
+            log_post_2d[i, j] = ll + lp
+
+    # ── Plot ──────────────────────────────────────────────────────────────────────
+    fig, ax = plt.subplots(figsize=(9, 7))
+    cf = ax.contourf(phi_form_grid, phi_color_grid, log_post_2d,
+                    levels=40, cmap="viridis")
+    plt.colorbar(cf, ax=ax, label="Log posterior")
+    ax.set_xlabel("phi_form → form_semval = sigmoid(phi_form)")
+    ax.set_ylabel("phi_color → color_semval = sigmoid(phi_color)")
+    ax.set_title(
+        "Profile posterior: phi_color × phi_form\n"
+        "Single peak = sampler issue  |  Two peaks = true bimodality"
+    )
+    # Mark all local maxima
+    from scipy.ndimage import maximum_filter
+    local_max = (log_post_2d == maximum_filter(log_post_2d, size=5))
+    rows, cols = np.where(local_max & (log_post_2d > log_post_2d.max() - 50))
+    for r, c in zip(rows, cols):
+        ax.scatter(phi_form_grid[c], phi_color_grid[r],
+                color="red", s=100, marker="*", zorder=5)
+    plt.tight_layout()
+    plt.savefig("./figures/profile_post_color_form_gb.png", dpi=150)
+    plt.show()
 
 def test():
     """
@@ -660,17 +926,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run speaker inference with NumPyro.")
     parser.add_argument("--speaker_type", type=str, choices=["global", "incremental"], default="global",
                         help="Choose the speaker model type.")
-    parser.add_argument("--num_samples", type=int, default=250, help="Number of posterior samples.")
-    parser.add_argument("--num_warmup", type=int, default=750, help="Number of warm-up iterations.")
+    parser.add_argument("--num_samples", type=int, default=500, help="Number of posterior samples.")
+    parser.add_argument("--num_warmup", type=int, default=500, help="Number of warm-up iterations.")
     parser.add_argument("--num_chains", type=int, default=4, help="Number of MCMC chains.")
     parser.add_argument("--test", action="store_true", help="Run test function and exit.")
 
 
     args = parser.parse_args()
 
-    numpyro.set_platform("cpu")
-    numpyro.set_host_device_count(args.num_chains)
-    jax.local_device_count()
+    # Place to test functions
+    #profile_likelihood_function(args.speaker_type)
+
 
     if args.test:
         test()
