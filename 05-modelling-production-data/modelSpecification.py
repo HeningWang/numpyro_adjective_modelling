@@ -56,8 +56,8 @@ LM_PRIOR_15 = jnp.array([
 ])
 
 # Fixed sharpness-conditioned size gain (Option B, non-inferred start values)
-GAMMA_BLURRED = 1.0
-GAMMA_SHARP = 1.6
+GAMMA_BLURRED = 0.9
+GAMMA_SHARP = 2
 
 # =============================================================================  
 # 2. UTTERANCE COST  (LM-derived, temperature-scaled)  
@@ -151,34 +151,11 @@ def compute_size_semantics_fast(
     post_sorted  = post_sorted / (jnp.sum(post_sorted) + eps)
     cdf          = jnp.cumsum(post_sorted)       # (n_obj,) ∈ (0, 1]
 
-    # ── Step 2: find x_min_mid, x_max_mid via first-crossing ─────────────────
-    # "First index where cdf >= q" as a differentiable dot product
-    #
-    # above[i]      = 1 if cdf[i] >= q  else 0
-    # prev_above[i] = above[i-1]         (0 for i=0)
-    # first[i]      = above[i] * (1 - prev_above[i])
-    #               = 1 only at the FIRST crossing
-    #
-    # Then x_at_q   = dot(first, sizes_sorted)
-
-    def first_crossing_value(q):
-        above      = (cdf >= q).astype(jnp.float32)          # (n_obj,)
-        prev_above = jnp.concatenate([
-            jnp.zeros(1), above[:-1]
-        ])                                                    # (n_obj,)
-        first      = above * (1.0 - prev_above)              # (n_obj,)
-
-        # Edge case: q > all cdf values → use last element
-        no_cross = jnp.sum(first) < 0.5
-        first    = jnp.where(
-            no_cross,
-            jnp.zeros_like(first).at[-1].set(1.0),
-            first,
-        )
-        return jnp.dot(first, sizes_sorted)                  # scalar
-
-    x_min_mid = first_crossing_value(q_low)     # size at q_low  quantile
-    x_max_mid = first_crossing_value(q_high)    # size at q_high quantile
+    # ── Step 2: find x_min_mid, x_max_mid via first crossing (searchsorted) ──
+    idx_low  = jnp.minimum(jnp.searchsorted(cdf, q_low, side="left"), sizes_sorted.shape[0] - 1)
+    idx_high = jnp.minimum(jnp.searchsorted(cdf, q_high, side="left"), sizes_sorted.shape[0] - 1)
+    x_min_mid = sizes_sorted[idx_low]           # size at q_low quantile
+    x_max_mid = sizes_sorted[idx_high]          # size at q_high quantile
 
     # ── Step 3: context-dependent threshold ───────────────────────────────────
     #   k = 0  →  θ_k = x_max_mid  (only the largest objects are "big")
@@ -193,6 +170,35 @@ def compute_size_semantics_fast(
     z     = gamma * (sizes - theta_k) / denom                # (n_obj,)
 
     return 0.5 * (1.0 + lax.erf(z / jnp.sqrt(2.0)))         # (n_obj,) ∈ (0,1)
+
+
+def compute_size_semantics_fast_presorted(
+    sizes:        jnp.ndarray,      # (n_obj,)
+    sort_idx:     jnp.ndarray,      # (n_obj,)
+    sizes_sorted: jnp.ndarray,      # (n_obj,)
+    posterior:    jnp.ndarray,      # (n_obj,)
+    k:            float,
+    wf:           float,
+    gamma:        float = 1.0,
+    q_low:        float = 0.2,
+    q_high:       float = 0.8,
+) -> jnp.ndarray:
+    eps = 1e-8
+
+    post_sorted = posterior[sort_idx]
+    post_sorted = post_sorted / (jnp.sum(post_sorted) + eps)
+    cdf = jnp.cumsum(post_sorted)
+
+    idx_low = jnp.minimum(jnp.searchsorted(cdf, q_low, side="left"), sizes_sorted.shape[0] - 1)
+    idx_high = jnp.minimum(jnp.searchsorted(cdf, q_high, side="left"), sizes_sorted.shape[0] - 1)
+
+    x_min_mid = sizes_sorted[idx_low]
+    x_max_mid = sizes_sorted[idx_high]
+    theta_k = x_max_mid - k * (x_max_mid - x_min_mid)
+
+    denom = wf * jnp.sqrt(sizes ** 2 + theta_k ** 2 + eps)
+    z = gamma * (sizes - theta_k) / denom
+    return 0.5 * (1.0 + lax.erf(z / jnp.sqrt(2.0)))
 
 
 
@@ -480,6 +486,8 @@ def incremental_speaker(
     # ── NEW: extract sizes once here ──────────────────────────────────────────
     # states[:, 0] would be re-executed inside every vmap call without this
     sizes = states[:, 0]                                              # (n_obj,)
+    size_sort_idx = jnp.argsort(sizes)                                # (n_obj,)
+    sizes_sorted = sizes[size_sort_idx]                               # (n_obj,)
     # ─────────────────────────────────────────────────────────────────────────
 
     # ── LM utterance prior ────────────────────────────────────────────────────
@@ -508,18 +516,20 @@ def incremental_speaker(
         cand_mask_t = CANDIDATE_MASK[t]    # (n_utt, 3)
         active_t    = ACTIVE_POS[t]        # (n_utt,)
 
-        # ── Step 1: size log-semantics per utterance ───────────────────────────
+        # ── Step 1: size log-semantics per utterance (reuse pre-sorted sizes) ─
         def size_log_sem_for_utt(post):
-            sv = compute_size_semantics_fast(
-                sizes,    # ← pre-extracted (n_obj,), no slicing inside vmap
+            sv = compute_size_semantics_fast_presorted(
+                sizes,
+                size_sort_idx,
+                sizes_sorted,
                 post,
                 k,
                 wf,
                 gamma,
             )
-            return jnp.log(jnp.clip(sv, eps))                        # (n_obj,)
+            return jnp.log(jnp.clip(sv, eps))
 
-        size_log_sems = jax.vmap(size_log_sem_for_utt)(per_utt_posts) # (n_utt, n_obj)
+        size_log_sems = jax.vmap(size_log_sem_for_utt)(per_utt_posts)   # (n_utt, n_obj)
 
         # ── Step 2: full log-sem table  (n_utt, 3, n_obj) ────────────────────
         log_sem_static = jnp.stack(
@@ -541,22 +551,19 @@ def incremental_speaker(
             log_sem_table,     # (n_utt, 3, n_obj)
         )                                                             # (n_utt, 3, n_obj)
 
-        log_prior = jnp.log(
-            per_utt_posts / jnp.clip(
-                jnp.sum(per_utt_posts, axis=-1, keepdims=True), 1e-20
-            )
-        )                                                             # (n_utt, n_obj)
+        log_per_utt_posts = jnp.log(jnp.clip(per_utt_posts, eps))     # (n_utt, n_obj)
+        log_prior = log_per_utt_posts
 
         log_updated = log_prior[:, None, :] + log_prod_sem           # (n_utt, 3, n_obj)
 
         log_Z    = jax.scipy.special.logsumexp(log_updated, axis=-1) # (n_utt, 3)
         log_norm = log_updated - log_Z[:, :, None]                   # (n_utt, 3, n_obj)
-        L_vals   = jnp.exp(log_norm[:, :, referent_index])           # (n_utt, 3)
+        log_L_ref = log_norm[:, :, referent_index]                   # (n_utt, 3)
 
         # ── Step 4: masked softmax ─────────────────────────────────────────────
         logits      = jnp.where(
             cand_mask_t,
-            alpha * jnp.log(jnp.clip(L_vals, eps)),
+            alpha * log_L_ref,
             -1e9,
         )
         local_probs = jax.nn.softmax(logits, axis=-1)                # (n_utt, 3)
@@ -575,7 +582,7 @@ def incremental_speaker(
             log_sem_table,           # (n_utt, 3, n_obj)
         )                                                             # (n_utt, n_obj)
 
-        log_updated_post = jnp.log(jnp.clip(per_utt_posts, eps)) + jnp.where(
+        log_updated_post = log_per_utt_posts + jnp.where(
             active_t[:, None],
             selected_log_sem,
             0.0,
@@ -587,15 +594,111 @@ def incremental_speaker(
 
         return (log_scores + log_chosen, new_per_utt_posts), None
     
-    step_checkpointed = jax.checkpoint(step)   # ← wrap step  
     (log_final_scores, _), _ = lax.scan(
-        step_checkpointed,
+        step,
         (init_scores, init_posts),
         jnp.arange(T),
     )
 
     log_unnorm = log_P_beta + log_final_scores                        # (n_utt,)
     return jax.nn.softmax(log_unnorm)                                 # (n_utt,)
+
+
+def incremental_speaker_frozen(
+    states:       jnp.ndarray,
+    alpha:        float = 3.0,
+    color_semval: float = 0.95,
+    form_semval:  float = 0.80,
+    k:            float = 0.50,
+    wf:           float = 1.00,
+    beta:         float = 1.00,
+    gamma:        float = 1.00,
+) -> jnp.ndarray:
+
+    eps            = 1e-8
+    referent_index = 0
+    n_obj          = states.shape[0]
+
+    sizes = states[:, 0]
+    size_sort_idx = jnp.argsort(sizes)
+    sizes_sorted = sizes[size_sort_idx]
+
+    lm_scaled  = jnp.power(jnp.clip(LM_PRIOR_15, eps), beta)
+    log_P_beta = jnp.log(lm_scaled / jnp.sum(lm_scaled))
+
+    colors = states[:, 1]
+    forms  = states[:, 2]
+
+    log_color_sem = jnp.log(
+        jnp.where(colors == 1, color_semval, 1.0 - color_semval) + eps
+    )
+    log_form_sem  = jnp.log(
+        jnp.where(forms  == 1, form_semval,  1.0 - form_semval)  + eps
+    )
+
+    uniform     = jnp.ones(n_obj) / n_obj
+    init_scores = jnp.zeros(n_utt)
+    init_posts  = jnp.broadcast_to(uniform, (n_utt, n_obj))
+
+    def size_log_sem_for_utt(post):
+        sv = compute_size_semantics_fast_presorted(
+            sizes,
+            size_sort_idx,
+            sizes_sorted,
+            post,
+            k,
+            wf,
+            gamma,
+        )
+        return jnp.log(jnp.clip(sv, eps))
+
+    size_log_sems_frozen = jax.vmap(size_log_sem_for_utt)(init_posts)
+
+    log_sem_static = jnp.stack([log_color_sem, log_form_sem], axis=0)
+    log_sem_table_frozen = jnp.concatenate([
+        size_log_sems_frozen[:, None, :],
+        jnp.broadcast_to(log_sem_static[None, :, :], (n_utt, 2, n_obj)),
+    ], axis=1)
+
+    def step(carry, t):
+        log_scores, per_utt_posts = carry
+
+        cand_mask_t = CANDIDATE_MASK[t]
+        active_t    = ACTIVE_POS[t]
+
+        token_pres_t = TOKEN_PRESENT[t]
+        log_prod_sem = jnp.einsum("uav, uvo -> uao", token_pres_t, log_sem_table_frozen)
+
+        log_per_utt_posts = jnp.log(jnp.clip(per_utt_posts, eps))
+        log_updated = log_per_utt_posts[:, None, :] + log_prod_sem
+
+        log_Z = jax.scipy.special.logsumexp(log_updated, axis=-1)
+        log_norm = log_updated - log_Z[:, :, None]
+        log_L_ref = log_norm[:, :, referent_index]
+
+        logits = jnp.where(cand_mask_t, alpha * log_L_ref, -1e9)
+        local_probs = jax.nn.softmax(logits, axis=-1)
+
+        chosen = jnp.sum(local_probs * ACTUAL_TOK_ONEHOT[t], axis=-1)
+        chosen = jnp.where(active_t, chosen, 1.0)
+        log_chosen = jnp.where(active_t, jnp.log(jnp.clip(chosen, eps)), 0.0)
+
+        selected_log_sem = jnp.einsum(
+            "uv, uvo -> uo",
+            ACTUAL_TOK_ONEHOT[t],
+            log_sem_table_frozen,
+        )
+
+        log_updated_post = log_per_utt_posts + jnp.where(active_t[:, None], selected_log_sem, 0.0)
+        log_Z_post = jax.scipy.special.logsumexp(log_updated_post, axis=-1, keepdims=True)
+        new_per_utt_posts = jnp.exp(log_updated_post - log_Z_post)
+
+        return (log_scores + log_chosen, new_per_utt_posts), None
+
+    (log_final_scores, _), _ = lax.scan(step, (init_scores, init_posts), jnp.arange(T))
+
+    log_unnorm = log_P_beta + log_final_scores
+    return jax.nn.softmax(log_unnorm)
 
 # ── Vectorise over trials ──────────────────────────────────────────────────────  
 vectorized_incremental_speaker = jax.vmap(  
@@ -611,6 +714,19 @@ vectorized_incremental_speaker = jax.vmap(
              ),  
 )  
 
+vectorized_incremental_speaker_frozen = jax.vmap(
+    incremental_speaker_frozen,
+    in_axes=(0,
+             None,
+             None,
+             None,
+             None,
+             None,
+             None,
+             0,
+             ),
+)
+
 # ── Pre JIT ──────────────────────────────────────────────────────  
 @jax.jit  
 def jitted_speaker(states, alpha, color_semval, form_semval, k, wf, beta, gamma):  
@@ -618,15 +734,24 @@ def jitted_speaker(states, alpha, color_semval, form_semval, k, wf, beta, gamma)
         states, alpha, color_semval, form_semval, k, wf, beta, gamma  
     )  
 
+
+@jax.jit
+def jitted_speaker_frozen(states, alpha, color_semval, form_semval, k, wf, beta, gamma):
+    return vectorized_incremental_speaker_frozen(
+        states, alpha, color_semval, form_semval, k, wf, beta, gamma
+    )
+
 # Warm it up with dummy values matching your actual shapes/dtypes  
 _dummy_states = jnp.ones((len(states), 6, 3))  
 _dummy_gamma = jnp.ones((len(states),), dtype=jnp.float32)
 _ = jitted_speaker(_dummy_states, 3.0, 0.95, 0.80, 0.5, 1.0, 1.0, _dummy_gamma)  
 _.block_until_ready()  
+_ = jitted_speaker_frozen(_dummy_states, 3.0, 0.95, 0.80, 0.5, 1.0, 1.0, _dummy_gamma)
+_.block_until_ready()
 
 
 
-def likelihood_function_incremental_speaker(states = None, empirical = None, sharpness_idx = None):
+def likelihood_function_incremental_speaker(states = None, empirical = None, sharpness_idx = None, incremental_fast_mode: bool = False):
     # ── Semantic parameters ───────────────────────────────────────────────────  
     # # Infer color and form semantics; size semantics are computed from these via the
     # phi_color  = numpyro.sample("phi_color", dist.HalfNormal(2.0))  
@@ -670,16 +795,17 @@ def likelihood_function_incremental_speaker(states = None, empirical = None, sha
     with numpyro.plate("data", len(states)):
         # Get vectorized incremental speaker output for all states
         # For single output, it is shape (n_utt, n_obj)
-        probs = jitted_speaker(  
-            states,  
-            alpha,  
-            color_semval,  
-            form_semval,  
-            k,  
-            wf,  
-            beta,  
+        speaker_fn = jitted_speaker_frozen if incremental_fast_mode else jitted_speaker
+        probs = speaker_fn(
+            states,
+            alpha,
+            color_semval,
+            form_semval,
+            k,
+            wf,
+            beta,
             gamma,
-        )                                              # (N, n_utt) 
+        )                                              # (N, n_utt)
         if empirical is None:
             numpyro.sample("obs", dist.Categorical(probs=probs))
         else:
@@ -690,6 +816,7 @@ def run_inference(speaker_type: str = "global",
                     num_warmup: int = 100,
                     num_samples: int = 250,
                     num_chains: int = 4,
+                                        incremental_fast_mode: bool = False,
                     device: str = "cpu",
                   ):
 
@@ -724,27 +851,44 @@ def run_inference(speaker_type: str = "global",
     if speaker_type == "global":
         # Use the global speaker likelihood function
         model = likelihood_function_global_speaker
+        target_accept_prob = 0.9
+        max_tree_depth = 3
     elif speaker_type == "incremental":
         # Use the incremental speaker likelihood function
         model = likelihood_function_incremental_speaker
+        target_accept_prob = 0.85
+        max_tree_depth = 2
+    else:
+        raise ValueError(f"Unknown speaker_type: {speaker_type}")
     
-    kernel = NUTS(model, target_accept_prob=0.9, max_tree_depth=3)
+    kernel = NUTS(model, target_accept_prob=target_accept_prob, max_tree_depth=max_tree_depth)
     mcmc = MCMC(kernel, num_warmup=num_warmup,num_samples=num_samples, num_chains=num_chains,
                     chain_method="vectorized",           # ← vectorized chains for speed
                     )
-    mcmc.run(rng_key_, states_train, empirical_train_seq_flat, sharpness_idx)
+    if speaker_type == "incremental":
+        mcmc.run(rng_key_, states_train, empirical_train_seq_flat, sharpness_idx, incremental_fast_mode)
+    else:
+        mcmc.run(rng_key_, states_train, empirical_train_seq_flat, sharpness_idx)
 
     # print the summary of the posterior distribution
     mcmc.print_summary()
 
     # Get the MCMC samples and convert to a numpyro ArviZ InferenceData object
     posterior_samples = mcmc.get_samples() 
-    posterior_predictive = Predictive(model, posterior_samples)(
-    PRNGKey(1), states_train, None, sharpness_idx
-    )
-    prior = Predictive(model, num_samples=500)(
-        PRNGKey(2), states_train, None, sharpness_idx
-    )   
+    if speaker_type == "incremental":
+        posterior_predictive = Predictive(model, posterior_samples)(
+            PRNGKey(1), states_train, None, sharpness_idx, incremental_fast_mode
+        )
+        prior = Predictive(model, num_samples=500)(
+            PRNGKey(2), states_train, None, sharpness_idx, incremental_fast_mode
+        )
+    else:
+        posterior_predictive = Predictive(model, posterior_samples)(
+            PRNGKey(1), states_train, None, sharpness_idx
+        )
+        prior = Predictive(model, num_samples=500)(
+            PRNGKey(2), states_train, None, sharpness_idx
+        )
 
     N = states_train.shape[0]  # 3196
 
@@ -924,11 +1068,13 @@ def test():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run speaker inference with NumPyro.")
-    parser.add_argument("--speaker_type", type=str, choices=["global", "incremental"], default="global",
+    parser.add_argument("--speaker_type", type=str, choices=["global", "incremental"], default="incremental",
                         help="Choose the speaker model type.")
     parser.add_argument("--num_samples", type=int, default=500, help="Number of posterior samples.")
     parser.add_argument("--num_warmup", type=int, default=500, help="Number of warm-up iterations.")
     parser.add_argument("--num_chains", type=int, default=4, help="Number of MCMC chains.")
+    parser.add_argument("--incremental_fast_mode", action="store_true",
+                        help="Use faster approximate incremental speaker with frozen size-semantics updates.")
     parser.add_argument("--test", action="store_true", help="Run test function and exit.")
 
 
@@ -946,4 +1092,5 @@ if __name__ == "__main__":
             num_samples=args.num_samples,
             num_warmup=args.num_warmup,
             num_chains=args.num_chains,
+            incremental_fast_mode=args.incremental_fast_mode,
         )

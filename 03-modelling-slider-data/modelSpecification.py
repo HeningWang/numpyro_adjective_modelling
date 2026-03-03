@@ -1,6 +1,9 @@
 import os
+os.environ["JAX_PLATFORMS"] = "cpu"        # ← force CPU before JAX init  
+os.environ["JAX_TRACEBACK_FILTERING"] = "off"  # optional: full tracebacks  
+os.environ["XLA_FLAGS"] = "--xla_force_host_platform_device_count=4"  
+
 import argparse
-#from IPython.display import set_matplotlib_formats
 import jax
 import jax.numpy as jnp
 from jax import random, vmap
@@ -15,6 +18,7 @@ import arviz as az
 import numpyro
 from numpyro.diagnostics import hpdi
 import numpyro.distributions as dist
+import numpyro.distributions.constraints as constraints
 from numpyro import handlers
 from numpyro.infer import MCMC, NUTS, Predictive
 from jax import lax
@@ -100,41 +104,39 @@ def size_semantic_value_midrange(
     size: jnp.ndarray,      # scalar or array
     theta_k: float,
     w_f: float,
+    gamma: float = 1.0,     # size gain / discriminability (higher = sharper semantics)
 ) -> jnp.ndarray:
     """
-    Graded size semantics with mid-range threshold θ_k(C) and noise w_f.
+    Graded size semantics with mid-range threshold θ_k(C), noise w_f, and gain gamma.
 
-    ⟦size⟧_C(s) = 1 - Φ( (x - θ_k) / (w_f * sqrt(x^2 + θ_k^2)) )
+    ⟦size⟧_C(s) = Φ( gamma * (x - θ_k) / (w_f * sqrt(x^2 + θ_k^2)) )
     """
-    # Avoid zero division; eps not strictly necessary but helps numerics.
     eps = 1e-8
     denom = w_f * jnp.sqrt(size**2 + theta_k**2 + eps)
-    z = (size - theta_k) / denom
-    # Standard normal CDF at z
-    return 1.0 - dist.Normal(0.0, 1.0).cdf(z)
+    z = gamma * (size - theta_k) / denom
+    return dist.Normal(0.0, 1.0).cdf(z)
 
 def _size_meaning_vector(
     states: jnp.ndarray,   # (n_obj, 3)
     prior: jnp.ndarray,    # (n_obj,)
     k: float,
     wf: float,
+    gamma: float = 1.0,
     q_low: float = 0.2,
     q_high: float = 0.8,
 ) -> jnp.ndarray:
     """Context-dependent graded size semantics ⟦size⟧_C(s) for all objects."""
     sizes = states[:, 0]  # (n_obj,)
 
-    # mid-range extrema & threshold θ_k(C)
     x_min_mid, x_max_mid = get_midrange_extrema_from_context(
         states, prior, q_low=q_low, q_high=q_high
     )
     theta_k = x_max_mid - k * (x_max_mid - x_min_mid)
 
-    # ⟦size⟧_C(s) = 1 - Φ((x - θ_k)/(wf * sqrt(x²+θ_k²)))
     eps = 1e-8
     denom = wf * jnp.sqrt(sizes**2 + theta_k**2 + eps)
-    z = (sizes - theta_k) / denom
-    return 1.0 - dist.Normal(0.0, 1.0).cdf(z)  # (n_obj,)
+    z = gamma * (sizes - theta_k) / denom
+    return dist.Normal(0.0, 1.0).cdf(z)  # (n_obj,)
 
 # --- atomic adjective meaning (no sampling, just semantic values) ---
 
@@ -145,6 +147,7 @@ def adjMeaning(
     color_semvalue: float = 0.8,
     wf: float = 0.6,
     k: float = 0.5,
+    gamma: float = 1.0,
 ) -> jnp.ndarray:
     """
     Deterministic lexical meaning ⟦w⟧_C(s) for one adjective w in context C.
@@ -168,6 +171,7 @@ def adjMeaning(
                 k=k,
             ),
             w_f=wf,
+            gamma=gamma,
         )
 
     # word == 1 → color, else → size (we only ever use 0 or 1 here)
@@ -178,6 +182,7 @@ def literal_listener_one_word(
     color_semvalue: float = 0.90,
     wf: float = 1,
     k: float = 0.5,
+    gamma: float = 1.0,
 ) -> jnp.ndarray:
     """
     Incremental literal listener for single-word utterances:
@@ -199,6 +204,7 @@ def literal_listener_one_word(
             color_semvalue=color_semvalue,
             wf=wf,
             k=k,
+            gamma=gamma,
         )
         unnorm = prior0 * m
         norm = jnp.clip(unnorm.sum(), 1e-20)
@@ -213,6 +219,7 @@ def literal_listener_recursive(
     color_semvalue: float = 0.90,
     wf: float = 1,
     k: float = 0.5,
+    gamma: float = 1.0,
 ) -> jnp.ndarray:
     """
     Incremental literal listener using backward functional semantics.
@@ -251,6 +258,7 @@ def literal_listener_recursive(
             color_semvalue=color_semvalue,
             wf=wf,
             k=k,
+            gamma=gamma,
         )
         unnorm = prior * m
         norm = jnp.clip(unnorm.sum(), 1e-20)
@@ -283,6 +291,7 @@ def speaker_recursive(
     form_semvalue: float = 0.98,  # kept for API compatibility, unused here
     wf: float = 0.6,
     k: float = 0.5,
+    gamma: float = 1.0,
 ):
     """
     Truly token-wise incremental RSA speaker for the 2-utterance slider setup.
@@ -310,6 +319,7 @@ def speaker_recursive(
         color_semvalue=color_semvalue,
         wf=wf,
         k=k,
+        gamma=gamma,
     )  # (2, n_obj)
 
     # L2: shape (2, n_obj)
@@ -321,6 +331,7 @@ def speaker_recursive(
         color_semvalue=color_semvalue,
         wf=wf,
         k=k,
+        gamma=gamma,
     )  # (2, n_obj)
 
     # transpose to (n_obj, 2) for easier per-state handling
@@ -397,36 +408,43 @@ def global_speaker(
     bias: float = 2.0,
     color_semvalue: float = 0.98,
     k: float = 0.5,
+    wf: float = 0.8,
+    gamma: float = 1.0,
 ):
     listener = literal_listener_recursive(
         2,
         states,
         color_semvalue=color_semvalue,
+        wf=wf,
         k=k,
+        gamma=gamma,
     )  # (2, n_obj)
 
+    eps = 1e-20
     utt_cost = jnp.array([0.0, bias])          # (2,)
-    util_speaker = jnp.log(listener.T) - utt_cost  # (n_obj, 2)
+    util_speaker = jnp.log(jnp.clip(listener.T, eps, 1.0)) - utt_cost  # (n_obj, 2)
     softmax_result = jax.nn.softmax(alpha * util_speaker, axis=-1)
 
     # Extract only the probs for "big blue" and target referent (index 0)
     probs_bigblue_referent = softmax_result[0, 0]  # (n_obj,)
     return probs_bigblue_referent
 
-vectorized_gb_speaker = jax.vmap(global_speaker, in_axes=(0, # states
+vectorized_gb_speaker = jax.vmap(global_speaker, in_axes=(0,    # states
                                                           None, # alpha
                                                           None, # bias
                                                           None, # color_semvalue
                                                           None, # k
+                                                          None, # wf
+                                                          0,    # gamma (per-trial)
                                                           ))
 
 # Define a function to encode the states of the objects
 def encode_states(line):
       states = []
       for i in range(6):
-        color = 1 if line.iloc[10 + i] == "blue" else 0
-        form = 1 if line.iloc[16 + i] == "circle" else 0
-        new_obj = (line.iloc[4 + i], color, form) # size, color, form
+        color = 1 if line.iloc[11 + i] == "blue" else 0
+        form = 1 if line.iloc[17 + i] == "circle" else 0
+        new_obj = (line.iloc[5 + i], color, form) # size, color, form
         states.append(new_obj)
       return jnp.array(states)
 
@@ -511,44 +529,625 @@ def link_logit(p,s):
     xtrans = p * (x0 - (1 - x0)) + (1 - x0)
     return s * -jnp.log((1 / xtrans) - 1) + 0.5
 
-vectorized_inc_speaker = jax.vmap(speaker_recursive, in_axes=(None,0,None,None,None,None,None,None))
+vectorized_inc_speaker = jax.vmap(speaker_recursive, in_axes=(None,0,None,None,None,None,None,None,0))
 
-def likelihood_gb_speaker(states = None, data = None):
-    alpha = numpyro.sample("alpha", dist.HalfNormal(5))
-    color_semvalue = numpyro.sample("color_semvalue", dist.Beta(8, 3))
-    k = numpyro.sample("k", dist.Beta(3, 8))
-    bias = numpyro.sample("bias", dist.HalfNormal(5))
-    sigma = numpyro.sample("sigma", dist.HalfNormal(0.1))
+# Fixed parameters
+FIXED_BIAS = 2.0
+FIXED_COLOR_SEMVALUE = 0.8
+FIXED_K = 0.5
+FIXED_WF = 1.0
+# Sharpness-conditioned size gain (same convention as production model)
+GAMMA_BLURRED = 0.9
+GAMMA_SHARP   = 2.0
 
-    with numpyro.plate("data",len(states)):
-        model_prob = vectorized_gb_speaker(states, 
-                                           alpha, 
-                                           bias, 
-                                           color_semvalue,
-                                            k)
-        #slider_predict = jax.vmap(link_logit, in_axes = (0,None))(model_prob[:,0,0], steepness)
-        #slider_predict = jnp.clip(slider_predict, 1e-5, 1 - 1e-5)
+@jax.jit
+def jitted_global_speaker(states, alpha, bias, gamma):
+    return vectorized_gb_speaker(
+        states,
+        alpha,
+        bias,
+        FIXED_COLOR_SEMVALUE,
+        FIXED_K,
+        FIXED_WF,
+        gamma,
+    )
+
+@jax.jit
+def jitted_incremental_speaker(states, alpha, bias, gamma):
+    return vectorized_inc_speaker(
+        2,
+        states,
+        alpha,
+        bias,
+        FIXED_COLOR_SEMVALUE,
+        FIXED_COLOR_SEMVALUE,
+        FIXED_WF,
+        FIXED_K,
+        gamma,
+    )
+
+
+# Fast incremental path: precompute listeners outside MCMC loop.
+# literal_listener_one_word / literal_listener_recursive depend only on
+# (states, gamma), NOT on alpha or bias -- so they can be evaluated once
+# before MCMC and passed as static data to every likelihood call.
+
+_vmap_L1 = jax.vmap(
+    lambda s, g: literal_listener_one_word(
+        s, FIXED_COLOR_SEMVALUE, FIXED_WF, FIXED_K, g
+    ),
+    in_axes=(0, 0),
+)
+_vmap_L2 = jax.vmap(
+    lambda s, g: literal_listener_recursive(
+        2, s, FIXED_COLOR_SEMVALUE, FIXED_WF, FIXED_K, g
+    ),
+    in_axes=(0, 0),
+)
+
+
+@jax.jit
+def precompute_listeners_all(states, gamma):
+    """Precompute L1 and L2 listener arrays for all N trials (run once before MCMC).
+
+    Returns
+    -------
+    L1_all : (N, 2, n_obj) -- one-word listener
+    L2_all : (N, 2, n_obj) -- two-word listener
+    """
+    return _vmap_L1(states, gamma), _vmap_L2(states, gamma)
+
+
+def _inc_speaker_from_listeners(L1, L2, alpha, bias):
+    """Incremental speaker for one trial given precomputed listener arrays.
+
+    Parameters
+    ----------
+    L1   : (2, n_obj)  -- [L(big), L(blue)]
+    L2   : (2, n_obj)  -- [L(big blue), L(blue big)]
+    alpha: float
+    bias : float
+
+    Returns
+    -------
+    float : P_inc(big_blue | referent 0)
+    """
+    eps = 1e-20
+    L1_big     = L1[0]
+    L1_blue    = L1[1]
+    L2_bigblue = L2[0]
+    L2_bluebig = L2[1]
+
+    num_big  = jnp.power(jnp.clip(L1_big,  eps, 1.0), alpha)
+    num_blue = jnp.power(jnp.clip(L1_blue, eps, 1.0), alpha)
+    Z1       = jnp.clip(num_big + num_blue, eps)
+    S1_big   = num_big  / Z1
+    S1_blue  = num_blue / Z1
+
+    num_bigblue  = jnp.power(jnp.clip(L2_bigblue, eps, 1.0), alpha)
+    num_stop_big = jnp.power(jnp.clip(L1_big,     eps, 1.0), alpha)
+    Z2_big            = jnp.clip(num_bigblue + num_stop_big, eps)
+    S2_blue_given_big = num_bigblue / Z2_big
+
+    num_bluebig   = jnp.power(jnp.clip(L2_bluebig, eps, 1.0), alpha)
+    num_stop_blue = jnp.power(jnp.clip(L1_blue,    eps, 1.0), alpha)
+    Z2_blue           = jnp.clip(num_bluebig + num_stop_blue, eps)
+    S2_big_given_blue = num_bluebig / Z2_blue
+
+    P_bigblue = S1_big  * S2_blue_given_big
+    P_bluebig = S1_blue * S2_big_given_blue
+    P_chain   = jnp.clip(jnp.stack([P_bigblue, P_bluebig], axis=-1), eps, 1.0)
+
+    utt_cost = jnp.array([0.0, bias])
+    util     = jnp.log(P_chain) - utt_cost
+    S_inc    = jax.nn.softmax(util, axis=-1)
+    return S_inc[0, 0]
+
+
+# Vectorise over observations; alpha and bias remain scalar
+jitted_inc_speaker_fast = jax.jit(
+    jax.vmap(_inc_speaker_from_listeners, in_axes=(0, 0, None, None))
+)
+
+
+# Fast incremental path: precompute listeners outside MCMC loop.
+# literal_listener_one_word / literal_listener_recursive depend only on
+# (states, gamma), NOT on alpha or bias -- so they can be evaluated once
+# before MCMC and passed as static data to every likelihood call.
+
+_vmap_L1 = jax.vmap(
+    lambda s, g: literal_listener_one_word(
+        s, FIXED_COLOR_SEMVALUE, FIXED_WF, FIXED_K, g
+    ),
+    in_axes=(0, 0),
+)
+_vmap_L2 = jax.vmap(
+    lambda s, g: literal_listener_recursive(
+        2, s, FIXED_COLOR_SEMVALUE, FIXED_WF, FIXED_K, g
+    ),
+    in_axes=(0, 0),
+)
+
+
+@jax.jit
+def precompute_listeners_all(states, gamma):
+    """Precompute L1 and L2 listener arrays for all N trials (run once before MCMC).
+
+    Returns
+    -------
+    L1_all : (N, 2, n_obj) -- one-word listener
+    L2_all : (N, 2, n_obj) -- two-word listener
+    """
+    return _vmap_L1(states, gamma), _vmap_L2(states, gamma)
+
+
+def _inc_speaker_from_listeners(L1, L2, alpha, bias):
+    """Incremental speaker for one trial given precomputed listener arrays.
+
+    Parameters
+    ----------
+    L1   : (2, n_obj)  -- [L(big), L(blue)]
+    L2   : (2, n_obj)  -- [L(big blue), L(blue big)]
+    alpha: float
+    bias : float
+
+    Returns
+    -------
+    float : P_inc(big_blue | referent 0)
+    """
+    eps = 1e-20
+    L1_big     = L1[0]
+    L1_blue    = L1[1]
+    L2_bigblue = L2[0]
+    L2_bluebig = L2[1]
+
+    num_big  = jnp.power(jnp.clip(L1_big,  eps, 1.0), alpha)
+    num_blue = jnp.power(jnp.clip(L1_blue, eps, 1.0), alpha)
+    Z1       = jnp.clip(num_big + num_blue, eps)
+    S1_big   = num_big  / Z1
+    S1_blue  = num_blue / Z1
+
+    num_bigblue  = jnp.power(jnp.clip(L2_bigblue, eps, 1.0), alpha)
+    num_stop_big = jnp.power(jnp.clip(L1_big,     eps, 1.0), alpha)
+    Z2_big            = jnp.clip(num_bigblue + num_stop_big, eps)
+    S2_blue_given_big = num_bigblue / Z2_big
+
+    num_bluebig   = jnp.power(jnp.clip(L2_bluebig, eps, 1.0), alpha)
+    num_stop_blue = jnp.power(jnp.clip(L1_blue,    eps, 1.0), alpha)
+    Z2_blue           = jnp.clip(num_bluebig + num_stop_blue, eps)
+    S2_big_given_blue = num_bluebig / Z2_blue
+
+    P_bigblue = S1_big  * S2_blue_given_big
+    P_bluebig = S1_blue * S2_big_given_blue
+    P_chain   = jnp.clip(jnp.stack([P_bigblue, P_bluebig], axis=-1), eps, 1.0)
+
+    utt_cost = jnp.array([0.0, bias])
+    util     = jnp.log(P_chain) - utt_cost
+    S_inc    = jax.nn.softmax(util, axis=-1)
+    return S_inc[0, 0]
+
+
+# Vectorise over observations; alpha and bias remain scalar
+jitted_inc_speaker_fast = jax.jit(
+    jax.vmap(_inc_speaker_from_listeners, in_axes=(0, 0, None, None))
+)
+
+
+# Fast incremental path: precompute listeners outside MCMC loop.
+# literal_listener_one_word / literal_listener_recursive depend only on
+# (states, gamma), NOT on alpha or bias -- so they can be evaluated once
+# before MCMC and passed as static data to every likelihood call.
+
+_vmap_L1 = jax.vmap(
+    lambda s, g: literal_listener_one_word(
+        s, FIXED_COLOR_SEMVALUE, FIXED_WF, FIXED_K, g
+    ),
+    in_axes=(0, 0),
+)
+_vmap_L2 = jax.vmap(
+    lambda s, g: literal_listener_recursive(
+        2, s, FIXED_COLOR_SEMVALUE, FIXED_WF, FIXED_K, g
+    ),
+    in_axes=(0, 0),
+)
+
+
+@jax.jit
+def precompute_listeners_all(states, gamma):
+    """Precompute L1 and L2 listener arrays for all N trials (run once before MCMC).
+
+    Returns
+    -------
+    L1_all : (N, 2, n_obj) -- one-word listener
+    L2_all : (N, 2, n_obj) -- two-word listener
+    """
+    return _vmap_L1(states, gamma), _vmap_L2(states, gamma)
+
+
+def _inc_speaker_from_listeners(L1, L2, alpha, bias):
+    """Incremental speaker for one trial given precomputed listener arrays.
+
+    Parameters
+    ----------
+    L1   : (2, n_obj)  -- [L(big), L(blue)]
+    L2   : (2, n_obj)  -- [L(big blue), L(blue big)]
+    alpha: float
+    bias : float
+
+    Returns
+    -------
+    float : P_inc(big_blue | referent 0)
+    """
+    eps = 1e-20
+    L1_big     = L1[0]
+    L1_blue    = L1[1]
+    L2_bigblue = L2[0]
+    L2_bluebig = L2[1]
+
+    num_big  = jnp.power(jnp.clip(L1_big,  eps, 1.0), alpha)
+    num_blue = jnp.power(jnp.clip(L1_blue, eps, 1.0), alpha)
+    Z1       = jnp.clip(num_big + num_blue, eps)
+    S1_big   = num_big  / Z1
+    S1_blue  = num_blue / Z1
+
+    num_bigblue  = jnp.power(jnp.clip(L2_bigblue, eps, 1.0), alpha)
+    num_stop_big = jnp.power(jnp.clip(L1_big,     eps, 1.0), alpha)
+    Z2_big            = jnp.clip(num_bigblue + num_stop_big, eps)
+    S2_blue_given_big = num_bigblue / Z2_big
+
+    num_bluebig   = jnp.power(jnp.clip(L2_bluebig, eps, 1.0), alpha)
+    num_stop_blue = jnp.power(jnp.clip(L1_blue,    eps, 1.0), alpha)
+    Z2_blue           = jnp.clip(num_bluebig + num_stop_blue, eps)
+    S2_big_given_blue = num_bluebig / Z2_blue
+
+    P_bigblue = S1_big  * S2_blue_given_big
+    P_bluebig = S1_blue * S2_big_given_blue
+    P_chain   = jnp.clip(jnp.stack([P_bigblue, P_bluebig], axis=-1), eps, 1.0)
+
+    utt_cost = jnp.array([0.0, bias])
+    util     = jnp.log(P_chain) - utt_cost
+    S_inc    = jax.nn.softmax(util, axis=-1)
+    return S_inc[0, 0]
+
+
+# Vectorise over observations; alpha and bias remain scalar
+jitted_inc_speaker_fast = jax.jit(
+    jax.vmap(_inc_speaker_from_listeners, in_axes=(0, 0, None, None))
+)
+
+class ZOIB(dist.Distribution):
+    arg_constraints = {
+        "mu": constraints.unit_interval,
+        "sigma": constraints.positive,
+        "pi0": constraints.unit_interval,
+        "pi1": constraints.unit_interval,
+    }
+    support = constraints.unit_interval
+
+    def __init__(self, mu: jnp.ndarray, sigma: float, pi0: float, pi1: float, validate_args=None):
+        self.mu = jnp.clip(mu, 1e-6, 1.0 - 1e-6)
+        self.sigma = jnp.clip(sigma, 1e-6)
+        self.pi0 = jnp.clip(pi0, 0.0, 0.49)
+        self.pi1 = jnp.clip(pi1, 0.0, 0.49)
+        self.cont_weight = jnp.clip(1.0 - self.pi0 - self.pi1, 1e-6, 1.0)
+        concentration = jnp.clip(1.0 / (self.sigma**2 + 1e-6), 1e-3, 1e6)
+        self.beta_a = jnp.clip(self.mu * concentration, 1e-3, 1e6)
+        self.beta_b = jnp.clip((1.0 - self.mu) * concentration, 1e-3, 1e6)
+        batch_shape = jnp.shape(self.mu)
+        super().__init__(batch_shape=batch_shape, event_shape=(), validate_args=validate_args)
+
+    def sample(self, key, sample_shape=()):
+        key_comp, key_beta = random.split(key)
+        mix_probs = jnp.stack(
+            [
+                jnp.full(self.batch_shape, self.pi0),
+                jnp.full(self.batch_shape, self.pi1),
+                jnp.full(self.batch_shape, self.cont_weight),
+            ],
+            axis=-1,
+        )
+        comp = dist.Categorical(probs=mix_probs).sample(key_comp, sample_shape=sample_shape)
+        beta_sample = dist.Beta(self.beta_a, self.beta_b).sample(key_beta, sample_shape=sample_shape)
+        return jnp.where(comp == 0, 0.0, jnp.where(comp == 1, 1.0, beta_sample))
+
+    def log_prob(self, value):
+        value = jnp.clip(value, 0.0, 1.0)
+        eps = 1e-6  # must be > float32 machine epsilon (~1.2e-7) so 1.0 - eps != 1.0 in float32
+        is_zero = jnp.isclose(value, 0.0)
+        is_one = jnp.isclose(value, 1.0)
+        beta_lp = dist.Beta(self.beta_a, self.beta_b).log_prob(jnp.clip(value, eps, 1.0 - eps))
+        logp_cont = jnp.log(self.cont_weight + eps) + beta_lp
+        logp = jnp.where(is_zero, jnp.log(self.pi0 + eps), logp_cont)
+        logp = jnp.where(is_one, jnp.log(self.pi1 + eps), logp)
+        return logp
+
+def likelihood_gb_speaker(states=None, data=None, pi0: float=0.01, pi1: float=0.01, sharpness_idx=None):
+    alpha = numpyro.sample("alpha", dist.HalfNormal(5.0))
+    bias  = numpyro.sample("bias",  dist.HalfNormal(2.0))  # ordering cost: >0 prefers "big blue"
+    sigma = numpyro.sample("sigma", dist.HalfNormal(0.3))
+
+    if sharpness_idx is None:
+        sharpness_idx = jnp.zeros(len(states))
+    gamma = jnp.where(sharpness_idx > 0.5, GAMMA_SHARP, GAMMA_BLURRED)
+
+    with numpyro.plate("data", len(states)):
+        model_prob = jitted_global_speaker(states, alpha, bias, gamma)
+        model_prob = jnp.clip(model_prob, 1e-6, 1 - 1e-6)
         if data is not None:
-            data = jnp.clip(data, 1e-5, 1 - 1e-5)
-        numpyro.sample("obs", dist.TruncatedNormal(model_prob, sigma, low = 1e-5, high = 1 - 1e-5,), obs=data)
+            data = jnp.clip(data, 0.0, 1.0)
+        numpyro.sample("obs", ZOIB(model_prob, sigma, pi0, pi1), obs=data)
 
-def likelihood_inc_speaker(states = None, data = None):
-    gamma = numpyro.sample("gamma", dist.HalfNormal(5))
-    color_semvalue = numpyro.sample("color_semvalue", dist.Uniform(0.5, 1))
-    form_semvalue = color_semvalue
-    k = numpyro.sample("k", dist.Uniform(0, 1))
-    wf = 0.8
-    bias = numpyro.sample("bias", dist.HalfNormal(5))
-    steepness = 1
-    sigma = numpyro.sample("sigma", dist.HalfNormal(0.1))
+def likelihood_inc_speaker(states=None, data=None, pi0: float=0.01, pi1: float=0.01, sharpness_idx=None):
+    alpha = numpyro.sample("alpha", dist.HalfNormal(5.0))
+    bias  = numpyro.sample("bias",  dist.HalfNormal(2.0))  # ordering cost: >0 prefers "big blue"
+    sigma = numpyro.sample("sigma", dist.HalfNormal(0.3))
 
-    with numpyro.plate("data",len(states)):
-        model_prob = vectorized_inc_speaker(2, states, gamma, bias, color_semvalue, form_semvalue, wf, k)
-        #slider_predict = jax.vmap(link_logit, in_axes = (0,None))(model_prob[:,0,0], steepness)
-        #slider_predict = jnp.clip(slider_predict, 1e-5, 1 - 1e-5)
+    if sharpness_idx is None:
+        sharpness_idx = jnp.zeros(len(states))
+    gamma = jnp.where(sharpness_idx > 0.5, GAMMA_SHARP, GAMMA_BLURRED)
+
+    with numpyro.plate("data", len(states)):
+        model_prob = jitted_incremental_speaker(states, alpha, bias, gamma)
+        model_prob = jnp.clip(model_prob, 1e-6, 1 - 1e-6)
         if data is not None:
-            data = jnp.clip(data, 1e-5, 1 - 1e-5)
-        numpyro.sample("obs", dist.Normal(model_prob, sigma), obs=data)
+            data = jnp.clip(data, 0.0, 1.0)
+        numpyro.sample("obs", ZOIB(model_prob, sigma, pi0, pi1), obs=data)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Hierarchical (random participant intercepts) — Option A
+# New functions only; all functions above are left intact.
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+
+
+def likelihood_inc_speaker_fast(
+    states=None,
+    data=None,
+    pi0=0.01,
+    pi1=0.01,
+    sharpness_idx=None,
+    L1_all=None,
+    L2_all=None,
+):
+    """Like likelihood_inc_speaker but uses precomputed L1/L2 arrays."""
+    alpha = numpyro.sample("alpha", dist.HalfNormal(5.0))
+    bias  = numpyro.sample("bias",  dist.HalfNormal(2.0))
+    sigma = numpyro.sample("sigma", dist.HalfNormal(0.3))
+
+    with numpyro.plate("data", L1_all.shape[0]):
+        model_prob = jitted_inc_speaker_fast(L1_all, L2_all, alpha, bias)
+        model_prob = jnp.clip(model_prob, 1e-6, 1 - 1e-6)
+        if data is not None:
+            data = jnp.clip(data, 0.0, 1.0)
+        numpyro.sample("obs", ZOIB(model_prob, sigma, pi0, pi1), obs=data)
+
+def import_dataset_hier(file_path="../01-dataset/01-slider-data-preprocessed.csv"):
+    """Extends import_dataset() with participant indices for hierarchical models.
+
+    Returns
+    -------
+    states_train    : jnp.ndarray  (N, n_obj, 3)
+    empirical_train : jnp.ndarray  (N,)  slider values in [0, 1]
+    df              : pd.DataFrame full preprocessed data frame
+    participant_idx : jnp.ndarray  int32 (N,) — 0-based participant index per obs
+    n_participants  : int          number of unique participants
+    """
+    df = pd.read_csv(file_path)
+    df = df[df["combination"] == "dimension_color"]
+    df.reset_index(inplace=True, drop=True)
+    df["states"] = df.apply(lambda row: encode_states(row), axis=1)
+    df.prefer_first_1st = jnp.clip(df.prefer_first_1st.to_numpy(), 0, 100)
+    df.prefer_first_1st = df.prefer_first_1st / 100
+    train = df
+    states_train    = jnp.stack([cell for cell in train.states])
+    empirical_train = jnp.array(train.prefer_first_1st.to_numpy())
+    # Deterministic 0-based participant index sorted by participant id
+    participant_ids_np = train["id"].to_numpy()
+    unique_ids         = np.unique(participant_ids_np)
+    id_to_idx          = {int(pid): i for i, pid in enumerate(unique_ids)}
+    participant_idx    = jnp.array(
+        [id_to_idx[int(pid)] for pid in participant_ids_np], dtype=jnp.int32
+    )
+    n_participants = int(len(unique_ids))
+    return states_train, empirical_train, df, participant_idx, n_participants
+
+
+def likelihood_gb_speaker_hier(
+    states=None, data=None,
+    pi0: float = 0.01, pi1: float = 0.01,
+    sharpness_idx=None,
+    participant_idx=None, n_participants: int = 1,
+):
+    """Global speaker with per-participant additive intercepts (Option A).
+
+    Population parameters (identical priors to likelihood_gb_speaker):
+        alpha ~ HalfNormal(5)
+        bias  ~ HalfNormal(2)
+        sigma ~ HalfNormal(0.3)
+    Participant-level random intercepts:
+        tau     ~ HalfNormal(0.2)        # SD of baseline shifts
+        delta_i ~ Normal(0, tau)         # intercept for participant i
+    Observation model:
+        mu_j = clip(RSA(alpha, bias, s_j) + delta[participant_idx[j]], 1e-6, 1-1e-6)
+        y_j  ~ ZOIB(mu_j, sigma, pi0, pi1)
+    """
+    alpha = numpyro.sample("alpha", dist.HalfNormal(5.0))
+    bias  = numpyro.sample("bias",  dist.HalfNormal(2.0))
+    sigma = numpyro.sample("sigma", dist.HalfNormal(0.3))
+    tau   = numpyro.sample("tau",   dist.HalfNormal(0.2))
+
+    with numpyro.plate("participants", n_participants):
+        delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+    if sharpness_idx is None:
+        sharpness_idx = jnp.zeros(len(states))
+    gamma = jnp.where(sharpness_idx > 0.5, GAMMA_SHARP, GAMMA_BLURRED)
+
+    with numpyro.plate("data", len(states)):
+        rsa_prob    = jitted_global_speaker(states, alpha, bias, gamma)
+        model_prob  = jnp.clip(rsa_prob + delta[participant_idx], 1e-6, 1 - 1e-6)
+        if data is not None:
+            data = jnp.clip(data, 0.0, 1.0)
+        numpyro.sample("obs", ZOIB(model_prob, sigma, pi0, pi1), obs=data)
+
+
+def likelihood_inc_speaker_hier(
+    states=None, data=None,
+    pi0: float = 0.01, pi1: float = 0.01,
+    sharpness_idx=None,
+    participant_idx=None, n_participants: int = 1,
+):
+    """Incremental speaker with per-participant additive intercepts (Option A).
+
+    Same structure as likelihood_gb_speaker_hier but uses the incremental RSA.
+    """
+    alpha = numpyro.sample("alpha", dist.HalfNormal(5.0))
+    bias  = numpyro.sample("bias",  dist.HalfNormal(2.0))
+    sigma = numpyro.sample("sigma", dist.HalfNormal(0.3))
+    tau   = numpyro.sample("tau",   dist.HalfNormal(0.2))
+
+    with numpyro.plate("participants", n_participants):
+        delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+    if sharpness_idx is None:
+        sharpness_idx = jnp.zeros(len(states))
+    gamma = jnp.where(sharpness_idx > 0.5, GAMMA_SHARP, GAMMA_BLURRED)
+
+    with numpyro.plate("data", len(states)):
+        rsa_prob    = jitted_incremental_speaker(states, alpha, bias, gamma)
+        model_prob  = jnp.clip(rsa_prob + delta[participant_idx], 1e-6, 1 - 1e-6)
+        if data is not None:
+            data = jnp.clip(data, 0.0, 1.0)
+        numpyro.sample("obs", ZOIB(model_prob, sigma, pi0, pi1), obs=data)
+
+
+
+
+
+def likelihood_inc_speaker_hier_fast(
+    states=None,
+    data=None,
+    pi0=0.01,
+    pi1=0.01,
+    sharpness_idx=None,
+    participant_idx=None,
+    n_participants=1,
+    L1_all=None,
+    L2_all=None,
+):
+    """Hierarchical incremental speaker using precomputed L1/L2 arrays."""
+    alpha = numpyro.sample("alpha", dist.HalfNormal(5.0))
+    bias  = numpyro.sample("bias",  dist.HalfNormal(2.0))
+    sigma = numpyro.sample("sigma", dist.HalfNormal(0.3))
+    tau   = numpyro.sample("tau",   dist.HalfNormal(0.2))
+
+    with numpyro.plate("participants", n_participants):
+        delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+    with numpyro.plate("data", L1_all.shape[0]):
+        rsa_prob   = jitted_inc_speaker_fast(L1_all, L2_all, alpha, bias)
+        model_prob = jnp.clip(rsa_prob + delta[participant_idx], 1e-6, 1 - 1e-6)
+        if data is not None:
+            data = jnp.clip(data, 0.0, 1.0)
+        numpyro.sample("obs", ZOIB(model_prob, sigma, pi0, pi1), obs=data)
+
+def run_inference_hier(
+    speaker_type: str = "global",
+    num_samples: int = 1000,
+    num_warmup: int = 1000,
+    num_chains: int = 4,
+):
+    """Run MCMC for the hierarchical (random participant intercept) speaker model.
+
+    Saves results to
+        ./inference_data/mcmc_results_{speaker_type}_speaker_hier_warmup{W}_samples{S}_chains{C}.nc
+    """
+    states_train, empirical_train, df, participant_idx, n_participants = import_dataset_hier()
+    print(f"Hierarchical model: {n_participants} participants, {len(states_train)} observations")
+
+    empirical_train_np = np.asarray(empirical_train)
+    pi0 = float(np.mean(np.isclose(empirical_train_np, 0.0)))
+    pi1 = float(np.mean(np.isclose(empirical_train_np, 1.0)))
+    if (pi0 + pi1) >= 0.95:
+        raise ValueError(f"Boundary masses too large for ZOIB: pi0+pi1={pi0+pi1:.3f}")
+
+    sharpness_idx = jnp.array((df["sharpness"] == "sharp").astype(float).to_numpy())
+    gamma_train   = jnp.where(sharpness_idx > 0.5, GAMMA_SHARP, GAMMA_BLURRED)
+
+    # Precompile JIT paths
+    _ = jitted_global_speaker(states_train, 2.0, 2.0, gamma_train).block_until_ready()
+    _ = jitted_incremental_speaker(states_train, 2.0, 2.0, gamma_train).block_until_ready()
+
+    output_file_name = (
+        f"./inference_data/mcmc_results_{speaker_type}_speaker_hier"
+        f"_warmup{num_warmup}_samples{num_samples}_chains{num_chains}.nc"
+    )
+    print(f"Output file: {output_file_name}")
+    if os.path.exists(output_file_name):
+        os.remove(output_file_name)
+        print(f"Removed existing file: {output_file_name}")
+
+    rng_key = random.PRNGKey(11)
+    rng_key, rng_key_ = random.split(rng_key)
+
+    extra_args_hier: tuple = ()
+    if speaker_type == "global":
+        model = likelihood_gb_speaker_hier
+    elif speaker_type == "incremental":
+        print("Precomputing literal listener arrays (once, outside MCMC)...")
+        L1_all, L2_all = precompute_listeners_all(states_train, gamma_train)
+        L1_all = L1_all.block_until_ready()
+        L2_all = L2_all.block_until_ready()
+        print("Precomputation done.")
+        model = likelihood_inc_speaker_hier_fast
+        extra_args_hier = (L1_all, L2_all)
+    else:
+        raise ValueError("Invalid speaker type. Choose 'global' or 'incremental'.")
+
+    kernel = NUTS(model, dense_mass=False, max_tree_depth=8, target_accept_prob=0.9)
+    mcmc = MCMC(
+        kernel,
+        num_warmup=num_warmup,
+        num_samples=num_samples,
+        num_chains=num_chains,
+        chain_method="vectorized",
+    )
+    mcmc.run(
+        rng_key_, states_train, empirical_train,
+        pi0, pi1, sharpness_idx, participant_idx, n_participants,
+        *extra_args_hier,
+    )
+    mcmc.print_summary(exclude_deterministic=False)
+
+    posterior_samples = mcmc.get_samples()
+    posterior_predictive = Predictive(model, posterior_samples)(
+        PRNGKey(1), states_train, None,
+        pi0, pi1, sharpness_idx, participant_idx, n_participants,
+        *extra_args_hier,
+    )
+    prior = Predictive(model, num_samples=1000)(
+        PRNGKey(2), states_train, None,
+        pi0, pi1, sharpness_idx, participant_idx, n_participants,
+        *extra_args_hier,
+    )
+
+    N = states_train.shape[0]
+    numpyro_data = az.from_numpyro(
+        mcmc,
+        prior=prior,
+        posterior_predictive=posterior_predictive,
+        coords={
+            "states": np.arange(N),
+            "participants": np.arange(n_participants),
+        },
+        dims={"obs": ["states"], "delta": ["participants"]},
+    )
+    az.to_netcdf(numpyro_data, output_file_name)
+    assert os.path.exists(output_file_name), f"Save failed: {output_file_name} not found"
+    size_mb = os.path.getsize(output_file_name) / 1024 / 1024
+    print(f"Saved: {output_file_name}  ({size_mb:.1f} MB)")
+
 
 def run_inference(
     speaker_type: str = "global",
@@ -560,39 +1159,63 @@ def run_inference(
     # Import the dataset
     states_train, empirical_train, df = import_dataset()
 
+    # Precompute boundary masses for ZOIB outside MCMC
+    empirical_train_np = np.asarray(empirical_train)
+    pi0 = float(np.mean(np.isclose(empirical_train_np, 0.0)))
+    pi1 = float(np.mean(np.isclose(empirical_train_np, 1.0)))
+    if (pi0 + pi1) >= 0.95:
+        raise ValueError(f"Boundary masses too large for ZOIB: pi0+pi1={pi0+pi1:.3f}")
+
+    # Sharpness-conditioned size gain (per trial)
+    sharpness_idx = jnp.array((df["sharpness"] == "sharp").astype(float).to_numpy())
+    gamma_train   = jnp.where(sharpness_idx > 0.5, GAMMA_SHARP, GAMMA_BLURRED)
+
+    # Precompile JIT paths before MCMC (production-style speedup)
+    _ = jitted_global_speaker(states_train, 2.0, 2.0, gamma_train).block_until_ready()
+    _ = jitted_incremental_speaker(states_train, 2.0, 2.0, gamma_train).block_until_ready()
+
     # Setup output file name
     output_file_name = f"./inference_data/mcmc_results_{speaker_type}_speaker_warmup{num_warmup}_samples{num_samples}_chains{num_chains}.nc"
+    print(f"Output file: {output_file_name}")
+
+    # Remove existing file so we never silently overwrite a stale result
+    if os.path.exists(output_file_name):
+        os.remove(output_file_name)
+        print(f"Removed existing file: {output_file_name}")
 
     # Define a random key
-    rng_key = random.PRNGKey(4711)
-    rng_key, rng_key_ = random.split(rng_key)
-
-    # Define the MCMC kernel
     rng_key = random.PRNGKey(11)
     rng_key, rng_key_ = random.split(rng_key)
+    extra_args: tuple = ()
     if speaker_type == "global":
         model = likelihood_gb_speaker
     elif speaker_type == "incremental":
-        model = likelihood_inc_speaker
+        print("Precomputing literal listener arrays (once, outside MCMC)...")
+        L1_all, L2_all = precompute_listeners_all(states_train, gamma_train)
+        L1_all = L1_all.block_until_ready()
+        L2_all = L2_all.block_until_ready()
+        print("Precomputation done.")
+        model = likelihood_inc_speaker_fast
+        extra_args = (L1_all, L2_all)
     else:
         raise ValueError("Invalid speaker type. Choose 'global' or 'incremental'.")
-    
+
     # Define and run MCMC
-    kernel = NUTS(model, dense_mass=True, max_tree_depth=10, target_accept_prob=0.9)
-    mcmc = MCMC(kernel, num_warmup=num_warmup,num_samples=num_samples,num_chains=num_chains)
-    mcmc.run(rng_key_, states_train, empirical_train)
+    kernel = NUTS(model, dense_mass=True, max_tree_depth=8, target_accept_prob=0.9)
+    mcmc = MCMC(kernel, num_warmup=num_warmup, num_samples=num_samples, num_chains=num_chains, chain_method="vectorized")
+    mcmc.run(rng_key_, states_train, empirical_train, pi0, pi1, sharpness_idx, *extra_args)
 
     # Print the summary of the posterior distribution
     mcmc.print_summary()
 
     # Get the MCMC samples and convert to a numpyro ArviZ InferenceData object
-    posterior_samples = mcmc.get_samples() 
+    posterior_samples = mcmc.get_samples()
     posterior_predictive = Predictive(model, posterior_samples)(
-    PRNGKey(1), states_train
+        PRNGKey(1), states_train, None, pi0, pi1, sharpness_idx, *extra_args
     )
     prior = Predictive(model, num_samples=1000)(
-        PRNGKey(2), states_train
-    )   
+        PRNGKey(2), states_train, None, pi0, pi1, sharpness_idx, *extra_args
+    )
 
     N = states_train.shape[0]  # 3196
 
@@ -606,16 +1229,22 @@ def run_inference(
 
     # Write the inference data to a netcdf file
     az.to_netcdf(numpyro_data, output_file_name)
+    assert os.path.exists(output_file_name), f"Save failed: {output_file_name} not found"
+    size_mb = os.path.getsize(output_file_name) / 1024 / 1024
+    print(f"Saved: {output_file_name}  ({size_mb:.1f} MB)")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run speaker inference with NumPyro.")
     parser.add_argument("--speaker_type", type=str, choices=["global", "incremental"], default="global",
                         help="Choose the speaker model type.")
-    parser.add_argument("--num_samples", type=int, default=1000, help="Number of posterior samples.")
-    parser.add_argument("--num_warmup", type=int, default=1000, help="Number of warm-up iterations.")
+    parser.add_argument("--num_samples", type=int, default=500, help="Number of posterior samples.")
+    parser.add_argument("--num_warmup", type=int, default=500, help="Number of warm-up iterations.")
     parser.add_argument("--num_chains", type=int, default=4, help="Number of MCMC chains.")
     parser.add_argument("--test", action="store_true", help="Run test function and exit.")
-
+    parser.add_argument(
+        "--hierarchical", action="store_true",
+        help="Run hierarchical model with random participant intercepts (Option A)."
+    )
 
     args = parser.parse_args()
 
@@ -625,6 +1254,13 @@ if __name__ == "__main__":
 
     if args.test:
         pass
+    elif args.hierarchical:
+        run_inference_hier(
+            speaker_type=args.speaker_type,
+            num_samples=args.num_samples,
+            num_warmup=args.num_warmup,
+            num_chains=args.num_chains,
+        )
     else:
         run_inference(
             speaker_type=args.speaker_type,
