@@ -1,0 +1,307 @@
+% =============================================================================
+%  Simulation section — stand-alone fragment for inclusion in main CogSci paper
+%  Compile as standalone:  pdflatex simulation_standalone.tex
+%  Include in main paper:  \input{simulation}
+% =============================================================================
+
+\section{Simulation}
+
+\subsection{Overview}
+
+A factorial simulation examined how two RSA speaker architectures — an
+\textit{incremental} speaker that composes utterances token-by-token via a
+chain rule, and a \textit{global} speaker that evaluates full two-word
+utterances at once — distribute probability mass over the orders
+\textit{big blue} and \textit{blue big} across a wide range of contextual
+and semantic parameter settings.
+The central measure is communicative success: the probability that a
+pragmatic listener, reasoning about the speaker, recovers the intended
+referent from a given utterance.
+Size-first (\textit{big blue}) is taken to be preferred whenever it yields
+strictly higher communicative success than color-first (\textit{blue big}).
+
+\subsection{Model}
+
+\paragraph{Referents and contexts.}
+Each context consists of $n_{\text{obj}}$ objects drawn from a
+log-normal size distribution with spread parameter $\sigma_{\text{sd}}$,
+with each draw independently assigned a uniformly random color (0 or 1) and
+form (0 or 1).
+The intended referent is always the object with the largest size, color
+$= 1$ (``blue''), and form $= 1$.
+The uniform object prior is $P(s) = 1/n_{\text{obj}}$.
+
+\paragraph{Adjective semantics.}
+For a color adjective (``blue''),
+\begin{equation}
+  \llbracket \text{blue} \rrbracket(s) \;=\;
+  c_s \cdot v_c + (1 - c_s)(1 - v_c),
+\end{equation}
+where $c_s \in \{0,1\}$ is the object's color feature and
+$v_c \in (0.5, 1)$ is the color semantic value (how reliably the word
+maps to the feature).
+
+For a size adjective (``big''), applicability is modeled as a
+cumulative-normal threshold function with perceptual blur $\omega$:
+\begin{equation}
+  \llbracket \text{big} \rrbracket(s) \;=\;
+  \Phi\!\left(\frac{s - \theta}{\omega\sqrt{s^2 + \theta^2}}\right),
+\end{equation}
+where $\theta$ is a context-sensitive threshold and
+$\omega$ controls sharpness: small $\omega$ produces a steep CDF
+so that only the very largest object receives high applicability.
+
+\paragraph{Threshold.}
+The threshold $\theta$ is defined over the mid-range of the context
+distribution $C$,
+\begin{equation}
+  \theta_k(C) \;=\;
+  x_{\max}^{\text{mid}}(C) - k\bigl(x_{\max}^{\text{mid}}(C) - x_{\min}^{\text{mid}}(C)\bigr),
+\end{equation}
+where $x_{\min}^{\text{mid}}$ and $x_{\max}^{\text{mid}}$ are the
+20th- and 80th-percentile sizes in $C$, and $k \in [0,1]$ shifts
+the threshold between the top and the middle of the mid-range.
+Higher $k$ lowers the threshold, admitting more objects as ``big.''
+
+\paragraph{Literal listener.}
+For single-word utterances,
+$L_0(s \mid w) \propto \llbracket w \rrbracket(s) \cdot P(s)$.
+For two-word utterances $u = w_1 w_2$, the literal listener applies
+backward functional composition:
+$L_0(s \mid w_1 w_2) \propto
+  \llbracket w_1 \rrbracket(s) \cdot \llbracket w_2 \rrbracket(s) \cdot P(s)$.
+
+\paragraph{Global speaker.}
+The global speaker evaluates both full two-word utterances simultaneously,
+\begin{equation}
+  S_G(u \mid s) \;\propto\; \bigl[L_0(s \mid u)\bigr]^\alpha,
+  \quad u \in \{\text{big-blue},\; \text{blue-big}\},
+\end{equation}
+treating each ordering as an atomic unit.
+
+\paragraph{Incremental speaker.}
+The incremental speaker applies a two-step chain rule
+following \citeA{cohn-gordon-et-al2019}.
+At step 1, it selects a first token by reasoning over the single-word
+literal listener:
+\begin{equation}
+  S_1(w_1 \mid s)
+    \;\propto\; \bigl[L_0(s \mid w_1)\bigr]^\alpha.
+\end{equation}
+At step 2, given prefix $w_1$, it decides whether to continue:
+\begin{equation}
+  S_2(w_2 \mid w_1, s)
+    \;\propto\; \bigl[L_0(s \mid w_1 w_2)\bigr]^\alpha,
+\end{equation}
+where the alternative is stopping at the single word $w_1$.
+The full utterance probability is then
+\begin{equation}
+  S_I(w_1 w_2 \mid s) \;=\; S_1(w_1 \mid s) \cdot S_2(w_2 \mid w_1, s).
+  \label{eq:inc-chain}
+\end{equation}
+
+\paragraph{Pragmatic listener.}
+The pragmatic listener inverts the speaker distribution via Bayes' rule
+with a uniform prior over referents,
+\begin{equation}
+  L_1(s \mid u) \;\propto\; S(u \mid s) \cdot P(s).
+\end{equation}
+The primary dependent variable is the \textit{size-first advantage},
+\begin{equation}
+  \Delta(s) \;=\;
+  L_1(s^* \mid \text{big-blue}) - L_1(s^* \mid \text{blue-big}),
+\end{equation}
+where $s^*$ is the intended referent.
+Positive values indicate that the size-first order yields higher
+communicative success.
+
+\subsection{Parameter Sweep}
+
+Six parameters were varied factorially (Table~\ref{tab:params}).
+For each combination, 1{,}000 contexts were sampled, yielding
+6{,}000{,}000 rows total.
+The simulation was implemented in JAX \cite{jax2018github} and executed
+in a single vectorized pass using nested \texttt{vmap}/\texttt{jit},
+completing in under 45 seconds on CPU.
+
+\begin{table}[h]
+\centering
+\small
+\caption{Simulation parameter grid.}
+\label{tab:params}
+\begin{tabular}{llc}
+\toprule
+Parameter & Values & $n$ \\
+\midrule
+$n_{\text{obj}}$    & 2, 6, 10, 14, 18, 22, 26, 30 & 8 \\
+Speaker model       & incremental, global           & 2 \\
+$v_c$ (color sem.)  & 0.90, 0.92, 0.94, 0.96, 0.98 & 5 \\
+$k$ (threshold)     & 0.1, 0.3, 0.5, 0.7, 0.9      & 5 \\
+$\omega$ (blur)     & 0.1, 0.2, 0.3, 0.5, 0.8      & 5 \\
+$\sigma_{\text{sd}}$ (context spread) & 2.0, 7.75, 15.0 & 3 \\
+\midrule
+\multicolumn{2}{l}{Fixed: $\alpha = 1$, bias $= 0$, utterance length $= 2$} & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Results}
+
+\subsubsection{Global Speaker}
+
+The global speaker produced a consistent size-first advantage across
+virtually all parameter combinations.
+Averaging over all contexts and parameter values, it assigned
+$L_1(s^* \mid \text{big-blue}) = 0.138$ versus
+$L_1(s^* \mid \text{blue-big}) = 0.122$,
+yielding a mean advantage of $\Delta = +0.016$.
+Across individual parameter combinations, 64.4\% produced a positive
+advantage, and the direction was preserved across all levels of
+$n_{\text{obj}}$, $\sigma_{\text{sd}}$, and $v_c$.
+
+The preference arises because the global speaker, reasoning about a
+context in which the referent is always the largest object, assigns
+disproportionate weight to the size adjective as a discriminating first
+token.
+Both adjectives identify the referent, but ``big'' partitions the
+context more sharply when objects span a wide size range.
+
+\subsubsection{Incremental Speaker: Role of Perceptual Blur}
+
+The incremental speaker showed a qualitatively different pattern depending
+on the perceptual blur parameter $\omega$.
+At $\omega = 0.5$ (the default in prior work), the incremental speaker
+produced a \textit{negative} mean advantage ($\Delta = -0.016$),
+with only 23.3\% of parameter combinations favoring size-first.
+This reversal reflects a structural asymmetry in the chain rule
+(Equation~\ref{eq:inc-chain}):
+
+The referent is by construction the only object with color $= 1$, so
+$\llbracket \text{blue} \rrbracket(s^*)$ is close to $v_c$ ($\approx 0.90$--$0.98$)
+while $\llbracket \text{blue} \rrbracket(s)$ for any non-referent is close to
+$1 - v_c$ ($\approx 0.02$--$0.10$).
+The color adjective thus almost perfectly identifies the referent at
+step 1.
+The size adjective, however, depends on $\omega$: at large $\omega$,
+the CDF is shallow and multiple objects receive moderate size
+applicability, reducing the discriminating power of ``big'' relative to
+``blue.''
+When ``blue'' is the more informative first token, the incremental
+speaker prefers to say it first, producing \textit{blue big}.
+
+Reducing $\omega$ sharpens the size CDF so that only the largest object
+receives high applicability, restoring size as a reliable discriminator at
+step 1.
+Figure~\ref{fig:adv-wf} shows a monotone relationship between $\omega$
+and $\Delta$ for the incremental speaker: the size-first advantage crosses
+zero at approximately $\omega \approx 0.25$, and reaches a mean of
+$+0.050$ at $\omega = 0.1$.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\columnwidth]{../04-simulation-w-randomstates/sim_advantage_wf_sd.png}
+  \caption{Mean size-first advantage ($\Delta$) as a function of perceptual
+    blur $\omega$ for incremental and global speakers, broken down by context
+    sharpness $\sigma_{\text{sd}}$.
+    Error bands show $\pm 2$ SE.
+    The dashed line marks $\Delta = 0$.
+    The global speaker is insensitive to $\omega$; the incremental speaker
+    crosses from negative to positive at $\omega \approx 0.25$.}
+  \label{fig:adv-wf}
+\end{figure}
+
+\subsubsection{Interaction of $\omega$ with Context Sharpness}
+
+Context sharpness $\sigma_{\text{sd}}$ modulates the overall magnitude
+of $\Delta$ for both speakers but interacts most strongly with $\omega$
+for the incremental speaker.
+Table~\ref{tab:wf-sd} reports mean $\Delta$ at each combination of
+$\omega$ and $\sigma_{\text{sd}}$ for the incremental speaker.
+At $\omega = 0.1$, sharp contexts ($\sigma_{\text{sd}} = 15$) produce
+$\Delta = +0.075$, approximately ten times the global-speaker advantage,
+while blurred contexts ($\sigma_{\text{sd}} = 2$) yield only $+0.007$.
+This interaction occurs because a sharp context distributes objects
+across a wide size range, making the size adjective highly diagnostic
+when $\omega$ is small.
+In a blurred context, objects cluster near a common size, and even a
+steep CDF cannot make ``big'' much more discriminating than chance.
+
+\begin{table}[h]
+\centering
+\small
+\caption{Mean size-first advantage $\Delta$ for the incremental speaker
+  by perceptual blur $\omega$ and context sharpness $\sigma_{\text{sd}}$.}
+\label{tab:wf-sd}
+\begin{tabular}{lccc}
+\toprule
+ & \multicolumn{3}{c}{$\sigma_{\text{sd}}$} \\
+\cmidrule(lr){2-4}
+$\omega$ & 2.0 & 7.75 & 15.0 \\
+\midrule
+0.1 & $+0.007$ & $+0.068$ & $+0.075$ \\
+0.2 & $-0.016$ & $+0.027$ & $+0.035$ \\
+0.3 & $-0.025$ & $+0.008$ & $+0.014$ \\
+0.5 & $-0.032$ & $-0.011$ & $-0.006$ \\
+0.8 & $-0.035$ & $-0.022$ & $-0.019$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Role of the Threshold Parameter $k$}
+
+The threshold parameter $k$ has opposite directional effects on the two
+speaker architectures.
+For the incremental speaker, higher $k$ (lower threshold; more objects
+qualify as ``big'') degrades size-first advantage — increasing $k$ from
+0.1 to 0.9 reduces the mean advantage by approximately 0.035 — because a
+permissive threshold weakens the discriminating power of ``big.''
+For the global speaker, the same manipulation slightly \textit{increases}
+the size-first advantage, reflecting a different cost structure: the
+global speaker trades off complete utterances rather than first tokens,
+and a lower threshold can increase the marginal utility of adding a size
+specification last.
+
+\subsubsection{Effect of Context Size}
+
+Communicative success for both speakers declines with increasing
+$n_{\text{obj}}$ due to dilution of referent probability across more
+objects (Figure~\ref{fig:nobj}).
+The \textit{direction} of the advantage is preserved across context
+sizes for the global speaker.
+For the incremental speaker the direction is parameter-dependent, but
+the crossover at $\omega \approx 0.25$ is robust to $n_{\text{obj}}$.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\columnwidth]{../04-simulation-w-randomstates/sim_nobj.png}
+  \caption{Communicative success for \textit{big blue} and \textit{blue big}
+    as a function of context size $n_{\text{obj}}$, faceted by context
+    sharpness and speaker model.}
+  \label{fig:nobj}
+\end{figure}
+
+\subsubsection{Optimal Parameter Region}
+
+The highest observed size-first advantage for the incremental speaker
+across the entire grid was $\Delta = +0.107$, occurring at
+$\omega = 0.1$, $\sigma_{\text{sd}} = 15$, $k = 0.1$, $v_c = 0.90$.
+This combination maximizes the diagnosticity of ``big'' at step 1 by
+(a) sharpening the size CDF ($\omega = 0.1$), (b) spreading objects
+maximally ($\sigma_{\text{sd}} = 15$), (c) raising the threshold to
+restrict ``big'' to the top of the distribution ($k = 0.1$), and
+(d) slightly reducing color reliability ($v_c = 0.90$), diminishing
+the comparative advantage of ``blue'' as a first token.
+
+\subsection{Summary}
+
+The global speaker predicts a size-first preference across parameter space.
+The incremental speaker predicts the same only when perceptual blur is
+low ($\omega \lesssim 0.25$) and context sharpness is high.
+At typical blur values reported in prior psychophysical work ($\omega
+\approx 0.5$--$0.8$), the incremental speaker reverses to prefer
+color-first, driven by the higher step-1 informativeness of color in
+contexts where all referents share the same color feature.
+The critical parameter is $\omega$: it determines whether the
+chain-rule composition penalizes or favors size as the initial token.
+These results motivate estimating $\omega$ from empirical adjective-ordering
+data rather than fixing it a priori.

@@ -3,44 +3,53 @@
 # Set the locale to ensure decimal points are interpreted correctly
 export LC_NUMERIC="en_US.UTF-8"
 
-# Define values for arguments
-nobj_list=$(seq 2 4 30)  # Generates a sequence from 2 to 30 with a step of 4, 7 values in total
-speaker_list=("incremental_speaker" "global_speaker")  # List of speaker models, two values in total
-color_semvalue_list=$(seq 0.9 0.02 0.99)  # Generates a sequence from 0.90 to 0.99 with a step of 0.02, six values in total
-k_list=$(seq 0.1 0.2 0.99)  # Generates a sequence from 0.05 to 0.99 with a step of 0.2, five values in total
-wf_list=(0.5)  # Generates a sequence from 0.2 to 1.0 with a step of 0.2, five values in total
-size_distribution_list=("normal")  # List of size distributions, three values in total
-# Total iterations: 5 (nobj) * 2 (speaker) * 6 (color_semvalue) * 4 (k) * 5 (wf) * 3 (size_distribution) = 1800 * 10000 (sample_size) = 18,000,000
+# ---------------------------------------------------------------------------
+# Parameter sweep
+# ---------------------------------------------------------------------------
+nobj_list=$(seq 2 4 30)                      # 2, 6, 10, 14, 18, 22, 26, 30  (8 values)
+speaker_list=("incremental_speaker" "global_speaker")
+color_semvalue_list=$(seq 0.9 0.02 0.99)     # 0.90, 0.92, 0.94, 0.96, 0.98  (5-6 values)
+k_list=$(seq 0.1 0.2 0.99)                   # 0.1, 0.3, 0.5, 0.7, 0.9       (5 values)
+size_distribution_list=("normal")
+sd_spread_list=(2.0 7.75 15.0)               # blurred / baseline / sharp     (3 values)
 
-# Define other arguments with default values
-sample_size=10000
-form_semvalue=0.98
+# ---------------------------------------------------------------------------
+# Fixed parameters
+# ---------------------------------------------------------------------------
+sample_size=1000
 alpha=1.0
 bias=0.0
-wf=0.5
+wf=0.5          # perceptual blur: cognitive constant, NOT swept
 world_length=2
-size_distribution="normal"
-# 10000 * 7 nobj * 2 speaker * 6 color_semvalue * 5 k = 4200000
-n_total=400
+
+# Total iterations: 8 (nobj) * 2 (speaker) * 6 (color_semvalue) * 5 (k) * 3 (sd_spread) = 1440
+# Total contexts: 1440 * 1000 = 1,440,000  (Monte Carlo SE < 0.016)
+n_total=1440
 counter=0
-# Loop over speaker_list, nobj_list, color_semvalue_list, k_list, and wf_list to run the Python script for each combination
-for speaker in "${speaker_list[@]}"; do 
+
+# ---------------------------------------------------------------------------
+# Simulation loop
+# ---------------------------------------------------------------------------
+for speaker in "${speaker_list[@]}"; do
     for nobj in $nobj_list; do
         for color_semvalue in $color_semvalue_list; do
             for k in $k_list; do
-                        ((counter++))
-                        python 01-simulation-random-states.py --nobj $nobj \
-                            --sample_size $sample_size \
-                            --color_semvalue $color_semvalue \
-                            --form_semvalue $form_semvalue \
-                            --wf $wf \
-                            --k $k \
-                            --speaker $speaker \
-                            --alpha $alpha \
-                            --bias $bias \
-                            --world_length $world_length \
-                            --size_distribution $size_distribution
-                        echo -ne "Progress: $counter / $n_total \r"
+                for sd_spread in "${sd_spread_list[@]}"; do
+                    ((counter++))
+                    python 01-simulation-random-states.py \
+                        --nobj              $nobj \
+                        --sample_size       $sample_size \
+                        --color_semvalue    $color_semvalue \
+                        --wf                $wf \
+                        --k                 $k \
+                        --speaker           $speaker \
+                        --alpha             $alpha \
+                        --bias              $bias \
+                        --world_length      $world_length \
+                        --size_distribution normal \
+                        --sd_spread         $sd_spread
+                    echo -ne "Progress: $counter / $n_total \r"
+                done
             done
         done
     done

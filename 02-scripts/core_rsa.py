@@ -1,9 +1,8 @@
 import os
 
-#from IPython.display import set_matplotlib_formats
 import jax
 import jax.numpy as jnp
-from jax import random, vmap
+from jax import random, vmap, lax
 from jax.scipy.special import logsumexp
 import matplotlib.pyplot as plt
 import numpy as np
@@ -23,351 +22,386 @@ numpyro.set_platform("cpu")
 print(jax.__version__)
 jax.devices()
 
-# Mutate the dataset to include the states of the objects
-# ... states are independent variables for models
 
-
-
-
-# Transform/rescale slider value from range 0 to 100 to 0 to 1
-# ... in order to match predicted probability from models
-
-def transformation_data(slider_value, link = None):
-    if link == "identity":
-      slider_value = jnp.clip(slider_value, 0, 100)
-      transformed_prob = slider_value / 100
-    elif link == "logit":
-        transformed_prob = 1 / (1 + math.exp(-slider_value))
-    return transformed_prob
-
-def link_function(x, param = 1):
-    return 1 / (1 + jnp.exp(param * -(x - 0.5)))
-
-def compute_alpha_beta_concentration(mu, v):
-    alpha = mu * v
-    beta = (1 - mu) * v
-    return alpha, beta
-
-#def Marginal(fn):
-#    return memoize(lambda *args: HashingMarginal(Search(fn).run(*args)))
-
-def plot_dist(d, ax=None):
-    support = d.enumerate_support()
-    data = [d.log_prob(s).exp().item() for s in d.enumerate_support()]
-    names = list(map(str, support))
-
-    if ax is None:
-        ax = plt.subplot(111)
-
-    width = 0.3
-    bins = [x-width/2 for x in range(1, len(data) + 1)]
-    ax.bar(bins,data,width=width)
-    ax.set_xticks(list(range(1, len(data) + 1)))
-    ax.set_xticklabels(names, rotation=45, rotation_mode="anchor", ha="right")
-
-def get_results(posterior):
-    results = {}
-    support = posterior.enumerate_support()
-    data = [posterior.log_prob(s).exp().item() for s in posterior.enumerate_support()]
-    results["support"] = support
-    results["probs"] = data
-    return results
+# ---------------------------------------------------------------------------
+# Utility helpers
+# ---------------------------------------------------------------------------
 
 def normalize(arr, axis=1):
-    """
-    Normalize arr along axis
-    """
     return arr / jnp.sum(arr, axis=axis, keepdims=True)
 
-def get_threshold_kp(states, k=0.5):
-    min_val = jnp.min(states[:,0])
-    max_val = jnp.max(states[:,0])
-    threshold = max_val - k * (max_val - min_val)
-    return threshold
+def link_function(x, param=1):
+    return 1 / (1 + jnp.exp(param * -(x - 0.5)))
 
-def get_threshold_kp_weighted(states, states_prior, k=0.5):
-    sorted_indices = jnp.unique(jnp.argsort(states[:, 0] * states_prior), size = 6)
-    sorted_states = states[sorted_indices]
-    min_val = sorted_states[0, 0]
-    max_val = sorted_states[-1, 0]
-
-    weighted_threshold = max_val - k * (max_val - min_val)
-
-    return weighted_threshold
-
-def get_threshold_kp_sample(states, states_prior, k=0.5):
-    
-    xk = states[:, 0] # The values of size of all objects in a given context, shape (nobj,) 
-    pk = states_prior # The prior probabilities of the objects in a given context, shape (nobj,)
-    dist = scipy.stats.rv_discrete(values=(xk, pk)) # Create a discrete distribution
-    sample_size = int(round(states.shape[0] / 2)) # Sample size is half of the number of objects in a given context
-    samples = jnp.array(dist.rvs(size= sample_size)) # Sample from the distribution
-    min_val = jnp.min(samples) # Get the minimum value of the samples
-    max_val = jnp.max(samples) # Get the maximum value of the samples
-    threshold = max_val - k * (max_val - min_val) # Compute the threshold
-
-    return threshold
-
-def get_threshold_kp_sample_jax(states, states_prior, k=0.5):
-    sample_size = int(round(states.shape[0] / 2)) # Sample size is half of the number of objects in a given context
-    costum_dist = dist.Categorical(probs=states_prior)
-    sample_indices = jnp.unique(costum_dist.sample(random.PRNGKey(0),(1,sample_size)), size= sample_size)
-    sorted_states = states[sample_indices][:,0]
-    min_val = jnp.min(sorted_states)
-    max_val = jnp.max(sorted_states)
-
-    weighted_threshold = max_val - k * (max_val - min_val)
-    return weighted_threshold
-
-
-def adjMeaning(word, obj, current_state_prior, color_semvalue=0.98, form_semvalue=0.98, wf=0.6, k=0.5):
-    colors = [1]  # Specify the color values
-    sizes = [0]  # Specify the size values
-
-    if word == 1:
-        return numpyro.sample("color", numpyro.distributions.Bernoulli(color_semvalue)) if word == obj[1] else numpyro.sample("color", numpyro.distributions.Bernoulli(1 - color_semvalue))
-    elif word == 0:
-        threshold = get_threshold_kp(current_state_prior, k)
-        size = obj[0]
-        prob_big = 1 - dist.Normal(size - threshold, wf * jnp.sqrt(size ** 2 + threshold ** 2)).cdf(jnp.array([0.0]))
-        return numpyro.sample("size", numpyro.distributions.Bernoulli(prob_big))
-    
-def get_size_semval(size,threshold,wf):
-  return 1 - dist.Normal(size - threshold, wf * jnp.sqrt(size ** 2 + threshold ** 2)).cdf(0.0)
-
-def literal_listener_one_word(states, color_semvalue = 0.98, form_semvalue = 0.98, wf = 0.6, k = 0.5):
-  probs_blue = jnp.where((1. == states[:, 1]), color_semvalue, 1 - color_semvalue)
-  threshold = get_threshold_kp(states, k)
-  probs_big = jnp.array([1 - dist.Normal(obj[0] - threshold, wf * jnp.sqrt(obj[0] ** 2 + threshold ** 2)).cdf(0) for obj in states])
-  probs = normalize(jnp.array([probs_big,probs_blue]))
-  return probs
-
-def literal_listener_recursive(word_length, states, color_semvalue = 0.90, form_semvalue = 0.98, wf = 0.6, k = 0.5, sample_based = True):
-  '''
-  Input: word_length: int, states: jnp.array(nobj, 3), color_semvalue: float, form_semvalue: float, wf: float, k: float
-  return: jnp.array(2 * nobj) where the first row corresponds to big blue, the second row corresponds to blue big
-  '''
-  if word_length <= 1: # Base case
-    current_states_prior = normalize(jnp.ones((2,states.shape[0]))) # Create a uniform prior of shape (2, nobj)
-  else:
-    current_states_prior = literal_listener_recursive(word_length - 1, states, color_semvalue = 0.98, form_semvalue = 0.98, wf = 0.6, k = 0.5) # Recursive call
-    current_states_prior = jnp.flip(current_states_prior, axis = 0) # Flip the prior, axis = 0 means flip along the rows
-    # At first, first row is probs for big, second row is probs for blue
-
-  probs_blue = jnp.where((1. == states[:, 1]), color_semvalue, 1 - color_semvalue) # Apply the meaning function of color to objects to get probs
-  # Get the threshold for the size adjective
-  if sample_based:
-    threshold = get_threshold_kp_sample_jax(states, current_states_prior[0,:], k)
-  else:
-    threshold = get_threshold_kp(states, k)
-  probs_big = jax.vmap(get_size_semval, in_axes = (0, None, None))(states[:,0], threshold, wf) # Apply the meaning function of size to objects to get probs
-  probs = normalize(jnp.multiply(jnp.array([probs_big,probs_blue]), current_states_prior)) # Apply Bayes' rule
-  return probs
-
-
-def speaker_one_word(states, alpha = 1, bias = 0, color_semvalue = 0.98, form_semvalue = 0.98, wf = 0.6, k = 0.5):
-  listener = literal_listener_one_word(states, color_semvalue, form_semvalue,wf,k)
-  bias_weights = jnp.array([0, 1]) * bias
-  util_speaker = jnp.log(jnp.transpose(listener)) - bias_weights
-  softmax_result = jax.nn.softmax(alpha * util_speaker)
-  return softmax_result
-
-def speaker_recursive(word_length, states, alpha = 1, bias = 0, color_semvalue = 0.98, form_semvalue = 0.98, wf = 0.6, k = 0.5):
-  # At first, first col is probs for big blue, second col is probs for blue big
-  # Create a biased prior of shape (2,)
-  if word_length <= 1: # Base case
-    current_utt_prior = jnp.array([0, 1]) * bias # the negative bias is applied to the second utterance (blue big)
-  else:
-    current_utt_prior = speaker_recursive(word_length - 1, states, alpha, bias, color_semvalue, form_semvalue, wf, k) # Recursive call
-    current_utt_prior = jnp.flip(current_utt_prior, axis = 1) # Flip the prior, axis = 1 means flip along the columns
-
-  listener = literal_listener_recursive(word_length, states, color_semvalue, form_semvalue, wf, k) # Get the listener probs given the current states
-  util_speaker = jnp.log(jnp.transpose(listener)) - current_utt_prior # Compute the utility of the speaker
-  softmax_result = jax.nn.softmax(alpha * util_speaker) # Compute the softmax of the utility
-  return softmax_result
-
-def global_speaker(states, alpha = 1, bias = 0, color_semvalue = 0.98, form_semvalue = 0.98, wf = 0.6, k = 0.5):
-  listener = literal_listener_recursive(2,states, color_semvalue, form_semvalue,wf,k)
-  bias_weights = jnp.array([0, 1]) * bias
-  util_speaker = jnp.log(jnp.transpose(listener)) - bias_weights
-  softmax_result = jax.nn.softmax(alpha * util_speaker)
-  return softmax_result
-
-def pragmatic_listener(states, alpha = 1, bias = 0, color_semvalue = 0.98, form_semvalue = 0.98, wf = 0.6, k = 0.5, speaker = "global_speaker", word_length = 2):
-  prior_probs = jnp.ones((2,states.shape[0])) # Create a uniform prior of shape (2, nobj)
-  if speaker == "global_speaker":
-    softmax_result = global_speaker(states, alpha, bias, color_semvalue, form_semvalue, wf, k)
-    # Apply Bayes' rule
-    bayes_result = normalize(jnp.transpose(softmax_result) * prior_probs)
-    return bayes_result
-  
-  if speaker == "incremental_speaker":
-    softmax_result = speaker_recursive(word_length, states, alpha, bias, color_semvalue, form_semvalue, wf, k)
-    # Apply Bayes' rule
-    bayes_result = normalize(jnp.transpose(softmax_result) * prior_probs)
-    return bayes_result
-   
-# Define a function to encode the states of the objects
-def encode_states(line):
-      states = []
-      for i in range(6):
-        color = 1 if line.iloc[10 + i] == "blue" else 0
-        form = 1 if line.iloc[16 + i] == "circle" else 0
-        new_obj = (line.iloc[4 + i], color, form) # size, color, form
-        states.append(new_obj)
-      return jnp.array(states)
-
-def import_dataset(file_path = "../01-dataset/01-slider-data-preprocessed.csv"):
-   # Import the data
-    df = pd.read_csv(file_path)
-
-    # Subset data to only include combination dimension_color
-    df = df[df['combination'] == 'dimension_color']
-    df.reset_index(inplace=True, drop=True)
-
-    # Mutate the dataset to include the states of the objects
-    df["states"] = df.apply(lambda row: encode_states(row), axis=1)
-
-    # Transform/rescale slider value from range 0 to 100 to 0 to 1
-    df.prefer_first_1st = jnp.clip(df.prefer_first_1st.to_numpy(), 0, 100)
-    df.prefer_first_1st = df.prefer_first_1st/100
-
-        
-    # split the dataset into training and test sets
-    #train, test = train_test_split(df, test_size=0.99, random_state=42)
-
-    # Use the whole dataset as training set
-    train = df
-
-    # Extract the states and empirical data and store them in JAX arrays
-    states_train = jnp.stack([cell for cell in train.states])
-    empirical_train = jnp.array(train.prefer_first_1st.to_numpy())
-
-    return states_train, empirical_train, df
-    
-
-def test_core_rsa():
-    # Import the data
-    file_path = "../01-dataset/01-slider-data-preprocessed.csv"
-    df = pd.read_csv(file_path)
-
-    # subset data to only include combination dimension_color
-    df = df[df['combination'] == 'dimension_color']
-    df.reset_index(inplace=True, drop=True)
-
-    # Mutate the dataset to include the states of the objects
-    df_experiment = df.copy()
-    df_experiment["states"] = df_experiment.apply(lambda row: encode_states(row), axis=1)
-
-    # Transform/rescale slider value from range 0 to 100 to 0 to 1
-    df_experiment.prefer_first_1st = jnp.clip(df_experiment.prefer_first_1st.to_numpy(), 0, 100)
-    df_experiment.prefer_first_1st = df_experiment.prefer_first_1st/100
-    print(df_experiment.prefer_first_1st.describe())
-
-    # 118 brdc sharp, target not the biggest
-    # 12 brdc blurred
-
-    # 119 erdc sharp
-    # 15 erdc blurred
-
-    index = 15
-    states_manuell = jnp.array([[10., 1., 1.],
-                    [10., 1., 1.],
-                    [3., 1., 1.],
-                    [3., 1., 0.],
-                    [3., 1., 0.],
-                    [1., 0., 1.]], dtype=jnp.float32)
-
-    states_example = states_manuell
-    #states_example = df_experiment.iloc[index, df_experiment.columns.get_loc("states")]
-    condition = df_experiment.iloc[index, df_experiment.columns.get_loc("conditions")]
-    distribution = df_experiment.iloc[index, df_experiment.columns.get_loc("sharpness")]
-    preference = df_experiment.iloc[index, df_experiment.columns.get_loc("prefer_first_1st")]
-    print(states_example)
-    print(condition + " " + distribution)
-    print(preference)
-    print(f"literal listener one word: {literal_listener_one_word(states_example)}")
-    print(f"literal listener two words: {literal_listener_recursive(2,states_example)}")
-    print(f"speaker one word: {speaker_one_word(states_example)}")
-    print(f"speaker two words global: {global_speaker(states_example)}")
-    print("________________________________________")
-    print(f"speaker two words incremental: {speaker_recursive(2,states_example)}")
-    print("________________________________________")
-    print(f"pragmatic listener of a global speaker: {pragmatic_listener(states_example)}")
-    print("________________________________________")
-    print(f"pragmatic listener of a incremental speaker: {pragmatic_listener(states_example, speaker= 'incremental_speaker')}")
-
-def link_logit(p,s):
+def link_logit(p, s):
     x0 = 1 / (jnp.exp(1 / (-2 * s)) + 1)
     xtrans = p * (x0 - (1 - x0)) + (1 - x0)
     return s * -jnp.log((1 / xtrans) - 1) + 0.5
 
-vectorized_speaker = jax.vmap(speaker_recursive, in_axes=(None,0,None,None,None,None,None,None))
 
-def model_inc_utt_parallel_normal(states = None, data = None):
-    gamma = numpyro.sample("gamma", dist.HalfNormal(5))
-    color_semvalue = numpyro.sample("color_semvalue", dist.Uniform(0.5, 1))
-    form_semvalue = color_semvalue
-    k = numpyro.sample("k", dist.Uniform(0, 1))
-    wf = numpyro.sample("wf", dist.Uniform(0,1))
-    bias = numpyro.sample("bias", dist.HalfNormal(5))
-    steepness = numpyro.sample("steepness", dist.HalfNormal(0.5))
-    sigma = numpyro.sample("sigma", dist.Uniform(0,0.1))
+# ---------------------------------------------------------------------------
+# Threshold: mid-range max-min threshold  θ_k(C)
+# Replaces the old sample-based threshold functions.
+# ---------------------------------------------------------------------------
 
-    with numpyro.plate("data",len(states)):
-        model_prob = vectorized_speaker(2, states, gamma, bias, color_semvalue, form_semvalue, wf, k)
-        slider_predict = jax.vmap(link_logit, in_axes = (0,None))(model_prob[:,0,0], steepness)
-        slider_predict = jnp.clip(slider_predict, 1e-5, 1 - 1e-5)
-        if data is not None:
-            data = jnp.clip(data, 1e-5, 1 - 1e-5)
-        numpyro.sample("obs", dist.TruncatedNormal(slider_predict, sigma, low = 1e-5, high = 1 - 1e-5,), obs=data)
+def get_midrange_extrema_from_context(states, state_prior, q_low=0.2, q_high=0.8):
+    """
+    Compute mid-range extrema x_min^mid(C), x_max^mid(C).
 
-def run_inference():
-    states_train, empirical_train = import_dataset()
-    vectorized_speaker = jax.vmap(speaker_recursive, in_axes=(None,0,None,None,None,None,None,None))
-    model_prob = vectorized_speaker(2,states_train, 1,1,0.5,0.5,0.5,0.5)
-    print(jnp.shape(model_prob))
-    print(jnp.shape(model_prob[:,0,0]))
-    slider_predict = jax.vmap(link_function, in_axes = (0,None))(model_prob[:,0,0],20)
+    Args:
+        states:      (n_obj, 3)
+        state_prior: (n_obj,)  — contextual distribution C(s), must sum to 1
+        q_low, q_high: quantile bounds for the mid-range band
 
-    slider_predict = jnp.clip(slider_predict, 1e-5, 1 - 1e-5)
-    print(jnp.shape(slider_predict))
+    Returns:
+        x_min_mid, x_max_mid: scalars
+    """
+    sizes = states[:, 0]
+    idx = jnp.argsort(sizes)
+    sizes_sorted = sizes[idx]
+    prior_sorted = state_prior[idx]
+    cdf = jnp.cumsum(prior_sorted)
 
-    # define the MCMC kernel and the number of samples
-    rng_key = random.PRNGKey(11)
-    rng_key, rng_key_ = random.split(rng_key)
+    i_low  = jnp.argmax(cdf >= q_low)
+    i_high = jnp.argmax(cdf >= q_high)
 
-    kernel = NUTS(model_inc_utt_parallel_normal, dense_mass=True, max_tree_depth=15, target_accept_prob=0.95)
-    mcmc_inc = MCMC(kernel, num_warmup=5000,num_samples=30000,num_chains=1)
-    mcmc_inc.run(rng_key_, states_train, empirical_train)
+    return sizes_sorted[i_low], sizes_sorted[i_high]
 
-    # print the summary of the posterior distribution
-    mcmc_inc.print_summary()
 
-    # Get the MCMC samples and convert to a DataFrame
-    posterior_inc = mcmc_inc.get_samples()
-    df_inc = pd.DataFrame(posterior_inc)
+def get_threshold_k_midrange_jax(states, state_prior, k=0.5, q_low=0.2, q_high=0.8):
+    """
+    θ_k(C) = x_max^mid(C) - k * (x_max^mid(C) - x_min^mid(C))
 
-    # Save the DataFrame to a CSV file
-    df_inc.to_csv('../posterior_samples/02_inc_normal_logit_sample.csv', index=False)
+    Args:
+        states:      (n_obj, 3)
+        state_prior: (n_obj,)
+        k:           interpolation parameter in [0, 1]
+
+    Returns:
+        scalar threshold
+    """
+    x_min_mid, x_max_mid = get_midrange_extrema_from_context(
+        states, state_prior, q_low=q_low, q_high=q_high
+    )
+    return x_max_mid - k * (x_max_mid - x_min_mid)
+
+
+# ---------------------------------------------------------------------------
+# Atomic semantics
+# ---------------------------------------------------------------------------
+
+def get_size_semval(size, threshold, wf):
+    """P(size adjective applies | object size, threshold, blur wf)."""
+    eps = 1e-8
+    denom = wf * jnp.sqrt(size ** 2 + threshold ** 2 + eps)
+    return dist.Normal(0.0, 1.0).cdf((size - threshold) / denom)
+
+
+def adjMeaning(word, states, current_state_prior, color_semvalue=0.8, wf=0.6, k=0.5):
+    """
+    Deterministic lexical meaning ⟦w⟧_C(s) for one adjective w across all objects.
+
+    word == 0 → size ("big")
+    word == 1 → color ("blue")
+
+    Returns a vector of shape (n_obj,) with semantic values in [0, 1].
+    JAX-safe (lax.cond), suitable for vmap/jit.
+    """
+    def color_branch(_):
+        x_color = states[:, 1]  # 0/1 feature
+        return x_color * color_semvalue + (1.0 - x_color) * (1.0 - color_semvalue)
+
+    def size_branch(_):
+        threshold = get_threshold_k_midrange_jax(states, current_state_prior, k)
+        eps = 1e-8
+        denom = wf * jnp.sqrt(states[:, 0] ** 2 + threshold ** 2 + eps)
+        return dist.Normal(0.0, 1.0).cdf((states[:, 0] - threshold) / denom)
+
+    return lax.cond(word == 1, color_branch, size_branch, operand=None)
+
+
+# ---------------------------------------------------------------------------
+# Literal listeners
+# ---------------------------------------------------------------------------
+
+def literal_listener_one_word(states, color_semvalue=0.90, wf=1.0, k=0.5,
+                               form_semvalue=None):
+    """
+    Literal listener for single-word utterances.
+
+    Returns (2, n_obj): row 0 = L(s | 'big'), row 1 = L(s | 'blue').
+    `form_semvalue` is accepted but ignored (form not used).
+    """
+    n_obj = states.shape[0]
+    prior0 = jnp.ones(n_obj) / n_obj
+    tokens = jnp.array([0, 1], dtype=jnp.int32)  # 0=big, 1=blue
+
+    def update_token(token):
+        m = adjMeaning(token, states, prior0, color_semvalue, wf, k)
+        unnorm = prior0 * m
+        return unnorm / jnp.clip(unnorm.sum(), 1e-20)
+
+    return jax.vmap(update_token)(tokens)  # (2, n_obj)
+
+
+def literal_listener_recursive(word_length, states, color_semvalue=0.90, wf=1.0,
+                                k=0.5, form_semvalue=None, sample_based=None):
+    """
+    Incremental literal listener using backward functional semantics.
+
+    Utterances:
+      row 0: "big blue"  encoded as tokens [0, 1]
+      row 1: "blue big"  encoded as tokens [1, 0]
+
+    Returns (2, n_obj).
+    `form_semvalue` and `sample_based` are accepted but ignored.
+    """
+    assert word_length == 2, "Only 2-word utterances are supported."
+    n_obj = states.shape[0]
+    prior0 = jnp.ones(n_obj) / n_obj
+
+    utterances = jnp.array([[0, 1], [1, 0]], dtype=jnp.int32)
+
+    def update_one_token(prior, token):
+        m = adjMeaning(token, states, prior, color_semvalue, wf, k)
+        unnorm = prior * m
+        return unnorm / jnp.clip(unnorm.sum(), 1e-20), None
+
+    def interpret_utterance(tokens):
+        tokens_rev = tokens[::-1]  # right-to-left backward composition
+        final_belief, _ = lax.scan(update_one_token, prior0, tokens_rev)
+        return final_belief  # (n_obj,)
+
+    return jax.vmap(interpret_utterance)(utterances)  # (2, n_obj)
+
+
+# ---------------------------------------------------------------------------
+# Speakers
+# ---------------------------------------------------------------------------
+
+def speaker_one_word(states, alpha=1, bias=0, color_semvalue=0.98,
+                     form_semvalue=None, wf=0.6, k=0.5):
+    """One-word speaker. Returns (n_obj, 2)."""
+    listener = literal_listener_one_word(states, color_semvalue, wf, k)
+    bias_weights = jnp.array([0.0, bias])
+    util_speaker = jnp.log(jnp.clip(listener.T, 1e-20, 1.0)) - bias_weights
+    return jax.nn.softmax(alpha * util_speaker, axis=-1)
+
+
+def speaker_recursive(word_length, states, alpha=1.0, bias=0.0,
+                      color_semvalue=0.98, form_semvalue=None, wf=0.6, k=0.5):
+    """
+    Truly incremental RSA speaker (chain-rule over tokens).
+
+    Returns (n_obj, 2):
+      col 0: P_inc("big blue"  | s_j)
+      col 1: P_inc("blue big"  | s_j)
+
+    `form_semvalue` is accepted but ignored.
+    """
+    assert word_length == 2
+
+    # Literal listeners
+    L1 = literal_listener_one_word(states, color_semvalue, wf, k)   # (2, n_obj)
+    L2 = literal_listener_recursive(word_length, states, color_semvalue, wf, k)  # (2, n_obj)
+
+    L1_T = L1.T  # (n_obj, 2): col 0 = L(s|big), col 1 = L(s|blue)
+    L2_T = L2.T  # (n_obj, 2): col 0 = L(s|big blue), col 1 = L(s|blue big)
+
+    L1_big  = L1_T[:, 0]
+    L1_blue = L1_T[:, 1]
+    L2_bigblue = L2_T[:, 0]
+    L2_bluebig = L2_T[:, 1]
+
+    eps = 1e-20
+
+    # Step 1: choose first token
+    num_big  = jnp.power(jnp.clip(L1_big,  eps, 1.0), alpha)
+    num_blue = jnp.power(jnp.clip(L1_blue, eps, 1.0), alpha)
+    Z1 = jnp.clip(num_big + num_blue, eps)
+    S1_big  = num_big  / Z1
+    S1_blue = num_blue / Z1
+
+    # Step 2a: given prefix 'big', choose stop-or-blue
+    num_bigblue  = jnp.power(jnp.clip(L2_bigblue, eps, 1.0), alpha)
+    num_stop_big = jnp.power(jnp.clip(L1_big,     eps, 1.0), alpha)
+    S2_blue_given_big = num_bigblue / jnp.clip(num_bigblue + num_stop_big, eps)
+
+    # Step 2b: given prefix 'blue', choose stop-or-big
+    num_bluebig   = jnp.power(jnp.clip(L2_bluebig, eps, 1.0), alpha)
+    num_stop_blue = jnp.power(jnp.clip(L1_blue,    eps, 1.0), alpha)
+    S2_big_given_blue = num_bluebig / jnp.clip(num_bluebig + num_stop_blue, eps)
+
+    # Path probabilities (chain rule)
+    P_chain_bigblue = S1_big  * S2_blue_given_big   # (n_obj,)
+    P_chain_bluebig = S1_blue * S2_big_given_blue   # (n_obj,)
+
+    P_chain = jnp.clip(
+        jnp.stack([P_chain_bigblue, P_chain_bluebig], axis=-1), eps, 1.0
+    )  # (n_obj, 2)
+
+    # Utterance-level cost (bias against "blue big")
+    utt_cost = jnp.array([0.0, bias])
+    util = jnp.log(P_chain) - utt_cost
+    return jax.nn.softmax(util, axis=-1)  # (n_obj, 2)
+
+
+def global_speaker(states, alpha=1.0, bias=0.0, color_semvalue=0.98,
+                   form_semvalue=None, wf=0.6, k=0.5):
+    """
+    Global (non-incremental) RSA speaker.
+
+    Returns (n_obj, 2):
+      col 0: P_global("big blue"  | s_j)
+      col 1: P_global("blue big"  | s_j)
+
+    `form_semvalue` is accepted but ignored.
+    """
+    listener = literal_listener_recursive(2, states, color_semvalue, wf, k)  # (2, n_obj)
+    eps = 1e-20
+    utt_cost = jnp.array([0.0, bias])
+    util_speaker = jnp.log(jnp.clip(listener.T, eps, 1.0)) - utt_cost  # (n_obj, 2)
+    return jax.nn.softmax(alpha * util_speaker, axis=-1)  # (n_obj, 2)
+
+
+# ---------------------------------------------------------------------------
+# Pragmatic listener  L1(referent | utterance, context)
+# This is the communicative success measure (Option B).
+# Returns (2, n_obj):
+#   row 0: L1(s | "big blue")
+#   row 1: L1(s | "blue big")
+# ---------------------------------------------------------------------------
+
+def pragmatic_listener(states, alpha=1, bias=0, color_semvalue=0.98,
+                       form_semvalue=None, wf=0.6, k=0.5,
+                       speaker="global_speaker", word_length=2):
+    """
+    Pragmatic listener via Bayes' rule over speaker distribution.
+
+    L1(r | u) ∝ S1(u | r) * P(r)   [uniform prior over referents]
+
+    Returns (2, n_obj):
+      result[0, 0] = L1(referent | "big blue")  ← communicative success (Option B)
+      result[1, 0] = L1(referent | "blue big")
+    """
+    prior_probs = jnp.ones((2, states.shape[0]))  # uniform (2, n_obj)
+
+    if speaker == "global_speaker":
+        softmax_result = global_speaker(states, alpha, bias, color_semvalue,
+                                        form_semvalue, wf, k)  # (n_obj, 2)
+    else:  # "incremental_speaker"
+        softmax_result = speaker_recursive(word_length, states, alpha, bias,
+                                           color_semvalue, form_semvalue, wf, k)  # (n_obj, 2)
+
+    # Transpose to (2, n_obj), then normalize over objects for each utterance
+    return normalize(jnp.transpose(softmax_result) * prior_probs)  # (2, n_obj)
+
+
+# ---------------------------------------------------------------------------
+# Dataset helpers  (encode_states index already fixed: +5/+11/+17)
+# ---------------------------------------------------------------------------
+
+def encode_states(line):
+    states = []
+    for i in range(6):
+        color = 1 if line.iloc[11 + i] == "blue" else 0
+        form  = 1 if line.iloc[17 + i] == "circle" else 0
+        new_obj = (line.iloc[5 + i], color, form)
+        states.append(new_obj)
+    return jnp.array(states)
+
+
+def import_dataset(file_path="../01-dataset/01-slider-data-preprocessed.csv"):
+    df = pd.read_csv(file_path)
+    df = df[df['combination'] == 'dimension_color']
+    df.reset_index(inplace=True, drop=True)
+    df["states"] = df.apply(lambda row: encode_states(row), axis=1)
+    df.prefer_first_1st = jnp.clip(df.prefer_first_1st.to_numpy(), 0, 100)
+    df.prefer_first_1st = df.prefer_first_1st / 100
+    train = df
+    states_train   = jnp.stack([cell for cell in train.states])
+    empirical_train = jnp.array(train.prefer_first_1st.to_numpy())
+    return states_train, empirical_train, df
+
+
+# ---------------------------------------------------------------------------
+# Tests
+# ---------------------------------------------------------------------------
+
+def test_core_rsa():
+    file_path = "../01-dataset/01-slider-data-preprocessed.csv"
+    df = pd.read_csv(file_path)
+    df = df[df['combination'] == 'dimension_color']
+    df.reset_index(inplace=True, drop=True)
+    df_experiment = df.copy()
+    df_experiment["states"] = df_experiment.apply(lambda row: encode_states(row), axis=1)
+    df_experiment.prefer_first_1st = jnp.clip(df_experiment.prefer_first_1st.to_numpy(), 0, 100)
+    df_experiment.prefer_first_1st = df_experiment.prefer_first_1st / 100
+    print(df_experiment.prefer_first_1st.describe())
+
+    index = 15
+    states_manuell = jnp.array([[10., 1., 1.],
+                                 [10., 1., 1.],
+                                 [ 3., 1., 1.],
+                                 [ 3., 1., 0.],
+                                 [ 3., 1., 0.],
+                                 [ 1., 0., 1.]], dtype=jnp.float32)
+    states_example = states_manuell
+    condition   = df_experiment.iloc[index, df_experiment.columns.get_loc("conditions")]
+    distribution = df_experiment.iloc[index, df_experiment.columns.get_loc("sharpness")]
+    preference  = df_experiment.iloc[index, df_experiment.columns.get_loc("prefer_first_1st")]
+    print(states_example)
+    print(condition + " " + distribution)
+    print(preference)
+    print(f"literal listener one word:      {literal_listener_one_word(states_example)}")
+    print(f"literal listener two words:     {literal_listener_recursive(2, states_example)}")
+    print(f"speaker one word:               {speaker_one_word(states_example)}")
+    print(f"speaker two words global:       {global_speaker(states_example)}")
+    print("________________________________________")
+    print(f"speaker two words incremental:  {speaker_recursive(2, states_example)}")
+    print("________________________________________")
+    print(f"pragmatic listener (global):    {pragmatic_listener(states_example)}")
+    print("________________________________________")
+    print(f"pragmatic listener (incremental): {pragmatic_listener(states_example, speaker='incremental_speaker')}")
+
 
 def test_threshold():
     states_train, empirical_train, df = import_dataset()
     states_example = states_train[46]
-    empirical_example = empirical_train[46]
-    def uniform_state_prior(nobj=6):
-        """
-        Input: number of objects
-        Output: list of prior probabilities for each object
-        """
-        prior=normalize(jnp.ones((2,nobj)))
-        return prior
-    stt_prior = uniform_state_prior()
-    print(stt_prior)
-    threshold = get_threshold_kp_sample_jax(states_example, stt_prior[0,:])
-    print(threshold)
+    n_obj = states_example.shape[0]
+    prior = jnp.ones(n_obj) / n_obj
+    threshold = get_threshold_k_midrange_jax(states_example, prior)
+    print(f"midrange threshold: {threshold}")
+
+
+# ---------------------------------------------------------------------------
+# Legacy inference model (kept for reference; uses speaker_recursive API)
+# ---------------------------------------------------------------------------
+
+vectorized_speaker = jax.vmap(
+    speaker_recursive,
+    in_axes=(None, 0, None, None, None, None, None, None)
+)
+
+def model_inc_utt_parallel_normal(states=None, data=None):
+    alpha        = numpyro.sample("alpha",        dist.HalfNormal(5))
+    color_semvalue = numpyro.sample("color_semvalue", dist.Uniform(0.5, 1))
+    k            = numpyro.sample("k",            dist.Uniform(0, 1))
+    wf           = numpyro.sample("wf",           dist.Uniform(0, 1))
+    bias         = numpyro.sample("bias",         dist.HalfNormal(5))
+    steepness    = numpyro.sample("steepness",    dist.HalfNormal(0.5))
+    sigma        = numpyro.sample("sigma",        dist.Uniform(0, 0.1))
+
+    with numpyro.plate("data", len(states)):
+        model_prob     = vectorized_speaker(2, states, alpha, bias, color_semvalue, None, wf, k)
+        slider_predict = jax.vmap(link_logit, in_axes=(0, None))(model_prob[:, 0, 0], steepness)
+        slider_predict = jnp.clip(slider_predict, 1e-5, 1 - 1e-5)
+        if data is not None:
+            data = jnp.clip(data, 1e-5, 1 - 1e-5)
+        numpyro.sample("obs", dist.TruncatedNormal(
+            slider_predict, sigma, low=1e-5, high=1 - 1e-5), obs=data)
+
 
 if __name__ == "__main__":
-    #test_core_rsa()
-    test_threshold()
-    #run_inference()
+    test_core_rsa()
+    # test_threshold()
