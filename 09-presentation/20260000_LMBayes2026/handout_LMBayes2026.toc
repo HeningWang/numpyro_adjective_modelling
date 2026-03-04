@@ -1,0 +1,30 @@
+\contentsline {section}{\numberline {1}Model}{2}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Representational primitives}{2}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Atomic semantics}{2}{subsection.1.2}%
+\contentsline {paragraph}{Size (\textsc {D}).}{2}{section*.3}%
+\contentsline {paragraph}{Colour (\textsc {C}) and Form (\textsc {F}).}{2}{section*.4}%
+\contentsline {subsection}{\numberline {1.3}Compositional meaning}{2}{subsection.1.3}%
+\contentsline {subsection}{\numberline {1.4}Utterance prior (cost)}{2}{subsection.1.4}%
+\contentsline {subsection}{\numberline {1.5}Speaker models}{2}{subsection.1.5}%
+\contentsline {paragraph}{Global speaker $S_\text {G}$.}{2}{section*.5}%
+\contentsline {paragraph}{Incremental speaker $S_\text {I}$.}{3}{section*.6}%
+\contentsline {subsection}{\numberline {1.6}Two model variants \& parameterisation}{3}{subsection.1.6}%
+\contentsline {section}{\numberline {2}Experiments: Overall Design}{4}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Slider-rating study (Experiment 1)}{4}{subsection.2.1}%
+\contentsline {paragraph}{Task.}{4}{section*.7}%
+\contentsline {paragraph}{Dependent variable.}{4}{section*.8}%
+\contentsline {paragraph}{Key findings.}{4}{section*.9}%
+\contentsline {paragraph}{Modelling goal.}{4}{section*.10}%
+\contentsline {subsection}{\numberline {2.2}Free-production study (Experiment 2)}{5}{subsection.2.2}%
+\contentsline {paragraph}{Task.}{5}{section*.11}%
+\contentsline {paragraph}{Dependent variable.}{5}{section*.12}%
+\contentsline {paragraph}{Conditions.}{5}{section*.13}%
+\contentsline {paragraph}{Key findings.}{5}{section*.14}%
+\contentsline {paragraph}{Modelling challenges.}{5}{section*.15}%
+\contentsline {section}{\numberline {3}Simulation}{6}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Goals}{6}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Design}{6}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Key results}{6}{subsection.3.3}%
+\contentsline {section}{\numberline {4}General Discussion}{7}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Summary}{7}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Open issues for the write-up}{7}{subsection.4.2}%

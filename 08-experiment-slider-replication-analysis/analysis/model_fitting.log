@@ -1,0 +1,534 @@
+Loading required package: Matrix
+
+Attaching package: ‘Matrix’
+
+The following objects are masked from ‘package:tidyr’:
+
+    expand, pack, unpack
+
+
+Attaching package: ‘lmerTest’
+
+The following object is masked from ‘package:lme4’:
+
+    lmer
+
+The following object is masked from ‘package:stats’:
+
+    step
+
+
+Attaching package: ‘dplyr’
+
+The following object is masked from ‘package:gridExtra’:
+
+    combine
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+Loading required package: carData
+lattice theme set by effectsTheme()
+See ?effectsTheme for details.
+Welcome to emmeans.
+Caution: You lose important information if you filter this package's results.
+See '? untidy'
+[1] 16.0863
+            dimension_X
+color_form            0
+dimension_X           1
+       first second
+both       0      0
+first      1      0
+second     0      1
+Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+lmerModLmerTest]
+Formula: transli ~ relevant_property * combination * dist + (1 | id) +  
+    (1 | item)
+   Data: data
+
+REML criterion at convergence: 50317.2
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-3.6133 -0.4757  0.1451  0.6883  2.5037 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ id       (Intercept)  1.86515 1.366   
+ item     (Intercept)  0.06504 0.255   
+ Residual             10.95869 3.310   
+Number of obs: 9548, groups:  id, 120; item, 27
+
+Fixed effects:
+                                                           Estimate Std. Error
+(Intercept)                                                 0.69230    0.16783
+relevant_propertyfirst                                      1.00632    0.14277
+relevant_propertysecond                                    -1.50518    0.14267
+combinationdimension_X                                      1.37323    0.12394
+distsharp                                                   0.14364    0.32098
+relevant_propertyfirst:combinationdimension_X              -0.11753    0.17587
+relevant_propertysecond:combinationdimension_X              0.11177    0.17498
+relevant_propertyfirst:distsharp                            0.10991    0.28554
+relevant_propertysecond:distsharp                          -0.69628    0.28534
+combinationdimension_X:distsharp                           -0.09856    0.24787
+relevant_propertyfirst:combinationdimension_X:distsharp     0.45231    0.35174
+relevant_propertysecond:combinationdimension_X:distsharp    0.51277    0.34995
+                                                                 df t value
+(Intercept)                                               277.16666   4.125
+relevant_propertyfirst                                   9391.92544   7.048
+relevant_propertysecond                                  9391.92010 -10.550
+combinationdimension_X                                   9393.39881  11.080
+distsharp                                                 279.37871   0.448
+relevant_propertyfirst:combinationdimension_X            9393.04903  -0.668
+relevant_propertysecond:combinationdimension_X           9392.25779   0.639
+relevant_propertyfirst:distsharp                         9391.95916   0.385
+relevant_propertysecond:distsharp                        9391.92556  -2.440
+combinationdimension_X:distsharp                         9392.47138  -0.398
+relevant_propertyfirst:combinationdimension_X:distsharp  9393.09364   1.286
+relevant_propertysecond:combinationdimension_X:distsharp 9392.17558   1.465
+                                                         Pr(>|t|)    
+(Intercept)                                              4.91e-05 ***
+relevant_propertyfirst                                   1.94e-12 ***
+relevant_propertysecond                                   < 2e-16 ***
+combinationdimension_X                                    < 2e-16 ***
+distsharp                                                  0.6549    
+relevant_propertyfirst:combinationdimension_X              0.5040    
+relevant_propertysecond:combinationdimension_X             0.5230    
+relevant_propertyfirst:distsharp                           0.7003    
+relevant_propertysecond:distsharp                          0.0147 *  
+combinationdimension_X:distsharp                           0.6909    
+relevant_propertyfirst:combinationdimension_X:distsharp    0.1985    
+relevant_propertysecond:combinationdimension_X:distsharp   0.1429    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+                  (Intr) rlvnt_prprtyf rlvnt_prprtys cmbn_X dstshr
+rlvnt_prprtyf     -0.426                                          
+rlvnt_prprtys     -0.426  0.501                                   
+cmbntndmn_X       -0.490  0.576         0.577                     
+distsharp          0.032 -0.015        -0.015        -0.017       
+rlvnt_prprtyf:_X   0.345 -0.812        -0.406        -0.705  0.012
+rlvnt_prprtys:_X   0.347 -0.408        -0.815        -0.708  0.012
+rlvnt_prprtyf:    -0.014  0.034         0.017         0.019 -0.445
+rlvnt_prprtys:    -0.014  0.017         0.033         0.019 -0.445
+cmbntndm_X:       -0.016  0.019         0.019         0.029 -0.513
+rlvnt_prprtyf:_X:  0.012 -0.028        -0.014        -0.021  0.361
+rlvnt_prprtys:_X:  0.012 -0.014        -0.027        -0.021  0.363
+                  rlvnt_prprtyf:_X rlvnt_prprtys:_X rlvnt_prprtyf:
+rlvnt_prprtyf                                                     
+rlvnt_prprtys                                                     
+cmbntndmn_X                                                       
+distsharp                                                         
+rlvnt_prprtyf:_X                                                  
+rlvnt_prprtys:_X   0.499                                          
+rlvnt_prprtyf:    -0.028           -0.014                         
+rlvnt_prprtys:    -0.014           -0.027            0.501        
+cmbntndm_X:       -0.021           -0.021            0.576        
+rlvnt_prprtyf:_X:  0.022            0.015           -0.812        
+rlvnt_prprtys:_X:  0.015            0.031           -0.408        
+                  rlvnt_prprtys: cmb_X: rlvnt_prprtyf:_X:
+rlvnt_prprtyf                                            
+rlvnt_prprtys                                            
+cmbntndmn_X                                              
+distsharp                                                
+rlvnt_prprtyf:_X                                         
+rlvnt_prprtys:_X                                         
+rlvnt_prprtyf:                                           
+rlvnt_prprtys:                                           
+cmbntndm_X:        0.577                                 
+rlvnt_prprtyf:_X: -0.406         -0.705                  
+rlvnt_prprtys:_X: -0.815         -0.708  0.499           
+Type III Analysis of Variance Table with Satterthwaite's method
+                                   Sum Sq Mean Sq NumDF  DenDF  F value
+relevant_property                  8299.1  4149.5     2 9392.8 378.6523
+combination                        4013.1  4013.1     1 9396.8 366.2027
+dist                                  0.6     0.6     1  119.9   0.0530
+relevant_property:combination        18.7     9.3     2 9392.8   0.8528
+relevant_property:dist              215.5   107.7     2 9392.8   9.8318
+combination:dist                     26.6    26.6     1 9393.5   2.4248
+relevant_property:combination:dist   28.0    14.0     2 9392.9   1.2783
+                                      Pr(>F)    
+relevant_property                  < 2.2e-16 ***
+combination                        < 2.2e-16 ***
+dist                                  0.8183    
+relevant_property:combination         0.4263    
+relevant_property:dist             5.427e-05 ***
+combination:dist                      0.1195    
+relevant_property:combination:dist    0.2785    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+Backward reduced random-effect table:
+
+           Eliminated npar logLik   AIC     LRT Df Pr(>Chisq)    
+<none>                  15 -25159 50347                          
+(1 | id)            0   14 -25740 51508 1163.02  1  < 2.2e-16 ***
+(1 | item)          0   14 -25171 50370   24.68  1  6.761e-07 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Backward reduced fixed-effect table:
+Degrees of freedom method: Satterthwaite 
+
+                                   Eliminated Sum Sq Mean Sq NumDF  DenDF
+relevant_property:combination:dist          1   28.0    14.0     2 9392.9
+relevant_property:combination               2   18.4     9.2     2 9394.9
+combination:dist                            3   26.2    26.2     1 9397.4
+combination                                 0 4005.4  4005.4     1 9401.8
+relevant_property:dist                      0  228.2   114.1     2 9398.6
+                                    F value    Pr(>F)    
+relevant_property:combination:dist   1.2783    0.2785    
+relevant_property:combination        0.8385    0.4324    
+combination:dist                     2.3907    0.1221    
+combination                        365.4360 < 2.2e-16 ***
+relevant_property:dist              10.4110 3.045e-05 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Model found:
+transli ~ relevant_property + combination + dist + (1 | id) + (1 | item) + relevant_property:dist
+Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+lmerModLmerTest]
+Formula: transli ~ relevant_property * dist + (1 | id) + (1 | item)
+   Data: data_cf
+
+REML criterion at convergence: 17484.7
+
+Scaled residuals: 
+     Min       1Q   Median       3Q      Max 
+-2.89363 -0.66000  0.06075  0.72851  2.95274 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ id       (Intercept)  2.0802  1.4423  
+ item     (Intercept)  0.4075  0.6384  
+ Residual             12.0992  3.4784  
+Number of obs: 3233, groups:  id, 120; item, 27
+
+Fixed effects:
+                                   Estimate Std. Error        df t value
+(Intercept)                          0.6946     0.2091  104.2773   3.322
+relevant_propertyfirst               1.0067     0.1500 3085.4686   6.711
+relevant_propertysecond             -1.5065     0.1499 3085.4833 -10.049
+distsharp                            0.1502     0.3383  212.2911   0.444
+relevant_propertyfirst:distsharp     0.1064     0.3000 3085.4928   0.355
+relevant_propertysecond:distsharp   -0.7034     0.2998 3085.4853  -2.346
+                                  Pr(>|t|)    
+(Intercept)                        0.00123 ** 
+relevant_propertyfirst             2.3e-11 ***
+relevant_propertysecond            < 2e-16 ***
+distsharp                          0.65751    
+relevant_propertyfirst:distsharp   0.72281    
+relevant_propertysecond:distsharp  0.01903 *  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+               (Intr) rlvnt_prprtyf rlvnt_prprtys dstshr rlvnt_prprtyf:
+rlvnt_prprtyf  -0.359                                                  
+rlvnt_prprtys  -0.359  0.501                                           
+distsharp       0.027 -0.015        -0.015                             
+rlvnt_prprtyf: -0.012  0.034         0.017        -0.444               
+rlvnt_prprtys: -0.012  0.017         0.033        -0.444  0.501        
+Type III Analysis of Variance Table with Satterthwaite's method
+                       Sum Sq Mean Sq NumDF   DenDF  F value  Pr(>F)    
+relevant_property      3447.4 1723.69     2 3085.47 142.4632 < 2e-16 ***
+dist                      0.3    0.34     1  116.02   0.0282 0.86692    
+relevant_property:dist  104.4   52.18     2 3085.48   4.3123 0.01348 *  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+boundary (singular) fit: see help('isSingular')
+Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+lmerModLmerTest]
+Formula: transli ~ relevant_property * dist + (1 | id) + (1 | item)
+   Data: data_d
+
+REML criterion at convergence: 31973.9
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-3.9487 -0.3923  0.0825  0.5942  2.5409 
+
+Random effects:
+ Groups   Name        Variance  Std.Dev. 
+ id       (Intercept) 3.299e+00 1.816e+00
+ item     (Intercept) 1.066e-14 1.033e-07
+ Residual             8.729e+00 2.955e+00
+Number of obs: 6315, groups:  id, 120; item, 27
+
+Fixed effects:
+                                    Estimate Std. Error         df t value
+(Intercept)                          2.06508    0.17786  141.34300  11.611
+relevant_propertyfirst               0.88706    0.09166 6191.56156   9.678
+relevant_propertysecond             -1.39241    0.09041 6191.21374 -15.401
+distsharp                            0.04545    0.35572  141.34300   0.128
+relevant_propertyfirst:distsharp     0.56983    0.18331 6191.56156   3.108
+relevant_propertysecond:distsharp   -0.18427    0.18082 6191.21374  -1.019
+                                  Pr(>|t|)    
+(Intercept)                        < 2e-16 ***
+relevant_propertyfirst             < 2e-16 ***
+relevant_propertysecond            < 2e-16 ***
+distsharp                          0.89850    
+relevant_propertyfirst:distsharp   0.00189 ** 
+relevant_propertysecond:distsharp  0.30821    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+               (Intr) rlvnt_prprtyf rlvnt_prprtys dstshr rlvnt_prprtyf:
+rlvnt_prprtyf  -0.252                                                  
+rlvnt_prprtys  -0.256  0.496                                           
+distsharp       0.032 -0.005        -0.005                             
+rlvnt_prprtyf: -0.005 -0.001         0.010        -0.252               
+rlvnt_prprtys: -0.005  0.010         0.027        -0.256  0.496        
+optimizer (nloptwrap) convergence code: 0 (OK)
+boundary (singular) fit: see help('isSingular')
+
+Type III Analysis of Variance Table with Satterthwaite's method
+                       Sum Sq Mean Sq NumDF  DenDF  F value    Pr(>F)    
+relevant_property      5542.5 2771.27     2 6191.5 317.4746 < 2.2e-16 ***
+dist                      2.3    2.28     1  118.0   0.2618 0.6098699    
+relevant_property:dist  160.3   80.14     2 6191.5   9.1810 0.0001044 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+lmerModLmerTest]
+Formula: transli ~ dist + (1 | id) + (1 | item)
+   Data: data_dfirst
+
+REML criterion at convergence: 9423.4
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-4.4318 -0.1660  0.0983  0.3861  2.2151 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ id       (Intercept) 2.66404  1.6322  
+ item     (Intercept) 0.01586  0.1259  
+ Residual             5.19349  2.2789  
+Number of obs: 2039, groups:  id, 120; item, 27
+
+Fixed effects:
+            Estimate Std. Error       df t value Pr(>|t|)    
+(Intercept)   2.9615     0.1593 115.4121  18.589   <2e-16 ***
+distsharp     0.5937     0.3149 118.2157   1.885   0.0619 .  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+          (Intr)
+distsharp 0.027 
+Type III Analysis of Variance Table with Satterthwaite's method
+     Sum Sq Mean Sq NumDF  DenDF F value  Pr(>F)  
+dist 18.456  18.456     1 118.22  3.5536 0.06187 .
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+lmerModLmerTest]
+Formula: transli ~ dist + (1 | id) + (1 | item)
+   Data: data_dsecond
+
+REML criterion at convergence: 11051.9
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-3.4774 -0.3281  0.0262  0.3876  3.4268 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ id       (Intercept) 7.867391 2.80489 
+ item     (Intercept) 0.006718 0.08196 
+ Residual             8.480877 2.91219 
+Number of obs: 2152, groups:  id, 120; item, 27
+
+Fixed effects:
+            Estimate Std. Error       df t value Pr(>|t|)  
+(Intercept)   0.6730     0.2643 116.8788   2.547   0.0122 *
+distsharp    -0.1328     0.5276 117.9837  -0.252   0.8017  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+          (Intr)
+distsharp 0.033 
+Type III Analysis of Variance Table with Satterthwaite's method
+      Sum Sq Mean Sq NumDF  DenDF F value Pr(>F)
+dist 0.53729 0.53729     1 117.98  0.0634 0.8017
+boundary (singular) fit: see help('isSingular')
+Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+lmerModLmerTest]
+Formula: transli ~ relevant_property + (1 | id) + (1 | item)
+   Data: data_dsharp
+
+REML criterion at convergence: 15880.9
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-3.9037 -0.4263  0.0773  0.6105  2.5130 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ id       (Intercept) 3.814    1.953   
+ item     (Intercept) 0.000    0.000   
+ Residual             8.956    2.993   
+Number of obs: 3120, groups:  id, 58; item, 27
+
+Fixed effects:
+                         Estimate Std. Error        df t value Pr(>|t|)    
+(Intercept)                2.0878     0.2727   66.9282   7.656 1.01e-10 ***
+relevant_propertyfirst     1.1720     0.1312 3060.0157   8.930  < 2e-16 ***
+relevant_propertysecond   -1.4845     0.1312 3060.0106 -11.312  < 2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+              (Intr) rlvnt_prprtyf
+rlvnt_prprtyf -0.241              
+rlvnt_prprtys -0.241  0.500       
+optimizer (nloptwrap) convergence code: 0 (OK)
+boundary (singular) fit: see help('isSingular')
+
+Type III Analysis of Variance Table with Satterthwaite's method
+                  Sum Sq Mean Sq NumDF DenDF F value    Pr(>F)    
+relevant_property 3686.5  1843.3     2  3060  205.82 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+boundary (singular) fit: see help('isSingular')
+Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+lmerModLmerTest]
+Formula: transli ~ relevant_property + (1 | id) + (1 | item)
+   Data: data_dblurred
+
+REML criterion at convergence: 16089.8
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-3.6500 -0.3392  0.0890  0.5767  2.2920 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ id       (Intercept) 2.816    1.678   
+ item     (Intercept) 0.000    0.000   
+ Residual             8.508    2.917   
+Number of obs: 3195, groups:  id, 62; item, 27
+
+Fixed effects:
+                         Estimate Std. Error        df t value Pr(>|t|)    
+(Intercept)                2.0423     0.2308   74.8587   8.849 2.93e-13 ***
+relevant_propertyfirst     0.6022     0.1280 3131.5817   4.704 2.66e-06 ***
+relevant_propertysecond   -1.3002     0.1245 3131.1947 -10.442  < 2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+              (Intr) rlvnt_prprtyf
+rlvnt_prprtyf -0.266              
+rlvnt_prprtys -0.273  0.492       
+optimizer (nloptwrap) convergence code: 0 (OK)
+boundary (singular) fit: see help('isSingular')
+
+Type III Analysis of Variance Table with Satterthwaite's method
+                  Sum Sq Mean Sq NumDF  DenDF F value    Pr(>F)    
+relevant_property 2014.9  1007.5     2 3131.6  118.42 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+lmerModLmerTest]
+Formula: transli ~ dist + (1 | id) + (1 | item)
+   Data: data_dboth
+
+REML criterion at convergence: 10835.7
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-3.4314 -0.2185  0.1178  0.4606  2.2139 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ id       (Intercept) 3.119586 1.76624 
+ item     (Intercept) 0.006706 0.08189 
+ Residual             8.582185 2.92954 
+Number of obs: 2124, groups:  id, 120; item, 27
+
+Fixed effects:
+             Estimate Std. Error        df t value Pr(>|t|)    
+(Intercept)   2.06373    0.17413 108.94165  11.852   <2e-16 ***
+distsharp     0.04527    0.34683 118.01584   0.131    0.896    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+          (Intr)
+distsharp 0.031 
+Type III Analysis of Variance Table with Satterthwaite's method
+     Sum Sq Mean Sq NumDF  DenDF F value Pr(>F)
+dist 0.1462  0.1462     1 118.02   0.017 0.8964
+refitting model(s) with ML (instead of REML)
+Data: data
+Models:
+m1: data$sli ~ relevant_property + combination + dist + (1 | id) + (1 | item) + relevant_property:combination + relevant_property:dist + combination:dist
+m0: data$sli ~ relevant_property * combination * dist + (1 | id) + (1 | item)
+   npar    AIC    BIC  logLik deviance Chisq Df Pr(>Chisq)
+m1   13 7123.3 7216.4 -3548.6   7097.3                    
+m0   15 7123.4 7230.9 -3546.7   7093.4 3.861  2     0.1451
+refitting model(s) with ML (instead of REML)
+Data: data
+Models:
+m2: data$sli ~ relevant_property + combination + dist + (1 | id) + (1 | item) + relevant_property:combination + relevant_property:dist
+m1: data$sli ~ relevant_property + combination + dist + (1 | id) + (1 | item) + relevant_property:combination + relevant_property:dist + combination:dist
+   npar    AIC    BIC  logLik deviance  Chisq Df Pr(>Chisq)
+m2   12 7123.6 7209.5 -3549.8   7099.6                     
+m1   13 7123.3 7216.4 -3548.6   7097.3 2.2973  1     0.1296
+refitting model(s) with ML (instead of REML)
+Data: data
+Models:
+m3: data$sli ~ relevant_property + combination + dist + (1 | id) + (1 | item) + relevant_property:combination
+m2: data$sli ~ relevant_property + combination + dist + (1 | id) + (1 | item) + relevant_property:combination + relevant_property:dist
+   npar    AIC    BIC  logLik deviance  Chisq Df Pr(>Chisq)   
+m3   10 7131.1 7202.7 -3555.5   7111.1                        
+m2   12 7123.6 7209.5 -3549.8   7099.6 11.519  2   0.003153 **
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+refitting model(s) with ML (instead of REML)
+Data: data
+Models:
+m4: data$sli ~ relevant_property + combination + dist + (1 | id) + (1 | item)
+m3: data$sli ~ relevant_property + combination + dist + (1 | id) + (1 | item) + relevant_property:combination
+   npar    AIC    BIC  logLik deviance  Chisq Df Pr(>Chisq)
+m4    8 7130.6 7187.9 -3557.3   7114.6                     
+m3   10 7131.1 7202.7 -3555.5   7111.1 3.5214  2     0.1719
+refitting model(s) with ML (instead of REML)
+Data: data
+Models:
+m5: data$sli ~ relevant_property + dist + (1 | id) + (1 | item)
+m4: data$sli ~ relevant_property + combination + dist + (1 | id) + (1 | item)
+   npar    AIC    BIC  logLik deviance  Chisq Df Pr(>Chisq)    
+m5    7 7528.7 7578.8 -3757.3   7514.7                         
+m4    8 7130.6 7187.9 -3557.3   7114.6 400.06  1  < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+refitting model(s) with ML (instead of REML)
+Data: data
+Models:
+m6: data$sli ~ relevant_property + (1 | id) + (1 | item)
+m5: data$sli ~ relevant_property + dist + (1 | id) + (1 | item)
+   npar    AIC    BIC  logLik deviance  Chisq Df Pr(>Chisq)
+m6    6 7526.7 7569.7 -3757.3   7514.7                     
+m5    7 7528.7 7578.8 -3757.3   7514.7 0.0106  1     0.9182
+refitting model(s) with ML (instead of REML)
+Data: data
+Models:
+m7: data$sli ~ (1 | id) + (1 | item)
+m6: data$sli ~ relevant_property + (1 | id) + (1 | item)
+   npar    AIC    BIC  logLik deviance  Chisq Df Pr(>Chisq)    
+m7    4 8428.1 8456.8 -4210.1   8420.1                         
+m6    6 7526.7 7569.7 -3757.3   7514.7 905.41  2  < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1

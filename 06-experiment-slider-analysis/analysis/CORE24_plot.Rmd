@@ -1,0 +1,82 @@
+## Import libraries and set up the working directory
+```{r}
+library(tidyr)
+library(ggplot2)
+library(gridExtra)
+library(trimr)
+library(stringr)
+library(lme4)
+library(lmerTest)
+library(dplyr)
+library(effects)
+library(optimx)
+library(lattice)
+library(MASS)
+rm(list=ls())
+
+plots_dir<- file.path(getwd(),"plots")
+if(!dir.exists(plots_dir)) dir.create(plots_dir, recursive = TRUE, showWarnings = FALSE)
+```
+
+## Load the data
+```{r}
+# TODO: update path to posterior predictions CSV exported from 03-modelling-slider-data
+# data <- read.csv("../../03-modelling-slider-data/inference_data/<predictions>.csv")
+data <- read.csv("../data/02_inc_normal_logit_predictions.csv")
+```
+
+## Generate plot
+Define theme.
+```{r}
+my_theme <- function() {
+  theme_minimal() +
+    theme(
+      plot.title = element_text(size = 20, face = "bold"),
+      axis.title.x = element_text(size = 25, margin = margin(t = 10, r = 0, b = 0, l = 0)),
+      axis.title.y = element_text(size = 22, margin = margin(t = 0, r = 10, b = 0, l = 0)),
+      axis.text.x = element_text(size = 25, hjust = 1),
+      axis.text.y = element_text(size = 20),
+      legend.title = element_text(size = 25),
+      legend.text = element_text(size = 25),
+      strip.text.x = element_text(size = 25),
+      strip.text.y = element_text(size = 25, angle = 0),
+      panel.grid.major = element_line(colour = "grey90", size = 0.25),
+      panel.grid.minor = element_blank(),
+      panel.border = element_blank(),
+      panel.background = element_blank(),
+      legend.position="bottom"
+    )
+}
+```
+Aggregate the data.
+```{r}
+ratings_aggregated<-aggregate(mean_predictions~combination+relevant_property+sharpness, data=data, mean)
+#TODO: find another way to compute ses (SEwithin?)
+ses_ratings<-aggregate(mean_predictions~combination+relevant_property+sharpness, data=data, function(x) {sd(x)/sqrt(length(x))})
+ratings_aggregated<-cbind(ratings_aggregated,ses_ratings[,4])
+names(ratings_aggregated)[5]<-"se"
+```
+
+Draw the plot.
+```{r}
+combination_names = c("dimension_color" = "dimension_X")
+
+p <- ggplot(ratings_aggregated, aes(x=sharpness, y=mean_predictions, fill=relevant_property)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean_predictions-se, ymax=mean_predictions+se), width=.2,
+                position=position_dodge(.9))+
+  scale_fill_brewer(palette="Paired") +
+  my_theme() + 
+  scale_x_discrete(labels = combination_names) +
+  labs(
+       y = "Mean Model Predictions",
+       x = "Sharpness")
+
+p
+#pdf(file = file.path(plots_dir,"posterior_predictions.pdf"), width = 20, height = 10)
+ggsave(p, file = file.path(plots_dir,"model_predictions.png"), width = 20, height = 10)
+#p
+#dev.off()
+```
+
+
