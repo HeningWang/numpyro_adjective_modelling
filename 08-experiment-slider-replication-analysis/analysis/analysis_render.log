@@ -1,0 +1,49 @@
+
+
+processing file: analysis.Rmd
+1/41                   
+2/41 [setup]           
+3/41                   
+4/41 [unnamed-chunk-1] 
+5/41                   
+6/41 [unnamed-chunk-2] 
+7/41                   
+8/41 [unnamed-chunk-3] 
+9/41                   
+10/41 [unnamed-chunk-4] 
+11/41                   
+12/41 [unnamed-chunk-5] 
+13/41                   
+14/41 [unnamed-chunk-6] 
+15/41                   
+16/41 [unnamed-chunk-7] 
+17/41                   
+18/41 [unnamed-chunk-8] 
+19/41                   
+20/41 [unnamed-chunk-9] 
+21/41                   
+22/41 [unnamed-chunk-10]
+23/41                   
+24/41 [unnamed-chunk-11]
+25/41                   
+26/41 [unnamed-chunk-12]
+27/41                   
+28/41 [unnamed-chunk-13]
+29/41                   
+30/41 [unnamed-chunk-14]
+31/41                   
+32/41 [unnamed-chunk-15]
+33/41 [unnamed-chunk-16]
+34/41                   
+35/41 [unnamed-chunk-17]
+36/41 [unnamed-chunk-18]
+37/41                   
+38/41 [unnamed-chunk-19]
+39/41 [unnamed-chunk-20]
+40/41 [unnamed-chunk-21]
+41/41                   
+output file: analysis.knit.md
+
+/usr/local/bin/pandoc +RTS -K512m -RTS analysis.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output analysis.html --lua-filter /Library/Frameworks/R.framework/Versions/4.2-arm64/Resources/library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /Library/Frameworks/R.framework/Versions/4.2-arm64/Resources/library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --template /Library/Frameworks/R.framework/Versions/4.2-arm64/Resources/library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=bootstrap --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /var/folders/jc/6ctllcx143xbrgx01x69skg80000gn/T//RtmpM2pvMn/rmarkdown-str91d713df1f9a.html 
+
+Output created: analysis.html

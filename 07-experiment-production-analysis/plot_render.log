@@ -1,0 +1,18 @@
+
+
+processing file: plot.Rmd
+1/10                  
+2/10 [unnamed-chunk-1]
+3/10                  
+4/10 [unnamed-chunk-2]
+5/10                  
+6/10 [unnamed-chunk-3]
+7/10                  
+8/10 [unnamed-chunk-4]
+9/10 [unnamed-chunk-5]
+10/10                  
+output file: plot.knit.md
+
+/usr/local/bin/pandoc +RTS -K512m -RTS plot.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output plot.html --lua-filter /Library/Frameworks/R.framework/Versions/4.2-arm64/Resources/library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /Library/Frameworks/R.framework/Versions/4.2-arm64/Resources/library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --template /Library/Frameworks/R.framework/Versions/4.2-arm64/Resources/library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=bootstrap --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /var/folders/jc/6ctllcx143xbrgx01x69skg80000gn/T//RtmpZsT4zH/rmarkdown-str838d65a2a1e5.html 
+
+Output created: plot.html

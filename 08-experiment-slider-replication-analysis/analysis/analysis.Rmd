@@ -1,0 +1,235 @@
+---
+title: "analysis"
+output: html_document
+---
+
+Supress messages in this document so that the output is cleaner.
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+Import packages.
+```{r}
+rm(list = ls())
+options(warn = -1)
+library(tidyverse)
+library(lme4)
+library(lmerTest)
+library(ggplot2)
+library(aida)
+library(BayesFactor)
+library(pwr)
+library(brms)
+library(emmeans)
+library(effsize)
+library(HDInterval)
+```
+
+Set up theme for ggplot.
+
+```{r}
+theme_set(theme_aida())
+
+##################################################
+## CSP-colors
+##################################################
+CSP_colors = c(
+  "#7581B3", "#99C2C2", "#C65353", "#E2BA78", "#5C7457", "#575463",
+  "#B0B7D4", "#66A3A3", "#DB9494", "#D49735", "#9BB096", "#D4D3D9",
+  "#414C76", "#993333"
+  )
+# setting theme colors globally
+scale_colour_discrete <- function(...) {
+  scale_colour_manual(..., values = CSP_colors)
+}
+scale_fill_discrete <- function(...) {
+  scale_fill_manual(..., values = CSP_colors)
+}
+```
+Set up plots dir.
+```{r}
+plots_dir <- "./plots"
+```
+
+# Data Import & Preprocessing
+Import data.
+```{r}
+data <- read.csv("../../01-dataset/00-slider-data-replication-raw.csv")
+```
+
+Show basic information.
+```{r}
+#show how many pps
+sum(xtabs(~id,data=data)/180)
+
+# show how many lists
+round(xtabs(~list, data=data)/180)
+
+```
+Set up factors.
+```{r}
+data$conditions <- droplevels(as.factor(data$conditions))
+data$id <- droplevels(as.factor(data$id))
+data$slider_value <- as.numeric(data$slider_value)
+data$dist <- ifelse(data$list<4, "sharp", "blurred")
+data$dist <- droplevels(as.factor(data$dist))
+```
+Deal with missing data 
+```{r}
+#coercion slider value when missing list to NA (due to unexpected technical errors).
+missing_list <- which(is.na(data$list)==TRUE)
+data[missing_list,]$slider_value <- NA
+
+#coercion slider value when none fit to NA. This refers to the third option "neither".
+data$slider_value <- ifelse(data$slider_value==-1, NA, data$slider_value)
+
+```
+Subset filler from main data set.
+```{r}
+data_filler <- subset(data, str_sub(data$conditions, 1, 1) == "f")
+data <- droplevels(subset(data, str_sub(data$conditions, 1, 1) != "f"))
+```
+Encode slider. The max (100) position is randomized on the slider, either Left or Right. For Left, we have 1 -100 to get the same result as Right, which is the default. 
+```{r}
+data$prefer_first_1st <- ifelse(data$leftright_trial=="1left", 100-data$slider_value, data$slider_value)
+data$prefer_first_1st <- data$prefer_first_1st - 50 # We further extract 50 to get the range from -50 to 50 for better visualization.
+```
+Encode condition's name into English.
+```{r}
+data$combination <- as.factor(ifelse(str_sub(data$conditions, 3, 4)=="cf", "color_form",
+                           ifelse(str_sub(data$conditions, 3, 4)=="dc", "dimension_color",
+                                  "dimension_form")))
+
+
+data$relevant_property <- as.factor(ifelse(str_sub(data$conditions, 1, 1)== "e", "first",
+                                           ifelse(str_sub(data$conditions, 1, 1)== "z", "second",
+                                           "both")))
+```
+
+
+# Descriptive Statistics
+Aggregate data.
+```{r}
+#aggregate data
+aggregate(data$prefer_first_1st, list(data$conditions), FUN = function(x){c(mean(x), sd(x)/sqrt(length(x)))})
+aggregate(data$prefer_first_1st, list(data$conditions, data$dist), FUN = function(x){c(mean(x), sd(x)/sqrt(length(x)))})
+
+ratings_aggregated<-aggregate(prefer_first_1st~combination+relevant_property+dist, data=data, mean)
+#TODO: find another way to compute ses (SEwithin?)
+ses_ratings<-aggregate(prefer_first_1st~combination+relevant_property+dist, data=data, function(x) {sd(x)/sqrt(length(x))})
+ratings_aggregated<-cbind(ratings_aggregated,ses_ratings[,4])
+
+names(ratings_aggregated)[5]<-"se"
+
+```
+Draw a distribution plot of slider.
+```{r}
+# Raw data
+ggplot(data, aes(x = prefer_first_1st, fill = relevant_property)) +
+  geom_density(fill = CSP_colors[1]) 
+
+```
+
+Draw a summary plot of slider by conditions.
+```{r}
+# make bar plot for descriptive analysis
+p <- ggplot(ratings_aggregated, aes(x=combination, y=prefer_first_1st, fill=relevant_property)) +
+  ylab("preference for the position in front")+
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(aes(ymin=prefer_first_1st-se, ymax=prefer_first_1st+se), width=.2,
+                position=position_dodge(.9))+
+  facet_wrap(~dist)+
+  scale_fill_brewer(palette="Paired") + 
+  theme(axis.text.x = element_text(angle = 45, hjust=1))
+p
+ggsave(paste0(plots_dir, "/descriptive_plot.png"), plot = p, device = "png", width = 10, height = 10, units = "in", dpi = 300)
+
+```
+# Inferential Statistics
+Normality test.
+```{r}
+nortest::ad.test(data$prefer_first_1st) # Not passed with raw data. -> We need to transform the data.
+```
+Data transformation.
+```{r}
+data$sli<-(data$prefer_first_1st+50.5)/101
+model_raw <- lmer(data$prefer_first_1st~relevant_property*combination*dist
+           +(1|id)
+           +(1|item), data=data)
+model_log <- lmer(log(sli)~relevant_property*combination*dist
+           +(1|id)
+           +(1|item), data=data)
+data$transli<-qlogis(jitter(data$sli))
+model_logit <- lmer(transli~relevant_property*combination*dist
+             +(1|id)
+             +(1|item), data=data)
+par(mfrow=c(1,3))
+qqnorm(residuals(model_raw), main = "default value")
+qqnorm(residuals(model_log), main = "value log transformed")
+qqnorm(residuals(model_logit), main = "value logit transformed")
+
+# We will use logit transformed data for further analysis.
+model_full <- model_logit
+```
+```{r}
+step(model_full) # No sig. three way interaction. We can reduce model
+model_full <- update(model_full, .~.-relevant_property:combination:dist)
+```
+We want to resolve the interaction between distribution and combination first.
+```{r}
+# Subset the data to dimension_X and color_X
+data_dimisionX <- subset(data, combination=="dimension_form" | combination=="dimension_color")
+data_colorForm <- subset(data, combination=="color_form")
+
+# Fit two models for each subset
+model_dimisionX <- lmer(transli~relevant_property*dist
+             +(1|id)
+             +(1|item), data=data_dimisionX)
+
+model_colorForm <- lmer(transli~relevant_property*dist
+             +(1|id)
+             +(1|item), data=data_colorForm)
+
+# Check the interaction between relevant_property and dist
+step(model_dimisionX) # Sig. Interaction between relevant_property and dist. -> Further Anylysis to explain it needed.
+step(model_colorForm) # No sig. Interaction between relevant_property and dist. -> We can look at the summary now and make conclusions.
+summary(model_colorForm) 
+# 1. Sharp increase color first ordering in color form; 
+# 2. Sharp 
+```
+```{r}
+summary(model_dimisionX)
+```
+
+For Dimension X data, we further split the data by distribution.
+```{r}
+emmeans(model_dimisionX, pairwise~relevant_property * dist)
+# first blurred - first sharp     -0.5979 0.308 Inf  -1.944  0.3754
+emmeans(model_dimisionX, pairwise~dist)
+# blurred - sharp   -0.825 0.286 Inf  -2.885  0.0039
+```
+```{r}
+load("./data_preprocessed_huashan.RData")
+model_full <- lmer(prefer_first_1st~relevant_property*combination*dist
+             +(1|id)
+             +(1|item), data=data)
+step(model_full) # sig. interaction relevant:dist
+
+model_full <- update(model_full, .~.-relevant_property:combination:dist - relevant_property:combination - combination:dist)
+step(model_full)
+
+```
+```{r}
+data_dimisionX <- subset(data, combination=="dimension_X")
+data_colorForm <- subset(data, combination=="color_form")
+
+model_dimensionX <- lmer(prefer_first_1st~relevant_property*dist
+             +(1|id)
+             +(1|item), data=data_dimisionX)
+
+summary(model_dimensionX) # relevant_propertyfirst:distsharp     5.7283     1.9311 6171.7906   2.966  0.00302 **
+
+step(model_dimensionX) # sig. interaction relevant:dist)
+
+emmeans(model_dimensionX, pairwise~relevant_property * dist) # first blurred - first sharp      -4.850 3.59 Inf  -1.351  0.7564
+```
+
