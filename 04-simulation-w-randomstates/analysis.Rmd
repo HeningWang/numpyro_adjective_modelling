@@ -1,123 +1,400 @@
 ---
-title: "Analysis"
-author: "Your Name"
+title: "Simulation Analysis — Run 4"
 output:
-    html_document:
-        toc: true
-        toc_float: true
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: hide
 ---
-## Introduction
 
-This is an analysis of the data.
+# Overview
 
+Full simulation run uses `02-simulation-fast.py` (single-process, batched vmap).
 
-Load the data.
-```{r}
-rm(list=ls())  # Clear the workspace
-filename <- "../../RSAadj_simulation_results/simulation_full_run_3.csv"
-data <- read.csv(filename)
+**Parameter sweep**
 
-```
-Import packages.
-```{r}
+| Parameter | Values | n |
+|---|---|---|
+| `nobj` | 2, 6, 10, 14, 18, 22, 26, 30 | 8 |
+| `speaker` | incremental, global | 2 |
+| `color_semvalue` | 0.90, 0.92, 0.94, 0.96, 0.98 | 5 |
+| `k` | 0.1, 0.3, 0.5, 0.7, 0.9 | 5 |
+| `wf` | 0.1, 0.2, 0.3, 0.5, 0.8 | 5 |
+| `sd_spread` | 2.0 (blurred), 7.75 (baseline), 15.0 (sharp) | 3 |
+
+**Fixed:** `alpha = 1`, `bias = 0`, `world_length = 2`, `sample_size = 1000`
+
+Total rows: 8 × 2 × 5 × 5 × 5 × 3 × 1000 = 6,000,000
+
+**Outcome variables**
+
+- `probs_big_blue` — L1(referent | "big blue") = P(communicative success, size-first order)
+- `probs_blue_big` — L1(referent | "blue big") = P(communicative success, color-first order)
+- `size_first_advantage` = `probs_big_blue − probs_blue_big` (positive = size-first preferred)
+
+---
+
+# Setup
+
+```{r setup, message=FALSE, warning=FALSE}
+rm(list = ls())
 library(tidyverse)
-library(aida)
-library(ggplot2)
-```
 
-Set up the theme for plot.
-```{r}
-theme_set(theme_aida())
-
-##################################################
-## CSP-colors
-##################################################
-CSP_colors = c(
+# CSP palette from run_2 analysis
+CSP_colors <- c(
   "#7581B3", "#99C2C2", "#C65353", "#E2BA78", "#5C7457", "#575463",
   "#B0B7D4", "#66A3A3", "#DB9494", "#D49735", "#9BB096", "#D4D3D9",
   "#414C76", "#993333"
+)
+scale_colour_discrete <- function(...) scale_colour_manual(..., values = CSP_colors)
+scale_fill_discrete   <- function(...) scale_fill_manual(  ..., values = CSP_colors)
+
+theme_set(
+  theme_minimal(base_size = 13) +
+    theme(
+      strip.background = element_rect(fill = "#E8EAF0", colour = NA),
+      panel.grid.minor = element_blank()
+    )
+)
+```
+
+# Load & prepare data
+
+```{r load}
+data <- read.csv("simulation_full_run.csv")
+
+# Human-readable factor labels
+data <- data %>%
+  mutate(
+    speaker_label = recode(speaker,
+      "incremental_speaker" = "Incremental",
+      "global_speaker"      = "Global"
+    ),
+    sd_label = factor(
+      sd_spread,
+      levels = c(2.0, 7.75, 15.0),
+      labels = c("Blurred (σ=2)", "Baseline (σ=7.75)", "Sharp (σ=15)")
+    ),
+    # key derived variable
+    size_first_advantage = probs_big_blue - probs_blue_big
   )
-# setting theme colors globally
-scale_colour_discrete <- function(...) {
-  scale_colour_manual(..., values = CSP_colors)
-}
-scale_fill_discrete <- function(...) {
-  scale_fill_manual(..., values = CSP_colors)
-}
-CSP_color_names = c("glaucous", "opal", "shimmer", "crayola", "fern", "independence",
-           "glaucous light 2", "opal dark 2", "shimmer light 2", "crayola dark 2", "fern light 3", "independence light 4",
-           "glaucous dark 3", "shimmer dark 2"
-           )
-```
-Transform the data into long format for plotting.
-```{r}
-data.plot <- data %>% 
-  select("probs_big_blue","probs_blue_big") %>% 
-  pivot_longer(, names_to = "variable", values_to = "value")
+
+cat("Rows:", nrow(data), "\n")
+cat("Columns:", paste(names(data), collapse = ", "), "\n")
+glimpse(data)
 ```
 
-## Plot the propotion of sucess again color_semvalue & speaker
+# Descriptive overview: marginal means by speaker
 
-```{r}
-data %>% 
-  ggplot(aes(x=speaker, y=proportion_success)) + 
-  #geom_point(stat="identity", position=position_dodge()) + 
-  stat_summary(fun.data = "mean_cl_boot") +
-  theme_aida()
+```{r speaker-marginal}
+speaker_summary <- data %>%
+  group_by(speaker_label) %>%
+  summarise(
+    mean_bb  = mean(probs_big_blue),
+    se_bb    = sd(probs_big_blue) / sqrt(n()),
+    mean_bB  = mean(probs_blue_big),
+    se_bB    = sd(probs_blue_big) / sqrt(n()),
+    mean_adv = mean(size_first_advantage),
+    se_adv   = sd(size_first_advantage) / sqrt(n()),
+    .groups  = "drop"
+  )
+
+speaker_summary %>%
+  pivot_longer(
+    cols      = -speaker_label,
+    names_to  = c(".value", "utterance"),
+    names_pattern = "(mean|se)_(.*)"
+  ) %>%
+  filter(utterance %in% c("bb", "bB")) %>%
+  mutate(utterance = recode(utterance, bb = "big blue", bB = "blue big")) %>%
+  ggplot(aes(x = speaker_label, y = mean, colour = utterance)) +
+  geom_point(size = 4) +
+  geom_errorbar(aes(ymin = mean - 2 * se, ymax = mean + 2 * se), width = 0.15) +
+  labs(title  = "Communicative success by speaker (marginal mean ± 2 SE)",
+       x = "Speaker model", y = "P(referent | utterance)", colour = "Utterance") +
+  ylim(0, 1)
 ```
-```{r}
+
+# Speaker × sd_spread
+
+```{r speaker-sd}
 data %>%
-  ggplot(aes(x=size_distribution, y=proportion_success)) + 
-  #geom_point(stat="identity", position=position_dodge()) + 
-  stat_summary(fun.data = "mean_cl_boot") +
-  facet_wrap(~speaker) + 
-  theme_aida()
+  group_by(speaker_label, sd_label) %>%
+  summarise(
+    mean_bb = mean(probs_big_blue),
+    se_bb   = sd(probs_big_blue) / sqrt(n()),
+    mean_bB = mean(probs_blue_big),
+    se_bB   = sd(probs_blue_big) / sqrt(n()),
+    .groups = "drop"
+  ) %>%
+  pivot_longer(
+    cols      = c(mean_bb, mean_bB, se_bb, se_bB),
+    names_to  = c(".value", "utterance"),
+    names_pattern = "(mean|se)_(.*)"
+  ) %>%
+  mutate(utterance = recode(utterance, bb = "big blue", bB = "blue big")) %>%
+  ggplot(aes(x = sd_label, y = mean, colour = utterance, group = utterance)) +
+  geom_point(size = 3) +
+  geom_line() +
+  geom_errorbar(aes(ymin = mean - 2 * se, ymax = mean + 2 * se), width = 0.15) +
+  facet_wrap(~ speaker_label) +
+  labs(title  = "Communicative success by sd_spread and speaker",
+       x = "Context sharpness (sd_spread)",
+       y = "P(referent | utterance)",
+       colour = "Utterance") +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))
 ```
 
-To gain a basic understanding of the data and the impact of parameter values.
-```{r}
-data %>% filter(size_distribution == "normal") %>%
-  ggplot(aes(x=color_semvalue, y=proportion_success)) + 
-  #geom_point(stat="identity", position=position_dodge()) + 
-  stat_summary(fun.data = "mean_cl_boot") +
-  facet_wrap(~speaker) + 
-  theme_aida()
-```
-## Plot the propotion of sucess again nobj & speaker
-```{r}
-data %>% filter(size_distribution == "normal") %>%
-  ggplot(aes(x=nobj, y=proportion_success)) + 
-  #geom_point(stat="identity", position=position_dodge()) + 
-  stat_summary(fun.data = "mean_cl_boot") +
-  facet_wrap(~speaker) + 
-  theme_aida()
-```
-```{r}
-data %>% filter(size_distribution == "normal") %>%
-  ggplot(aes(x=wf, y=proportion_success)) + 
-  #geom_point(stat="identity", position=position_dodge()) + 
-  stat_summary(fun.data = "mean_cl_boot") +
-  facet_wrap(~speaker) + 
-  theme_aida()
-```
-```{r}
-data %>% filter(size_distribution == "normal") %>%
-  ggplot(aes(x=k, y=proportion_success)) + 
-  #geom_point(stat="identity", position=position_dodge()) + 
-  stat_summary(fun.data = "mean_cl_boot") +
-  facet_wrap(~speaker) + 
-  theme_aida()
+# Size-first advantage
+
+Key question: when does "big blue" beat "blue big"?
+
+```{r advantage-overview}
+data %>%
+  group_by(speaker_label, sd_label) %>%
+  summarise(
+    mean_adv = mean(size_first_advantage),
+    se_adv   = sd(size_first_advantage) / sqrt(n()),
+    .groups = "drop"
+  ) %>%
+  ggplot(aes(x = sd_label, y = mean_adv, fill = speaker_label)) +
+  geom_col(position = "dodge") +
+  geom_errorbar(
+    aes(ymin = mean_adv - 2 * se_adv, ymax = mean_adv + 2 * se_adv),
+    position = position_dodge(0.9), width = 0.2
+  ) +
+  geom_hline(yintercept = 0, lty = 2, colour = "grey30") +
+  labs(title   = "Size-first advantage (probs_big_blue − probs_blue_big)",
+       subtitle = "Positive = 'big blue' has higher communicative success",
+       x = "Context sharpness", y = "Advantage", fill = "Speaker") +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))
 ```
 
-```{r}
-library(ggplot2)
-#ggplot(data, aes(x=color_semvalue, y=proportion_success)) + geom_smooth()
-data %>% filter(wf == 0.6 & k == 0.6 & size_distribution == "normal" & nobj == 10) %>%
-  ggplot(aes(x=nobj, y=proportion_success)) + 
-  #geom_point(stat="identity", position=position_dodge()) + 
-  stat_summary(fun.data = "mean_cl_boot") + 
-  #facet_wrap(~speaker) + 
-  facet_grid(speaker~color_semvalue) +
-  theme_aida()
+# Effect of nobj
 
+```{r nobj}
+p_nobj <- data %>%
+  ggplot(aes(x = nobj)) +
+  stat_summary(aes(y = probs_big_blue,  colour = "big blue"),
+               fun.data = mean_cl_boot) +
+  stat_summary(aes(y = probs_blue_big, colour = "blue big"),
+               fun.data = mean_cl_boot) +
+  facet_grid(sd_label ~ speaker_label) +
+  labs(title  = "Communicative success by nobj",
+       x      = "N objects in context",
+       y      = "P(referent | utterance)",
+       colour = "Utterance") +
+  scale_x_continuous(breaks = unique(data$nobj))
+
+p_nobj
+ggsave("sim_nobj.png", p_nobj, width = 9, height = 7, dpi = 300)
+```
+
+# Effect of color_semvalue
+
+```{r csv}
+p_csv <- data %>%
+  group_by(speaker_label, sd_label, color_semvalue) %>%
+  summarise(
+    mean_bb = mean(probs_big_blue),
+    se_bb   = sd(probs_big_blue) / sqrt(n()),
+    mean_bB = mean(probs_blue_big),
+    se_bB   = sd(probs_blue_big) / sqrt(n()),
+    .groups = "drop"
+  ) %>%
+  pivot_longer(
+    cols      = c(mean_bb, mean_bB, se_bb, se_bB),
+    names_to  = c(".value", "utterance"),
+    names_pattern = "(mean|se)_(.*)"
+  ) %>%
+  mutate(utterance = recode(utterance, bb = "big blue", bB = "blue big")) %>%
+  ggplot(aes(x = color_semvalue, y = mean, colour = utterance)) +
+  geom_point(size = 2) +
+  geom_line() +
+  geom_errorbar(aes(ymin = mean - 2 * se, ymax = mean + 2 * se), width = 0.005) +
+  facet_grid(sd_label ~ speaker_label) +
+  labs(title  = "Communicative success by color_semvalue",
+       x = "Color semantic value", y = "P(referent | utterance)",
+       colour = "Utterance")
+
+p_csv
+ggsave("sim_colorsemval.png", p_csv, width = 9, height = 8, dpi = 300)
+```
+
+# Effect of k (threshold parameter)
+
+```{r k}
+p_k <- data %>%
+  group_by(speaker_label, sd_label, k) %>%
+  summarise(
+    mean_bb = mean(probs_big_blue),
+    se_bb   = sd(probs_big_blue) / sqrt(n()),
+    mean_bB = mean(probs_blue_big),
+    se_bB   = sd(probs_blue_big) / sqrt(n()),
+    .groups = "drop"
+  ) %>%
+  pivot_longer(
+    cols      = c(mean_bb, mean_bB, se_bb, se_bB),
+    names_to  = c(".value", "utterance"),
+    names_pattern = "(mean|se)_(.*)"
+  ) %>%
+  mutate(utterance = recode(utterance, bb = "big blue", bB = "blue big")) %>%
+  ggplot(aes(x = k, y = mean, colour = utterance)) +
+  geom_point(size = 2) +
+  geom_line() +
+  geom_errorbar(aes(ymin = mean - 2 * se, ymax = mean + 2 * se), width = 0.02) +
+  facet_grid(sd_label ~ speaker_label) +
+  labs(title  = "Communicative success by k (threshold strictness)",
+       x = "k", y = "P(referent | utterance)", colour = "Utterance")
+
+p_k
+ggsave("sim_k.png", p_k, width = 9, height = 8, dpi = 300)
+```
+
+# Effect of wf (perceptual blur)
+
+`wf` controls the steepness of the size CDF: low wf = sharp/certain size semantics; high wf = blurred/uncertain size semantics. Lower wf should make "big" a more reliable first word for the incremental speaker.
+
+```{r wf}
+p_wf <- data %>%
+  group_by(speaker_label, sd_label, wf) %>%
+  summarise(
+    mean_bb = mean(probs_big_blue),
+    se_bb   = sd(probs_big_blue) / sqrt(n()),
+    mean_bB = mean(probs_blue_big),
+    se_bB   = sd(probs_blue_big) / sqrt(n()),
+    .groups = "drop"
+  ) %>%
+  pivot_longer(
+    cols      = c(mean_bb, mean_bB, se_bb, se_bB),
+    names_to  = c(".value", "utterance"),
+    names_pattern = "(mean|se)_(.*)"
+  ) %>%
+  mutate(utterance = recode(utterance, bb = "big blue", bB = "blue big")) %>%
+  ggplot(aes(x = wf, y = mean, colour = utterance)) +
+  geom_point(size = 2) +
+  geom_line() +
+  geom_errorbar(aes(ymin = mean - 2 * se, ymax = mean + 2 * se), width = 0.02) +
+  facet_grid(sd_label ~ speaker_label) +
+  labs(title  = "Communicative success by wf (perceptual blur)",
+       subtitle = "Lower wf = sharper size semantics",
+       x = "wf", y = "P(referent | utterance)", colour = "Utterance")
+
+p_wf
+ggsave("sim_wf.png", p_wf, width = 9, height = 8, dpi = 300)
+```
+
+# Size-first advantage by wf
+
+```{r adv-wf}
+p_adv_wf <- data %>%
+  group_by(speaker_label, wf, sd_label) %>%
+  summarise(
+    mean_adv = mean(size_first_advantage),
+    se_adv   = sd(size_first_advantage) / sqrt(n()),
+    .groups = "drop"
+  ) %>%
+  ggplot(aes(x = wf, y = mean_adv, colour = sd_label, group = sd_label)) +
+  geom_point(size = 2.5) +
+  geom_line() +
+  geom_ribbon(aes(ymin = mean_adv - 2 * se_adv,
+                  ymax = mean_adv + 2 * se_adv,
+                  fill = sd_label), alpha = 0.15, colour = NA) +
+  geom_hline(yintercept = 0, lty = 2, colour = "grey30") +
+  facet_wrap(~ speaker_label) +
+  labs(title   = "Size-first advantage by wf and sharpness",
+       subtitle = "Crosses zero = incremental flips to prefer big-blue",
+       x = "wf", y = "Advantage (big blue − blue big)",
+       colour = "Context", fill = "Context")
+
+p_adv_wf
+ggsave("sim_advantage_wf_sd.png", p_adv_wf, width = 9, height = 5, dpi = 300)
+```
+
+# Size-first advantage: k × sd_spread heatmap
+
+```{r heatmap}
+p_heat <- data %>%
+  group_by(speaker_label, k, sd_label) %>%
+  summarise(mean_adv = mean(size_first_advantage), .groups = "drop") %>%
+  ggplot(aes(x = factor(k), y = sd_label, fill = mean_adv)) +
+  geom_tile(colour = "white") +
+  geom_text(aes(label = round(mean_adv, 3)), size = 3) +
+  scale_fill_gradient2(low = CSP_colors[3], mid = "white", high = CSP_colors[1],
+                       midpoint = 0, name = "Advantage") +
+  facet_wrap(~ speaker_label) +
+  labs(title = "Mean size-first advantage: k × sd_spread",
+       x = "k", y = "Context sharpness")
+
+p_heat
+ggsave("sim_heatmap_k_sd.png", p_heat, width = 10, height = 4, dpi = 300)
+```
+
+# Size-first advantage: color_semvalue × sd_spread heatmap
+
+```{r heatmap2}
+p_heat2 <- data %>%
+  group_by(speaker_label, color_semvalue, sd_label) %>%
+  summarise(mean_adv = mean(size_first_advantage), .groups = "drop") %>%
+  ggplot(aes(x = factor(color_semvalue), y = sd_label, fill = mean_adv)) +
+  geom_tile(colour = "white") +
+  geom_text(aes(label = round(mean_adv, 3)), size = 3) +
+  scale_fill_gradient2(low = CSP_colors[3], mid = "white", high = CSP_colors[1],
+                       midpoint = 0, name = "Advantage") +
+  facet_wrap(~ speaker_label) +
+  labs(title = "Mean size-first advantage: color_semvalue × sd_spread",
+       x = "color_semvalue", y = "Context sharpness")
+
+p_heat2
+ggsave("sim_heatmap_csv_sd.png", p_heat2, width = 10, height = 4, dpi = 300)
+```
+
+# nobj × sd_spread interaction (size-first advantage)
+
+```{r adv-nobj-sd}
+p_inter <- data %>%
+  group_by(speaker_label, nobj, sd_label) %>%
+  summarise(
+    mean_adv = mean(size_first_advantage),
+    se_adv   = sd(size_first_advantage) / sqrt(n()),
+    .groups = "drop"
+  ) %>%
+  ggplot(aes(x = nobj, y = mean_adv, colour = sd_label, group = sd_label)) +
+  geom_point(size = 2.5) +
+  geom_line() +
+  geom_ribbon(aes(ymin = mean_adv - 2 * se_adv,
+                  ymax = mean_adv + 2 * se_adv,
+                  fill = sd_label), alpha = 0.15, colour = NA) +
+  geom_hline(yintercept = 0, lty = 2, colour = "grey30") +
+  facet_wrap(~ speaker_label) +
+  scale_x_continuous(breaks = unique(data$nobj)) +
+  labs(title   = "Size-first advantage by nobj and sharpness",
+       x = "N objects", y = "Advantage (big blue − blue big)",
+       colour = "Context", fill = "Context")
+
+p_inter
+ggsave("sim_advantage_nobj_sd.png", p_inter, width = 9, height = 5, dpi = 300)
+```
+
+# Descriptive summary table
+
+```{r summary-table}
+data %>%
+  group_by(speaker_label, sd_label) %>%
+  summarise(
+    n            = n(),
+    mean_bb      = round(mean(probs_big_blue),  4),
+    sd_bb        = round(sd(probs_big_blue),    4),
+    mean_bB      = round(mean(probs_blue_big),  4),
+    sd_bB        = round(sd(probs_blue_big),    4),
+    mean_adv     = round(mean(size_first_advantage), 4),
+    sd_adv       = round(sd(size_first_advantage),   4),
+    .groups = "drop"
+  ) %>%
+  knitr::kable(col.names = c(
+    "Speaker", "Context", "N",
+    "Mean P(bb)", "SD P(bb)",
+    "Mean P(bB)", "SD P(bB)",
+    "Mean adv.", "SD adv."
+  ))
 ```

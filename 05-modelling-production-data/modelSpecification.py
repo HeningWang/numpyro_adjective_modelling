@@ -27,7 +27,7 @@ from numpyro import handlers
 from numpyro.infer import MCMC, NUTS, HMC, MixedHMC, init_to_value
 from numpyro.infer import Predictive
 from sklearn.model_selection import train_test_split
-from helper import import_dataset, normalize, build_utterance_prior_jax
+from helper import import_dataset, import_dataset_hier, normalize, build_utterance_prior_jax
 
 
 print(jax.__version__)
@@ -751,6 +751,134 @@ _.block_until_ready()
 
 
 
+# =============================================================================
+# HIERARCHICAL VMAPS  (map over states AND alpha — one alpha per trial)
+# =============================================================================
+
+vectorized_global_speaker_hier = jax.vmap(
+    global_speaker,
+    in_axes=(0,    # states
+             0,    # alpha  ← per-trial (participant-specific)
+             None, # color_sem
+             None, # form_sem
+             None, # k
+             None, # wf
+             None, # beta
+             0,    # gamma (per-trial sharpness-conditioned gain)
+             ),
+)
+
+@jax.jit
+def jitted_global_speaker_hier(states, alpha_per_trial, color_semval, form_semval, k, wf, beta, gamma):
+    return vectorized_global_speaker_hier(
+        states, alpha_per_trial, color_semval, form_semval, k, wf, beta, gamma
+    )
+
+vectorized_incremental_speaker_hier = jax.vmap(
+    incremental_speaker,
+    in_axes=(0,    # states
+             0,    # alpha  ← per-trial
+             None, # color_semval
+             None, # form_semval
+             None, # k
+             None, # wf
+             None, # beta
+             0,    # gamma
+             ),
+)
+
+@jax.jit
+def jitted_speaker_hier(states, alpha_per_trial, color_semval, form_semval, k, wf, beta, gamma):
+    return vectorized_incremental_speaker_hier(
+        states, alpha_per_trial, color_semval, form_semval, k, wf, beta, gamma
+    )
+
+
+def likelihood_function_global_speaker_hier(
+    states=None, empirical=None, sharpness_idx=None,
+    participant_idx=None, n_participants=None,
+):
+    """Global speaker with per-participant random effects on alpha.
+
+    Population priors:
+        alpha    ~ HalfNormal(5.0)
+        log_beta ~ Normal(0.0, 0.5)
+    Participant-level random intercepts:
+        tau     ~ HalfNormal(0.2)   # SD of rationality shifts
+        delta_i ~ Normal(0, tau)    # per-participant alpha offset
+    Observation model:
+        alpha_j = max(alpha + delta[participant_idx[j]], 0)
+        obs_j  ~ Categorical(global_speaker(state_j, alpha_j, ...))
+    """
+    color_sem = 0.8
+    form_sem  = 0.7
+    k         = 0.5
+    wf        = 1.0
+
+    log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
+    beta     = jnp.exp(log_beta)
+
+    alpha = numpyro.sample("alpha", dist.HalfNormal(5.0))
+    tau   = numpyro.sample("tau",   dist.HalfNormal(0.2))
+
+    with numpyro.plate("participants", n_participants):
+        delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+    if sharpness_idx is None:
+        sharpness_idx = jnp.zeros((len(states),), dtype=jnp.float32)
+    gamma = jnp.where(sharpness_idx > 0.5, GAMMA_SHARP, GAMMA_BLURRED)
+
+    alpha_per_trial = jnp.maximum(alpha + delta[participant_idx], 0.0)
+
+    with numpyro.plate("data", len(states)):
+        probs = jitted_global_speaker_hier(
+            states, alpha_per_trial, color_sem, form_sem, k, wf, beta, gamma
+        )
+        if empirical is None:
+            numpyro.sample("obs", dist.Categorical(probs=probs))
+        else:
+            numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+
+
+def likelihood_function_incremental_speaker_hier(
+    states=None, empirical=None, sharpness_idx=None,
+    participant_idx=None, n_participants=None,
+):
+    """Incremental speaker with per-participant random effects on alpha.
+
+    Same structure as likelihood_function_global_speaker_hier but uses
+    the incremental RSA speaker.
+    """
+    color_semval = 0.8
+    form_semval  = 0.7
+    k            = 0.5
+    wf           = 1.0
+
+    log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
+    beta     = jnp.exp(log_beta)
+
+    alpha = numpyro.sample("alpha", dist.HalfNormal(5.0))
+    tau   = numpyro.sample("tau",   dist.HalfNormal(0.2))
+
+    with numpyro.plate("participants", n_participants):
+        delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+    if sharpness_idx is None:
+        sharpness_idx = jnp.zeros((len(states),), dtype=jnp.float32)
+    gamma = jnp.where(sharpness_idx > 0.5, GAMMA_SHARP, GAMMA_BLURRED)
+
+    alpha_per_trial = jnp.maximum(alpha + delta[participant_idx], 0.0)
+
+    with numpyro.plate("data", len(states)):
+        probs = jitted_speaker_hier(
+            states, alpha_per_trial, color_semval, form_semval, k, wf, beta, gamma
+        )
+        if empirical is None:
+            numpyro.sample("obs", dist.Categorical(probs=probs))
+        else:
+            numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+
+
 def likelihood_function_incremental_speaker(states = None, empirical = None, sharpness_idx = None, incremental_fast_mode: bool = False):
     # ── Semantic parameters ───────────────────────────────────────────────────  
     # # Infer color and form semantics; size semantics are computed from these via the
@@ -811,17 +939,152 @@ def likelihood_function_incremental_speaker(states = None, empirical = None, sha
         else:
             numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
 
- # ========================
+
+# ========================
+# Gamma-inferred variants
+# ========================
+
+def likelihood_function_global_speaker_gamma(states=None, empirical=None, sharpness_idx=None):
+    """Global speaker with inferred size-discriminability (gamma) per sharpness condition."""
+    color_sem = 0.8
+    form_sem  = 0.7
+    k         = 0.5
+    wf        = 1.0
+
+    log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
+    beta     = jnp.exp(log_beta)
+    alpha    = numpyro.sample("alpha", dist.HalfNormal(5.0))
+
+    log_gamma_blurred = numpyro.sample("log_gamma_blurred", dist.Normal(jnp.log(GAMMA_BLURRED), 0.5))
+    log_gamma_sharp   = numpyro.sample("log_gamma_sharp",   dist.Normal(jnp.log(GAMMA_SHARP),   0.5))
+
+    if sharpness_idx is None:
+        sharpness_idx = jnp.zeros((len(states),), dtype=jnp.float32)
+    gamma = jnp.where(sharpness_idx > 0.5, jnp.exp(log_gamma_sharp), jnp.exp(log_gamma_blurred))
+
+    with numpyro.plate("data", len(states)):
+        probs = jitted_global_speaker(states, alpha, color_sem, form_sem, k, wf, beta, gamma)
+        if empirical is None:
+            numpyro.sample("obs", dist.Categorical(probs=probs))
+        else:
+            numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+
+
+def likelihood_function_incremental_speaker_gamma(states=None, empirical=None, sharpness_idx=None,
+                                                   incremental_fast_mode: bool = False):
+    """Incremental speaker with inferred size-discriminability (gamma) per sharpness condition."""
+    color_semval = 0.8
+    form_semval  = 0.7
+    k    = 0.5
+    wf   = 1.0
+
+    log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
+    beta     = jnp.exp(log_beta)
+    alpha    = numpyro.sample("alpha", dist.HalfNormal(5.0))
+
+    log_gamma_blurred = numpyro.sample("log_gamma_blurred", dist.Normal(jnp.log(GAMMA_BLURRED), 0.5))
+    log_gamma_sharp   = numpyro.sample("log_gamma_sharp",   dist.Normal(jnp.log(GAMMA_SHARP),   0.5))
+
+    if sharpness_idx is None:
+        sharpness_idx = jnp.zeros((len(states),), dtype=jnp.float32)
+    gamma = jnp.where(sharpness_idx > 0.5, jnp.exp(log_gamma_sharp), jnp.exp(log_gamma_blurred))
+
+    with numpyro.plate("data", len(states)):
+        speaker_fn = jitted_speaker_frozen if incremental_fast_mode else jitted_speaker
+        probs = speaker_fn(states, alpha, color_semval, form_semval, k, wf, beta, gamma)
+        if empirical is None:
+            numpyro.sample("obs", dist.Categorical(probs=probs))
+        else:
+            numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+
+
+def likelihood_function_global_speaker_hier_gamma(
+    states=None, empirical=None, sharpness_idx=None,
+    participant_idx=None, n_participants=None,
+):
+    """Global speaker hierarchical + inferred gamma."""
+    color_sem = 0.8
+    form_sem  = 0.7
+    k         = 0.5
+    wf        = 1.0
+
+    log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
+    beta     = jnp.exp(log_beta)
+    alpha    = numpyro.sample("alpha", dist.HalfNormal(5.0))
+    tau      = numpyro.sample("tau",   dist.HalfNormal(0.2))
+
+    with numpyro.plate("participants", n_participants):
+        delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+    log_gamma_blurred = numpyro.sample("log_gamma_blurred", dist.Normal(jnp.log(GAMMA_BLURRED), 0.5))
+    log_gamma_sharp   = numpyro.sample("log_gamma_sharp",   dist.Normal(jnp.log(GAMMA_SHARP),   0.5))
+
+    if sharpness_idx is None:
+        sharpness_idx = jnp.zeros((len(states),), dtype=jnp.float32)
+    gamma = jnp.where(sharpness_idx > 0.5, jnp.exp(log_gamma_sharp), jnp.exp(log_gamma_blurred))
+
+    alpha_per_trial = jnp.maximum(alpha + delta[participant_idx], 0.0)
+
+    with numpyro.plate("data", len(states)):
+        probs = jitted_global_speaker_hier(
+            states, alpha_per_trial, color_sem, form_sem, k, wf, beta, gamma
+        )
+        if empirical is None:
+            numpyro.sample("obs", dist.Categorical(probs=probs))
+        else:
+            numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+
+
+def likelihood_function_incremental_speaker_hier_gamma(
+    states=None, empirical=None, sharpness_idx=None,
+    participant_idx=None, n_participants=None,
+):
+    """Incremental speaker hierarchical + inferred gamma."""
+    color_semval = 0.8
+    form_semval  = 0.7
+    k            = 0.5
+    wf           = 1.0
+
+    log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
+    beta     = jnp.exp(log_beta)
+    alpha    = numpyro.sample("alpha", dist.HalfNormal(5.0))
+    tau      = numpyro.sample("tau",   dist.HalfNormal(0.2))
+
+    with numpyro.plate("participants", n_participants):
+        delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+    log_gamma_blurred = numpyro.sample("log_gamma_blurred", dist.Normal(jnp.log(GAMMA_BLURRED), 0.5))
+    log_gamma_sharp   = numpyro.sample("log_gamma_sharp",   dist.Normal(jnp.log(GAMMA_SHARP),   0.5))
+
+    if sharpness_idx is None:
+        sharpness_idx = jnp.zeros((len(states),), dtype=jnp.float32)
+    gamma = jnp.where(sharpness_idx > 0.5, jnp.exp(log_gamma_sharp), jnp.exp(log_gamma_blurred))
+
+    alpha_per_trial = jnp.maximum(alpha + delta[participant_idx], 0.0)
+
+    with numpyro.plate("data", len(states)):
+        probs = jitted_speaker_hier(
+            states, alpha_per_trial, color_semval, form_semval, k, wf, beta, gamma
+        )
+        if empirical is None:
+            numpyro.sample("obs", dist.Categorical(probs=probs))
+        else:
+            numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+
+
+# ========================
 def run_inference(speaker_type: str = "global",
                     num_warmup: int = 100,
                     num_samples: int = 250,
                     num_chains: int = 4,
-                                        incremental_fast_mode: bool = False,
+                    incremental_fast_mode: bool = False,
+                    infer_gamma: bool = False,
                     device: str = "cpu",
                   ):
 
     # Setup output file name
-    output_file_name = f"./inference_data/mcmc_results_{speaker_type}_speaker_warmup{num_warmup}_samples{num_samples}_chains{num_chains}.nc"
+    gamma_suffix = "_gamma" if infer_gamma else ""
+    output_file_name = f"./inference_data/mcmc_results_{speaker_type}_speaker{gamma_suffix}_warmup{num_warmup}_samples{num_samples}_chains{num_chains}.nc"
 
     # Delete if exists  
     if os.path.exists(output_file_name):  
@@ -849,13 +1112,11 @@ def run_inference(speaker_type: str = "global",
     rng_key, rng_key_ = random.split(rng_key)
 
     if speaker_type == "global":
-        # Use the global speaker likelihood function
-        model = likelihood_function_global_speaker
+        model = likelihood_function_global_speaker_gamma if infer_gamma else likelihood_function_global_speaker
         target_accept_prob = 0.9
         max_tree_depth = 3
     elif speaker_type == "incremental":
-        # Use the incremental speaker likelihood function
-        model = likelihood_function_incremental_speaker
+        model = likelihood_function_incremental_speaker_gamma if infer_gamma else likelihood_function_incremental_speaker
         target_accept_prob = 0.85
         max_tree_depth = 2
     else:
@@ -902,6 +1163,91 @@ def run_inference(speaker_type: str = "global",
 
     # Write the inference data to a netcdf file
     az.to_netcdf(numpyro_data, output_file_name)
+
+def run_inference_hier(
+    speaker_type: str = "global",
+    num_warmup: int = 1000,
+    num_samples: int = 1000,
+    num_chains: int = 4,
+    infer_gamma: bool = False,
+    device: str = "cpu",
+):
+    """Run MCMC for the hierarchical (random participant alpha) speaker model.
+
+    Saves results to
+        ./inference_data/mcmc_results_{speaker_type}_speaker_hier[_gamma]_warmup{W}_samples{S}_chains{C}.nc
+    """
+    gamma_suffix = "_gamma" if infer_gamma else ""
+    output_file_name = (
+        f"./inference_data/mcmc_results_{speaker_type}_speaker_hier{gamma_suffix}"
+        f"_warmup{num_warmup}_samples{num_samples}_chains{num_chains}.nc"
+    )
+    if os.path.exists(output_file_name):
+        os.remove(output_file_name)
+        print(f"Deleted existing file: {output_file_name}")
+
+    data = import_dataset_hier()
+    states_train          = data["states_train"]
+    empirical_seq_flat    = data["empirical_seq_flat"]
+    sharpness_idx         = data["sharpness_idx"]
+    participant_idx       = data["participant_idx"]
+    n_participants        = data["n_participants"]
+
+    print(f"Hierarchical model: {n_participants} participants, {len(states_train)} observations")
+    print(f"Output file: {output_file_name}")
+
+    rng_key = random.PRNGKey(4711)
+    rng_key, rng_key_ = random.split(rng_key)
+
+    if speaker_type == "global":
+        model = likelihood_function_global_speaker_hier_gamma if infer_gamma else likelihood_function_global_speaker_hier
+        target_accept_prob = 0.9
+        max_tree_depth     = 3
+    elif speaker_type == "incremental":
+        model = likelihood_function_incremental_speaker_hier_gamma if infer_gamma else likelihood_function_incremental_speaker_hier
+        target_accept_prob = 0.85
+        max_tree_depth     = 2
+    else:
+        raise ValueError(f"Unknown speaker_type: {speaker_type}")
+
+    kernel = NUTS(model, target_accept_prob=target_accept_prob, max_tree_depth=max_tree_depth)
+    mcmc = MCMC(
+        kernel,
+        num_warmup=num_warmup,
+        num_samples=num_samples,
+        num_chains=num_chains,
+        chain_method="vectorized",
+    )
+    mcmc.run(
+        rng_key_,
+        states_train, empirical_seq_flat, sharpness_idx,
+        participant_idx, n_participants,
+    )
+    mcmc.print_summary(exclude_deterministic=False)
+
+    posterior_samples = mcmc.get_samples()
+    posterior_predictive = Predictive(model, posterior_samples)(
+        PRNGKey(1), states_train, None, sharpness_idx, participant_idx, n_participants
+    )
+    prior = Predictive(model, num_samples=500)(
+        PRNGKey(2), states_train, None, sharpness_idx, participant_idx, n_participants
+    )
+
+    N = states_train.shape[0]
+    numpyro_data = az.from_numpyro(
+        mcmc,
+        prior=prior,
+        posterior_predictive=posterior_predictive,
+        coords={
+            "item":         np.arange(N),
+            "participants": np.arange(n_participants),
+        },
+        dims={"obs": ["item"], "delta": ["participants"]},
+    )
+    az.to_netcdf(numpyro_data, output_file_name)
+    assert os.path.exists(output_file_name), f"Save failed: {output_file_name} not found"
+    print(f"Saved: {output_file_name}")
+
 
 def profile_likelihood_function(speaker_type: str = "global"):
         # ── Run this BEFORE the full inference ───────────────────────────────────────
@@ -1076,21 +1422,36 @@ if __name__ == "__main__":
     parser.add_argument("--incremental_fast_mode", action="store_true",
                         help="Use faster approximate incremental speaker with frozen size-semantics updates.")
     parser.add_argument("--test", action="store_true", help="Run test function and exit.")
-
+    parser.add_argument(
+        "--hierarchical", action="store_true",
+        help="Run hierarchical model with random per-participant alpha intercepts.",
+    )
+    parser.add_argument(
+        "--infer_gamma", action="store_true",
+        help="Infer gamma (size discriminability) per sharpness condition instead of using fixed values.",
+    )
 
     args = parser.parse_args()
 
     # Place to test functions
     #profile_likelihood_function(args.speaker_type)
 
-
     if args.test:
         test()
+    elif args.hierarchical:
+        run_inference_hier(
+            speaker_type=args.speaker_type,
+            num_samples=args.num_samples,
+            num_warmup=args.num_warmup,
+            num_chains=args.num_chains,
+            infer_gamma=args.infer_gamma,
+        )
     else:
         run_inference(
             speaker_type=args.speaker_type,
             num_samples=args.num_samples,
             num_warmup=args.num_warmup,
             num_chains=args.num_chains,
+            infer_gamma=args.infer_gamma,
             incremental_fast_mode=args.incremental_fast_mode,
         )

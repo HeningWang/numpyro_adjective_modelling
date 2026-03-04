@@ -115,6 +115,32 @@ def import_dataset(
         "sharpness_idx": sharpness_idx,
     }
 
+def import_dataset_hier(
+    file_path: Optional[Union[str, Path]] = None
+):
+    """Extends import_dataset() with participant indices for hierarchical models.
+
+    Returns all keys from import_dataset() plus:
+        participant_idx : jnp.ndarray  shape (N,) int32  — 0-indexed participant ID
+        n_participants  : int          — total number of unique participants
+    """
+    base = import_dataset(file_path)
+
+    dataset_path = Path(file_path) if file_path is not None else DEFAULT_DATASET_PATH
+    df_raw = pd.read_csv(dataset_path).dropna(subset=["annotation"])
+    df_raw = df_raw[df_raw["conditions"].isin(CONDITIONS_OF_INTEREST)].copy()
+
+    # Participant IDs from the 'id' column; encode as 0-indexed integers
+    unique_participants = sorted(df_raw["id"].unique())
+    participant_to_idx = {pid: i for i, pid in enumerate(unique_participants)}
+    participant_idx_np = df_raw["id"].map(participant_to_idx).to_numpy(dtype=np.int32)
+    n_participants = len(unique_participants)
+
+    base["participant_idx"] = jnp.array(participant_idx_np, dtype=jnp.int32)
+    base["n_participants"] = n_participants
+    return base
+
+
 def build_utterance_prior_jax(
     utterance_list: jnp.ndarray,  # shape (U, 3)
     costParam_length: float = 1.0,

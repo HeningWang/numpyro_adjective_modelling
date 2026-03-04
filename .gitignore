@@ -38,3 +38,10 @@ __pycache__/
 .claude/settings.json
 05-modelling-production-data/inference_data/mcmc_results_global_speaker_warmup500_samples500_chains4.nc
 05-modelling-production-data/inference_data/mcmc_results_incremental_speaker_warmup500_samples500_chains4.nc
+05-modelling-production-data/__pycache__/helper.cpython-311.pyc
+05-modelling-production-data/__pycache__/helper.cpython-311.pyc
+.DS_Store
+
+# Simulation output CSVs (large, regenerable)
+04-simulation-w-randomstates/simulation_full_run*.csv
+04-simulation-w-randomstates/simulation_test*.csv

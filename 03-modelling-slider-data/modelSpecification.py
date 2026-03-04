@@ -4,6 +4,7 @@ os.environ["JAX_TRACEBACK_FILTERING"] = "off"  # optional: full tracebacks
 os.environ["XLA_FLAGS"] = "--xla_force_host_platform_device_count=4"  
 
 import argparse
+import functools
 import jax
 import jax.numpy as jnp
 from jax import random, vmap
@@ -861,14 +862,20 @@ class ZOIB(dist.Distribution):
         logp = jnp.where(is_one, jnp.log(self.pi1 + eps), logp)
         return logp
 
-def likelihood_gb_speaker(states=None, data=None, pi0: float=0.01, pi1: float=0.01, sharpness_idx=None):
+def likelihood_gb_speaker(states=None, data=None, pi0: float=0.01, pi1: float=0.01, sharpness_idx=None, infer_gamma: bool = True):
     alpha = numpyro.sample("alpha", dist.HalfNormal(5.0))
     bias  = numpyro.sample("bias",  dist.HalfNormal(2.0))  # ordering cost: >0 prefers "big blue"
     sigma = numpyro.sample("sigma", dist.HalfNormal(0.3))
+    if infer_gamma:
+        gamma_blurred = numpyro.sample("gamma_blurred", dist.HalfNormal(3.0))
+        gamma_sharp   = numpyro.sample("gamma_sharp",   dist.HalfNormal(3.0))
+    else:
+        gamma_blurred = GAMMA_BLURRED
+        gamma_sharp   = GAMMA_SHARP
 
     if sharpness_idx is None:
         sharpness_idx = jnp.zeros(len(states))
-    gamma = jnp.where(sharpness_idx > 0.5, GAMMA_SHARP, GAMMA_BLURRED)
+    gamma = jnp.where(sharpness_idx > 0.5, gamma_sharp, gamma_blurred)
 
     with numpyro.plate("data", len(states)):
         model_prob = jitted_global_speaker(states, alpha, bias, gamma)
@@ -877,14 +884,20 @@ def likelihood_gb_speaker(states=None, data=None, pi0: float=0.01, pi1: float=0.
             data = jnp.clip(data, 0.0, 1.0)
         numpyro.sample("obs", ZOIB(model_prob, sigma, pi0, pi1), obs=data)
 
-def likelihood_inc_speaker(states=None, data=None, pi0: float=0.01, pi1: float=0.01, sharpness_idx=None):
+def likelihood_inc_speaker(states=None, data=None, pi0: float=0.01, pi1: float=0.01, sharpness_idx=None, infer_gamma: bool = True):
     alpha = numpyro.sample("alpha", dist.HalfNormal(5.0))
     bias  = numpyro.sample("bias",  dist.HalfNormal(2.0))  # ordering cost: >0 prefers "big blue"
     sigma = numpyro.sample("sigma", dist.HalfNormal(0.3))
+    if infer_gamma:
+        gamma_blurred = numpyro.sample("gamma_blurred", dist.HalfNormal(3.0))
+        gamma_sharp   = numpyro.sample("gamma_sharp",   dist.HalfNormal(3.0))
+    else:
+        gamma_blurred = GAMMA_BLURRED
+        gamma_sharp   = GAMMA_SHARP
 
     if sharpness_idx is None:
         sharpness_idx = jnp.zeros(len(states))
-    gamma = jnp.where(sharpness_idx > 0.5, GAMMA_SHARP, GAMMA_BLURRED)
+    gamma = jnp.where(sharpness_idx > 0.5, gamma_sharp, gamma_blurred)
 
     with numpyro.plate("data", len(states)):
         model_prob = jitted_incremental_speaker(states, alpha, bias, gamma)
@@ -958,6 +971,7 @@ def likelihood_gb_speaker_hier(
     pi0: float = 0.01, pi1: float = 0.01,
     sharpness_idx=None,
     participant_idx=None, n_participants: int = 1,
+    infer_gamma: bool = True,
 ):
     """Global speaker with per-participant additive intercepts (Option A).
 
@@ -976,13 +990,19 @@ def likelihood_gb_speaker_hier(
     bias  = numpyro.sample("bias",  dist.HalfNormal(2.0))
     sigma = numpyro.sample("sigma", dist.HalfNormal(0.3))
     tau   = numpyro.sample("tau",   dist.HalfNormal(0.2))
+    if infer_gamma:
+        gamma_blurred = numpyro.sample("gamma_blurred", dist.HalfNormal(3.0))
+        gamma_sharp   = numpyro.sample("gamma_sharp",   dist.HalfNormal(3.0))
+    else:
+        gamma_blurred = GAMMA_BLURRED
+        gamma_sharp   = GAMMA_SHARP
 
     with numpyro.plate("participants", n_participants):
         delta = numpyro.sample("delta", dist.Normal(0.0, tau))
 
     if sharpness_idx is None:
         sharpness_idx = jnp.zeros(len(states))
-    gamma = jnp.where(sharpness_idx > 0.5, GAMMA_SHARP, GAMMA_BLURRED)
+    gamma = jnp.where(sharpness_idx > 0.5, gamma_sharp, gamma_blurred)
 
     with numpyro.plate("data", len(states)):
         rsa_prob    = jitted_global_speaker(states, alpha, bias, gamma)
@@ -997,6 +1017,7 @@ def likelihood_inc_speaker_hier(
     pi0: float = 0.01, pi1: float = 0.01,
     sharpness_idx=None,
     participant_idx=None, n_participants: int = 1,
+    infer_gamma: bool = True,
 ):
     """Incremental speaker with per-participant additive intercepts (Option A).
 
@@ -1006,13 +1027,19 @@ def likelihood_inc_speaker_hier(
     bias  = numpyro.sample("bias",  dist.HalfNormal(2.0))
     sigma = numpyro.sample("sigma", dist.HalfNormal(0.3))
     tau   = numpyro.sample("tau",   dist.HalfNormal(0.2))
+    if infer_gamma:
+        gamma_blurred = numpyro.sample("gamma_blurred", dist.HalfNormal(3.0))
+        gamma_sharp   = numpyro.sample("gamma_sharp",   dist.HalfNormal(3.0))
+    else:
+        gamma_blurred = GAMMA_BLURRED
+        gamma_sharp   = GAMMA_SHARP
 
     with numpyro.plate("participants", n_participants):
         delta = numpyro.sample("delta", dist.Normal(0.0, tau))
 
     if sharpness_idx is None:
         sharpness_idx = jnp.zeros(len(states))
-    gamma = jnp.where(sharpness_idx > 0.5, GAMMA_SHARP, GAMMA_BLURRED)
+    gamma = jnp.where(sharpness_idx > 0.5, gamma_sharp, gamma_blurred)
 
     with numpyro.plate("data", len(states)):
         rsa_prob    = jitted_incremental_speaker(states, alpha, bias, gamma)
@@ -1057,6 +1084,7 @@ def run_inference_hier(
     num_samples: int = 1000,
     num_warmup: int = 1000,
     num_chains: int = 4,
+    infer_gamma: bool = True,
 ):
     """Run MCMC for the hierarchical (random participant intercept) speaker model.
 
@@ -1073,14 +1101,15 @@ def run_inference_hier(
         raise ValueError(f"Boundary masses too large for ZOIB: pi0+pi1={pi0+pi1:.3f}")
 
     sharpness_idx = jnp.array((df["sharpness"] == "sharp").astype(float).to_numpy())
-    gamma_train   = jnp.where(sharpness_idx > 0.5, GAMMA_SHARP, GAMMA_BLURRED)
 
-    # Precompile JIT paths
-    _ = jitted_global_speaker(states_train, 2.0, 2.0, gamma_train).block_until_ready()
-    _ = jitted_incremental_speaker(states_train, 2.0, 2.0, gamma_train).block_until_ready()
+    # Precompile JIT paths (gamma is now inferred; compile with dummy=1.0)
+    gamma_dummy = jnp.ones(states_train.shape[0])
+    _ = jitted_global_speaker(states_train, 2.0, 2.0, gamma_dummy).block_until_ready()
+    _ = jitted_incremental_speaker(states_train, 2.0, 2.0, gamma_dummy).block_until_ready()
 
+    gamma_tag = "infer_gamma" if infer_gamma else "fix_gamma"
     output_file_name = (
-        f"./inference_data/mcmc_results_{speaker_type}_speaker_hier"
+        f"./inference_data/mcmc_results_{speaker_type}_speaker_hier_{gamma_tag}"
         f"_warmup{num_warmup}_samples{num_samples}_chains{num_chains}.nc"
     )
     print(f"Output file: {output_file_name}")
@@ -1093,17 +1122,12 @@ def run_inference_hier(
 
     extra_args_hier: tuple = ()
     if speaker_type == "global":
-        model = likelihood_gb_speaker_hier
+        _base_model = likelihood_gb_speaker_hier
     elif speaker_type == "incremental":
-        print("Precomputing literal listener arrays (once, outside MCMC)...")
-        L1_all, L2_all = precompute_listeners_all(states_train, gamma_train)
-        L1_all = L1_all.block_until_ready()
-        L2_all = L2_all.block_until_ready()
-        print("Precomputation done.")
-        model = likelihood_inc_speaker_hier_fast
-        extra_args_hier = (L1_all, L2_all)
+        _base_model = likelihood_inc_speaker_hier
     else:
         raise ValueError("Invalid speaker type. Choose 'global' or 'incremental'.")
+    model = functools.partial(_base_model, infer_gamma=infer_gamma)
 
     kernel = NUTS(model, dense_mass=False, max_tree_depth=8, target_accept_prob=0.9)
     mcmc = MCMC(
@@ -1154,7 +1178,7 @@ def run_inference(
     num_samples: int = 1000,
     num_warmup: int = 1000,
     num_chains: int = 4,
-
+    infer_gamma: bool = True,
 ):
     # Import the dataset
     states_train, empirical_train, df = import_dataset()
@@ -1166,16 +1190,18 @@ def run_inference(
     if (pi0 + pi1) >= 0.95:
         raise ValueError(f"Boundary masses too large for ZOIB: pi0+pi1={pi0+pi1:.3f}")
 
-    # Sharpness-conditioned size gain (per trial)
     sharpness_idx = jnp.array((df["sharpness"] == "sharp").astype(float).to_numpy())
-    gamma_train   = jnp.where(sharpness_idx > 0.5, GAMMA_SHARP, GAMMA_BLURRED)
 
-    # Precompile JIT paths before MCMC (production-style speedup)
-    _ = jitted_global_speaker(states_train, 2.0, 2.0, gamma_train).block_until_ready()
-    _ = jitted_incremental_speaker(states_train, 2.0, 2.0, gamma_train).block_until_ready()
+    # Precompile JIT paths before MCMC (gamma is now inferred; compile with dummy=1.0)
+    gamma_dummy = jnp.ones(states_train.shape[0])
+    _ = jitted_global_speaker(states_train, 2.0, 2.0, gamma_dummy).block_until_ready()
+    _ = jitted_incremental_speaker(states_train, 2.0, 2.0, gamma_dummy).block_until_ready()
 
-    # Setup output file name
-    output_file_name = f"./inference_data/mcmc_results_{speaker_type}_speaker_warmup{num_warmup}_samples{num_samples}_chains{num_chains}.nc"
+    gamma_tag = "infer_gamma" if infer_gamma else "fix_gamma"
+    output_file_name = (
+        f"./inference_data/mcmc_results_{speaker_type}_speaker_{gamma_tag}"
+        f"_warmup{num_warmup}_samples{num_samples}_chains{num_chains}.nc"
+    )
     print(f"Output file: {output_file_name}")
 
     # Remove existing file so we never silently overwrite a stale result
@@ -1188,17 +1214,12 @@ def run_inference(
     rng_key, rng_key_ = random.split(rng_key)
     extra_args: tuple = ()
     if speaker_type == "global":
-        model = likelihood_gb_speaker
+        _base_model = likelihood_gb_speaker
     elif speaker_type == "incremental":
-        print("Precomputing literal listener arrays (once, outside MCMC)...")
-        L1_all, L2_all = precompute_listeners_all(states_train, gamma_train)
-        L1_all = L1_all.block_until_ready()
-        L2_all = L2_all.block_until_ready()
-        print("Precomputation done.")
-        model = likelihood_inc_speaker_fast
-        extra_args = (L1_all, L2_all)
+        _base_model = likelihood_inc_speaker
     else:
         raise ValueError("Invalid speaker type. Choose 'global' or 'incremental'.")
+    model = functools.partial(_base_model, infer_gamma=infer_gamma)
 
     # Define and run MCMC
     kernel = NUTS(model, dense_mass=True, max_tree_depth=8, target_accept_prob=0.9)
@@ -1245,6 +1266,10 @@ if __name__ == "__main__":
         "--hierarchical", action="store_true",
         help="Run hierarchical model with random participant intercepts (Option A)."
     )
+    parser.add_argument(
+        "--infer_gamma", action=argparse.BooleanOptionalAction, default=True,
+        help="Infer gamma_blurred/gamma_sharp (default). Use --no_infer_gamma to fix them."
+    )
 
     args = parser.parse_args()
 
@@ -1260,6 +1285,7 @@ if __name__ == "__main__":
             num_samples=args.num_samples,
             num_warmup=args.num_warmup,
             num_chains=args.num_chains,
+            infer_gamma=args.infer_gamma,
         )
     else:
         run_inference(
@@ -1267,4 +1293,5 @@ if __name__ == "__main__":
             num_samples=args.num_samples,
             num_warmup=args.num_warmup,
             num_chains=args.num_chains,
+            infer_gamma=args.infer_gamma,
         )
