@@ -67,7 +67,7 @@
   \large LMBayes Meeting 2026 --- Discussion Handout
 }
 \author{Hening Wang, Fabian Schlotterbeck \& Michael Franke}
-\date{\today \quad Toward (finally and hopefully!!) a first draft of the full paper}
+\date{\today}
 
 % =============================================================================
 \begin{document}
@@ -166,17 +166,64 @@ In the slider model both \adj{C} and \adj{F} share a single $\nu$; in the produc
   \label{fig:sim-csv}
 \end{figure}
 
-\subsection{Incremental compositional semantics}
+\subsection{Incremental listener}
 \label{sec:model:composition}
 
-Meanings compose \emph{right to left}: processing begins at the adjective closest to the noun ($a_T$) and proceeds outward ($a_{T-1}, \ldots, a_1$), so that each successive adjective narrows the listener's posterior over the set of objects compatible with the already-interpreted suffix.
-Starting from a uniform prior $p_T(o)$, each step applies the next adjective (scanning from $t = T$ down to $t = 1$):
+The incremental listener constructs utterance meanings compositionally by applying a chain-rule--based update over tokenwise semantics.
+Crucially, interpretation proceeds \emph{incrementally} not only in the sense of multiplying semantic contributions, but also in the sense that each update \emph{redefines the context} relative to which subsequent tokens are evaluated.
+
+\paragraph{Chain--rule factorisation.}
+Let $u=(w_1,\ldots,w_T)$ be an utterance and let $o$ range over objects.
+The listener maintains a sequence of belief states $\{P_t(o)\}_{t=0}^T$, where $P_t(o)$ represents the listener's posterior belief after incorporating the suffix $(w_{t+1},\ldots,w_T)$.
+Formally,
 \begin{equation}
-  p_{t-1}(o) \propto p_t(o) \cdot \llbracket a_t \rrbracket(o, \mathcal{C}, p_t).
+  P_t(o) = P\bigl(o \mid w_{t+1},\ldots,w_T\bigr), \qquad t=0,\ldots,T,
+  \label{eq:listener_belief}
+\end{equation}
+with base case
+\begin{equation}
+  P_T(o) = P_{\mathrm{prior}}(o).
+  \label{eq:listener_base}
+\end{equation}
+For $t = T,T-1,\ldots,1$, beliefs are updated according to
+\begin{equation}
+  P_{t-1}(o) \;\propto\; P_t(o)\;\llbracket w_t \rrbracket_{P_t}(o),
   \label{eq:comp}
 \end{equation}
-The \emph{literal listener} $L_0(o \mid u, \mathcal{C})$ is the resulting posterior $p_0$ after all adjectives in $u$ have been processed.
-Crucially, the size semantics $\llbracket \text{S} \rrbracket$ (\cref{eq:size_sem}) depend on the \emph{running posterior} $p_t$ as the effective context, making the threshold $\theta_k$ dynamically sensitive to what has already been established by previously interpreted adjectives.
+where $\llbracket w_t \rrbracket_{P_t}(o)$ is the semantic value of token $w_t$ \emph{evaluated relative to the current context} $P_t$.
+Normalisation yields
+\begin{equation}
+  P_{t-1}(o) = \frac{P_t(o)\,\llbracket w_t \rrbracket_{P_t}(o)}{\sum_{o'} P_t(o')\,\llbracket w_t \rrbracket_{P_t}(o')}.
+  \label{eq:comp_norm}
+\end{equation}
+After all tokens have been incorporated, the listener arrives at the utterance-level posterior
+\begin{equation}
+  P_0(o) = P(o \mid u),
+  \label{eq:listener_final}
+\end{equation}
+which corresponds to the appropriate row of the listener matrix $M_{\text{listener}}$.
+
+\paragraph{Context recursion.}
+A key property of this formulation is that the current belief state $P_t$ serves a \emph{dual role}.
+First, it is multiplied with the semantic contribution of the next token.
+Second---and critically---it also determines the semantics of that token itself.
+Thus, the update from $P_t$ to $P_{t-1}$ is not merely multiplicative but \emph{recursive}:
+\begin{equation}
+  \llbracket w_t \rrbracket_{P_t} \quad\text{depends on}\quad P_t(o) \;\propto\; P_{t+1}(o)\,\llbracket w_{t+1} \rrbracket_{P_{t+1}}(o).
+  \label{eq:context_recursion}
+\end{equation}
+As a consequence, the interpretation of each token is conditioned on the entire suffix that follows it.
+Later words reshape the context in which earlier words are interpreted, rather than simply contributing independent semantic factors.
+
+\paragraph{Ordering effects.}
+Because certain lexical meanings---most notably size adjectives---depend on the current context distribution, changing the order of words alters the sequence of contexts $\{P_t\}$ and thereby the meanings computed at each step.
+This breaks the commutativity that would hold under static or Boolean semantics:
+\begin{equation}
+  P(o \mid w_1,w_2) \;\neq\; P(o \mid w_2,w_1) \quad\text{in general.}
+  \label{eq:noncommutativity}
+\end{equation}
+Incrementality therefore arises from two interacting sources: (\emph{i}) chain-rule composition of tokenwise semantics, and (\emph{ii}) recursive context dependence.
+Together, these properties yield a genuinely incremental listener whose interpretations are sensitive to word order in a way that cannot be reduced to a global, order-insensitive update.
 
 \subsection{Utterance prior (cost)}
 \label{sec:model:cost}
@@ -192,53 +239,121 @@ We incorporate two cost signals into the utterance prior, depending on the datas
 \subsection{Speaker models}
 \label{sec:model:speakers}
 
-\paragraph{Global speaker $S_\text{G}$.}
-A standard RSA pragmatic speaker that evaluates a complete utterance's utility:
+\subsubsection{Global speaker}
+\label{sec:model:speakers:global}
+
+The global speaker computes a distribution over complete utterances by applying a softmax to utterance-level utilities:
 \begin{equation}
-  P_{S_\text{G}}(u \mid o, \mathcal{C})
-  \propto \exp\!\bigl[\alpha \cdot
-    \log L_0(o \mid u, \mathcal{C}) - \lambda \cdot \text{cost}(u)\bigr].
+  S_{\text{gb}}(u \mid o)
+  = \frac{\exp\!\bigl(U(o,u)\bigr)}{\sum_{u'} \exp\!\bigl(U(o,u')\bigr)}.
   \label{eq:global_speaker}
 \end{equation}
-
-\paragraph{Incremental speaker $S_\text{I}$.}
-Produces one adjective at a time; at step $t$ it chooses the next adjective $a_t$ given the prefix already produced.
-The updated-listener posterior after each step feeds into the next step's cost-weighted speaker distribution:
-\begin{align}
-  P_{S_\text{I}}(a_1 \mid o, \mathcal{C})
-  &\propto \exp\!\bigl[\alpha \cdot
-    \log L_0(o \mid a_1, \mathcal{C}) - \lambda \cdot \text{cost}(a_1)\bigr], \\
-  P_{S_\text{I}}(a_t \mid a_{1:t-1}, o, \mathcal{C})
-  &\propto \exp\!\bigl[\alpha \cdot
-    \log p_t(o) - \lambda \cdot \text{cost}(a_t \mid a_{1:t-1})\bigr].
-  \label{eq:inc_speaker}
-\end{align}
-The joint probability of a complete utterance $u = (a_1, \ldots, a_T)$ factorises by the chain rule into a product of next-word decisions:
+The utility of an utterance $u$ for an intended referent $o^\ast$ is defined as
 \begin{equation}
-  P_{S_\text{I}}(u \mid o, \mathcal{C})
-  = \prod_{t=1}^{T} P_{S_\text{I}}(a_t \mid a_{1:t-1},\, o,\, \mathcal{C}).
+  U(o^\ast,u)
+  = \alpha\,\log L(o^\ast \mid u) + \beta\,\log P_{\mathrm{LM}}(u),
+  \label{eq:global_utility}
+\end{equation}
+where $\alpha$ is the RSA rationality parameter governing sensitivity to informativeness, and $\beta \geq 0$ scales the contribution of the language-model prior, which encodes utterance frequency and length biases (higher $\beta$ favours high-probability LM forms).
+
+\textbf{Slider variant.}
+For the slider-rating models, which compare only two utterances (\utter{big blue} vs.\ \utter{blue big}), the utility takes the form
+\begin{equation}
+  U(o,u) = \alpha\bigl(\log L(o \mid u) - b_u\bigr),
+  \label{eq:slider_utility}
+\end{equation}
+where $b_u$ is the subjectivity bias ($b_u = 0$ for the size-first ordering, $b_u = b$ for the reverse ordering).
+
+For each intended object $o_j$, this yields a full distribution over utterances.
+The resulting probability vector constitutes the $j$th row of the global speaker matrix $M_{\text{gsp}}$.
+In the experiment, the speaker always refers to a fixed target referent $o_r$.
+Under our indexing scheme, the target referent corresponds to index~$1$.
+Accordingly, the model prediction entering the likelihood is
+\begin{equation}
+  \mathbf{p} = (p_1,\dots,p_{15}) = P(u \mid o_r),
+  \label{eq:global_prediction}
+\end{equation}
+which is given by the first row of $M_{\text{gsp}}$.
+
+\subsubsection{Incremental RSA speaker}
+\label{sec:model:speakers:incremental}
+
+\paragraph{Chain-rule factorisation.}
+For a fixed intended referent $o^\ast$, the incremental pragmatic speaker constructs utterances token by token.
+Formally, utterance production obeys the chain rule:
+\begin{equation}
+  S_{\mathrm{inc}}(u \mid o^\ast)
+  = \prod_{t=1}^{T} S_t\!\left(w_t \mid u_{<t},\, o^\ast\right),
+  \qquad u_{<t} = (w_1,\ldots,w_{t-1}),
   \label{eq:inc_chain}
 \end{equation}
+where $S_t(\cdot)$ denotes the speaker's local decision rule at step~$t$.
 
-\noindent\textit{Intuition: how the incremental speaker works.}
-The global speaker $S_\text{G}$ scores all 15 complete utterances simultaneously, selecting the one that best balances informativeness and cost (\cref{eq:global_speaker}).
-The incremental speaker $S_\text{I}$, by contrast, builds the utterance one adjective at a time from left to right.
-At step~1 it selects the first adjective that is most informative given the full context $\mathcal{C}$; the literal listener then updates its beliefs accordingly; at step~2 the speaker decides whether to produce an additional adjective, now evaluated against the listener's \emph{updated} posterior rather than the original context.
-This sequential process models left-to-right production planning, where each adjective reshapes the communicative landscape for all subsequent ones (\cref{eq:inc_speaker,eq:inc_chain}).
+\paragraph{Local RSA utility.}
+At each step, the speaker evaluates possible next tokens $a$ solely in terms of their informativeness for the intended referent.
+The local decision rule is
+\begin{equation}
+  S_t(a \mid u_{<t}, o^\ast)
+  \;\propto\;
+  \bigl[L(o^\ast \mid u_{<t} + a)\bigr]^{\alpha},
+  \label{eq:inc_speaker}
+\end{equation}
+where $L(o^\ast \mid u)$ is the incremental literal listener defined over context-dependent semantics, and $\alpha$ is the RSA rationality parameter.
+Thus, at the token level the incremental speaker reasons only about \emph{informativeness}: utterance cost does not enter into the stepwise utility.
+Costs derived from the external language model apply only at the level of complete utterances, as described in the utterance-cost subsection.
 
-\noindent\textit{Intuition: why ordering matters.}
-The key mechanism is the context-sensitivity of the size semantics (\cref{eq:size_sem}): the threshold $\theta_k$ depends on the effective context at the point where \adj{S} is evaluated.
-For the global speaker, this operates through right-to-left compositional semantics (\cref{eq:comp}): in \utter{SC}, the listener first processes \adj{C} (rightmost, closer to the noun), narrowing the posterior to colour-matching objects, before evaluating \adj{S} over this filtered set.
-In \utter{CS}, \adj{S} is processed first over the full original context.
-For the incremental speaker, the same asymmetry arises through production order: when \adj{S} is produced first, its informativeness is evaluated over the full context at step~1; when \adj{C} is produced first, \adj{S} is evaluated at step~2 against the listener's colour-updated posterior.
-In both models, the \emph{order} in which adjectives appear changes how informative each one is---and it is this asymmetry that drives ordering preferences as an emergent pragmatic phenomenon.
+\paragraph{Composition of utterance-level cost and incremental pragmatics.}
+Combining the chain-rule factorisation with utterance-level cost yields the full production probability for an utterance $u = (w_1,\ldots,w_T)$:
+\begin{equation}
+  S_{\mathrm{inc}}(u \mid o^\ast)
+  = P_{\mathrm{LM}}(u)^{\beta}
+  \cdot \prod_{t=1}^{T}
+  \frac{\bigl[L(o^\ast \mid u_{<t} + w_t)\bigr]^{\alpha}}{Z_t(u_{<t}, o^\ast)},
+  \label{eq:inc_full}
+\end{equation}
+where $P_{\mathrm{LM}}(u)$ is the language-model probability of the complete utterance and
+\begin{equation}
+  Z_t(u_{<t}, o^\ast)
+  = \sum_{a} \bigl[L(o^\ast \mid u_{<t} + a)\bigr]^{\alpha}
+  \label{eq:inc_normaliser}
+\end{equation}
+is the local normalisation constant ensuring that $S_t(\cdot \mid u_{<t}, o^\ast)$ defines a proper probability distribution over possible next tokens.
 
-\noindent\textit{Intuition: why redundant adjectives occur.}
-In both speaker models, each utterance's utility trades off informativeness against cost.
-A second adjective is produced whenever its marginal informativeness gain outweighs the additional cost.
-For the global speaker, this trade-off is evaluated jointly across all 15 utterances: a two-adjective form \utter{SC} beats \utter{S} alone when adding colour raises $\log L_0(o \mid u, \mathcal{C})$ enough to compensate for the longer utterance.
-For the incremental speaker, after the first adjective has been produced the listener's posterior $p_1$ may still assign non-negligible probability to distractors; if a second adjective reduces this residual uncertainty sufficiently, the speaker produces it even though the referent may already be probable.
-Both mechanisms predict \emph{more} over-informative utterances when a single property is insufficient to uniquely pick out the referent (\eg, the both-relevant condition) and \emph{fewer} when one adjective is already highly informative (\eg, sharp-size contexts)---consistent with the dominance of single-adjective \utter{S} in sharp conditions and increased multi-adjective use in both-relevant conditions.
+This formulation makes explicit that utterance cost enters the model only once, as a global multiplicative factor, while pragmatic reasoning operates incrementally through successive evaluations of local informativeness.
+As a result, ordering effects in the incremental speaker arise from sequential semantic context update rather than from token-level cost or language-model biases.
+
+\paragraph{Intuition: why incremental and global speakers are not equivalent.}
+Although both the global and incremental speakers assign probabilities over the same utterance space, they are not in general equivalent.
+The key difference lies in how pragmatic reasoning is applied.
+In the global speaker, pragmatic reasoning is applied once, at the level of complete utterances.
+In the incremental speaker, pragmatic reasoning is applied repeatedly and locally, at each step of utterance construction, relative to an evolving semantic context.
+
+Formally, in the global speaker, utterance utility is computed as
+\begin{equation}
+  U_{\mathrm{gsp}}(o^\ast,u)
+  = \alpha \log L(o^\ast \mid u) + \beta\,\log P_{\mathrm{LM}}(u),
+  \label{eq:global_utility_compare}
+\end{equation}
+and normalised once over complete utterances.
+In contrast, the incremental speaker decomposes pragmatic reasoning across token positions:
+\begin{equation}
+  S_{\mathrm{inc}}(u \mid o^\ast)
+  = P_{\mathrm{LM}}(u)^{\beta}
+  \prod_{t=1}^{T}
+  \frac{\bigl[L(o^\ast \mid u_{<t} + w_t)\bigr]^{\alpha}}{Z_t(u_{<t}, o^\ast)}.
+  \label{eq:inc_compare}
+\end{equation}
+Because the listener $L(o^\ast \mid u)$ depends on context-dependent semantics, the marginal contribution of a word differs depending on when it is evaluated.
+As a result, the product of locally optimal pragmatic choices generally does not coincide with the globally optimal utterance-level choice.
+Thus,
+\begin{equation}
+  S_{\mathrm{inc}}(u \mid o^\ast) \;\neq\; S_{\mathrm{gsp}}(u \mid o^\ast) \quad\text{in general},
+  \label{eq:speaker_inequality}
+\end{equation}
+even when both models share the same language-model cost and rationality parameter.
+
+Intuitively, the incremental speaker optimises \emph{incremental informativeness}, while the global speaker optimises \emph{total informativeness}.
+When semantics is context-dependent---as in the present model---these two criteria diverge, yielding genuine ordering effects that cannot be reduced to utterance-level cost differences.
 
 \subsection{Model variants \& parameterisation}
 \label{sec:model:variants}
@@ -517,7 +632,7 @@ Each simulated trial computes communicative success $p(o_\text{ref} \mid u)$ for
 
 \subsection{Summary}
 
-We presented an RSA model with two speaker variants---global and incremental---that derives adjective ordering preferences from the interaction of context-sensitive compositional semantics, communicative efficiency, and, in the incremental case, left-to-right production planning.  The model is fitted to two complementary behavioural datasets (slider ratings, Experiment~1; free production, Experiment~2) via NUTS-based Bayesian inference in NumPyro\,/\,JAX, and its qualitative predictions are stress-tested across a 6-million-trial parameter simulation.
+We presented an RSA model with two speaker variants---global and incremental---that derives adjective ordering preferences from the interaction of context-sensitive compositional semantics, communicative efficiency, and, in the incremental case, left-to-right production planning.  The model is fitted to two complementary behavioural datasets (slider ratings, Experiment~1; free production, Experiment~2) via NUTS-based Bayesian inference in NumPyro\,/\,JAX, and its qualitative predictions are tested with simulation.
 
 \begin{discussbox}{Key findings}
   \begin{itemize}[leftmargin=*]

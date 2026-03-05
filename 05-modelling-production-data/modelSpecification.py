@@ -221,8 +221,9 @@ def incremental_semantics_jax(
 
     The scan processes tokens right-to-left so that each successive word  
     narrows the posterior in a psycholinguistically plausible order.  
-    Only size semantics depend on the running posterior (context); color  
-    and form are pre-computed once.  
+    Size semantics are context-recursive: recomputed from the running  
+    posterior at each scan step so that the threshold adapts to the  
+    current belief state.  Colour and form are pre-computed once.  
 
     Returns  
     -------  
@@ -238,13 +239,14 @@ def incremental_semantics_jax(
         state_prior = jnp.ones(n_obj) / n_obj  
 
     # ------------------------------------------------------------------  
-    # Pre-compute context-INDEPENDENT semantics once  
+    # Pre-compute context-INDEPENDENT semantics (colour / form) once  
     # ------------------------------------------------------------------  
     colors    = states[:, 1]  
     forms     = states[:, 2]  
     color_vec = jnp.where(colors == 1, color_sem, 1.0 - color_sem)  # (n_obj,)  
     form_vec  = jnp.where(forms  == 1, form_sem,  1.0 - form_sem)   # (n_obj,)  
-    size_vec  = compute_size_semantics(states, state_prior, k, wf, gamma=gamma)   # (n_obj,)  
+    # Size semantics are context-recursive: recomputed from the running  
+    # posterior at each scan step (see update_one below).  
 
     # ------------------------------------------------------------------  
     # Scan: process tokens right → left  
@@ -254,6 +256,9 @@ def incremental_semantics_jax(
 
     def update_one(prior_i, token_i):  
         """Update a single utterance's running posterior by one token."""  
+        # Normalise running posterior for size-semantics context  
+        prior_norm = prior_i / jnp.clip(prior_i.sum(), 1e-20)  
+        size_vec = compute_size_semantics(states, prior_norm, k, wf, gamma=gamma)  
         def skip(_):   return prior_i  
         def apply(_):  
             return lax.switch(  
