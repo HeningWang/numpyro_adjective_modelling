@@ -373,7 +373,7 @@ Each item encodes a context as a $6 \times 3$ matrix $(s, c, f)$ with the refere
 \paragraph{Task.}  Participants rated the \emph{felicity} of each adjective description on a continuous slider (0--100) for a given context-referent pair.
 Ratings were collected for single-adjective (\utter{S}, \utter{C}, \utter{F}) and two-adjective (\utter{SC}, \utter{SF}, \utter{CS}, \etc) descriptions.
 
-\paragraph{Dependent variable.}  Normalised slider ratings, interpreted as empirical truth values $[\![ u ]\!]_\text{emp}(o, \mathcal{C}) \in [0,1]$.
+\paragraph{Dependent variable.}  Normalised slider ratings from [0, 100] to [-0.5, 0.5], mean-centred around 0, positive values indicating a preference for size-first orderings and negative values indicating a preference for colour/form-first orderings. 
 
 \begin{discussbox}{Key findings (lmer: centred slider $\sim$ relevance $\times$ sharpness + (1$|$participant) + (1$|$item); \cref{fig:slider-empirical,fig:slider-model}).}
 \begin{itemize}[leftmargin=*]
@@ -412,7 +412,7 @@ Responses were manually annotated into the 15 utterance categories.
 
 \begin{discussbox}{Key findings (glmer: binomial, (1$|$participant) + (1$|$item); \cref{fig:production-empirical,fig:production-model}).}
 
-\textbf{(1) Size-first advantage} (S-initial utterances coded as 1, all others as 0):
+\textbf{(1) Size-first preference} (S-initial utterances coded as 1, all others as 0):
 \begin{itemize}[leftmargin=*]
   \item \textbf{Relevance main effect} ($\chi^2(2) = 1859.7$, $p < .001$): size-first orderings dominate in size-relevant contexts; colour-first orderings dominate in colour-relevant contexts; both-relevant falls in between.
   \item \textbf{Sharpness main effect}: not significant ($\chi^2(1) = 0.79$, $p = .37$).
@@ -524,15 +524,8 @@ We presented an RSA model with two speaker variants---global and incremental---t
   \item \textbf{Ordering preferences emerge from compositional semantics alone.}
     Even the global speaker---which has no production-level incrementality---generates a size-before-colour preference across most of the parameter space, because applying a color adjective first to the hierarchical compositional semantics narrows the comparison class and thereby boosts the informativeness of a subsequent size adjective (\cref{sec:simulation}).
   \item \textbf{Incremental production amplifies and qualitatively extends the effect.}
-    The incremental speaker strengthens the size-first advantage and, uniquely, predicts a \emph{reversal} to colour-first preference in blurred, small-context conditions (\cref{fig:sim-nobj})---a signature absent from the global speaker.
-  \item \textbf{Relevance is the dominant modulator in human data.}
-    Both experiments show a large relevance main effect: size-first preference is strongest in size-relevant contexts and weakest (or reversed) in colour-relevant contexts
-  \item \textbf{Sharpness interacts with relevance asymmetrically.}
-    Sharpness alone has no significant main effect in either dataset, yet it interacts with relevance: in size-relevant contexts sharpness \emph{increases} the size-first preference, whereas in both-relevant and colour-relevant contexts it \emph{decreases} it---consistent with the model's context-dependent informativity mechanism.
-  \item \textbf{Over-informativity is context-driven.}
-    Speakers produce redundant adjectives most often in size-relevant, blurred contexts ($\chi^2(2)=725.7$, $p<.001$), where size alone is least informative---exactly the regime in which the model predicts the highest utility gain from including an additional modifier.
-  \item \textbf{Incremental hierarchical model fits best.}
-    LOO model comparison favours the incremental hierarchical variant for both slider and production data
+  \item Also \textbf{incremental hierarchical model fits the data best.}
+  \item \textbf{Q: Do we need an incremental speaker model?}
 \end{itemize}
 \end{discussbox}
 
@@ -540,7 +533,7 @@ We presented an RSA model with two speaker variants---global and incremental---t
 \begin{discussbox}{Outlook}
 \begin{itemize}[leftmargin=*]
   \item What is the right framing for the paper: pragmatics, psycholinguistics,
-    or computational linguistics?
+    or cognitive science?
   \item Target venue?  \todo{CogSci / Cognition / PLOS ONE / Glossa / ?}
   \item What level of detail should each section have for the target audience?
 \end{itemize}
