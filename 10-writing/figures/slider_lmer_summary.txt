@@ -1,0 +1,80 @@
+=== Full model summary ===
+Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+lmerModLmerTest]
+Formula: slider_centered ~ rp * sh + (1 | id) + (1 | item)
+   Data: df_lmer
+
+REML criterion at convergence: 2173.8
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-3.3503 -0.5239  0.1284  0.6618  2.4842 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ id       (Intercept) 0.03464  0.1861  
+ item     (Intercept) 0.00000  0.0000  
+ Residual             0.09910  0.3148  
+Number of obs: 3485, groups:  id, 134; item, 27
+
+Fixed effects:
+                            Estimate Std. Error         df t value Pr(>|t|)    
+(Intercept)                  0.29701    0.02604  200.60071  11.406  < 2e-16 ***
+rpBoth relevant             -0.05106    0.01867 3349.50744  -2.735 0.006275 ** 
+rpColour relevant           -0.23432    0.01847 3350.47283 -12.688  < 2e-16 ***
+shSharp                      0.04461    0.03733  193.46463   1.195 0.233550    
+rpBoth relevant:shSharp     -0.08713    0.02638 3348.78380  -3.303 0.000966 ***
+rpColour relevant:shSharp   -0.06446    0.02625 3348.96291  -2.456 0.014109 *  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+            (Intr) rpBthr rpClrr shShrp rpBr:S
+rpBothrlvnt -0.376                            
+rpColrrlvnt -0.381  0.530                     
+shSharp     -0.697  0.262  0.266              
+rpBrlvnt:sS  0.266 -0.708 -0.375 -0.363       
+rpCrlvnt:sS  0.268 -0.373 -0.704 -0.365  0.516
+optimizer (nloptwrap) convergence code: 0 (OK)
+boundary (singular) fit: see help('isSingular')
+
+
+=== ANOVA (Type III) ===
+Type III Analysis of Variance Table with Satterthwaite's method
+      Sum Sq Mean Sq NumDF  DenDF  F value    Pr(>F)    
+rp    42.355 21.1776     2 3348.5 213.7080 < 2.2e-16 ***
+sh     0.003  0.0030     1  132.1   0.0304  0.861785    
+rp:sh  1.157  0.5787     2 3348.5   5.8403  0.002938 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+=== Model comparison: interaction ===
+Data: df_lmer
+Models:
+m_add: slider_centered ~ rp + sh + (1 | id) + (1 | item)
+m_full: slider_centered ~ rp * sh + (1 | id) + (1 | item)
+       npar    AIC    BIC  logLik deviance  Chisq Df Pr(>Chisq)   
+m_add     7 2163.0 2206.1 -1074.5   2149.0                        
+m_full    9 2155.3 2210.8 -1068.7   2137.3 11.673  2    0.00292 **
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+=== Model comparison: sharpness main effect ===
+Data: df_lmer
+Models:
+m_rel: slider_centered ~ rp + (1 | id) + (1 | item)
+m_add: slider_centered ~ rp + sh + (1 | id) + (1 | item)
+      npar    AIC    BIC  logLik deviance  Chisq Df Pr(>Chisq)
+m_rel    6 2161.1 2198.0 -1074.5   2149.1                     
+m_add    7 2163.0 2206.1 -1074.5   2149.0 0.0425  1     0.8368
+
+=== Model comparison: relevance main effect ===
+Data: df_lmer
+Models:
+m_null: slider_centered ~ 1 + (1 | id) + (1 | item)
+m_rel: slider_centered ~ rp + (1 | id) + (1 | item)
+       npar    AIC    BIC  logLik deviance  Chisq Df Pr(>Chisq)    
+m_null    4 2559.6 2584.2 -1275.8   2551.6                         
+m_rel     6 2161.1 2198.0 -1074.5   2149.1 402.55  2  < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1

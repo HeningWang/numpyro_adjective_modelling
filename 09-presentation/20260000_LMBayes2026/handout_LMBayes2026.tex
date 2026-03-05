@@ -15,6 +15,7 @@
 \usepackage{multirow}
 \usepackage{amsmath, amssymb}
 \usepackage{mathtools}
+\usepackage{stmaryrd}
 \usepackage{bm}
 \usepackage{graphicx}
 \usepackage[dvipsnames]{xcolor}
@@ -22,6 +23,7 @@
 \usepackage{parskip}          % paragraph spacing instead of indent
 \usepackage{natbib}
 \usepackage{hyperref}
+\usepackage{float}
 \hypersetup{
   colorlinks = true,
   linkcolor  = MidnightBlue,
@@ -36,7 +38,8 @@
 \newcommand{\eg}{\textit{e.g.}}
 \newcommand{\ie}{\textit{i.e.}}
 \newcommand{\cf}{\textit{cf.}}
-\newcommand{\adj}[1]{\textsc{#1}}   % adjective categories: \adj{D}, \adj{C}
+\newcommand{\etc}{\textit{etc.}}
+\newcommand{\adj}[1]{\textsc{#1}}   % adjective categories: \adj{S}, \adj{C}
 \newcommand{\utter}[1]{\textsf{#1}} % utterances: \utter{DC}
 \newcommand{\param}[1]{\ensuremath{#1}}
 \newcommand{\todo}[1]{\textcolor{BrickRed}{\textbf{[TODO: #1]}}}
@@ -63,50 +66,37 @@
   An Incremental RSA Account with Bayesian Inference}\\[6pt]
   \large LMBayes Meeting 2026 --- Discussion Handout
 }
-\author{Hening Wang \quad Fabian Schlotterbeck \& \quad Michael Franke}
-\date{\today \quad (Toward (finally!!)a first draft)}
+\author{Hening Wang Fabian Schlotterbeck \& Michael Franke}
+\date{\today \quad Toward (finally and hopefully!!) a first draft of the full paper}
 
 % =============================================================================
 \begin{document}
 \maketitle
-\tableofcontents
-\bigskip
 
 % =============================================================================
 \section*{Introduction}
 \label{sec:intro}
 % =============================================================================
 
-Speakers of diverse languages exhibit robust ordering preferences of adjectives (e.g., preferring “the big brown bag” over “the brown big bag”).
-A way to approach this regularity is through communicative efficiency: helping interlocutors coordinate quickly and reliably. Yet “efficiency” can be formalized from two perspectives that make different ordering predictions: a hierarchical, comprehension-oriented view in which modification is composed outward from the noun, and a linear, production-oriented view in which speakers benefit from placing highly informative material early in the unfolding word stream. 
-The present project pursues a third, unified perspective: adjective ordering
-explained by \emph{incremental pragmatic reasoning}, where a speaker produces
-one adjective at a time and the in-context informativeness of each adjective
-interacts with its inherent semantic precision.
+Speakers of diverse languages exhibit robust ordering preferences of adjectives (\eg, preferring ``the big brown bag'' over ``the brown big bag'').
+One way to approach this regularity is through communicative efficiency: helping interlocutors coordinate quickly and reliably.
+Yet ``efficiency'' can be formalized from two perspectives with opposing predictions: a \emph{hierarchical, comprehension-oriented} view in which modification composes outward from the noun (placing efficient adjectives closer to it), and a \emph{linear, production-oriented} view in which speakers benefit from placing efficient adjectives early (putting them further from the noun).
+The present project pursues a unified perspective: adjective ordering is explained by \emph{incremental pragmatic reasoning}, where a speaker produces one adjective at a time from left to right and the contextual informativeness of each adjective interacts with its inherent semantic imprecision through right-to-left hierarchical structure and compositional semantics.
 
-The project has three interlocking components:
+The project has three main building blocks:
 \begin{enumerate}[label=\arabic*.]
-  \item \textbf{Model.} An incremental variant of the Rational Speech Act (RSA)
-    framework, implemented in NumPyro / JAX, with Bayesian inference over
-    model parameters.
-  \item \textbf{Experiments.} Two complementary data sources---a slider-rating
-    study measuring graded truth values, and a free-production experiment
-    measuring ordering preferences.
-  \item \textbf{Simulation.} A broad parameter sweep exploring the behaviour of
-    the model across context-size distributions, perceptual blur, and
-    semantic-value parameters.
+  \item \textbf{Model.} An incremental variant of the Rational Speech Act (RSA) model, implemented in NumPyro / JAX, with Bayesian model comparisons.
+  \item \textbf{Experiments.} Two complementary experiments in referential communication---a slider-rating experiment, and a free-production experiment.
+  \item \textbf{Simulation.} A broad parameter sweep showing that the size-first advantage emerges without being assumed a priori, generalising our findings beyond the limited set of experiment items.
 \end{enumerate}
 
-\begin{discussbox}{Starting questions}
+\begin{discussbox}{High-level research questions}
 \begin{itemize}[leftmargin=*]
-  \item What is the minimal pragmatic mechanism that \emph{derives} ordering
-    preferences rather than stipulating them?
-  \item What role does \emph{inherent} vs.\ \emph{contextual} informativeness
-    play for different adjective classes?
-  \item How do we best connect a Bayesian model to categorical production data?
+  \item What is the minimal pragmatic mechanism that predicts adjective ordering as an emergent consequence of communication, rather than stipulating a fixed order?
+  \item What role does the interaction between \emph{inherent} semantic imprecision and \emph{contextual} informativeness play in shaping ordering preferences?
+  \item Does incremental (left-to-right) production planning add explanatory power beyond what compositional semantics alone provides?
 \end{itemize}
 \end{discussbox}
-
 \newpage
 
 
@@ -118,22 +108,19 @@ The project has three interlocking components:
 \subsection{Representational primitives}
 \label{sec:model:primitives}
 
-An \textbf{object} is a triple $o = (s, c, f)$ where $s \in [1,30]$ is size,
-$c \in \{0,1\}$ colour match, and $f \in \{0,1\}$ form match.
-A \textbf{context} $\mathcal{C}$ is a set of $n_\text{obj}$ objects; the
-referent is always the largest object with $c=f=1$.
+\textbf{State space.} An \textbf{object} is a triple $o = (s, c, f)$ where $s \in [1,10]$ is size (used to construct experiment items), $c \in \{0,1\}$ indicates colour match, and $f \in \{0,1\}$ indicates form match.
+A \textbf{context} $\mathcal{C}$ is a set of $n_\text{obj}$ objects; the referent is always the largest object with $c=f=1$.
 
-\textbf{Utterance space.} We allow single-adjective and multi-adjective
-utterances built from three basic categories: \adj{D} (dimension/size),
-\adj{C} (colour), \adj{F} (form).
+\textbf{Utterance space.} Utterances are built from two semantic types: \adj{S} (size) and \adj{C} (colour/form; form is subsumed under colour because they share the same determinate semantics).
+An utterance $u = (a_1, \ldots, a_T)$ is an ordered sequence of adjectives $a_t \in \{\adj{S}, \adj{C}, \adj{F}\}$, where $T \in \{1,2,3\}$ is the utterance length.
 Combining lengths and orderings yields 15 surface forms:
-\{D, DC, DCF, DF, DFC, C, CD, CDF, CF, CFD, F, FD, FDC, FC, FCD\}.
+\{S, SC, SCF, SF, SFC, C, CS, CSF, CF, CFS, F, FS, FSC, FC, FCS\}.
+In all analyses, \adj{F} is treated identically to \adj{C}.
 
-\subsection{Atomic semantics}
+\subsection{Meaning functions}
 \label{sec:model:semantics}
 
-\paragraph{Size (\adj{D}).}  We adopt a \emph{slack semantics} based on the
-Approximate Number System.
+\paragraph{Context-dependent, threshold-based size (\adj{S}) semantics.}  We adopt a \emph{slack semantics} based on the Approximate Number System.
 A context-dependent threshold is computed as
 \begin{equation}
   \theta_k(\mathcal{C})
@@ -141,50 +128,65 @@ A context-dependent threshold is computed as
     - k \,\bigl(x^\text{mid}_\text{max}(\mathcal{C}) - x^\text{mid}_\text{min}(\mathcal{C})\bigr),
   \label{eq:threshold}
 \end{equation}
-where $x^\text{mid}_\text{min}$ and $x^\text{mid}_\text{max}$ are the
-$q_\text{low}$- and $q_\text{high}$-quantiles of the contextual size
-distribution ($q_\text{low}=0.2$, $q_\text{high}=0.8$).
-The semantic value of applying \adj{D} to object $o$ is then
+where $x^\text{mid}_\text{min}$ and $x^\text{mid}_\text{max}$ are the $q_\text{low}$- and $q_\text{high}$-quantiles of the contextual size distribution ($q_\text{low}=0.2$, $q_\text{high}=0.8$).
+The semantic value of applying \adj{S} to object $o$ is then
 \begin{equation}
-  \llbracket\text{D}\rrbracket(o, \mathcal{C})
+  \llbracket\text{S}\rrbracket(o, \mathcal{C})
   = \Phi\!\left(
       \frac{s_o - \theta_k(\mathcal{C})}
            {w_f \sqrt{s_o^2 + \theta_k(\mathcal{C})^2}}
     \right),
   \label{eq:size_sem}
 \end{equation}
-where $\Phi$ is the standard normal CDF and $w_f \geq 0$ is a
-\emph{perceptual blur} parameter.
+where $\theta_k$ is the threshold from \cref{eq:threshold}, $\Phi$ is the standard normal CDF, and $w_f \geq 0$ is a \emph{perceptual blur} parameter.
 
-\paragraph{Colour (\adj{C}) and Form (\adj{F}).}
-These features have determinate denotations, but we parameterise their
-semantic strength by a single \emph{color/form semantic value}
-$\nu \in (0,1)$ applied via a logistic link function.
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.85\textwidth]{../../10-writing/figures/sim_k.pdf}
+  \caption{Effect of threshold $k$ on communicative success (simulation, marginalised over all other parameters).  Lower $k$ (stricter threshold) reduces both orderings' success but narrows the gap between them.  The incremental speaker maintains a consistent size-first advantage across $k$ values.}
+  \label{fig:sim-k}
+\end{figure}
 
-\subsection{Compositional meaning}
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.85\textwidth]{../../10-writing/figures/sim_wf.pdf}
+  \caption{Effect of perceptual blur $w_f$ on communicative success (simulation, marginalised over all other parameters).  Higher $w_f$ degrades the informativeness of size, reducing the advantage of \utter{big blue} over \utter{blue big}.  The incremental speaker shows a larger separation between orderings than the global speaker.}
+  \label{fig:sim-wf}
+\end{figure}
+
+\paragraph{Colour/Form (\adj{C}, \adj{F}).}
+Both colour and form have determinate denotations: an object either matches the described colour/form or it does not ($c, f \in \{0,1\}$).
+Their semantic value is parameterised by a scalar $\nu \in (0,1)$, interpretable as the probability that a feature-matching object is correctly described by the adjective---capturing residual uncertainty in the mapping from perceptual feature to word.
+In the slider model both \adj{C} and \adj{F} share a single $\nu$; in the production model they receive separate values ($\nu_\text{colour}$, $\nu_\text{form}$), but both are fixed rather than inferred (see \cref{sec:model:variants}).
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.85\textwidth]{../../10-writing/figures/sim_colorsemval.pdf}
+  \caption{Effect of colour semantic value $\nu$ on communicative success (simulation, marginalised over all other parameters).  Higher $\nu$ (more deterministic colour semantics) increases \utter{blue big} success, narrowing the gap.  The incremental speaker still favours size-first ordering across all $\nu$ values tested.}
+  \label{fig:sim-csv}
+\end{figure}
+
+\subsection{Incremental compositional semantics}
 \label{sec:model:composition}
 
-Meanings compose \emph{left to right} (reflecting incremental production):
-starting from a uniform prior $p_0(o)$, each successive adjective updates the
-listener's posterior:
+Meanings compose \emph{right to left}: processing begins at the adjective closest to the noun ($a_T$) and proceeds outward ($a_{T-1}, \ldots, a_1$), so that each successive adjective narrows the listener's posterior over the set of objects compatible with the already-interpreted suffix.
+Starting from a uniform prior $p_T(o)$, each step applies the next adjective (scanning from $t = T$ down to $t = 1$):
 \begin{equation}
-  p_{t+1}(o) \propto p_t(o) \cdot \llbracket a_{t+1} \rrbracket(o, \mathcal{C}).
+  p_{t-1}(o) \propto p_t(o) \cdot \llbracket a_t \rrbracket(o, \mathcal{C}, p_t).
   \label{eq:comp}
 \end{equation}
-The \emph{literal listener} $L_0(o \mid u, \mathcal{C})$ is the posterior after
-processing all adjectives in utterance $u$.
+The \emph{literal listener} $L_0(o \mid u, \mathcal{C})$ is the resulting posterior $p_0$ after all adjectives in $u$ have been processed.
+Crucially, the size semantics $\llbracket \text{S} \rrbracket$ (\cref{eq:size_sem}) depend on the \emph{running posterior} $p_t$ as the effective context, making the threshold $\theta_k$ dynamically sensitive to what has already been established by previously interpreted adjectives.
 
 \subsection{Utterance prior (cost)}
 \label{sec:model:cost}
 
-We incorporate three cost signals into the utterance prior:
+We incorporate two cost signals into the utterance prior, depending on the dataset:
 \begin{enumerate}[label=(\roman*)]
-  \item \textbf{LM-derived cost:} $\text{cost}_\text{LM}(u) = -\log P_\text{LM}(u)^\beta$,
+  \item \textbf{Slider rating --- subjectivity bias:} an additive penalty favouring size-first (S-initial) orderings, captured by a bias parameter $b$.
+  \item \textbf{Production --- LM-derived cost:} $\text{cost}_\text{LM}(u) = -\beta\,\log P_\text{LM}(u)$,
     where $P_\text{LM}$ is a GPT-based prior over the 15 utterances and
-    $\beta$ controls sensitivity.  Shorter, high-frequency forms (\eg\ \utter{D}) are cheaper.
-  \item \textbf{Subjectivity bias:} an additive penalty favouring
-    subjective-first orderings (D-initial), captured by a bias parameter.
-  \item \textbf{Length cost:} utterance length enters implicitly via $P_\text{LM}$.
+    $\beta$ controls sensitivity.  This cost implicitly captures frequency and length biases: shorter, high-frequency forms (\eg\ \utter{S}) are cheaper.
 \end{enumerate}
 
 \subsection{Speaker models}
@@ -200,9 +202,8 @@ A standard RSA pragmatic speaker that evaluates a complete utterance's utility:
 \end{equation}
 
 \paragraph{Incremental speaker $S_\text{I}$.}
-Produces one adjective at a time; at step $t$ it chooses the next adjective
-$a_t$ given the prefix already produced.  The updated-listener posterior after
-each step feeds into the next step's cost-weighted speaker distribution:
+Produces one adjective at a time; at step $t$ it chooses the next adjective $a_t$ given the prefix already produced.
+The updated-listener posterior after each step feeds into the next step's cost-weighted speaker distribution:
 \begin{align}
   P_{S_\text{I}}(a_1 \mid o, \mathcal{C})
   &\propto \exp\!\bigl[\alpha \cdot
@@ -212,40 +213,119 @@ each step feeds into the next step's cost-weighted speaker distribution:
     \log p_t(o) - \lambda \cdot \text{cost}(a_t \mid a_{1:t-1})\bigr].
   \label{eq:inc_speaker}
 \end{align}
+The joint probability of a complete utterance $u = (a_1, \ldots, a_T)$ factorises by the chain rule into a product of next-word decisions:
+\begin{equation}
+  P_{S_\text{I}}(u \mid o, \mathcal{C})
+  = \prod_{t=1}^{T} P_{S_\text{I}}(a_t \mid a_{1:t-1},\, o,\, \mathcal{C}).
+  \label{eq:inc_chain}
+\end{equation}
 
-\subsection{Two model variants \& parameterisation}
+\noindent\textit{Intuition: how the incremental speaker works.}
+The global speaker $S_\text{G}$ scores all 15 complete utterances simultaneously, selecting the one that best balances informativeness and cost (\cref{eq:global_speaker}).
+The incremental speaker $S_\text{I}$, by contrast, builds the utterance one adjective at a time from left to right.
+At step~1 it selects the first adjective that is most informative given the full context $\mathcal{C}$; the literal listener then updates its beliefs accordingly; at step~2 the speaker decides whether to produce an additional adjective, now evaluated against the listener's \emph{updated} posterior rather than the original context.
+This sequential process models left-to-right production planning, where each adjective reshapes the communicative landscape for all subsequent ones (\cref{eq:inc_speaker,eq:inc_chain}).
+
+\noindent\textit{Intuition: why ordering matters.}
+The key mechanism is the context-sensitivity of the size semantics (\cref{eq:size_sem}): the threshold $\theta_k$ depends on the effective context at the point where \adj{S} is evaluated.
+For the global speaker, this operates through right-to-left compositional semantics (\cref{eq:comp}): in \utter{SC}, the listener first processes \adj{C} (rightmost, closer to the noun), narrowing the posterior to colour-matching objects, before evaluating \adj{S} over this filtered set.
+In \utter{CS}, \adj{S} is processed first over the full original context.
+For the incremental speaker, the same asymmetry arises through production order: when \adj{S} is produced first, its informativeness is evaluated over the full context at step~1; when \adj{C} is produced first, \adj{S} is evaluated at step~2 against the listener's colour-updated posterior.
+In both models, the \emph{order} in which adjectives appear changes how informative each one is---and it is this asymmetry that drives ordering preferences as an emergent pragmatic phenomenon.
+
+\noindent\textit{Intuition: why redundant adjectives occur.}
+In both speaker models, each utterance's utility trades off informativeness against cost.
+A second adjective is produced whenever its marginal informativeness gain outweighs the additional cost.
+For the global speaker, this trade-off is evaluated jointly across all 15 utterances: a two-adjective form \utter{SC} beats \utter{S} alone when adding colour raises $\log L_0(o \mid u, \mathcal{C})$ enough to compensate for the longer utterance.
+For the incremental speaker, after the first adjective has been produced the listener's posterior $p_1$ may still assign non-negligible probability to distractors; if a second adjective reduces this residual uncertainty sufficiently, the speaker produces it even though the referent may already be probable.
+Both mechanisms predict \emph{more} over-informative utterances when a single property is insufficient to uniquely pick out the referent (\eg, the both-relevant condition) and \emph{fewer} when one adjective is already highly informative (\eg, sharp-size contexts)---consistent with the dominance of single-adjective \utter{S} in sharp conditions and increased multi-adjective use in both-relevant conditions.
+
+\subsection{Model variants \& parameterisation}
 \label{sec:model:variants}
 
+Crossing the two speaker models ($S_\text{G}$ vs.\ $S_\text{I}$) with two levels of participant-level pooling yields four model variants per dataset, compared via LOO-CV.  The semantic parameters $k$, $w_f$, and $\nu$ are held fixed at theoretically motivated values (see below); inference targets the pragmatic and observation-level parameters.
+
+\medskip\noindent\textbf{Slider-rating models.}
+The slider models compare only two utterances (\utter{big blue} vs.\ \utter{blue big}), using a subjectivity bias as the cost term and a Zero-One-Inflated Beta (ZOIB) observation model.
+
 \begin{center}
-\begin{tabularx}{0.92\textwidth}{lXl}
+\begin{tabularx}{\textwidth}{llXl}
 \toprule
-\textbf{Variant} & \textbf{Description} & \textbf{Free parameters} \\
+\textbf{Model} & \textbf{Speaker} & \textbf{Participant pooling} & \textbf{Inferred parameters} \\
 \midrule
-\textbf{Flat / global} &
-  Global speaker, uniform or LM prior;
-  single set of parameters across all items &
-  $\alpha, k, w_f, \nu, \beta$ \\
-\midrule
-\textbf{Hierarchical / incremental} &
-  Incremental speaker; item-level random effects on $k$ and $\nu$;
-  hyperpriors over means and variances &
-  $\mu_k, \sigma_k, \mu_\nu, \sigma_\nu, \alpha, \beta, w_f$ \\
+Global, pooled        & $S_\text{G}$ & Single parameter set across all participants & $\alpha,\; b,\; \sigma$ \\[2pt]
+Global, hierarchical  & $S_\text{G}$ & Per-participant additive intercepts $\delta_i$ & $\alpha,\; b,\; \sigma,\; \tau,\; \delta_i$ \\[2pt]
+Incremental, pooled       & $S_\text{I}$ & Single parameter set across all participants & $\alpha,\; b,\; \sigma$ \\[2pt]
+Incremental, hierarchical & $S_\text{I}$ & Per-participant additive intercepts $\delta_i$ & $\alpha,\; b,\; \sigma,\; \tau,\; \delta_i$ \\
 \bottomrule
 \end{tabularx}
 \end{center}
 
-\begin{discussbox}{Model discussion}
+\medskip\noindent\textbf{Production models.}
+The production models evaluate all 15 utterances with LM-derived costs.  The hierarchical variants add per-participant deviations on $\alpha$.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{llXl}
+\toprule
+\textbf{Model} & \textbf{Speaker} & \textbf{Participant pooling} & \textbf{Inferred parameters} \\
+\midrule
+Global, pooled        & $S_\text{G}$ & Single parameter set across all participants & $\alpha,\; \beta$ \\[2pt]
+Global, hierarchical  & $S_\text{G}$ & Per-participant deviations on $\alpha$ & $\alpha,\; \beta,\; \tau,\; \delta_i$ \\[2pt]
+Incremental, pooled       & $S_\text{I}$ & Single parameter set across all participants & $\alpha,\; \beta$ \\[2pt]
+Incremental, hierarchical & $S_\text{I}$ & Per-participant deviations on $\alpha$ & $\alpha,\; \beta,\; \tau,\; \delta_i$ \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\medskip\noindent\textbf{Fixed semantic parameters} (shared across all model variants):
+$k = 0.5$, $w_f = 1.0$, $\nu_\text{colour} = 0.8$ (slider and production), $\nu_\text{form} = 0.7$ (production only).
+Although not inferred, these parameters play a central role in shaping the model's predictions; \cref{fig:sim-k,fig:sim-wf,fig:sim-csv} illustrate their effects via the simulation (\cref{sec:simulation}).
+
+\medskip\noindent\textbf{Parameter glossary.}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{llX}
+\toprule
+\textbf{Parameter} & \textbf{Support} & \textbf{Interpretation} \\
+\midrule
+\multicolumn{3}{l}{\textit{Inferred}} \\
+$\alpha$             & $\mathbb{R}_{>0}$    & Pragmatic rationality: sharpness of the speaker's softmax over utterances \\
+$b$                  & $\mathbb{R}_{>0}$    & Subjectivity bias favouring S-initial orderings (slider models only) \\
+$\sigma$             & $\mathbb{R}_{>0}$    & ZOIB dispersion controlling the spread of predicted slider ratings (slider models only) \\
+$\beta$              & $\mathbb{R}_{>0}$    & Sensitivity to LM-derived utterance cost (production models only) \\
+$\tau$               & $\mathbb{R}_{>0}$    & SD of participant-level random effects (hierarchical variants only) \\
+$\delta_i$           & $\mathbb{R}$         & Per-participant intercept or deviation (hierarchical variants only) \\
+\midrule
+\multicolumn{3}{l}{\textit{Fixed (not inferred; effects shown in \cref{fig:sim-k,fig:sim-wf,fig:sim-csv})}} \\
+$k$                  & $(0,1)$              & Threshold position within the contextual size range; lower $k$ = stricter threshold (\cref{fig:sim-k}) \\
+$w_f$                & $\mathbb{R}_{\geq0}$ & Perceptual blur in the Weber-fraction size comparison; higher $w_f$ = noisier size semantics (\cref{fig:sim-wf}) \\
+$\nu$                & $(0,1)$              & Colour/form semantic value: probability that a feature-matching object is truly described by the adjective; higher $\nu$ narrows the size-first advantage (\cref{fig:sim-csv}) \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+
+\begin{discussbox}{Challenges and experiences in fitting the models}
+\label{sec:model:challenges}
+
 \begin{itemize}[leftmargin=*]
-  \item Should $w_f$ (perceptual blur) be inferred or fixed?  Slider data
-    suggest a sharp vs.\ blurred manipulation, but the mapping to a single
-    scalar is unclear.
-  \item The LM prior collapses utterance-order preferences and length.
-    Should these be decoupled?
-  \item Is the left-to-right compositionality assumption linguistically
-    motivated or merely computationally convenient?
+  \item \textbf{Computational efficiency.}
+    Making inference tractable required systematic vectorisation of data and parameters (leveraging JAX's batch semantics), JIT compilation of the entire model graph, and precomputing all quantities that do not depend on MCMC samples---in particular, marginalising out stochastic dependencies that could otherwise be recomputed at every leapfrog step.
+
+  \item \textbf{Slow and stuck chains; chain diagnostics.}
+    NUTS chains were frequently slow or got stuck in low-probability regions, making the usual workflow of running many short diagnostic chains prohibitively expensive.
+    This motivated a dedicated posterior-analysis pipeline to detect problems early: visual inspection of posterior distributions for bad shapes, number of divergences, cross-chain disagreement, high autocorrelation within chains, and strong parameter correlations.
+    Defining what counts as ``successful inference'' (\eg\ by inspecting by-condition posterior predictives) helps a lot.
+
+  \item \textbf{Slider rating data: bathtub-shaped distribution.}
+    Slider ratings pile up at 0 and 1 (boundary values), violating standard continuous likelihood assumptions.
+    We adopted a Zero-One-Inflated Beta (ZOIB) likelihood that explicitly models boundary probability mass via mixture components---a point mass at 0 with probability $\pi_0$, a point mass at 1 with probability $\pi_1$, and a Beta distribution for interior values with probability $1 - \pi_0 - \pi_1$.
+
+  \item \textbf{Production data: degenerate and context-dependent distributions.}
+    The free-production data exhibit highly concentrated, context-dependent categorical distributions---many utterance types receive near-zero counts in some conditions---making the full likelihood surface very steep and difficult to navigate.
+    Our solution was to fix the semantic parameters ($k$, $w_f$, $\nu$) at shared values across both datasets and infer only the pragmatic parameters ($\alpha$, $\beta$) from the production data.
 \end{itemize}
 \end{discussbox}
-
 \newpage
 
 
@@ -254,7 +334,9 @@ each step feeds into the next step's cost-weighted speaker distribution:
 \label{sec:experiments}
 % =============================================================================
 
-Both experiments share the same factorial design:
+The two experiments are complementary.  The slider-rating study elicits graded acceptability judgements for pre-specified descriptions, framed from the speaker's perspective (\ie, ``how well does this description pick out the target?''), providing continuous data on how well each description fits a given context.  The free-production study records the descriptions that speakers actually generate, yielding categorical choice data that reveal ordering preferences and the frequency of redundant modifiers.  Together, the two tasks separate semantic fit (\emph{how good is this description?}) from pragmatic choice (\emph{which description does a speaker produce?}).
+
+Both experiments share the same $3 \times 2$ factorial design:
 
 \begin{center}
 \begin{tabularx}{0.88\textwidth}{lX}
@@ -262,28 +344,23 @@ Both experiments share the same factorial design:
 \textbf{Factor} & \textbf{Levels} \\
 \midrule
 $F_1$: \textbf{Relevant property}
-  & Size-relevant (\texttt{zrdc}), Colour-relevant (\texttt{erdc}),
-    Both-relevant (\texttt{brdc}) \\
+  & Size-relevant, Colour-relevant, Both-relevant \\
 $F_2$: \textbf{Sharpness}
-  & Sharp (size is diagnostically large), Blurred (size is gradient/perceptually noisy) \\
+  & Sharp (sizes well separated), Blurred (sizes clustered) \\
 \midrule
-\multicolumn{2}{l}{\textit{Fixed}: Referent = largest, colour-matching, form-matching object in a 6-object context} \\
+\multicolumn{2}{p{0.85\textwidth}}{\textit{Fixed}: Referent = largest, colour-matching, form-matching object in a 6-object context} \\
 \bottomrule
 \end{tabularx}
 \end{center}
 
-Each item encodes a context as a $6 \times 3$ matrix $(s, c, f)$ with the
-referent at index 0.  Conditions outside the $\{$\texttt{zrdc, erdc, brdc}$\}$
-set (non-size-adjective manipulations) are excluded from modelling.
+The adjective pair shown on each trial varied (size--colour, size--form, or colour--form), but because form and colour share the same semantic type---determinate features parameterised by $\nu$---they are treated identically in the model.  All analyses are collapsed across adjective-pair types.
+Each item encodes a context as a $6 \times 3$ matrix $(s, c, f)$ with the referent at index 0 (\cref{fig:item}).
 
-\begin{figure}[h]
+\begin{figure}[h!]
   \centering
   % Replace with actual path when compiling locally:
-  % \includegraphics[width=0.7\textwidth]{../../09-presentation/20250710_LMBayes/experiment_item_illustration.png}
-  \fbox{\rule{0pt}{4cm}\rule{0.7\textwidth}{0pt}}
-  \caption{Illustration of an experiment item (placeholder).  Left panel: a
-    sharp-size context; right panel: a blurred-size context.  The referent
-    (circled) is the largest, colour-matching, form-matching object.}
+  \includegraphics[width=0.7\textwidth]{../../10-writing/figures/experiment_item_illustration.png}
+  \caption{Illustration of an experiment item (placeholder).  Left panel: a sharp-size context; right panel: a blurred-size context.  The referent (circled) is the largest, colour-matching, form-matching object.}
   \label{fig:item}
 \end{figure}
 
@@ -293,44 +370,34 @@ set (non-size-adjective manipulations) are excluded from modelling.
 \label{sec:exp:slider}
 % -----------------------------------------------------------------------
 
-\paragraph{Task.}  Participants rated the \emph{felicity} of each adjective
-description on a continuous slider (0--100) for a given context-referent pair.
-Ratings were collected for single-adjective (\utter{D}, \utter{C}, \utter{F})
-and two-adjective (\utter{DC}, \utter{DF}, \utter{CD}, \etc) descriptions.
+\paragraph{Task.}  Participants rated the \emph{felicity} of each adjective description on a continuous slider (0--100) for a given context-referent pair.
+Ratings were collected for single-adjective (\utter{S}, \utter{C}, \utter{F}) and two-adjective (\utter{SC}, \utter{SF}, \utter{CS}, \etc) descriptions.
 
-\paragraph{Dependent variable.}  Normalised slider ratings, interpreted as
-empirical truth values $[\![ u ]\!]_\text{emp}(o, \mathcal{C}) \in [0,1]$.
+\paragraph{Dependent variable.}  Normalised slider ratings, interpreted as empirical truth values $[\![ u ]\!]_\text{emp}(o, \mathcal{C}) \in [0,1]$.
 
-\paragraph{Key findings.}
+\begin{discussbox}{Key findings (lmer: centred slider $\sim$ relevance $\times$ sharpness + (1$|$participant) + (1$|$item); \cref{fig:slider-empirical,fig:slider-model}).}
 \begin{itemize}[leftmargin=*]
-  \item Size ratings are markedly lower in the blurred condition than the sharp
-    condition, validating the $w_f$ manipulation.
-  \item Colour and form ratings are high and stable across conditions.
-  \item Ordering interactions: in size-relevant contexts, \utter{DC} is rated
-    higher than \utter{CD}; the pattern reverses in colour-relevant contexts.
-\end{itemize}
-
-\paragraph{Modelling goal.}
-Fit the incremental RSA literal listener to graded slider ratings in order to
-estimate $k$, $w_f$, and $\nu$.  These values serve as informative priors for
-the production model.
-
-\begin{resbox}{Slider modelling}
-  Posterior estimates: $k \approx \todo{X}$, $w_f \approx \todo{X}$ (sharp),
-  $w_f \approx \todo{X}$ (blurred), $\nu \approx \todo{X}$.
-  \todo{Insert MCMC summary / forest plot here.}
-\end{resbox}
-
-\begin{discussbox}{Slider-study discussion}
-\begin{itemize}[leftmargin=*]
-  \item The slider task confounds \emph{semantic acceptability} with
-    \emph{pragmatic felicity}.  How should we interpret the ratings?
-  \item Should we run a replication study with a larger sample?
-    (A replication dataset is available; results not yet integrated.)
-  \item Should $k$ vary by condition or item, or is a single
-    population-level value enough?
+  \item \textbf{Relevance main effect} ($F(2, 3349) = 213.7$, $p < .001$; $\chi^2(2) = 402.6$, $p < .001$): size-first ordering preference is highest in size-relevant contexts, second highest in both-relevant contexts, and lowest in colour-relevant contexts.
+  \item Even in colour-relevant contexts, mean centred ratings remain above zero; the reverse ordering (below zero) is qualitatively not preferred.
+  \item \textbf{Sharpness main effect}: not significant ($F(1, 132) = 0.03$, $p = .86$).
+  \item \textbf{Relevance $\times$ Sharpness interaction} ($F(2, 3349) = 5.84$, $p = .003$; $\chi^2(2) = 11.7$, $p = .003$): sharpness modulates the size-first advantage asymmetrically---it \emph{increases} the preference in size-relevant contexts (blurred: $0.30$, sharp: $0.34$) but \emph{decreases} it in both-relevant (blurred: $0.25$, sharp: $0.20$) and colour-relevant contexts (blurred: $0.06$, sharp: $0.04$).
 \end{itemize}
 \end{discussbox}
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.85\textwidth]{../../10-writing/figures/slider_empirical.pdf}
+  \caption{Slider-rating empirical results.  Mean centred slider ratings (0 = no preference) by relevant-property condition and sharpness, with 95\% CIs. Size-first orderings are preferred across all conditions, but the preference is strongest in size-relevant contexts and weakest in colour-relevant contexts.  Sharpness modulates the size-first advantage asymmetrically across relevance conditions.}
+  \label{fig:slider-empirical}
+\end{figure}
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.48\textwidth]{../../10-writing/figures/slider_correlation_inc_hier.pdf}\hfill
+  \includegraphics[width=0.48\textwidth]{../../10-writing/figures/slider_model_comparison.pdf}
+  \caption{Left: Condition-level observed vs.\ predicted mean slider ratings for the incremental hierarchical model, with $R^2$ annotation and 95\% CIs.  Right: LOO-ELPD comparison across four model variants (best model highlighted in blue); $|\Delta\text{elpd}|/\text{dse} = 6.7$ (strong evidence for the incremental hierarchical model).}
+  \label{fig:slider-model}
+\end{figure}
 
 
 % -----------------------------------------------------------------------
@@ -338,61 +405,43 @@ the production model.
 \label{sec:exp:production}
 % -----------------------------------------------------------------------
 
-\paragraph{Task.}  Participants described the referent object to a hypothetical
-listener in as few words as possible, using only the provided adjectives.
+\paragraph{Task.}  Participants described the referent object to a hypothetical listener in as few words as possible, using only the provided adjectives.
 Responses were manually annotated into the 15 utterance categories.
 
-\paragraph{Dependent variable.}  Categorical annotation $y_i \in \{1, \ldots, 15\}$
-for each trial $i$.
+\paragraph{Dependent variable.}  Categorical annotation $y_i \in \{1, \ldots, 15\}$ for each trial $i$.
 
-\paragraph{Conditions.}  \todo{$N$ participants, $M$ items, $L$ lists; exact
-numbers to be confirmed.}
+\begin{discussbox}{Key findings (glmer: binomial, (1$|$participant) + (1$|$item); \cref{fig:production-empirical,fig:production-model}).}
 
-\paragraph{Key findings.}
-\begin{enumerate}[leftmargin=*]
-  \item \textbf{Relevant-property effect.}
-    Size-first orderings (\utter{D}, \utter{DC}, \utter{DCF}) dominate in
-    size-relevant contexts; colour-first (\utter{C}, \utter{CD}) dominate in
-    colour-relevant contexts.
-  \item \textbf{Sharpness effect.}
-    Size adjectives appear more frequently (including over-informatively) in the
-    blurred condition than the sharp condition.
-  \item \textbf{Single adjective dominance.}
-    \utter{D} alone is the modal response across most conditions; multi-word
-    utterances are more common when both properties are relevant.
-\end{enumerate}
-
-\paragraph{Modelling challenges.}
+\textbf{(1) Size-first advantage} (S-initial utterances coded as 1, all others as 0):
 \begin{itemize}[leftmargin=*]
-  \item \emph{Categorical likelihood instability.} Some rare categories have
-    near-zero model probability, driving the log-likelihood to $-\infty$.
-    Solution: aggregate trials to empirical \emph{soft distributions} per
-    condition, and use a Dirichlet likelihood.
-  \item \emph{Sparse data per item.} Items with few observations show unreliable
-    empirical distributions.  Solution: hierarchical model with item-level
-    random effects.
-  \item \emph{NUTS + discrete latents.} NUTS requires differentiability; all
-    discrete variables (utterance type) must be marginalised.
+  \item \textbf{Relevance main effect} ($\chi^2(2) = 1859.7$, $p < .001$): size-first orderings dominate in size-relevant contexts; colour-first orderings dominate in colour-relevant contexts; both-relevant falls in between.
+  \item \textbf{Sharpness main effect}: not significant ($\chi^2(1) = 0.79$, $p = .37$).
+  \item \textbf{Relevance $\times$ Sharpness interaction} ($\chi^2(2) = 31.4$, $p < .001$): sharpness modulates the size-first advantage asymmetrically across relevance conditions---it reduces size-first preference in size-relevant contexts but increases it in both-relevant contexts.
 \end{itemize}
 
-\begin{resbox}{Production modelling}
-  \todo{Insert posterior forest plot / predictive check here.}
-  Global model: $\alpha \approx \todo{X}$, $\beta \approx \todo{X}$.
-  Incremental model: $\mu_k \approx \todo{X}$, $\mu_{w_f} \approx \todo{X}$.
-\end{resbox}
-
-\begin{discussbox}{Production-study discussion}
+\medskip
+\textbf{(2) Over-informative utterances} (three-adjective responses in both-relevant; multi-word responses in size-/colour-relevant coded as 1):
 \begin{itemize}[leftmargin=*]
-  \item Is the Dirichlet likelihood the right choice, or should we use a
-    Multinomial with soft targets?
-  \item How do we evaluate model fit beyond visual predictive checks?
-    LOO-CV? WAIC?
-  \item The production data includes a replication study.  Should the two
-    datasets be modelled jointly or separately?
-  \item Should the LM prior ($\beta$) be inferred from the data, or is it
-    better fixed from corpus statistics?
+  \item \textbf{Relevance main effect} ($\chi^2(2) = 725.7$, $p < .001$): over-informative utterances are most frequent in size-relevant contexts, less frequent in both-relevant and colour-relevant contexts.
+  \item \textbf{Sharpness main effect} ($\chi^2(1) = 10.3$, $p = .001$): over-informative utterances are more frequent in the blurred condition than in the sharp condition.
+  \item \textbf{Relevance $\times$ Sharpness interaction} ($\chi^2(2) = 63.8$, $p < .001$): the sharpness effect on over-informativity is strongest in size-relevant contexts (blurred elicits far more multi-word utterances) and attenuated in both-relevant and colour-relevant contexts.
 \end{itemize}
 \end{discussbox}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.95\textwidth]{../../10-writing/figures/production_empirical.pdf}
+  \caption{Production empirical results.  Utterance-type proportions (with bootstrapped 95\% CIs) by relevant-property condition and sharpness.  Size-first orderings dominate in size-relevant contexts; colour-first orderings dominate in colour-relevant contexts.  Only utterance types with $\geq 2\%$ in at least one condition are shown.}
+  \label{fig:production-empirical}
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.48\textwidth]{../../10-writing/figures/production_correlation_inc_hier.pdf}\hfill
+  \includegraphics[width=0.48\textwidth]{../../10-writing/figures/production_model_comparison.pdf}
+  \caption{Left: Observed vs.\ predicted utterance-type proportions (per condition $\times$ utterance type) for the incremental hierarchical model, with $R^2$ annotation and 95\% CIs.  Right: LOO-ELPD comparison across four model variants; $|\Delta\text{elpd}|/\text{dse} = 4.6$ (strong evidence for the incremental hierarchical model).}
+  \label{fig:production-model}
+\end{figure}
 
 \newpage
 
@@ -407,13 +456,9 @@ numbers to be confirmed.}
 
 The simulation has three purposes:
 \begin{enumerate}[label=(\arabic*)]
-  \item Establish that the incremental speaker \emph{generates} ordering
-    preferences, not just accommodates them, across a broad range of contexts.
-  \item Map out which parameter region produces a qualitative \emph{big-before-colour}
-    preference and compare to a \emph{colour-before-big} region.
-  \item Assess robustness: does the ordering preference persist under varying
-    context size ($n_\text{obj}$), size-distribution spread ($\sigma_\text{spread}$),
-    and perceptual blur ($w_f$)?
+  \item Establish that the incremental speaker \emph{generates} ordering preferences, not just accommodates them, across a broad range of contexts.
+  \item Map out which parameter region produces a qualitative \emph{big-before-colour} preference and compare to a \emph{colour-before-big} region.
+  \item Assess robustness: does the ordering preference persist under varying context size ($n_\text{obj}$), size-distribution spread ($\sigma_\text{spread}$), and perceptual blur ($w_f$)?
 \end{enumerate}
 
 \subsection{Design}
@@ -438,39 +483,29 @@ $w_f$ (perceptual blur) & 0.1, 0.2, 0.3, 0.5, 0.8 & 5 \\
 \end{tabularx}
 \end{center}
 
-Each simulated trial computes communicative success
-$p(o_\text{ref} \mid u)$ for two key orderings
-(\utter{big blue} $>$ \utter{blue big}) and records which ordering the speaker
-model assigns higher probability.
+The parameter $\sigma_\text{spread}$ controls the standard deviation of the truncated normal from which object sizes are drawn within a context.  
+A small value (e.g.\ $\sigma_\text{spread}=2$) produces \emph{blurred} contexts in which objects are similar in size, making size adjectives less informative; a large value (e.g.\ $\sigma_\text{spread}=15$) yields \emph{sharp} contexts with well-separated sizes, making size adjectives highly informative.
 
-\subsection{Key results}
+Each simulated trial computes communicative success $p(o_\text{ref} \mid u)$ for two key orderings (\utter{big blue} $>$ \utter{blue big}) and records which ordering the speaker model assigns higher probability.
+
+\subsection{Results}
 \label{sec:sim:results}
 
-\todo{Insert simulation plots here -- e.g., proportion of big-first responses
-as a function of $k$, $w_f$, and $n_\text{obj}$.}
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.9\textwidth]{../../10-writing/figures/sim_advantage_nobj.pdf}
+  \caption{Size-first advantage (\texttt{big blue} $-$ \texttt{blue big}) as a function of context size $n_\text{obj}$ and context sharpness $\sigma_\text{spread}$, faceted by speaker type.  Both speakers show a positive advantage in sharp contexts that diminishes with increasing context size.  Crucially, the incremental speaker exhibits a \emph{negative} advantage (colour-first preference) in blurred contexts with few objects, a pattern absent from the global speaker.}
+  \label{fig:sim-nobj}
+\end{figure}
 
-\begin{resbox}{Simulation findings}
+\begin{discussbox}{Simulation findings}
 \begin{itemize}[leftmargin=*]
-  \item The incremental speaker robustly prefers \utter{D}-first over the
-    majority of the parameter space when size is contextually informative.
-  \item The threshold parameter $k$ has the largest impact on ordering
-    preferences: lower $k$ (higher threshold) reduces size-first preference.
-  \item The effect of $n_\text{obj}$ is mediated by $\sigma_\text{spread}$:
-    in narrow distributions, larger context size amplifies differences.
-  \item The global speaker shows a qualitatively similar but weaker preference,
-    suggesting the incremental mechanism is a contributing, not sole, factor.
-\end{itemize}
-\end{resbox}
-
-\begin{discussbox}{Simulation discussion}
-\begin{itemize}[leftmargin=*]
-  \item The simulation uses random contexts; should we run it on the actual
-    experimental contexts to bridge to the empirical data?
-  \item What is the right summary statistic: mean communicative success,
-    proportion of trials preferring one ordering, or something else?
-  \item Does the simulation yield clear predictions about the replication data?
+  \item Both speaker types generate a size-first ordering advantage across the majority of the parameter space, demonstrating that the emergence of ordering preferences is not exclusive to the incremental mechanism.
+  \item The global speaker derives its ordering asymmetry solely from context-dependent, sequential-update compositional semantics---i.e., the way the literal listener composes meaning by updating beliefs object-by-object.  This is the \emph{minimal mechanism}: it requires no production-level incrementality, only a compositional semantics that is sensitive to contextual informativity.  This is compatible with previous listener-oriented communicative-efficiency accounts of subjectivity-based ordering preferences.  While those accounts relied on non-agent simulations, our explicit RSA model captures, extends, and confirms their core insight within a fully agent-based framework.
+  \item The incremental speaker amplifies this effect and additionally produces qualitatively distinct predictions (e.g., a \emph{reversal} to colour-first preference in blurred, small-context conditions; \cref{fig:sim-nobj}), suggesting that the incremental production mechanism contributes an additional, separable source of ordering preferences beyond the minimal compositional-semantics baseline.
 \end{itemize}
 \end{discussbox}
+
 
 \newpage
 
@@ -482,55 +517,32 @@ as a function of $k$, $w_f$, and $n_\text{obj}$.}
 
 \subsection{Summary}
 
-We have presented an incremental RSA account of adjective ordering preferences
-that unifies informativeness-based and subjectivity-based explanations.  The
-model is fitted to two complementary datasets (slider ratings and free
-production) using NUTS-based Bayesian inference in NumPyro / JAX, and its
-qualitative behaviour is validated across a large-scale parameter simulation.
+We presented an RSA model with two speaker variants---global and incremental---that derives adjective ordering preferences from the interaction of context-sensitive compositional semantics, communicative efficiency, and, in the incremental case, left-to-right production planning.  The model is fitted to two complementary behavioural datasets (slider ratings, Experiment~1; free production, Experiment~2) via NUTS-based Bayesian inference in NumPyro\,/\,JAX, and its qualitative predictions are stress-tested across a 6-million-trial parameter simulation.
 
-Key claims:
-\begin{itemize}[leftmargin=*]
-  \item A simple incremental production rule---choose the next adjective
-    proportional to its \emph{residual} informativeness---generates ordering
-    preferences without a fixed hierarchy.
-  \item Perceptual blur ($w_f$) modulates size-adjective usage, explaining the
-    sharpness effect.
-  \item LM-derived costs provide a grounded utterance prior that is consistent
-    with observed single-adjective dominance.
+\begin{discussbox}{Key findings}
+  \begin{itemize}[leftmargin=*]
+  \item \textbf{Ordering preferences emerge from compositional semantics alone.}
+    Even the global speaker---which has no production-level incrementality---generates a size-before-colour preference across most of the parameter space, because applying a color adjective first to the hierarchical compositional semantics narrows the comparison class and thereby boosts the informativeness of a subsequent size adjective (\cref{sec:simulation}).
+  \item \textbf{Incremental production amplifies and qualitatively extends the effect.}
+    The incremental speaker strengthens the size-first advantage and, uniquely, predicts a \emph{reversal} to colour-first preference in blurred, small-context conditions (\cref{fig:sim-nobj})---a signature absent from the global speaker.
+  \item \textbf{Relevance is the dominant modulator in human data.}
+    Both experiments show a large relevance main effect: size-first preference is strongest in size-relevant contexts and weakest (or reversed) in colour-relevant contexts
+  \item \textbf{Sharpness interacts with relevance asymmetrically.}
+    Sharpness alone has no significant main effect in either dataset, yet it interacts with relevance: in size-relevant contexts sharpness \emph{increases} the size-first preference, whereas in both-relevant and colour-relevant contexts it \emph{decreases} it---consistent with the model's context-dependent informativity mechanism.
+  \item \textbf{Over-informativity is context-driven.}
+    Speakers produce redundant adjectives most often in size-relevant, blurred contexts ($\chi^2(2)=725.7$, $p<.001$), where size alone is least informative---exactly the regime in which the model predicts the highest utility gain from including an additional modifier.
+  \item \textbf{Incremental hierarchical model fits best.}
+    LOO model comparison favours the incremental hierarchical variant for both slider and production data
 \end{itemize}
+\end{discussbox}
 
-\subsection{Open issues for the write-up}
 
-\begin{enumerate}[label=\arabic*., leftmargin=*]
-  \item \textbf{Model comparison.}  A formal comparison of global vs.\
-    incremental speaker (LOO-CV or Bayes factors) is still outstanding.
-  \item \textbf{Replication dataset.}
-    The slider-rating replication study needs to be integrated; modelling
-    approach not yet finalised.
-  \item \textbf{Predictions vs.\ fits.}  Are the parameter values recovered from
-    the slider data good priors for the production model?  A formal
-    prior-predictive check for the production model is needed.
-  \item \textbf{LM prior validation.}  The GPT-derived utterance prior should
-    be evaluated against human acceptability judgments.
-  \item \textbf{Scope of adjective classes.}  The model currently handles
-    D, C, F; extension to other adjective classes (e.g., material, age) is
-    not addressed.
-  \item \textbf{Individual differences.}  The hierarchical model captures
-    item-level variability but not participant-level variability.
-  \item \textbf{Write-up structure.}  A tentative section order:
-    Introduction $\to$ Background (RSA, adjective ordering) $\to$ Model $\to$
-    Experiments $\to$ Results $\to$ Simulation $\to$ General Discussion.
-\end{enumerate}
-
-\begin{discussbox}{For the meeting}
+\begin{discussbox}{Outlook}
 \begin{itemize}[leftmargin=*]
   \item What is the right framing for the paper: pragmatics, psycholinguistics,
     or computational linguistics?
   \item Target venue?  \todo{CogSci / Cognition / PLOS ONE / Glossa / ?}
-  \item What level of detail should the model section have for the target
-    audience?
-  \item Figures wish-list: parameter recovery plot, posterior predictive vs.\
-    empirical distributions per condition, simulation heatmap.
+  \item What level of detail should each section have for the target audience?
 \end{itemize}
 \end{discussbox}
 
@@ -539,11 +551,9 @@ Key claims:
 \section*{References}
 % =============================================================================
 
-\todo{Add references (BibTeX file TBD).  Key citations to include:
-Frank \& Goodman (2012), Bergen et al.\ (2016), Scontras et al.\ (2017),
-Brehm \& Lam (2019), Piantadosi et al.\ (2012), Pyykkonen et al.\ (ANS semantics).}
+\todo{Add references}
 
 \bibliographystyle{apalike}
-% \bibliography{references}   % uncomment once references.bib is ready
+%\bibliography{references}   % uncomment once references.bib is ready
 
 \end{document}

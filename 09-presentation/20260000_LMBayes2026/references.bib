@@ -1,0 +1,1130 @@
+@INPROCEEDINGS{Karpathy,
+  author={Karpathy, Andrej and Fei-Fei, Li},
+  booktitle={2015 IEEE Conference on Computer Vision and Pattern Recognition (CVPR)}, 
+  title={Deep visual-semantic alignments for generating image descriptions}, 
+  year={2015},
+  volume={},
+  number={},
+  pages={3128-3137},
+  doi={10.1109/CVPR.2015.7298932}}
+
+
+@inproceedings{vinyals2015show,
+  title={Show and tell: A neural image caption generator},
+  author={Vinyals, Oriol and Toshev, Alexander and Bengio, Samy and Erhan, Dumitru},
+  booktitle={Proceedings of the IEEE conference on computer vision and pattern recognition},
+  pages={3156--3164},
+  year={2015}
+}
+
+@inproceedings{hendricks2016generating,
+  title={Generating visual explanations},
+  author={Hendricks, Lisa Anne and Akata, Zeynep and Rohrbach, Marcus and Donahue, Jeff and Schiele, Bernt and Darrell, Trevor},
+  booktitle={Computer Vision--ECCV 2016: 14th European Conference, Amsterdam, The Netherlands, October 11--14, 2016, Proceedings, Part IV 14},
+  pages={3--19},
+  year={2016},
+  organization={Springer}
+}
+
+@article{nie2020pragmatic,
+  title={Pragmatic issue-sensitive image captioning},
+  author={Nie, Allen and Cohn-Gordon, Reuben and Potts, Christopher},
+  journal={arXiv preprint arXiv:2004.14451},
+  year={2020}
+}
+
+@inproceedings{anderson2018bottom,
+  title={Bottom-up and top-down attention for image captioning and visual question answering},
+  author={Anderson, Peter and He, Xiaodong and Buehler, Chris and Teney, Damien and Johnson, Mark and Gould, Stephen and Zhang, Lei},
+  booktitle={Proceedings of the IEEE conference on computer vision and pattern recognition},
+  pages={6077--6086},
+  year={2018}
+}
+
+@inproceedings{vedantam2017context,
+  title={Context-aware captions from context-agnostic supervision},
+  author={Vedantam, Ramakrishna and Bengio, Samy and Murphy, Kevin and Parikh, Devi and Chechik, Gal},
+  booktitle={Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition},
+  pages={251--260},
+  year={2017}
+}
+
+@article{monroe2015learning,
+  title={Learning in the rational speech acts model},
+  author={Monroe, Will and Potts, Christopher},
+  journal={arXiv preprint arXiv:1510.06807},
+  year={2015}
+}
+
+@article{andreas2016reasoning,
+  title={Reasoning about pragmatics with neural listeners and speakers},
+  author={Andreas, Jacob and Klein, Dan},
+  journal={arXiv preprint arXiv:1604.00562},
+  year={2016}
+}
+
+@inproceedings{cohn-gordon-etal-2018-pragmatically,
+    title = "Pragmatically Informative Image Captioning with Character-Level Inference",
+    author = "Cohn-Gordon, Reuben  and
+      Goodman, Noah  and
+      Potts, Christopher",
+    booktitle = "Proceedings of the 2018 Conference of the North {A}merican Chapter of the Association for Computational Linguistics: Human Language Technologies, Volume 2 (Short Papers)",
+    month = jun,
+    year = "2018",
+    address = "New Orleans, Louisiana",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/N18-2070",
+    doi = "10.18653/v1/N18-2070",
+    pages = "439--443",
+    abstract = "We combine a neural image captioner with a Rational Speech Acts (RSA) model to make a system that is pragmatically informative: its objective is to produce captions that are not merely true but also distinguish their inputs from similar images. Previous attempts to combine RSA with neural image captioning require an inference which normalizes over the entire set of possible utterances. This poses a serious problem of efficiency, previously solved by sampling a small subset of possible utterances. We instead solve this problem by implementing a version of RSA which operates at the level of characters ({``}a{''}, {``}b{''}, {``}c{''}, ...) during the unrolling of the caption. We find that the utterance-level effect of referential captions can be obtained with only character-level decisions. Finally, we introduce an automatic method for testing the performance of pragmatic speaker models, and show that our model outperforms a non-pragmatic baseline as well as a word-level RSA captioner.",
+}
+
+@inproceedings{fried-etal-2018-unified,
+    title = "Unified Pragmatic Models for Generating and Following Instructions",
+    author = "Fried, Daniel  and
+      Andreas, Jacob  and
+      Klein, Dan",
+    booktitle = "Proceedings of the 2018 Conference of the North {A}merican Chapter of the Association for Computational Linguistics: Human Language Technologies, Volume 1 (Long Papers)",
+    month = jun,
+    year = "2018",
+    address = "New Orleans, Louisiana",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/N18-1177",
+    doi = "10.18653/v1/N18-1177",
+    pages = "1951--1963",
+    abstract = "We show that explicit pragmatic inference aids in correctly generating and following natural language instructions for complex, sequential tasks. Our pragmatics-enabled models reason about why speakers produce certain instructions, and about how listeners will react upon hearing them. Like previous pragmatic models, we use learned base listener and speaker models to build a pragmatic speaker that uses the base listener to simulate the interpretation of candidate descriptions, and a pragmatic listener that reasons counterfactually about alternative descriptions. We extend these models to tasks with sequential structure. Evaluation of language generation and interpretation shows that pragmatic inference improves state-of-the-art listener models (at correctly interpreting human instructions) and speaker models (at producing instructions correctly interpreted by humans) in diverse settings.",
+}
+
+@article{10.1162/tacl_a_00064,
+    author = {Monroe, Will and Hawkins, Robert
+            X.D. and Goodman, Noah
+            D. and Potts, Christopher},
+    title = "{Colors in Context: A Pragmatic Neural Model for Grounded Language
+                    Understanding}",
+    journal = {Transactions of the Association for Computational Linguistics},
+    volume = {5},
+    pages = {325-338},
+    year = {2017},
+    month = {09},
+    abstract = "{We present a model of pragmatic referring expression interpretation in a grounded
+                    communication task (identifying colors from descriptions) that draws upon
+                    predictions from two recurrent neural network classifiers, a speaker and a
+                    listener, unified by a recursive pragmatic reasoning framework. Experiments show
+                    that this combined pragmatic model interprets color descriptions more accurately
+                    than the classifiers from which it is built, and that much of this improvement
+                    results from combining the speaker and listener perspectives. We observe that
+                    pragmatic reasoning helps primarily in the hardest cases: when the model must
+                    distinguish very similar colors, or when few utterances adequately express the
+                    target color. Our findings make use of a newly-collected corpus of human
+                    utterances in color reference games, which exhibit a variety of pragmatic
+                    behaviors. We also show that the embedded speaker model reproduces many of these
+                    pragmatic behaviors.}",
+    issn = {2307-387X},
+    doi = {10.1162/tacl_a_00064},
+    url = {https://doi.org/10.1162/tacl\_a\_00064},
+    eprint = {https://direct.mit.edu/tacl/article-pdf/doi/10.1162/tacl\_a\_00064/1567474/tacl\_a\_00064.pdf},
+}
+
+@inproceedings{mao2016generation,
+  title={Generation and comprehension of unambiguous object descriptions},
+  author={Mao, Junhua and Huang, Jonathan and Toshev, Alexander and Camburu, Oana and Yuille, Alan L and Murphy, Kevin},
+  booktitle={Proceedings of the IEEE conference on computer vision and pattern recognition},
+  pages={11--20},
+  year={2016}
+}
+
+@article{hossain2019comprehensive,
+  title={A comprehensive survey of deep learning for image captioning},
+  author={Hossain, MD Zakir and Sohel, Ferdous and Shiratuddin, Mohd Fairuz and Laga, Hamid},
+  journal={ACM Computing Surveys (CsUR)},
+  volume={51},
+  number={6},
+  pages={1--36},
+  year={2019},
+  publisher={ACM New York, NY, USA}
+}
+
+@misc{ghandi2022deep,
+      title={Deep Learning Approaches on Image Captioning: A Review}, 
+      author={Taraneh Ghandi and Hamidreza Pourreza and Hamidreza Mahyar},
+      year={2022},
+      eprint={2201.12944},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV}
+}
+
+@inproceedings{rennie2017self,
+  title={Self-critical sequence training for image captioning},
+  author={Rennie, Steven J and Marcheret, Etienne and Mroueh, Youssef and Ross, Jerret and Goel, Vaibhava},
+  booktitle={Proceedings of the IEEE conference on computer vision and pattern recognition},
+  pages={7008--7024},
+  year={2017}
+}
+
+@incollection{grice1975logic,
+  title={Logic and conversation},
+  author={Grice, Herbert P},
+  booktitle={Speech acts},
+  pages={41--58},
+  year={1975},
+  publisher={Brill}
+}
+
+@article{frank2012predicting,
+  title={Predicting pragmatic reasoning in language games},
+  author={Frank, Michael C and Goodman, Noah D},
+  journal={Science},
+  volume={336},
+  number={6084},
+  pages={998--998},
+  year={2012},
+  publisher={American Association for the Advancement of Science}
+}
+
+@book{anderson1990adaptive,
+  title={The adaptive character of thought},
+  author={Anderson, John Robert},
+  year={1990},
+  publisher={Psychology Press}
+}
+
+@article{NLGreview,
+author = {Dong, Chenhe and Li, Yinghui and Gong, Haifan and Chen, Miaoxin and Li, Junxin and Shen, Ying and Yang, Min},
+title = {A Survey of Natural Language Generation},
+year = {2022},
+issue_date = {August 2023},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {55},
+number = {8},
+issn = {0360-0300},
+url = {https://doi.org/10.1145/3554727},
+doi = {10.1145/3554727},
+abstract = {This article offers a comprehensive review of the research on Natural Language Generation (NLG) over the past two decades, especially in relation to data-to-text generation and text-to-text generation deep learning methods, as well as new applications of NLG technology. This survey aims to (a) give the latest synthesis of deep learning research on the NLG core tasks, as well as the architectures adopted in the field; (b) detail meticulously and comprehensively various NLG tasks and datasets, and draw attention to the challenges in NLG evaluation, focusing on different evaluation methods and their relationships; (c) highlight some future emphasis and relatively recent research issues that arise due to the increasing synergy between NLG and other artificial intelligence areas, such as computer vision, text, and computational creativity.},
+journal = {ACM Comput. Surv.},
+month = {dec},
+articleno = {173},
+numpages = {38},
+keywords = {Natural language generation, text-to-text generation, data-to-text generation, evaluation, deep learning}
+}
+
+@inproceedings{lazaridou-etal-2020-multi,
+    title = "Multi-agent Communication meets Natural Language: Synergies between Functional and Structural Language Learning",
+    author = "Lazaridou, Angeliki  and
+      Potapenko, Anna  and
+      Tieleman, Olivier",
+    booktitle = "Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics",
+    month = jul,
+    year = "2020",
+    address = "Online",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2020.acl-main.685",
+    doi = "10.18653/v1/2020.acl-main.685",
+    pages = "7663--7674",
+    abstract = "We present a method for combining multi-agent communication and traditional data-driven approaches to natural language learning, with an end goal of teaching agents to communicate with humans in natural language. Our starting point is a language model that has been trained on generic, not task-specific language data. We then place this model in a multi-agent self-play environment that generates task-specific rewards used to adapt or modulate the model, turning it into a task-conditional language model. We introduce a new way for combining the two types of learning based on the idea of reranking language model samples, and show that this method outperforms others in communicating with humans in a visual referential communication task. Finally, we present a taxonomy of different types of language drift that can occur alongside a set of measures to detect them.",
+}
+
+@article{ohmer2021mutual,
+  title={Mutual exclusivity in pragmatic agents},
+  author={Ohmer, Xenia and Franke, Michael and K{\"o}nig, Peter},
+  journal={Cognitive Science},
+  volume={46},
+  number={1},
+  pages={e13069},
+  year={2021},
+  publisher={Wiley Online Library}
+}
+
+@article{reiter1997building,
+  title={Building applied natural language generation systems},
+  author={Reiter, Ehud and Dale, Robert},
+  journal={Natural Language Engineering},
+  volume={3},
+  number={1},
+  pages={57--87},
+  year={1997},
+  publisher={Cambridge university press}
+}
+
+@article{gatt2018survey,
+  title={Survey of the state of the art in natural language generation: Core tasks, applications and evaluation},
+  author={Gatt, Albert and Krahmer, Emiel},
+  journal={Journal of Artificial Intelligence Research},
+  volume={61},
+  pages={65--170},
+  year={2018}
+}
+
+@article{bubeck2023sparks,
+  title={Sparks of artificial general intelligence: Early experiments with gpt-4},
+  author={Bubeck, S{\'e}bastien and Chandrasekaran, Varun and Eldan, Ronen and Gehrke, Johannes and Horvitz, Eric and Kamar, Ece and Lee, Peter and Lee, Yin Tat and Li, Yuanzhi and Lundberg, Scott and others},
+  journal={arXiv preprint arXiv:2303.12712},
+  year={2023}
+}
+
+@article{brown2020language,
+  title={Language models are few-shot learners},
+  author={Brown, Tom and Mann, Benjamin and Ryder, Nick and Subbiah, Melanie and Kaplan, Jared D and Dhariwal, Prafulla and Neelakantan, Arvind and Shyam, Pranav and Sastry, Girish and Askell, Amanda and others},
+  journal={Advances in neural information processing systems},
+  volume={33},
+  pages={1877--1901},
+  year={2020}
+}
+
+@book{levinson2000presumptive,
+  title={Presumptive meanings: The theory of generalized conversational implicature},
+  author={Levinson, Stephen C},
+  year={2000},
+  publisher={MIT press}
+}
+
+@inproceedings{xu2015show,
+  title={Show, attend and tell: Neural image caption generation with visual attention},
+  author={Xu, Kelvin and Ba, Jimmy and Kiros, Ryan and Cho, Kyunghyun and Courville, Aaron and Salakhudinov, Ruslan and Zemel, Rich and Bengio, Yoshua},
+  booktitle={International conference on machine learning},
+  pages={2048--2057},
+  year={2015},
+  organization={PMLR}
+}
+
+@article{kwisthout2011bayesian,
+  title={Bayesian intractability is not an ailment that approximation can cure.},
+  author={Kwisthout, Johan and Wareham, Todd and Van Rooij, Iris},
+  journal={Cogn. Sci.},
+  volume={35},
+  number={5},
+  pages={779--784},
+  year={2011}
+}
+
+@article{yuan2020emergence,
+  author       = {Luyao Yuan and
+                  Zipeng Fu and
+                  Jingyue Shen and
+                  Lu Xu and
+                  Junhong Shen and
+                  Song{-}Chun Zhu},
+  title        = {Emergence of Pragmatics from Referential Game between Theory of Mind
+                  Agents},
+  journal      = {CoRR},
+  volume       = {abs/2001.07752},
+  year         = {2020},
+  url          = {https://arxiv.org/abs/2001.07752},
+  eprinttype    = {arXiv},
+  eprint       = {2001.07752},
+  timestamp    = {Fri, 24 Jan 2020 15:00:57 +0100},
+  biburl       = {https://dblp.org/rec/journals/corr/abs-2001-07752.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
+}
+
+@article{DBLP:journals/corr/abs-1804-03984,
+  author       = {Angeliki Lazaridou and
+                  Karl Moritz Hermann and
+                  Karl Tuyls and
+                  Stephen Clark},
+  title        = {Emergence of Linguistic Communication from Referential Games with
+                  Symbolic and Pixel Input},
+  journal      = {CoRR},
+  volume       = {abs/1804.03984},
+  year         = {2018},
+  url          = {http://arxiv.org/abs/1804.03984},
+  eprinttype    = {arXiv},
+  eprint       = {1804.03984},
+  timestamp    = {Mon, 13 Aug 2018 16:47:14 +0200},
+  biburl       = {https://dblp.org/rec/journals/corr/abs-1804-03984.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
+}
+
+@article{franke2016evolution,
+  title={The evolution of compositionality in signaling games},
+  author={Franke, Michael},
+  journal={Journal of Logic, Language and Information},
+  volume={25},
+  pages={355--377},
+  year={2016},
+  publisher={Springer}
+}
+
+@article{smith2013learning,
+  title={Learning and using language via recursive pragmatic reasoning about other agents},
+  author={Smith, Nathaniel J and Goodman, Noah and Frank, Michael},
+  journal={Advances in neural information processing systems},
+  volume={26},
+  year={2013}
+}
+
+@book{zipf1999psycho,
+  title={The psycho-biology of language: An introduction to dynamic philology},
+  author={Zipf, George Kingsley},
+  volume={21},
+  year={1999},
+  publisher={Psychology Press}
+}
+
+@book{lewis2008convention,
+  title={Convention: A philosophical study},
+  author={Lewis, David},
+  year={2008},
+  publisher={John Wiley \& Sons}
+}
+
+@article{hagoort2007beyond,
+  title={Beyond the sentence given},
+  author={Hagoort, Peter and van Berkum, Jos},
+  journal={Philosophical Transactions of the Royal Society B: Biological Sciences},
+  volume={362},
+  number={1481},
+  pages={801--811},
+  year={2007},
+  publisher={The Royal Society London}
+}
+
+@article{frazier2016sentence,
+  title={Sentence processing: A tutorial review},
+  author={Frazier, Lyn},
+  journal={Attention and performance XII},
+  pages={559--586},
+  year={2016},
+  publisher={Routledge}
+}
+
+@article{tanenhaus1995integration,
+  title={Integration of visual and linguistic information in spoken language comprehension},
+  author={Tanenhaus, Michael K and Spivey-Knowlton, Michael J and Eberhard, Kathleen M and Sedivy, Julie C},
+  journal={Science},
+  volume={268},
+  number={5217},
+  pages={1632--1634},
+  year={1995},
+  publisher={American Association for the Advancement of Science}
+}
+
+@article{shannon1948mathematical,
+  title={A mathematical theory of communication},
+  author={Shannon, Claude Elwood},
+  journal={The Bell system technical journal},
+  volume={27},
+  number={3},
+  pages={379--423},
+  year={1948},
+  publisher={Nokia Bell Labs}
+}
+
+@book{mackay2003information,
+  title={Information theory, inference and learning algorithms},
+  author={MacKay, David JC},
+  year={2003},
+  publisher={Cambridge university press}
+}
+
+@article{rabovsky2018modelling,
+  title={Modelling the N400 brain potential as change in a probabilistic representation of meaning},
+  author={Rabovsky, Milena and Hansen, Steven S and McClelland, James L},
+  journal={Nature Human Behaviour},
+  volume={2},
+  number={9},
+  pages={693--705},
+  year={2018},
+  publisher={Nature Publishing Group UK London}
+}
+
+@article{aurnhammer2019comparing,
+  title={Comparing gated and simple recurrent neural network architectures as models of human sentence processing},
+  author={Aurnhammer, Christoph and Frank, Stefan L},
+  year={2019},
+  publisher={[Sl]:[Sn]}
+}
+
+@article{kao2014nonliteral,
+  title={Nonliteral understanding of number words},
+  author={Kao, Justine T and Wu, Jean Y and Bergen, Leon and Goodman, Noah D},
+  journal={Proceedings of the National Academy of Sciences},
+  volume={111},
+  number={33},
+  pages={12002--12007},
+  year={2014},
+  publisher={National Acad Sciences}
+}
+
+@inproceedings{qing2014gradable,
+  title={Gradable adjectives, vagueness, and optimal language use: A speaker-oriented model},
+  author={Qing, Ciyang and Franke, Michael},
+  booktitle={Semantics and linguistic theory},
+  volume={24},
+  pages={23--41},
+  year={2014}
+}
+
+@article{levy2008expectation,
+  title={Expectation-based syntactic comprehension},
+  author={Levy, Roger},
+  journal={Cognition},
+  volume={106},
+  number={3},
+  pages={1126--1177},
+  year={2008},
+  publisher={Elsevier}
+}
+
+@inproceedings{hale2001probabilistic,
+  title={A probabilistic Earley parser as a psycholinguistic model},
+  author={Hale, John},
+  booktitle={Second meeting of the north american chapter of the association for computational linguistics},
+  year={2001}
+}
+
+@book{franke2009signal,
+  title={Signal to act: Game theory in pragmatics},
+  author={Franke, Michael},
+  year={2009},
+  publisher={University of Amsterdam}
+}
+
+@article{bott2017event,
+  title={An event semantics with continuations for incremental interpretation},
+  author={Bott, Oliver and Sternefeld, Wolfgang},
+  journal={Journal of Semantics},
+  volume={34},
+  number={2},
+  pages={201--236},
+  year={2017},
+  publisher={Oxford University Press}
+}
+
+@article{fukumura2010use,
+  title={The use of visual context during the production of referring expressions},
+  author={Fukumura, Kumiko and Van Gompel, Roger PG and Pickering, Martin J},
+  journal={Quarterly journal of experimental psychology},
+  volume={63},
+  number={9},
+  pages={1700--1715},
+  year={2010},
+  publisher={SAGE Publications Sage UK: London, England}
+}
+
+@article{fukumura2018ordering,
+  title={Ordering adjectives in referential communication},
+  author={Fukumura, Kumiko},
+  journal={Journal of Memory and Language},
+  volume={101},
+  pages={37--50},
+  year={2018},
+  publisher={Elsevier}
+}
+
+@article{fukumura2022overspecification,
+  title={Overspecification and incremental referential processing: An eye-tracking study.},
+  author={Fukumura, Kumiko and Carminati, Maria Nella},
+  journal={Journal of Experimental Psychology: Learning, Memory, and Cognition},
+  volume={48},
+  number={5},
+  pages={680},
+  year={2022},
+  publisher={American Psychological Association}
+}
+
+@article{degen2020redundancy,
+  title={When redundancy is useful: A Bayesian approach to “overinformative” referring expressions.},
+  author={Degen, Judith and Hawkins, Robert D and Graf, Caroline and Kreiss, Elisa and Goodman, Noah D},
+  journal={Psychological Review},
+  volume={127},
+  number={4},
+  pages={591},
+  year={2020},
+  publisher={American Psychological Association}
+}
+
+@article{engelhardt2006speakers,
+  title={Do speakers and listeners observe the Gricean Maxim of Quantity?},
+  author={Engelhardt, Paul E and Bailey, Karl GD and Ferreira, Fernanda},
+  journal={Journal of memory and language},
+  volume={54},
+  number={4},
+  pages={554--573},
+  year={2006},
+  publisher={Elsevier}
+}
+
+@article{geurts2015pragmatics,
+  title={Pragmatics and processing},
+  author={Geurts, Bart and Rubio-Fern{\'a}ndez, Paula},
+  journal={Ratio},
+  volume={28},
+  number={4},
+  pages={446--469},
+  year={2015},
+  publisher={Wiley Online Library}
+}
+
+@article{gigerenzer1997bounded,
+  title={Bounded rationality: Models of fast and frugal inference},
+  author={Gigerenzer, Gerd},
+  journal={Swiss Journal of Economics and Statistics},
+  volume={133},
+  number={2/2},
+  pages={201--218},
+  year={1997}
+}
+
+@article{goodman2016pragmatic,
+  title={Pragmatic language interpretation as probabilistic inference},
+  author={Goodman, Noah D and Frank, Michael C},
+  journal={Trends in cognitive sciences},
+  volume={20},
+  number={11},
+  pages={818--829},
+  year={2016},
+  publisher={Elsevier}
+}
+
+@incollection{grice1975logic,
+  title={Logic and conversation},
+  author={Grice, Herbert P},
+  booktitle={Speech acts},
+  pages={41--58},
+  year={1975},
+  publisher={Brill}
+}
+
+@article{hale2006uncertainty,
+  title={Uncertainty about the rest of the sentence},
+  author={Hale, John},
+  journal={Cognitive science},
+  volume={30},
+  number={4},
+  pages={643--672},
+  year={2006},
+  publisher={Wiley Online Library}
+}
+
+@article{knoeferle2005influence,
+  title={The influence of the immediate visual context on incremental thematic role-assignment: Evidence from eye-movements in depicted events},
+  author={Knoeferle, Pia and Crocker, Matthew W and Scheepers, Christoph and Pickering, Martin J},
+  journal={Cognition},
+  volume={95},
+  number={1},
+  pages={95--127},
+  year={2005},
+  publisher={Elsevier}
+}
+
+@article{kutas2000electrophysiology,
+  title={Electrophysiology reveals semantic memory use in language comprehension},
+  author={Kutas, Marta and Federmeier, Kara D},
+  journal={Trends in cognitive sciences},
+  volume={4},
+  number={12},
+  pages={463--470},
+  year={2000},
+  publisher={Elsevier}
+}
+
+@article{kutas2011thirty,
+  title={Thirty years and counting: finding meaning in the N400 component of the event-related brain potential (ERP)},
+  author={Kutas, Marta and Federmeier, Kara D},
+  journal={Annual review of psychology},
+  volume={62},
+  pages={621--647},
+  year={2011},
+  publisher={Annual Reviews}
+}
+
+@article{pechmann1989incremental,
+  title={Incremental speech production and referential overspecification},
+  author={Pechmann, Thomas},
+  year={1989},
+  publisher={Walter de Gruyter, Berlin/New York Berlin, New York}
+}
+
+@article{rubio2016redundant,
+  title={How redundant are redundant color adjectives? An efficiency-based analysis of color overspecification},
+  author={Rubio-Fern{\'a}ndez, Paula},
+  journal={Frontiers in psychology},
+  volume={7},
+  pages={153},
+  year={2016},
+  publisher={Frontiers Media SA}
+}
+
+@article{rubio2019overinformative,
+  title={Overinformative speakers are cooperative: Revisiting the Gricean Maxim of Quantity},
+  author={Rubio-Fernandez, Paula},
+  journal={Cognitive science},
+  volume={43},
+  number={11},
+  pages={e12797},
+  year={2019},
+  publisher={Wiley Online Library}
+}
+
+@article{sedivy1999achieving,
+  title={Achieving incremental semantic interpretation through contextual representation},
+  author={Sedivy, Julie C and Tanenhaus, Michael K and Chambers, Craig G and Carlson, Gregory N},
+  journal={Cognition},
+  volume={71},
+  number={2},
+  pages={109--147},
+  year={1999},
+  publisher={Elsevier}
+}
+
+@article{rubio2020redundant,
+  title={Redundant color words are more efficient than shorter descriptions},
+  author={Rubio-Fernandez, Paula},
+  year={2020},
+  publisher={PsyArXiv}
+}
+
+@article{tarenskeen2015overspecification,
+  title={Overspecification of color, pattern, and size: salience, absoluteness, and consistency},
+  author={Tarenskeen, Sammie and Broersma, Mirjam and Geurts, Bart},
+  journal={Frontiers in Psychology},
+  volume={6},
+  pages={1703},
+  year={2015},
+  publisher={Frontiers Media SA}
+}
+
+@article{van1999early,
+  title={Early referential context effects in sentence processing: Evidence from event-related brain potentials},
+  author={Van Berkum, Jos JA and Brown, Colin M and Hagoort, Peter},
+  journal={Journal of memory and language},
+  volume={41},
+  number={2},
+  pages={147--182},
+  year={1999},
+  publisher={Elsevier}
+}
+
+@article{van2019conceptualization,
+  title={Conceptualization in reference production: Probabilistic modeling and experimental testing.},
+  author={Van Gompel, Roger PG and Van Deemter, Kees and Gatt, Albert and Snoeren, Rick and Krahmer, Emiel J},
+  journal={Psychological review},
+  volume={126},
+  number={3},
+  pages={345},
+  year={2019},
+  publisher={American Psychological Association}
+}
+
+@article{vogels2020speakers,
+  title={How speakers adapt object descriptions to listeners under load},
+  author={Vogels, Jorrig and Howcroft, David M and Tourtouri, Elli and Demberg, Vera},
+  journal={Language, Cognition and Neuroscience},
+  volume={35},
+  number={1},
+  pages={78--92},
+  year={2020},
+  publisher={Taylor \& Francis}
+}
+
+@article{rohde2022color,
+  title={Color interpretation is guided by informativity expectations, not by world knowledge about colors},
+  author={Rohde, Hannah and Rubio-Fernandez, Paula},
+  journal={Journal of Memory and Language},
+  volume={127},
+  pages={104371},
+  year={2022},
+  publisher={Elsevier}
+}
+
+@article{rubio2020incrementality,
+  title={Incrementality and efficiency shape pragmatics across languages},
+  author={Rubio-Fernandez, Paula and Jara-Ettinger, Julian},
+  journal={Proceedings of the National Academy of Sciences},
+  volume={117},
+  number={24},
+  pages={13399--13404},
+  year={2020},
+  publisher={National Acad Sciences}
+}
+
+@article{tourtouri2021rational,
+  title={Rational Redundancy in Referring Expressions: Evidence from Event-related Potentials},
+  author={Tourtouri, Elli N and Delogu, Francesca and Crocker, Matthew W},
+  journal={Cognitive Science},
+  volume={45},
+  number={12},
+  pages={e13071},
+  year={2021},
+  publisher={Wiley Online Library}
+}
+
+@article{rohde2021s,
+  title={What's new? A comprehension bias in favor of informativity},
+  author={Rohde, Hannah and Futrell, Richard and Lucas, Christopher G},
+  journal={Cognition},
+  volume={209},
+  pages={104491},
+  year={2021},
+  publisher={Elsevier}
+}
+
+@article{rohde2022better,
+  title={This Better Be Interesting: A Speaker’s Decision to Speak Cues Listeners to Expect Informative Content},
+  author={Rohde, Hannah and Hoek, Jet and Keshev, Maayan and Franke, Michael},
+  journal={Open Mind},
+  volume={6},
+  pages={118--131},
+  year={2022},
+  publisher={MIT Press One Broadway, 12th Floor, Cambridge, Massachusetts 02142, USA~…}
+}
+
+@article{tsvilodub2023overinformative,
+  title={Overinformative Question Answering by Humans and Machines},
+  author={Tsvilodub, Polina and Franke, Michael and Hawkins, Robert D and Goodman, Noah D},
+  journal={arXiv preprint arXiv:2305.07151},
+  year={2023}
+}
+
+@article{tsvilodub2023role,
+  title={The role of relevance, competence, and priors for scalar inferences},
+  author={Tsvilodub, Polina and van Tiel, Bob and Franke, Michael},
+  journal={Experiments in Linguistic Meaning},
+  volume={2},
+  pages={288--298},
+  year={2023}
+}
+
+@inproceedings{carcassi2023handle,
+  title={How to handle the truth: A model of politeness as strategic truth-stretching},
+  author={Carcassi, Fausto and Franke, Michael},
+  booktitle={Proceedings of the Annual Meeting of the Cognitive Science Society},
+  volume={45},
+  number={45},
+  year={2023}
+}
+
+@article{van2021probabilistic,
+  title={Probabilistic pragmatics explains gradience and focality in natural language quantification},
+  author={van Tiel, Bob and Franke, Michael and Sauerland, Uli},
+  journal={Proceedings of the National Academy of Sciences},
+  volume={118},
+  number={9},
+  pages={e2005453118},
+  year={2021},
+  publisher={National Acad Sciences}
+}
+
+@article{augurzky2019gricean,
+  title={Gricean expectations in online sentence comprehension: an ERP study on the processing of scalar inferences},
+  author={Augurzky, Petra and Franke, Michael and Ulrich, Rolf},
+  journal={Cognitive Science},
+  volume={43},
+  number={8},
+  pages={e12776},
+  year={2019},
+  publisher={Wiley Online Library}
+}
+
+@inproceedings{franke2019subjectivity,
+  title={Subjectivity-based adjective ordering maximizes communicative success.},
+  author={Franke, Michael and Scontras, Gregory and Simonic, Mihael},
+  booktitle={CogSci},
+  pages={344--350},
+  year={2019}
+}
+
+@article{macuch2021pragmatic,
+  title={Pragmatic prediction in the processing of referring expressions containing scalar quantifiers},
+  author={Macuch Silva, Vinicius and Franke, Michael},
+  journal={Frontiers in Psychology},
+  volume={12},
+  pages={662050},
+  year={2021},
+  publisher={Frontiers}
+}
+
+@article{scontras2019grammatical,
+  title={On the grammatical source of adjective ordering preferences},
+  author={Scontras, Gregory and Degen, Judith and Goodman, Noah D},
+  journal={Semantics and Pragmatics},
+  volume={12},
+  pages={7--1},
+  year={2019}
+}
+
+@article{scontras2023adjective,
+  title={Adjective Ordering Across Languages},
+  author={Scontras, Gregory},
+  journal={Annual Review of Linguistics},
+  volume={9},
+  pages={357--376},
+  year={2023},
+  publisher={Annual Reviews}
+}
+
+@inproceedings{scontras2020incremental,
+  title={Incremental semantic restriction and subjectivity-based adjective ordering},
+  author={Scontras, Gregory and Bar-Sever, Galia and Kachakeche, Zeinab and Rosales Jr, Cesar Manuel and Samonte, Suttera},
+  booktitle={Proceedings of Sinn und Bedeutung},
+  volume={24},
+  number={2},
+  pages={253--270},
+  year={2020}
+}
+
+@article{scontras2017subjectivity,
+  title={Subjectivity predicts adjective ordering preferences},
+  author={Scontras, Gregory and Degen, Judith and Goodman, Noah D},
+  journal={Open Mind},
+  volume={1},
+  number={1},
+  pages={53--66},
+  year={2017},
+  publisher={MIT Press One Rogers Street, Cambridge, MA 02142-1209, USA journals-info~…}
+}
+
+@article{trainin2023subjectivity,
+  title={Subjectivity predicts adjective ordering preferences in Hebrew, but lexical factors matter too},
+  author={Trainin, Nitzan and Shetreet, Einat},
+  journal={Language, Cognition and Neuroscience},
+  pages={1--7},
+  year={2023},
+  publisher={Taylor \& Francis}
+}
+
+@article{degen2023rational,
+  title={The rational speech act framework},
+  author={Degen, Judith},
+  journal={Annual Review of Linguistics},
+  volume={9},
+  pages={519--540},
+  year={2023},
+  publisher={Annual Reviews}
+}
+
+@article{delong2005probabilistic,
+  title={Probabilistic word pre-activation during language comprehension inferred from electrical brain activity},
+  author={DeLong, Katherine A and Urbach, Thomas P and Kutas, Marta},
+  journal={Nature neuroscience},
+  volume={8},
+  number={8},
+  pages={1117--1121},
+  year={2005},
+  publisher={Nature Publishing Group US New York}
+}
+
+@article{jaeger2013seeking,
+  title={Seeking predictions from a predictive framework},
+  author={Jaeger, T Florian and Ferreira, Victor},
+  journal={The Behavioral and brain sciences},
+  volume={36},
+  number={4},
+  pages={359},
+  year={2013},
+  publisher={NIH Public Access}
+}
+
+@article{pickering2013integrated,
+  title={An integrated theory of language production and comprehension},
+  author={Pickering, Martin J and Garrod, Simon},
+  journal={Behavioral and brain sciences},
+  volume={36},
+  number={4},
+  pages={329--347},
+  year={2013},
+  publisher={Cambridge University Press}
+}
+
+@article{kuperberg2016we,
+  title={What do we mean by prediction in language comprehension?},
+  author={Kuperberg, Gina R and Jaeger, T Florian},
+  journal={Language, cognition and neuroscience},
+  volume={31},
+  number={1},
+  pages={32--59},
+  year={2016},
+  publisher={Taylor \& Francis}
+}
+
+@article{macdonald2013language,
+  title={How language production shapes language form and comprehension},
+  author={MacDonald, Maryellen C},
+  journal={Frontiers in psychology},
+  volume={4},
+  pages={226},
+  year={2013},
+  publisher={Frontiers Media SA}
+}
+
+@inproceedings{aparicio2015processing,
+  title={Processing gradable adjectives in context: A visual world study},
+  author={Aparicio, Helena and Xiang, Ming and Kennedy, Christopher},
+  booktitle={Semantics and Linguistic Theory},
+  pages={413--432},
+  year={2015}
+}
+
+@inproceedings{alexandropoulou2022incremental,
+  title={Incremental pragmatic interpretation of gradable adjectives: The role of standards of comparison},
+  author={Alexandropoulou, Stavroula and Discher, Henrik and Herb, Marisha and Gotzner, Nicole},
+  booktitle={Semantics and Linguistic Theory},
+  volume={1},
+  pages={481--497},
+  year={2022}
+}
+
+@article{kurumada2015communicative,
+  title={Communicative efficiency in language production: Optional case-marking in Japanese},
+  author={Kurumada, Chigusa and Jaeger, T Florian},
+  journal={Journal of Memory and Language},
+  volume={83},
+  pages={152--178},
+  year={2015},
+  publisher={Elsevier}
+}
+
+@article{kennedy2005scale,
+  title={Scale structure, degree modification, and the semantics of gradable predicates},
+  author={Kennedy, Christopher and McNally, Louise},
+  journal={Language},
+  pages={345--381},
+  year={2005},
+  publisher={JSTOR}
+}
+
+@article{regier2001grounding,
+  title={Grounding spatial language in perception: an empirical and computational investigation.},
+  author={Regier, Terry and Carlson, Laura A},
+  journal={Journal of experimental psychology: General},
+  volume={130},
+  number={2},
+  pages={273},
+  year={2001},
+  publisher={American Psychological Association}
+}
+
+@article{augurzky2020most,
+  title={Most (but not all) quantifiers are interpreted immediately in visual context},
+  author={Augurzky, Petra and Schlotterbeck, Fabian and Ulrich, Rolf},
+  journal={Language, Cognition and Neuroscience},
+  volume={35},
+  number={9},
+  pages={1203--1222},
+  year={2020},
+  publisher={Taylor \& Francis}
+}
+
+@article{schlotterbeck2023degree,
+  title={Degree of incrementality is modulated by experimental context--ERP evidence from German quantifier restriction},
+  author={Schlotterbeck, Fabian and Augurzky, Petra and Ulrich, Rolf},
+  journal={Language, Cognition and Neuroscience},
+  volume={38},
+  number={3},
+  pages={390--410},
+  year={2023},
+  publisher={Taylor \& Francis}
+}
+
+@article{aparicio2018perceived,
+  title={Perceived informativity and referential effects of contrast in adjectivally modified NPs},
+  author={Aparicio, Helena and Kennedy, Christopher and Xiang, Ming},
+  journal={The Semantics of Gradability, Vagueness, and Scale Structure: Experimental Perspectives},
+  pages={199--220},
+  year={2018},
+  publisher={Springer}
+}
+
+@incollection{sproat1991cross,
+  title={The cross-linguistic distribution of adjective ordering restrictions},
+  author={Sproat, Richard and Shih, Chilin},
+  booktitle={Interdisciplinary approaches to language: Essays in honor of S.-Y. Kuroda},
+  pages={565--593},
+  year={1991},
+  publisher={Springer}
+}
+
+@article{wilcox2020predictive,
+  title={On the predictive power of neural language models for human real-time comprehension behavior},
+  author={Wilcox, Ethan Gotlieb and Gauthier, Jon and Hu, Jennifer and Qian, Peng and Levy, Roger},
+  journal={arXiv preprint arXiv:2006.01912},
+  year={2020}
+}
+
+@article{hu2022fine,
+  title={A fine-grained comparison of pragmatic language understanding in humans and language models},
+  author={Hu, Jennifer and Floyd, Sammy and Jouravlev, Olessia and Fedorenko, Evelina and Gibson, Edward},
+  journal={arXiv preprint arXiv:2212.06801},
+  year={2022}
+}
+
+@article{futrell2019neural,
+  title={Neural language models as psycholinguistic subjects: Representations of syntactic state},
+  author={Futrell, Richard and Wilcox, Ethan and Morita, Takashi and Qian, Peng and Ballesteros, Miguel and Levy, Roger},
+  journal={arXiv preprint arXiv:1903.03260},
+  year={2019}
+}
+
+@article{binz2023using,
+  title={Using cognitive psychology to understand GPT-3},
+  author={Binz, Marcel and Schulz, Eric},
+  journal={Proceedings of the National Academy of Sciences},
+  volume={120},
+  number={6},
+  pages={e2218523120},
+  year={2023},
+  publisher={National Acad Sciences}
+}
+
+@misc{openai2023gpt4,
+      title={GPT-4 Technical Report}, 
+      author={OpenAI},
+      year={2023},
+      eprint={2303.08774},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL}
+}
+
+@article{schlotterbeck2023incremental,
+  title={An Incremental RSA Model for Adjective Ordering Preferences in Referential Visual Context},
+  author={Schlotterbeck, Fabian and Wang, Hening},
+  journal={Proceedings of the Society for Computation in Linguistics},
+  volume={6},
+  number={1},
+  pages={121--132},
+  year={2023}
+}
+
+@article{smith2013effect,
+  title={The effect of word predictability on reading time is logarithmic},
+  author={Smith, Nathaniel J and Levy, Roger},
+  journal={Cognition},
+  volume={128},
+  number={3},
+  pages={302--319},
+  year={2013},
+  publisher={Elsevier}
+}
+
+@article{bates2014fitting,
+  title={Fitting linear mixed-effects models using lme4},
+  author={Bates, Douglas and M{\"a}chler, Martin and Bolker, Ben and Walker, Steve},
+  journal={arXiv preprint arXiv:1406.5823},
+  year={2014}
+}
+
+@article{phan2019composable,
+  title={Composable effects for flexible and accelerated probabilistic programming in NumPyro},
+  author={Phan, Du and Pradhan, Neeraj and Jankowiak, Martin},
+  journal={arXiv preprint arXiv:1912.11554},
+  year={2019}
+}
+
+@article{dyer2023evaluating,
+  title={Evaluating a century of progress on the cognitive science of adjective ordering},
+  author={Dyer, William and Torres, Charles and Scontras, Gregory and Futrell, Richard},
+  journal={Transactions of the Association for Computational Linguistics},
+  volume={11},
+  pages={1185--1200},
+  year={2023},
+  publisher={MIT Press One Broadway, 12th Floor, Cambridge, Massachusetts 02142, USA~…}
+}
+
+@misc{scontras2025rsa,
+  author       = {Scontras, Gregory and Tessler, Michael Henry and Franke, Michael},
+  title        = {Probabilistic Language Understanding: An Introduction to the Rational Speech Act Framework},
+  howpublished = {\url{https://www.problang.org}},
+  note         = {Retrieved 2025-11-17},
+  year         = {2025}
+}

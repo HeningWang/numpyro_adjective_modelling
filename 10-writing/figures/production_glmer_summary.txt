@@ -1,0 +1,160 @@
+=== SIZE-FIRST ADVANTAGE ===
+
+--- Full model summary ---
+Generalized linear mixed model fit by maximum likelihood (Laplace
+  Approximation) [glmerMod]
+ Family: binomial  ( logit )
+Formula: size_first ~ relevant_property * sharpness + (1 | id) + (1 |  
+    item)
+   Data: df_prod_raw
+
+     AIC      BIC   logLik deviance df.resid 
+  2400.7   2449.3  -1192.4   2384.7     3188 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-6.0018 -0.1785 -0.0389  0.4230 26.3999 
+
+Random effects:
+ Groups Name        Variance Std.Dev.
+ id     (Intercept) 1.8078   1.345   
+ item   (Intercept) 0.6757   0.822   
+Number of obs: 3196, groups:  id, 113; item, 27
+
+Fixed effects:
+                                         Estimate Std. Error z value Pr(>|z|)
+(Intercept)                             1.8494887  0.0009394  1968.7   <2e-16
+relevant_propertyboth                  -1.8922824  0.0009388 -2015.7   <2e-16
+relevant_propertysecond                -6.0636260  0.0009390 -6457.3   <2e-16
+sharpnesssharp                         -0.2218662  0.0009394  -236.2   <2e-16
+relevant_propertyboth:sharpnesssharp    1.0140266  0.0009392  1079.7   <2e-16
+relevant_propertysecond:sharpnesssharp -1.1762750  0.0009392 -1252.4   <2e-16
+                                          
+(Intercept)                            ***
+relevant_propertyboth                  ***
+relevant_propertysecond                ***
+sharpnesssharp                         ***
+relevant_propertyboth:sharpnesssharp   ***
+relevant_propertysecond:sharpnesssharp ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+               (Intr) rlvnt_prprtyb rlvnt_prprtys shrpns rlvnt_prprtyb:
+rlvnt_prprtyb  0.000                                                   
+rlvnt_prprtys  0.000  0.001                                            
+shrpnssshrp    0.000  0.000         0.000                              
+rlvnt_prprtyb: 0.000  0.000         0.000         0.000                
+rlvnt_prprtys: 0.000  0.000         0.000         0.000  0.000         
+optimizer (Nelder_Mead) convergence code: 0 (OK)
+Model failed to converge with max|grad| = 0.0752492 (tol = 0.002, component 1)
+Model is nearly unidentifiable: very large eigenvalue
+ - Rescale variables?
+
+
+--- Interaction (additive vs full) ---
+Data: df_prod_raw
+Models:
+m_sf_add: size_first ~ relevant_property + sharpness + (1 | id) + (1 | item)
+m_sf_full: size_first ~ relevant_property * sharpness + (1 | id) + (1 | item)
+          npar    AIC    BIC  logLik deviance  Chisq Df Pr(>Chisq)    
+m_sf_add     6 2428.1 2464.5 -1208.0   2416.1                         
+m_sf_full    8 2400.7 2449.3 -1192.3   2384.7 31.388  2  1.528e-07 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+--- Sharpness main effect ---
+Data: df_prod_raw
+Models:
+m_sf_rel: size_first ~ relevant_property + (1 | id) + (1 | item)
+m_sf_add: size_first ~ relevant_property + sharpness + (1 | id) + (1 | item)
+         npar    AIC    BIC  logLik deviance  Chisq Df Pr(>Chisq)
+m_sf_rel    5 2426.9 2457.2 -1208.4   2416.9                     
+m_sf_add    6 2428.1 2464.5 -1208.0   2416.1 0.7883  1     0.3746
+
+--- Relevance main effect ---
+Data: df_prod_raw
+Models:
+m_sf_null: size_first ~ 1 + (1 | id) + (1 | item)
+m_sf_rel: size_first ~ relevant_property + (1 | id) + (1 | item)
+          npar    AIC    BIC  logLik deviance  Chisq Df Pr(>Chisq)    
+m_sf_null    3 4282.6 4300.8 -2138.3   4276.6                         
+m_sf_rel     5 2426.9 2457.2 -1208.4   2416.9 1859.7  2  < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+=== OVER-INFORMATIVE UTTERANCES ===
+
+--- Full model summary ---
+Generalized linear mixed model fit by maximum likelihood (Laplace
+  Approximation) [glmerMod]
+ Family: binomial  ( logit )
+Formula: over_informative ~ relevant_property * sharpness + (1 | id) +  
+    (1 | item)
+   Data: df_prod_raw
+
+     AIC      BIC   logLik deviance df.resid 
+  3236.8   3285.4  -1610.4   3220.8     3188 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-6.2871 -0.5517 -0.1834  0.5228  4.2486 
+
+Random effects:
+ Groups Name        Variance Std.Dev.
+ id     (Intercept) 1.7946   1.3396  
+ item   (Intercept) 0.1931   0.4395  
+Number of obs: 3196, groups:  id, 113; item, 27
+
+Fixed effects:
+                                       Estimate Std. Error z value Pr(>|z|)    
+(Intercept)                              2.8274     0.2529  11.181  < 2e-16 ***
+relevant_propertyboth                   -3.2957     0.1951 -16.891  < 2e-16 ***
+relevant_propertysecond                 -3.7162     0.2008 -18.509  < 2e-16 ***
+sharpnesssharp                          -2.1237     0.3204  -6.629 3.39e-11 ***
+relevant_propertyboth:sharpnesssharp     1.8619     0.2475   7.523 5.34e-14 ***
+relevant_propertysecond:sharpnesssharp   1.5931     0.2567   6.205 5.46e-10 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+               (Intr) rlvnt_prprtyb rlvnt_prprtys shrpns rlvnt_prprtyb:
+rlvnt_prprtyb  -0.552                                                  
+rlvnt_prprtys  -0.548  0.733                                           
+shrpnssshrp    -0.698  0.431         0.428                             
+rlvnt_prprtyb:  0.425 -0.775        -0.564        -0.487               
+rlvnt_prprtys:  0.415 -0.556        -0.762        -0.477  0.641        
+
+--- Interaction (additive vs full) ---
+Data: df_prod_raw
+Models:
+m_oi_add: over_informative ~ relevant_property + sharpness + (1 | id) + (1 | item)
+m_oi_full: over_informative ~ relevant_property * sharpness + (1 | id) + (1 | item)
+          npar    AIC    BIC  logLik deviance  Chisq Df Pr(>Chisq)    
+m_oi_add     6 3296.6 3333.0 -1642.3   3284.6                         
+m_oi_full    8 3236.8 3285.4 -1610.4   3220.8 63.768  2  1.422e-14 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+--- Sharpness main effect ---
+Data: df_prod_raw
+Models:
+m_oi_rel: over_informative ~ relevant_property + (1 | id) + (1 | item)
+m_oi_add: over_informative ~ relevant_property + sharpness + (1 | id) + (1 | item)
+         npar    AIC    BIC  logLik deviance  Chisq Df Pr(>Chisq)   
+m_oi_rel    5 3304.8 3335.2 -1647.4   3294.8                        
+m_oi_add    6 3296.6 3333.0 -1642.3   3284.6 10.266  1   0.001355 **
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+--- Relevance main effect ---
+Data: df_prod_raw
+Models:
+m_oi_null: over_informative ~ 1 + (1 | id) + (1 | item)
+m_oi_rel: over_informative ~ relevant_property + (1 | id) + (1 | item)
+          npar    AIC    BIC  logLik deviance  Chisq Df Pr(>Chisq)    
+m_oi_null    3 4026.6 4044.8 -2010.3   4020.6                         
+m_oi_rel     5 3304.8 3335.2 -1647.4   3294.8 725.74  2  < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1

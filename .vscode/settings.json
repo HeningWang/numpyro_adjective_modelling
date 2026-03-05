@@ -8,6 +8,10 @@
             "approve": true,
             "matchCommandLine": true
         },
-        "/Users/heningwang/Documents/GitHub/numpyro_adjective_modelling/jax-metal/bin/python": true
+        "/Users/heningwang/Documents/GitHub/numpyro_adjective_modelling/jax-metal/bin/python": true,
+        "/^awk -F',' 'NR>1 \\{print \\$27\\}' /Users/heningwang/Documents/GitHub/numpyro_adjective_modelling/01-dataset/01-slider-data-preprocessed\\.csv \\| sort -u$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
     }
 }
