@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.6.27)  5 MAR 2026 01:16
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.6.27)  5 MAR 2026 01:38
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -839,24 +839,24 @@ Package pdftex.def Info: ../../10-writing/figures/slider_model_comparison.pdf  u
 pdfTeX warning (ext4): destination with the same identifier (name{figure.5}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.411 \paragraph
-                {Dependent variable.}  Categorical annotation $y_i \in \{1, ...
+l.410 
+      
 pdfTeX warning (ext4): destination with the same identifier (name{figure.6}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.411 \paragraph
-                {Dependent variable.}  Categorical annotation $y_i \in \{1, ... <../../10-writing/figures/slider_empirical.pdf> <../../10-writing/figures/slider_correlation_inc_hier.pdf> <../../10-writing/figures/slider_model_comparison.pdf>]
-<../../10-writing/figures/production_empirical.pdf, id=251, 867.24pt x 397.485pt>
+l.410 
+       <../../10-writing/figures/slider_empirical.pdf> <../../10-writing/figures/slider_correlation_inc_hier.pdf> <../../10-writing/figures/slider_model_comparison.pdf>]
+<../../10-writing/figures/production_empirical.pdf, id=250, 867.24pt x 397.485pt>
 File: ../../10-writing/figures/production_empirical.pdf Graphic file (type pdf)
 <use ../../10-writing/figures/production_empirical.pdf>
 Package pdftex.def Info: ../../10-writing/figures/production_empirical.pdf  used on input line 433.
 (pdftex.def)             Requested size: 448.6987pt x 205.65625pt.
-<../../10-writing/figures/production_correlation_inc_hier.pdf, id=252, 505.89pt x 397.485pt>
+<../../10-writing/figures/production_correlation_inc_hier.pdf, id=251, 505.89pt x 397.485pt>
 File: ../../10-writing/figures/production_correlation_inc_hier.pdf Graphic file (type pdf)
 <use ../../10-writing/figures/production_correlation_inc_hier.pdf>
 Package pdftex.def Info: ../../10-writing/figures/production_correlation_inc_hier.pdf  used on input line 440.
 (pdftex.def)             Requested size: 226.70963pt x 178.1327pt.
-<../../10-writing/figures/production_model_comparison.pdf, id=253, 542.025pt x 289.08pt>
+<../../10-writing/figures/production_model_comparison.pdf, id=252, 542.025pt x 289.08pt>
 File: ../../10-writing/figures/production_model_comparison.pdf Graphic file (type pdf)
 <use ../../10-writing/figures/production_model_comparison.pdf>
 Package pdftex.def Info: ../../10-writing/figures/production_model_comparison.pdf  used on input line 441.
@@ -907,18 +907,18 @@ Package rerunfilecheck Info: File `handout_LMBayes2026.out' has not changed.
 (rerunfilecheck)             Checksum: 1FD28F018EDF8E298D4F9A34DDE3F282;2456.
  ) 
 Here is how much of TeX's memory you used:
- 30549 strings out of 474116
- 597721 string characters out of 5743682
+ 30547 strings out of 474116
+ 597673 string characters out of 5743682
  1945187 words of memory out of 5000000
- 52060 multiletter control sequences out of 15000+600000
- 599346 words of font info for 266 fonts, out of 8000000 for 9000
+ 52058 multiletter control sequences out of 15000+600000
+ 599314 words of font info for 266 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  83i,12n,87p,1116b,970s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfbx0800.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfbx1000.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfbx1095.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfbx1200.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfbx1440.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfbx1728.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfcc1095.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfrm0600.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfrm0800.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfrm1200.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfss1095.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfti1095.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sftt1095.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfxc1095.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/stmaryrd/stmary10.pfb>
-Output written on handout_LMBayes2026.pdf (12 pages, 545405 bytes).
+Output written on handout_LMBayes2026.pdf (12 pages, 544537 bytes).
 PDF statistics:
- 441 PDF objects out of 1000 (max. 8388607)
- 342 compressed objects within 4 object streams
+ 440 PDF objects out of 1000 (max. 8388607)
+ 341 compressed objects within 4 object streams
  63 named destinations out of 1000 (max. 500000)
  70340 words of extra memory for PDF output out of 74296 (max. 10000000)
 

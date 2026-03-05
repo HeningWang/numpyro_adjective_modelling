@@ -1,5 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1772669808.39622 "/Users/heningwang/Documents/GitHub/numpyro_adjective_modelling/09-presentation/20260000_LMBayes2026/handout_LMBayes2026.tex" "handout_LMBayes2026.pdf" "handout_LMBayes2026" 1772669809.74466 0
+["pdflatex"] 1772671092.23373 "/Users/heningwang/Documents/GitHub/numpyro_adjective_modelling/09-presentation/20260000_LMBayes2026/handout_LMBayes2026.tex" "handout_LMBayes2026.pdf" "handout_LMBayes2026" 1772671093.45836 0
   "../../10-writing/figures/experiment_item_illustration.png" 1772666333.15669 173560 a639762d59f55b0b13e9d72dafa059bb ""
   "../../10-writing/figures/production_correlation_inc_hier.pdf" 1772668117.40192 15449 64fb8c070f89ab79e88a54c8d94bbb93 ""
   "../../10-writing/figures/production_empirical.pdf" 1772668117.32273 7639 990526ed79c13bf41e8dce444f06105d ""
@@ -11,7 +11,7 @@
   "../../10-writing/figures/slider_correlation_inc_hier.pdf" 1772668117.04378 6266 4acc2443253bc64b97ce6a2ec1f574a6 ""
   "../../10-writing/figures/slider_empirical.pdf" 1772668115.77645 5352 681608045b2024bac7b4c2710a46d191 ""
   "../../10-writing/figures/slider_model_comparison.pdf" 1772668117.09625 5075 bd70faeff6512da9b71c701245ccf7b8 ""
-  "/Users/heningwang/Documents/GitHub/numpyro_adjective_modelling/09-presentation/20260000_LMBayes2026/handout_LMBayes2026.tex" 1772669808.13448 38396 26537a9016259a17f8498e4336fb9103 ""
+  "/Users/heningwang/Documents/GitHub/numpyro_adjective_modelling/09-presentation/20260000_LMBayes2026/handout_LMBayes2026.tex" 1772671090.65373 37258 c5cf48c0e84a9bf90d65a1f8a565f7e5 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc" 1136849721 2971 def0b6c1f0b107b3b936def894055589 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc" 1136849721 2900 1537cc8184ad1792082cd229ecc269f4 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
@@ -259,9 +259,9 @@
   "/usr/local/texlive/2024/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1719472845.68244 5467645 128b85b7cde5f5edc5cb7f1dd7ff8736 ""
   "/usr/local/texlive/2024/texmf-var/web2c/pdftex/pdflatex.fmt" 1719472804 8221416 ac1824bfbd335b916d22d3ef1f26606e ""
   "/usr/local/texlive/2024/texmf.cnf" 1710266656 577 e590dabc9e28c5b61546e15f63eebcdf ""
-  "handout_LMBayes2026.aux" 1772669809.59224 14299 3b5cb8ade5869e24016b6cfaf65ba267 "pdflatex"
-  "handout_LMBayes2026.out" 1772669809.59321 2456 1fd28f018edf8e298d4f9a34dde3f282 "pdflatex"
-  "handout_LMBayes2026.tex" 1772669808.13448 38396 26537a9016259a17f8498e4336fb9103 ""
+  "handout_LMBayes2026.aux" 1772671093.30815 14299 70d384baa1cb5b59190943496c8a9a4b "pdflatex"
+  "handout_LMBayes2026.out" 1772671093.30935 2456 1fd28f018edf8e298d4f9a34dde3f282 "pdflatex"
+  "handout_LMBayes2026.tex" 1772671090.65373 37258 c5cf48c0e84a9bf90d65a1f8a565f7e5 ""
   (generated)
   "handout_LMBayes2026.aux"
   "handout_LMBayes2026.log"
