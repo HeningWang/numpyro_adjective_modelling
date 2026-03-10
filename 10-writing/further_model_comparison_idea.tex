@@ -1,0 +1,236 @@
+\documentclass[11pt, a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{microtype}
+\usepackage{booktabs}
+\usepackage{amsmath, amssymb}
+\usepackage{mathtools}
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue}
+
+\title{Further Model Comparison Ideas\\[4pt]\large Internal Working Document}
+\author{Hening Wang}
+\date{March 2026}
+
+\begin{document}
+\maketitle
+
+\section{Motivation}
+
+The current model space crosses two dimensions:
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+ & Global speaker & Incremental speaker \\
+\midrule
+Pooled       & \checkmark & \checkmark \\
+Hierarchical & \checkmark & \checkmark \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Both speakers share the same incremental listener, which features \emph{context-recursive} compositional semantics: the size threshold $\theta_k$ is recomputed at each composition step relative to the running posterior.
+This means two mechanisms are confounded in the current incremental-vs-global comparison:
+
+\begin{enumerate}[label=(\roman*)]
+  \item \textbf{Production-level incrementality:} greedy left-to-right token selection (incremental speaker) vs.\ global utterance-level softmax (global speaker).
+  \item \textbf{Listener-level context recursion:} size semantics depend on the running posterior $P_t$, making word order matter even for the global speaker.
+\end{enumerate}
+
+When the incremental hierarchical model wins LOO, we cannot tell how much of the advantage comes from (i) and how much from (ii).
+The two extensions below are designed to tease these sources apart.
+
+
+\section{Extension 1: Incremental Speaker with Static Semantics}
+
+\subsection{Idea}
+
+Remove the context recursion from the listener.
+Instead of recomputing the size threshold at each composition step relative to the updated posterior $P_t$, fix the threshold once based on the \emph{original} uniform prior $P_T = P_\mathrm{prior}$.
+All other aspects of the model stay the same: the incremental speaker still produces tokens left-to-right via the chain rule, and the listener still composes meanings right-to-left --- but the meanings are now \emph{static} (context-independent).
+
+\subsection{Formal definition}
+
+Under static semantics, the size semantic value becomes:
+\[
+\llbracket \text{S} \rrbracket_\mathrm{static}(s)
+= \Phi\!\left(
+    \frac{s_o - \theta_k(P_\mathrm{prior})}
+         {w_f \sqrt{s_o^2 + \theta_k(P_\mathrm{prior})^2}}
+  \right),
+\]
+where $\theta_k(P_\mathrm{prior})$ is computed once from the full, unfiltered context.
+The listener update simplifies to a standard (non-recursive) Bayesian update:
+\[
+P_{t-1}(s) \propto P_t(s) \cdot \llbracket w_t \rrbracket_\mathrm{static}(s).
+\]
+Because $\llbracket w_t \rrbracket_\mathrm{static}$ no longer depends on $P_t$, this composition is commutative for fixed-length utterances:
+\[
+P(s \mid w_1, w_2) = P(s \mid w_2, w_1).
+\]
+The listener no longer distinguishes word order.
+Any ordering preferences must therefore come entirely from the \emph{speaker} side (production-level incrementality).
+
+\subsection{Model variants to add}
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+\textbf{Model} & \textbf{Speaker} & \textbf{Semantics} & \textbf{New?} \\
+\midrule
+Global, static semantics       & Global       & Static & New \\
+Incremental, static semantics  & Incremental  & Static & New \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Only the hierarchical variants are needed (they dominate pooled in all existing comparisons).
+
+\subsection{What this test reveals}
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Comparison} & \textbf{Question} \\
+\midrule
+Inc.\ recursive vs.\ Inc.\ static & Does context recursion help the incremental speaker? \\
+Global recursive vs.\ Global static & Does context recursion help the global speaker? \\
+Inc.\ static vs.\ Global static & Does production incrementality help without context recursion? \\
+Inc.\ recursive vs.\ Global recursive & (Already have) Combined effect \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Expected outcomes:
+\begin{itemize}
+  \item If Inc.\ recursive $\gg$ Inc.\ static: context recursion is doing heavy lifting, even within the incremental speaker.
+  \item If Inc.\ static $\approx$ Global static: production-level incrementality adds nothing once you remove context recursion --- the ordering signal comes entirely from the listener.
+  \item If Inc.\ static $>$ Global static: production-level incrementality contributes an independent ordering preference even with static semantics.
+\end{itemize}
+
+\subsection{Implementation}
+
+Minimal code change: in \texttt{incremental\_semantics\_jax} and its incremental-speaker counterpart, replace the call to \texttt{compute\_size\_semantics(states, state\_prior=running\_posterior, ...)} with \texttt{compute\_size\_semantics(states, state\_prior=uniform, ...)}, fixing the prior to uniform at every composition step.
+This is a one-line change per function (pass the original uniform prior instead of the current posterior).
+
+
+\section{Extension 2: Lookahead Speaker ($d = 1$)}
+
+\subsection{Idea}
+
+Let the incremental speaker ``plan one step ahead'' before committing to a token.
+Instead of choosing the token that maximises immediate informativeness, it chooses the token that leads to the best outcome after one additional step.
+
+\subsection{Formal definition}
+
+At step $t$, the lookahead-$d$ speaker scores candidate token $a$ using a value function:
+\begin{align}
+  V(u_{\leq t},\; s^*,\; 0) &= \bigl[L(s^* \mid u_{\leq t})\bigr]^\alpha, \\
+  V(u_{\leq t},\; s^*,\; d) &= \max_{a'}\; V(u_{\leq t} \oplus a',\; s^*,\; d-1).
+\end{align}
+The local decision rule becomes:
+\[
+S_t(a \mid u_{<t}, s^*) \;\propto\; V(u_{<t} \oplus a,\; s^*,\; d).
+\]
+
+Three values of $d$ span the continuum:
+\begin{center}
+\begin{tabular}{cll}
+\toprule
+$d$ & Behaviour & Status \\
+\midrule
+0 & Greedy (current incremental speaker) & Existing \\
+1 & One-step lookahead & \textbf{New} \\
+2 & Full lookahead ($\approx$ global with 3 tokens) & $\approx$ Existing \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Why only $d = 1$ is genuinely new}
+
+With $T_\mathrm{max} = 3$ and vocabulary $\{S, C, F\}$:
+\begin{itemize}
+  \item At step 1: $d=1$ evaluates all $(a_1, a_2)$ pairs (6 paths), picks $a_1$ based on the best continuation.
+  \item At step 2: $d=1$ evaluates the one remaining token --- identical to greedy.
+  \item $d=2$ at step 1 evaluates all $(a_1, a_2, a_3)$ triples --- exhaustive, collapsing to global-like behaviour.
+\end{itemize}
+
+So $d=1$ differs from greedy \emph{only at step 1}.
+
+\subsection{What this test reveals}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Comparison} & \textbf{Question} \\
+\midrule
+Inc.\ greedy vs.\ Inc.\ lookahead & Does planning ahead improve fit? \\
+Inc.\ lookahead vs.\ Global & Is one-step planning closer to greedy or global? \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Expected outcome: if greedy $\geq$ lookahead in LOO, this supports the psychological claim that adjective ordering arises from \emph{myopic, step-by-step} pragmatic reasoning rather than forward planning.
+The paper could then state:
+
+\begin{quote}
+``Even when permitted one step of lookahead planning, the speaker model does not improve its fit to human data, suggesting that ordering preferences are better explained by greedy, step-by-step pragmatic optimisation.''
+\end{quote}
+
+\subsection{Implementation}
+
+Modify step $t=0$ in \texttt{incremental\_speaker}:
+\begin{enumerate}
+  \item For each candidate first token $a \in \{S, C, F\}$, simulate the listener update after $a$.
+  \item For each possible second token $a'$ (given $a$), compute $[L(s^* \mid a, a')]^\alpha$.
+  \item Take the max over $a'$ as the score for $a$.
+  \item Steps $t \geq 1$: unchanged (greedy).
+\end{enumerate}
+Estimated effort: $\sim$50 lines of new code within the existing scan structure.
+
+
+\section{Summary: Extended Model Space}
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+\textbf{Model} & \textbf{Speaker} & \textbf{Semantics} & \textbf{Status} \\
+\midrule
+Global, hier.              & Global       & Recursive (current) & Existing \\
+Incremental, hier.         & Incremental ($d=0$) & Recursive (current) & Existing \\
+\midrule
+Global, static, hier.      & Global       & Static              & \textbf{New (Ext.\ 1)} \\
+Incremental, static, hier. & Incremental ($d=0$) & Static              & \textbf{New (Ext.\ 1)} \\
+\midrule
+Inc.\ lookahead, hier.     & Incremental ($d=1$) & Recursive (current) & \textbf{New (Ext.\ 2)} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Together, these five hierarchical models allow a $2 \times 2$ factorial decomposition (speaker type $\times$ semantics type) plus a lookahead variant, enabling us to disentangle the contributions of:
+\begin{enumerate}
+  \item Context-recursive compositional semantics (listener side)
+  \item Greedy incremental production (speaker side)
+  \item Forward planning (speaker side)
+\end{enumerate}
+
+\section{Priority and Effort}
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+\textbf{Extension} & \textbf{Scientific value} & \textbf{Impl.\ effort} & \textbf{Priority} \\
+\midrule
+Ext.\ 1 (static semantics) & High --- disentangles two confounded mechanisms & Low ($\sim$1-line change) & \textbf{1st} \\
+Ext.\ 2 (lookahead $d=1$)  & Medium --- strengthens myopia claim & Medium ($\sim$50 lines) & 2nd \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Extension 1 should be run first: it has the highest insight-to-effort ratio and directly addresses the question of where ordering preferences come from.
+Extension 2 is a nice addition once Extension 1 is done, cementing the ``greedy is best'' narrative.
+
+\end{document}
