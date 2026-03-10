@@ -1,6 +1,18 @@
 jax-metal/
 jax/
 .DS_Store
+10-writing/build/
+10-writing/*.aux
+10-writing/*.fdb_latexmk
+10-writing/*.fls
+10-writing/*.log
+10-writing/*.out
+10-writing/*.synctex.gz
+/*.aux
+/*.fdb_latexmk
+/*.fls
+/*.log
+/*.out
 analysis/regression/.DS_Store
 analysis/regression/production/.DS_Store
 analysis/.DS_Store
@@ -45,3 +57,5 @@ __pycache__/
 # Simulation output CSVs (large, regenerable)
 04-simulation-w-randomstates/simulation_full_run*.csv
 04-simulation-w-randomstates/simulation_test*.csv
+.DS_Store
+.DS_Store
