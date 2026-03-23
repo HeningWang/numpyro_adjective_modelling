@@ -59,3 +59,17 @@ __pycache__/
 04-simulation-w-randomstates/simulation_test*.csv
 .DS_Store
 .DS_Store
+
+# Claude Code / AI assistant config
+CLAUDE.md
+.mcp.json
+.claude/
+
+# Copilot / AI skills
+.github/skills/
+10-writing/broader_literature_connection_memo.md
+10-writing/captioning_pragmatics_followup_memo.md
+10-writing/communicative_efficiency_framing_memo.md
+10-writing/incremental_model_comparison_memo.md
+10-writing/subjectivity_contribution_memo.md
+10-writing/sword_model_analysis.md

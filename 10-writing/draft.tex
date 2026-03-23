@@ -79,23 +79,72 @@
 \label{sec:intro}
 % =============================================================================
 
-Speakers of diverse languages exhibit robust ordering preferences of adjectives (\eg, preferring ``the big brown bag'' over ``the brown big bag'').
-One way to approach this regularity is through communicative efficiency: helping interlocutors coordinate quickly and reliably.
-Yet ``efficiency'' can be formalized from two perspectives with opposing predictions: a \emph{hierarchical, comprehension-oriented} view in which modification composes outward from the noun (placing efficient adjectives closer to it), and a \emph{linear, production-oriented} view in which speakers benefit from placing efficient adjectives early (putting them further from the noun).
-The present project pursues a unified perspective: adjective ordering is explained by \emph{incremental pragmatic reasoning}, where a speaker produces one adjective at a time from left to right and the contextual informativeness of each adjective interacts with its inherent semantic imprecision through right-to-left hierarchical structure and compositional semantics.
+Speakers exhibit robust preferences in the order of multiple adjectives, preferring expressions like ``big brown bag'' over ``brown big bag''.
+Work on adjective ordering has identified two broad kinds of explanation for this regularity.
+One emphasizes \emph{stable lexical-semantic asymmetries}: less subjective adjectives are preferred closer to the noun, because they are more reliable under restrictive composition \citep{scontras2017subjectivity,scontras2019grammatical,franke2019subjectivity}.
+The other emphasizes \emph{communicative efficiency in referential context}: adjective order affects how efficiently a listener can identify the intended referent, so speakers should prefer orders that place the most useful discriminative cue early enough to guide reference resolution \citep{fukumura2018ordering,rubio2016redundant,rubio2019overinformative,rubio2021wordorder}.
+
+The present paper argues that these lines of work are best treated as complementary rather than competing.
+Stable semantic properties such as subjectivity provide a baseline ordering tendency, but actual ordering choices in referential communication are further shaped by the \emph{discriminatory strength} of adjectives in the current context.
+Our central claim is therefore not that adjective ordering requires a single mechanism such as subjectivity, nor that it requires production-level incrementality in every case.
+Rather, adjective ordering is a graded solution to a problem of \emph{efficient, incremental reference resolution}: speakers choose an order that balances reliable lexical-semantic information with context-specific pressures on listener search.
+
+To formalize this idea, we develop a Rational Speech Act (RSA) model of adjective ordering with two speaker architectures.
+A \emph{global} speaker evaluates complete utterances, whereas an \emph{incremental} speaker chooses adjectives left-to-right.
+Both share a context-sensitive compositional semantics in which adjective meanings are interpreted against evolving comparison classes, allowing us to separate the contribution of compositional semantics from the contribution of online production planning.
+This comparison is important because recent subjectivity-based theories suggest that incremental semantic restriction may already be sufficient to derive the canonical ordering tendency, while the broader incremental-efficiency literature predicts that online word order should matter whenever it changes discriminatory value.
 
 The project has three main building blocks:
 \begin{enumerate}[label=\arabic*.]
-  \item \textbf{Model.} An incremental variant of the Rational Speech Act (RSA) model, implemented in NumPyro / JAX, with Bayesian model comparisons.
-  \item \textbf{Experiments.} Two complementary experiments in referential communication---a slider-rating experiment, and a free-production experiment.
-  \item \textbf{Simulation.} A broad parameter sweep showing that the size-first advantage emerges without being assumed a priori, generalising our findings beyond the limited set of experiment items.
+  \item \textbf{Model.} A Bayesian RSA framework with global and incremental speaker variants, implemented in NumPyro / JAX.
+  \item \textbf{Experiments.} Two complementary referential tasks---a slider-rating experiment and a free-production experiment---that probe both graded preference and actual utterance choice.
+  \item \textbf{Simulation.} A broad parameter sweep that identifies which parts of the ordering effect follow from compositional semantics alone and which are amplified by incremental production.
 \end{enumerate}
 
 \begin{discussbox}{High-level research questions}
 \begin{itemize}[leftmargin=*]
-  \item What is the minimal pragmatic mechanism that predicts adjective ordering as an emergent consequence of communication, rather than stipulating a fixed order?
-  \item What role does the interaction between \emph{inherent} semantic imprecision and \emph{contextual} informativeness play in shaping ordering preferences?
-  \item Does incremental (left-to-right) production planning add explanatory power beyond what compositional semantics alone provides?
+  \item Can adjective ordering in referential communication be explained as an efficient solution to incremental reference resolution rather than as a fixed ordering hierarchy?
+  \item How do stable lexical-semantic biases (\eg, subjectivity) interact with context-specific discriminatory strength in shaping ordering preferences?
+  \item What is the minimal mechanism needed for the basic ordering effect, and what additional explanatory value is gained by modeling production as incremental?
+\end{itemize}
+\end{discussbox}
+
+% =============================================================================
+\section{Background}
+\label{sec:background}
+% =============================================================================
+
+\subsection{Adjective Ordering Beyond Fixed Hierarchies}
+
+Adjective ordering preferences have often been treated as evidence for fixed grammatical hierarchies, but recent work has shifted the explanation toward graded cognitive and communicative factors.
+\citet{scontras2017subjectivity} show that adjective \emph{subjectivity} is a powerful predictor of ordering preferences: less subjective adjectives tend to occur closer to the noun.
+\citet{scontras2019grammatical} connect this result to hierarchical nominal composition, arguing that adjectives closer to the noun compose over more restricted comparison classes and therefore benefit from being semantically more reliable.
+\citet{franke2019subjectivity} formalize this intuition in simulation, showing that subjectivity-based orderings improve average communicative success.
+Taken together, this literature suggests that canonical adjective-ordering tendencies can emerge from the interaction of semantic reliability and restrictive composition, without stipulating a rigid ordering template.
+
+\subsection{From Subjectivity to Communicative Efficiency}
+
+At the same time, a parallel literature in referential communication argues that adjective use and adjective order are shaped by \emph{communicative efficiency} in context.
+\citet{fukumura2018ordering} contrasts a subjectivity- or class-based view of ordering with the \emph{discriminatory efficiency hypothesis}, according to which speakers prefer to place the most discriminating adjective earlier in order to facilitate reference resolution.
+Rubio-Fern\'andez and colleagues extend this idea into a broader \emph{incremental efficiency hypothesis}: the usefulness of a modifier depends not only on whether it is globally informative, but on how it guides listener search as the utterance unfolds word by word \citep{rubio2016redundant,rubio2019overinformative,rubio2020incrementality,rubio2021wordorder}.
+This literature highlights a distinction that is crucial for the present paper: adjective ordering may reflect not just stable lexical-semantic preferences, but also the \emph{online discriminatory value} of adjectives in a specific referential scene.
+
+\subsection{Incremental Pragmatics and the Present Contribution}
+
+Incremental RSA models provide a natural way of formalizing this efficiency-based view.
+In the Cohn-Gordon line of work, pragmatic reasoning is applied to partial utterances rather than only to complete ones, so that the value of a word depends on where it appears and what alternatives remain available \citep{cohn-gordon-etal-2019-incremental,cohn-gordon-etal-2018-pragmatically}.
+For adjective ordering, this makes it possible to compare two distinct ideas that the broader literature has often run together: \emph{incremental semantic restriction} on the listener side, and \emph{incremental production planning} on the speaker side.
+
+The current paper contributes at exactly this junction.
+Empirically, we test whether English adjective-ordering behavior in referential tasks tracks discriminatory strength in context, extending earlier work on subjectivity and referential efficiency.
+Computationally, we compare a global RSA speaker with an incremental RSA speaker while holding the underlying context-sensitive compositional semantics fixed.
+This allows us to ask a sharper question than previous work: whether production-level incrementality is necessary for adjective-ordering effects in general, or whether it instead refines a more basic efficiency mechanism grounded in restrictive composition.
+
+\begin{discussbox}{Positioning the present paper}
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Broader literature connection:} adjective ordering is treated here as part of the broader problem of efficient, incremental reference resolution.
+  \item \textbf{Theoretical integration:} subjectivity provides a baseline lexical-semantic tendency; discriminatory strength explains context-sensitive modulation; incremental RSA supplies an explicit process model.
+  \item \textbf{Target claim:} we do not argue that only an incremental speaker can generate ordering preferences. Rather, we ask what minimal mechanism derives the baseline effect and whether incremental production improves the account of human behavior.
 \end{itemize}
 \end{discussbox}
 \newpage
@@ -630,25 +679,75 @@ Each simulated trial computes communicative success $p(o_\text{ref} \mid u)$ for
 
 \subsection{Summary}
 
-We presented an RSA model with two speaker variants---global and incremental---that derives adjective ordering preferences from the interaction of context-sensitive compositional semantics, communicative efficiency, and, in the incremental case, left-to-right production planning.  The model is fitted to two complementary behavioural datasets (slider ratings, Experiment~1; free production, Experiment~2) via NUTS-based Bayesian inference in NumPyro\,/\,JAX, and its qualitative predictions are tested with simulation.
+We presented an RSA account of adjective ordering with two speaker variants---global and incremental---embedded in a shared context-sensitive compositional semantics.
+The empirical motivation for this comparison was that adjective ordering has been explained from at least two partially overlapping perspectives in the recent literature: a \emph{subjectivity-based} account, in which less subjective adjectives are more reliable under restrictive composition, and a broader \emph{communicative-efficiency} account, in which adjective order is shaped by how efficiently an utterance guides reference resolution in context.
+Our experiments and simulations were designed to ask how far the minimal compositional-semantics mechanism already goes, and what additional explanatory value is gained by modeling production itself as incremental.
 
 \begin{discussbox}{Key findings}
   \begin{itemize}[leftmargin=*]
-  \item \textbf{Ordering preferences emerge from compositional semantics alone.}
-    Even the global speaker---which has no production-level incrementality---generates a size-before-colour preference across most of the parameter space, because applying a color adjective first to the hierarchical compositional semantics narrows the comparison class and thereby boosts the informativeness of a subsequent size adjective (\cref{sec:simulation}).
-  \item \textbf{Incremental production amplifies and qualitatively extends the effect.}
-  \item Also \textbf{incremental hierarchical model fits the data best.}
-  \item \textbf{Q: Do we need an incremental speaker model?}
+  \item \textbf{The baseline ordering effect does not require an incremental speaker.}
+    In the simulations, even the global speaker---which evaluates complete utterances rather than producing them word by word---shows a robust size-first preference across much of parameter space.
+    This result is important because it aligns our model with prior subjectivity-based and incremental-semantic-restriction accounts: a substantial part of the canonical ordering asymmetry can already be derived from context-sensitive restrictive composition \citep{franke2019subjectivity,scontras2019grammatical,scontras2020incremental}.
+  \item \textbf{Incremental production nevertheless adds explanatory value.}
+    The incremental speaker does not merely reproduce the baseline effect.
+    It amplifies the ordering asymmetry and, in some parts of parameter space, generates qualitatively distinct predictions, including colour-first reversals in blurred, low-contrast contexts (\cref{fig:sim-nobj}).
+    This suggests that production-level incrementality is best understood not as the sole source of adjective-ordering preferences, but as an additional mechanism that modulates a more basic efficiency effect.
+  \item \textbf{The human data support a discriminatory-strength account of ordering in context.}
+    Across the two experiments, ordering preferences vary systematically with which property is most useful for identifying the target.
+    This connects our findings directly to the discriminatory-efficiency hypothesis \citep{fukumura2018ordering} and to the broader incremental-efficiency literature on reference and modifier use \citep{rubio2016redundant,rubio2019overinformative,rubio2020incrementality,rubio2021wordorder}.
+  \item \textbf{The best-fitting model is the incremental hierarchical model.}
+    Although the global model captures the minimal compositional-semantic mechanism, the incremental hierarchical model provides the strongest quantitative fit to both slider and production data.
+    On our interpretation, this means that the basic direction of adjective-ordering preferences follows from efficient restrictive composition, while the detailed pattern of human behavior is better captured when production is modeled as an online, stepwise decision process.
 \end{itemize}
 \end{discussbox}
+
+\subsection{From Subjectivity to Communicative Efficiency}
+
+One contribution of the present results is to sharpen the relation between subjectivity-based and communicative-efficiency approaches to adjective ordering.
+The subjectivity literature shows that less subjective adjectives tend to occur closer to the noun, and explains this in terms of semantic reliability under hierarchical composition \citep{scontras2017subjectivity,scontras2019grammatical,franke2019subjectivity}.
+Our simulations support this general idea: once adjective meanings are interpreted relative to restricted comparison classes, a global speaker already derives the baseline ordering asymmetry.
+In this sense, the current results are cumulative with the subjectivity literature rather than revisionary.
+
+At the same time, the experiments show that adjective ordering in referential communication is not exhausted by static adjective-class preferences.
+What matters behaviorally is not only whether an adjective is generally more or less subjective, but also whether it is \emph{currently useful} for discriminating the target from its competitors.
+This is why the present findings fit naturally with Fukumura's discriminatory-efficiency hypothesis and with Rubio-Fern\'andez's broader claim that the efficiency of a referential expression must be evaluated incrementally, over the full visual context.
+Under this perspective, subjectivity provides a baseline tendency, while discriminatory strength explains how that tendency is modulated, strengthened, or sometimes locally counteracted by the current referential scene.
+
+\subsection{Do We Need an Incremental Speaker?}
+
+The answer suggested by the present results is nuanced.
+If the question is whether production-level incrementality is necessary to derive \emph{any} adjective-ordering preference, the answer is no.
+The global speaker already captures a substantial part of the phenomenon, because the ordering asymmetry can emerge from context-sensitive compositional semantics alone.
+This is the minimal mechanism.
+
+If the question is instead whether production-level incrementality improves the account of \emph{human behavior}, the answer appears to be yes.
+The incremental model fits both datasets better and predicts context-sensitive patterns that are harder to obtain from the global speaker alone.
+The relevant contrast is therefore not between ``incremental speaker'' and ``no theory,'' but between two levels of explanation:
+\begin{enumerate}[label=(\alph*)]
+  \item a minimal communicative account grounded in restrictive composition, and
+  \item a richer online-production account in which speakers optimize adjective choice step by step.
+\end{enumerate}
+This division of labor also clarifies the broader theoretical contribution of the paper.
+We are not arguing that adjective ordering is reducible to a single mechanism.
+Rather, we show how stable lexical-semantic asymmetries and context-specific discriminatory pressures can be integrated within a single probabilistic framework, and we provide evidence that online production planning helps explain the finer structure of human ordering behavior.
+
+\subsection{Broader Implications}
+
+Taken together, the results support a view of adjective ordering preferences as graded, context-sensitive adaptations for successful reference resolution.
+This perspective connects three strands of research that are often discussed separately.
+First, it preserves the central insight of subjectivity-based theories: semantically more reliable adjectives are favored in structurally inner positions.
+Second, it incorporates the communicative-efficiency literature, in which modifier use is sensitive to discriminatory value and visual search.
+Third, it embeds these pressures in an explicit incremental pragmatic model that makes quantitative predictions about both judgment and production.
+
+More broadly, this means that adjective ordering preferences should not be treated as the output of a fixed hierarchy alone, nor as the product of a single lexical predictor.
+They are better understood as efficient solutions to a referential communication problem in which lexical-semantic properties, context structure, and online utterance planning interact.
 
 
 \begin{discussbox}{Outlook}
 \begin{itemize}[leftmargin=*]
-  \item What is the right framing for the paper: pragmatics, psycholinguistics,
-    or cognitive science?
-  \item Target venue?  \todo{CogSci / Cognition / PLOS ONE / Glossa / ?}
-  \item What level of detail should each section have for the target audience?
+  \item \textbf{Ablation priority.} The most informative next step is to disentangle context-recursive semantics from production-level incrementality by adding static-semantics ablations (\cref{sec:simulation}; see also \texttt{further\_model\_comparison\_idea.tex}).
+  \item \textbf{Theoretical extension.} A useful longer-term comparison is with non-RSA discriminatory models such as emitter-suppressor accounts, which would test whether listener-based pragmatic inference is necessary beyond direct distractor suppression.
+  \item \textbf{Broader framing.} The paper is best positioned at the intersection of pragmatics, psycholinguistics, and cognitive science: it links adjective-ordering preferences to efficient, incremental reference resolution rather than to a language-specific ordering template alone.
 \end{itemize}
 \end{discussbox}
 
