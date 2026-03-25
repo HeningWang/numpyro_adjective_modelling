@@ -175,6 +175,37 @@ def literal_listener_recursive(word_length, states, color_semvalue=0.90, wf=1.0,
     return jax.vmap(interpret_utterance)(utterances)  # (2, n_obj)
 
 
+def literal_listener_recursive_frozen(word_length, states, color_semvalue=0.90,
+                                       wf=1.0, k=0.5):
+    """
+    Same as literal_listener_recursive but with STATIC size semantics.
+
+    Size threshold is always computed from the uniform prior, not from
+    the running posterior. This removes context-recursive threshold
+    adaptation while preserving incremental belief update.
+
+    Returns (2, n_obj).
+    """
+    assert word_length == 2, "Only 2-word utterances are supported."
+    n_obj = states.shape[0]
+    prior0 = jnp.ones(n_obj) / n_obj
+
+    utterances = jnp.array([[0, 1], [1, 0]], dtype=jnp.int32)
+
+    def update_one_token(prior, token):
+        # Size semantics always use uniform prior (frozen threshold)
+        m = adjMeaning(token, states, prior0, color_semvalue, wf, k)
+        unnorm = prior * m
+        return unnorm / jnp.clip(unnorm.sum(), 1e-20), None
+
+    def interpret_utterance(tokens):
+        tokens_rev = tokens[::-1]
+        final_belief, _ = lax.scan(update_one_token, prior0, tokens_rev)
+        return final_belief
+
+    return jax.vmap(interpret_utterance)(utterances)  # (2, n_obj)
+
+
 # ---------------------------------------------------------------------------
 # Speakers
 # ---------------------------------------------------------------------------
@@ -264,6 +295,74 @@ def global_speaker(states, alpha=1.0, bias=0.0, color_semvalue=0.98,
     return jax.nn.softmax(alpha * util_speaker, axis=-1)  # (n_obj, 2)
 
 
+def speaker_recursive_frozen(word_length, states, alpha=1.0, bias=0.0,
+                              color_semvalue=0.98, form_semvalue=None,
+                              wf=0.6, k=0.5):
+    """
+    Incremental RSA speaker with STATIC (frozen) size semantics.
+
+    Same chain-rule as speaker_recursive, but uses
+    literal_listener_recursive_frozen for 2-word listeners.
+
+    Returns (n_obj, 2).
+    """
+    assert word_length == 2
+
+    L1 = literal_listener_one_word(states, color_semvalue, wf, k)
+    L2 = literal_listener_recursive_frozen(word_length, states, color_semvalue, wf, k)
+
+    L1_T = L1.T
+    L2_T = L2.T
+
+    L1_big  = L1_T[:, 0]
+    L1_blue = L1_T[:, 1]
+    L2_bigblue = L2_T[:, 0]
+    L2_bluebig = L2_T[:, 1]
+
+    eps = 1e-20
+
+    num_big  = jnp.power(jnp.clip(L1_big,  eps, 1.0), alpha)
+    num_blue = jnp.power(jnp.clip(L1_blue, eps, 1.0), alpha)
+    Z1 = jnp.clip(num_big + num_blue, eps)
+    S1_big  = num_big  / Z1
+    S1_blue = num_blue / Z1
+
+    num_bigblue  = jnp.power(jnp.clip(L2_bigblue, eps, 1.0), alpha)
+    num_stop_big = jnp.power(jnp.clip(L1_big,     eps, 1.0), alpha)
+    S2_blue_given_big = num_bigblue / jnp.clip(num_bigblue + num_stop_big, eps)
+
+    num_bluebig   = jnp.power(jnp.clip(L2_bluebig, eps, 1.0), alpha)
+    num_stop_blue = jnp.power(jnp.clip(L1_blue,    eps, 1.0), alpha)
+    S2_big_given_blue = num_bluebig / jnp.clip(num_bluebig + num_stop_blue, eps)
+
+    P_chain_bigblue = S1_big  * S2_blue_given_big
+    P_chain_bluebig = S1_blue * S2_big_given_blue
+
+    P_chain = jnp.clip(
+        jnp.stack([P_chain_bigblue, P_chain_bluebig], axis=-1), eps, 1.0
+    )
+
+    utt_cost = jnp.array([0.0, bias])
+    util = jnp.log(P_chain) - utt_cost
+    return jax.nn.softmax(util, axis=-1)  # (n_obj, 2)
+
+
+def global_speaker_static(states, alpha=1.0, bias=0.0, color_semvalue=0.98,
+                           form_semvalue=None, wf=0.6, k=0.5):
+    """
+    Global RSA speaker with STATIC (frozen) size semantics.
+
+    Same as global_speaker, but uses literal_listener_recursive_frozen.
+
+    Returns (n_obj, 2).
+    """
+    listener = literal_listener_recursive_frozen(2, states, color_semvalue, wf, k)
+    eps = 1e-20
+    utt_cost = jnp.array([0.0, bias])
+    util_speaker = jnp.log(jnp.clip(listener.T, eps, 1.0)) - utt_cost
+    return jax.nn.softmax(alpha * util_speaker, axis=-1)  # (n_obj, 2)
+
+
 # ---------------------------------------------------------------------------
 # Pragmatic listener  L1(referent | utterance, context)
 # This is the communicative success measure (Option B).
@@ -288,10 +387,16 @@ def pragmatic_listener(states, alpha=1, bias=0, color_semvalue=0.98,
 
     if speaker == "global_speaker":
         softmax_result = global_speaker(states, alpha, bias, color_semvalue,
-                                        form_semvalue, wf, k)  # (n_obj, 2)
+                                        form_semvalue, wf, k)
+    elif speaker == "global_speaker_static":
+        softmax_result = global_speaker_static(states, alpha, bias, color_semvalue,
+                                                form_semvalue, wf, k)
+    elif speaker == "incremental_speaker_static":
+        softmax_result = speaker_recursive_frozen(word_length, states, alpha, bias,
+                                                   color_semvalue, form_semvalue, wf, k)
     else:  # "incremental_speaker"
         softmax_result = speaker_recursive(word_length, states, alpha, bias,
-                                           color_semvalue, form_semvalue, wf, k)  # (n_obj, 2)
+                                           color_semvalue, form_semvalue, wf, k)
 
     # Transpose to (2, n_obj), then normalize over objects for each utterance
     return normalize(jnp.transpose(softmax_result) * prior_probs)  # (2, n_obj)

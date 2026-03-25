@@ -86,17 +86,17 @@ The global speaker evaluates complete utterances; the incremental speaker choose
 Under context-updating semantics, the interpretation of ``big'' depends on what the listener already believes after hearing earlier words, so that ``big blue'' and ``blue big'' need not be equivalent; under context-fixed semantics, the size threshold is determined once from the scene.
 All four model variants are fitted to data from two complementary referential experiments in German --- a slider-rating study measuring graded ordering preferences and a constrained production study measuring actual utterance choice --- in a shared paradigm that varies discriminatory strength across scenes.
 Model comparison uses Bayesian leave-one-out cross-validation \citep[PSIS-LOO;][]{vehtari2017practical}, which quantifies how much predictive accuracy each mechanism adds and detects their interaction.
-A simulation study complements the empirical work by identifying which ordering effects follow from context-sensitive composition alone and which require word-by-word pragmatic choice.
+A simulation study complements the empirical work by crossing both speaker architectures with both semantic regimes to identify which ordering effects require context-sensitive composition, which require incremental production, and which emerge only from their interaction.
 
 Both experiments confirm that ordering preferences vary systematically with discriminatory strength: speakers tend to place the more informative adjective earlier while preserving a baseline size-first tendency.
-The simulation shows that a substantial part of this baseline already follows from context-sensitive restrictive composition without an incremental speaker.
+The simulation shows that recursive semantics is necessary for the baseline size-first advantage: the global speaker produces the canonical ordering only under context-updating semantics, where threshold adaptation makes the two orderings informationally non-equivalent.
 In the model comparison, incremental production emerges as the dominant mechanism across both datasets.
 In the production data, context-updating semantics provides a significant further improvement, but only when paired with an incremental speaker --- an interaction indicating that the two mechanisms are synergistic.
 \Cref{fig:overview} provides a schematic overview of the modelling framework, experiments, and key findings.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=\textwidth]{overview_figure}
+  \includegraphics[width=\textwidth]{overview_figure.png}
   \caption{Overview of the present study.
   Left: participants view a six-object display and refer to a framed target using size, colour, and form adjectives; referential context and size discriminability vary across trials.
   Centre: the RSA model pairs a literal listener that composes meaning right-to-left (noun-outward) with a pragmatic speaker.
@@ -635,11 +635,12 @@ Posterior-predictive correlations for the best-fitting model are shown in the Ap
 The simulation addresses three questions that the model comparison alone cannot answer.
 First, does the model \emph{generate} a size-first ordering preference across a broad range of contexts, or does this pattern emerge only after fitting to data?
 Second, which parameter regions produce a size-first advantage and which, if any, produce a colour-first reversal?
-Third, how robust is the ordering asymmetry as context size ($n_\text{obj}$), contextual spread ($\sigma_\text{spread}$), threshold placement ($k$), perceptual blur ($w_f$), and semantic determinacy ($\nu$) vary?
+Third, how do speaker architecture and semantic regime jointly determine the ordering preference --- in particular, is context-updating semantics necessary for the baseline effect, or does it emerge from incremental production alone?
 
-To answer these questions, we ran a full factorial sweep over the parameters listed in \Cref{tab:simulation}, crossing both speaker models (incremental, global) with context-updating semantics.
-For each parameter combination, 1{,}000 random six-object contexts were sampled, yielding 6{,}000{,}000 simulated trials in total.
-On each trial, the simulation computed the speaker's probability of producing the size-first vs.\ colour-first ordering for the target referent and recorded the size-first advantage (the log-odds difference between the two orders).
+To answer these questions, we ran a full factorial sweep over the parameters listed in \Cref{tab:simulation}, crossing both speaker models (incremental, global) with both semantic regimes (recursive, static).
+Under recursive semantics, the size threshold adapts to the literal listener's running posterior at each composition step; under static semantics, the threshold is computed once from the uniform prior and held fixed.
+For each parameter combination, 1{,}000 random six-object contexts were sampled, yielding 12{,}000{,}000 simulated trials in total.
+On each trial, the simulation computed the speaker's probability of producing the size-first vs.\ colour-first ordering for the target referent and recorded the size-first advantage (the difference in communicative success between the two orders).
 
 \begin{table}[htbp]
   \caption{Simulation parameter grid}
@@ -650,6 +651,7 @@ On each trial, the simulation computed the speaker's probability of producing th
     \textbf{Parameter} & \textbf{Values swept} & \textbf{\# levels} \\
     \midrule
     Speaker model & Incremental, global & 2 \\
+    Semantics & Recursive, static & 2 \\
     $n_\text{obj}$ & 2, 6, 10, 14, 18, 22, 26, 30 & 8 \\
     $\sigma_\text{spread}$ & 2.0, 7.75, 15.0 & 3 \\
     $\nu$ & 0.90, 0.92, 0.94, 0.96, 0.98 & 5 \\
@@ -658,7 +660,7 @@ On each trial, the simulation computed the speaker's probability of producing th
     \midrule
     Random context samples per combination & 1{,}000 & \\
     \midrule
-    \textbf{Total trials} & \textbf{6{,}000{,}000} & \\
+    \textbf{Total trials} & \textbf{12{,}000{,}000} & \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -668,24 +670,28 @@ The remaining parameters ($k$, $w_f$, $\nu$) are the fixed semantic parameters f
 
 \subsection{Results}
 
-\Cref{fig:sim-nobj} shows the size-first advantage as a function of context size and contextual spread for both speaker models.
+\Cref{fig:sim-nobj} shows the size-first advantage as a function of context size and contextual spread, faceted by speaker model (columns) and semantic regime (rows).
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.90\textwidth]{sim_advantage_nobj.pdf}
-  \caption{Size-first advantage as a function of context size ($n_\text{obj}$) and contextual spread ($\sigma_\text{spread}$), separated by speaker model. Both speakers favour size-first order across most of the parameter space. Only the incremental speaker yields a colour-first reversal in low-discriminability, low-cardinality contexts.}
+  \caption{Size-first advantage as a function of context size ($n_\text{obj}$) and contextual spread ($\sigma_\text{spread}$), faceted by speaker model (columns) and semantic regime (rows). Under recursive semantics (top), both speakers favour size-first order, with the incremental speaker yielding a colour-first reversal in low-discriminability contexts. Under static semantics (bottom), the global speaker produces exactly zero advantage, while the incremental speaker defaults to colour-first.}
   \label{fig:sim-nobj}
 \end{figure}
 
-Two findings stand out.
-First, both speaker models generate a size-first advantage across most of the parameter space.
+Three findings stand out.
+First, under recursive semantics, both speaker models generate a size-first advantage across most of the parameter space.
 A global speaker with context-sensitive composition already derives the canonical ordering asymmetry without any incremental machinery.
 This result is cumulative with the subjectivity literature: once semantic values are evaluated over progressively restricted comparison classes, less noisy inner modification is sufficient to produce the familiar ordering direction \citep{franke2019subjectivity,scontras2019grammatical,scontras2020incremental}.
-The baseline ordering preference thus does not require production-level incrementality.
 
-Second, the incremental speaker amplifies the size-first advantage in much of the parameter space and, crucially, generates qualitatively distinct predictions in a specific region: low-discriminability, low-cardinality contexts, where colour-first preferences emerge.
-The global speaker never produces this reversal.
-This division of labour mirrors the empirical picture: context-sensitive composition provides the minimal mechanism for the baseline effect, while incremental production adds an online control policy that sharpens and, in specific contexts, reverses the ordering preference.
+Second, static semantics completely eliminates the global speaker's advantage.
+Under static semantics, the global speaker produced $\Delta = 0.000$ across all parameter combinations without exception.
+When the size threshold does not update during composition, the literal listener assigns identical posteriors to both orderings, making them informationally equivalent.
+This reveals that the global speaker's baseline advantage depends entirely on recursive semantics --- it is not a property of the speaker architecture per se but of the order-sensitive threshold adaptation it exploits.
+
+Third, the incremental speaker amplifies the size-first advantage under recursive semantics in much of the parameter space and, crucially, generates qualitatively distinct predictions in a specific region: low-discriminability, low-cardinality contexts, where colour-first preferences emerge.
+Under static semantics, the incremental speaker defaults to colour-first ($\Delta = -0.009$), driven by the chain-rule asymmetry that favours ``blue'' as the opening token when size is insufficiently diagnostic.
+This division of labour clarifies the architecture: context-sensitive composition provides the necessary asymmetry that the global speaker can exploit, while incremental production adds an online control policy whose ordering preference depends on the relative informativeness of each adjective at step~1.
 
 % =============================================================================
 \section{General Discussion}
@@ -694,7 +700,7 @@ This division of labour mirrors the empirical picture: context-sensitive composi
 
 The present results support a unified view of adjective ordering in referential communication.
 Three findings stand out.
-First, context-sensitive restrictive composition is sufficient for the baseline ordering effect: the simulation shows that both speaker models generate a size-first advantage across most of the parameter space, cumulative with the subjectivity literature \citep{scontras2017subjectivity,franke2019subjectivity,scontras2019grammatical}.
+First, context-sensitive recursive composition is necessary for the baseline ordering effect: the simulation shows that the global speaker produces a size-first advantage only under recursive semantics, where threshold adaptation makes the two orderings informationally non-equivalent; under static semantics the advantage vanishes entirely.
 Second, incremental production is the dominant additional mechanism: both incremental models massively outperform both global models across both datasets.
 Third, context-updating semantics and incremental production interact --- context-updating composition adds significant predictive value for production, but only when paired with an incremental speaker.
 The full model is not a stack of independent add-ons; its components are synergistic.

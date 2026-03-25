@@ -310,6 +310,105 @@ cat("[✓] production_empirical.pdf\n")
 
 
 # =============================================================================
+#  FIGURE 4b — PPC barplot: empirical vs model predictions side by side
+# =============================================================================
+
+# Prepare model predictions with nicer labels
+df_prod_pred_nice <- df_prod_pred %>%
+  mutate(utterance_label = rename_D_to_S(utterance_label)) %>%
+  mutate(
+    relevant_property = factor(relevant_property, levels = names(rp_labels),
+                               labels = rp_labels),
+    sharpness = factor(sharpness, levels = names(sharp_labels),
+                       labels = sharp_labels)
+  )
+
+# Select the best model (incremental_recursive) for the PPC comparison
+df_ppc_model <- df_prod_pred_nice %>%
+  filter(model == "incremental_recursive") %>%
+  select(relevant_property, sharpness, utterance_label,
+         mean = model_mean, lo = model_lo, hi = model_hi) %>%
+  mutate(source = "Incremental, context-updating")
+
+df_ppc_human <- df_prod_emp %>%
+  select(relevant_property, sharpness, utterance_label,
+         mean = human_mean, lo = human_lo, hi = human_hi) %>%
+  mutate(source = "Empirical")
+
+df_ppc <- bind_rows(df_ppc_human, df_ppc_model)
+
+# Filter to utterance types >= 5% in at least one cell
+top_utts_ppc <- df_ppc %>%
+  group_by(utterance_label) %>%
+  summarise(max_prop = max(mean), .groups = "drop") %>%
+  filter(max_prop >= 0.05) %>%
+  pull(utterance_label)
+
+# Canonical ordering (S-initial, C-initial, F-initial)
+utt_order <- c(
+  "S", "SC", "SCF", "SF", "SFC",
+  "C", "CS", "CSF", "CF", "CFS",
+  "F", "FS", "FSC", "FC", "FCS"
+)
+
+# Facet label for sharpness rows
+sharp_facet_labels <- c(
+  "High" = "Size discrim.: High",
+  "Low"  = "Size discrim.: Low"
+)
+
+df_ppc_top <- df_ppc %>%
+  filter(utterance_label %in% top_utts_ppc) %>%
+  mutate(
+    utterance_label = factor(
+      utterance_label,
+      levels = rev(intersect(utt_order, top_utts_ppc))
+    ),
+    source = factor(
+      source,
+      levels = c("Empirical",
+                  "Incremental, context-updating")
+    )
+  )
+
+fig4b <- df_ppc_top %>%
+  ggplot(aes(x = mean, y = utterance_label,
+             fill = source)) +
+  geom_col(
+    position = position_dodge(0.7),
+    width = 0.6, alpha = 0.85
+  ) +
+  geom_errorbarh(
+    aes(xmin = lo, xmax = hi),
+    position = position_dodge(0.7),
+    height = 0.25, linewidth = 0.5
+  ) +
+  facet_grid(
+    sharpness ~ relevant_property,
+    labeller = labeller(
+      sharpness = sharp_facet_labels
+    )
+  ) +
+  scale_fill_manual(
+    values = CSP_colors[c(1, 3)], name = NULL
+  ) +
+  scale_x_continuous(
+    labels = scales::percent_format(accuracy = 1)
+  ) +
+  labs(x = "Proportion", y = "Utterance type") +
+  theme_model() +
+  theme(
+    legend.position = "top",
+    strip.text = element_text(size = 13),
+    panel.spacing = unit(1, "lines")
+  )
+
+ggsave(file.path(fig_dir, "production_ppc_barplot.pdf"), fig4b,
+       width = 12, height = 7, dpi = 300)
+cat("[✓] production_ppc_barplot.pdf\n")
+
+
+# =============================================================================
 #  FIGURE 5 — Correlation: inc_hier model vs. empirical (production)
 # =============================================================================
 
@@ -511,6 +610,10 @@ df_sim <- df_sim %>%
     speaker_label = recode(speaker,
       "incremental_speaker" = "Incremental",
       "global_speaker"      = "Global"
+    ),
+    semantics_label = recode(semantics,
+      "recursive" = "Recursive",
+      "static"    = "Static"
     )
   )
 
@@ -667,7 +770,7 @@ df_sim <- df_sim %>%
   )
 
 df_sim_nobj <- df_sim %>%
-  group_by(speaker_label, nobj, context_label) %>%
+  group_by(speaker_label, semantics_label, nobj, context_label) %>%
   summarise(
     mean_adv = mean(size_first_advantage),
     se_adv   = sd(size_first_advantage) / sqrt(n()),
@@ -682,7 +785,7 @@ fig10 <- df_sim_nobj %>%
                   ymax = mean_adv + 2 * se_adv),
               alpha = 0.15, colour = NA) +
   geom_hline(yintercept = 0, linetype = "dashed", colour = "grey30") +
-  facet_wrap(~ speaker_label) +
+  facet_grid(semantics_label ~ speaker_label) +
   scale_colour_manual(
     values = CSP_colors[c(3, 2, 1)],
     name = "Context",
@@ -705,7 +808,7 @@ fig10 <- df_sim_nobj %>%
   )
 
 ggsave(file.path(fig_dir, "sim_advantage_nobj.pdf"), fig10,
-       width = 9, height = 4.5, dpi = 300)
+       width = 9, height = 7, dpi = 300)
 cat("[\u2713] sim_advantage_nobj.pdf\n")
 
 cat("\n[Done] All simulation figures saved to", fig_dir, "\n")
