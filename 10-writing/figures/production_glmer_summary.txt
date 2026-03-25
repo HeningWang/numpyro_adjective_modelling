@@ -22,30 +22,30 @@ Random effects:
 Number of obs: 3196, groups:  id, 113; item, 27
 
 Fixed effects:
-                                         Estimate Std. Error z value Pr(>|z|)
-(Intercept)                             1.8494887  0.0009394  1968.7   <2e-16
-relevant_propertyboth                  -1.8922824  0.0009388 -2015.7   <2e-16
-relevant_propertysecond                -6.0636260  0.0009390 -6457.3   <2e-16
-sharpnesssharp                         -0.2218662  0.0009394  -236.2   <2e-16
-relevant_propertyboth:sharpnesssharp    1.0140266  0.0009392  1079.7   <2e-16
-relevant_propertysecond:sharpnesssharp -1.1762750  0.0009392 -1252.4   <2e-16
-                                          
-(Intercept)                            ***
-relevant_propertyboth                  ***
-relevant_propertysecond                ***
-sharpnesssharp                         ***
-relevant_propertyboth:sharpnesssharp   ***
-relevant_propertysecond:sharpnesssharp ***
+                                        Estimate Std. Error z value Pr(>|z|)
+(Intercept)                            1.8494887  0.0009394  1968.7   <2e-16
+relevant_propertyboth                 -1.8922824  0.0009388 -2015.7   <2e-16
+relevant_propertysecond               -6.0636260  0.0009390 -6457.3   <2e-16
+sharpnessHigh                         -0.2218662  0.0009394  -236.2   <2e-16
+relevant_propertyboth:sharpnessHigh    1.0140266  0.0009392  1079.7   <2e-16
+relevant_propertysecond:sharpnessHigh -1.1762750  0.0009392 -1252.4   <2e-16
+                                         
+(Intercept)                           ***
+relevant_propertyboth                 ***
+relevant_propertysecond               ***
+sharpnessHigh                         ***
+relevant_propertyboth:sharpnessHigh   ***
+relevant_propertysecond:sharpnessHigh ***
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 Correlation of Fixed Effects:
-               (Intr) rlvnt_prprtyb rlvnt_prprtys shrpns rlvnt_prprtyb:
-rlvnt_prprtyb  0.000                                                   
-rlvnt_prprtys  0.000  0.001                                            
-shrpnssshrp    0.000  0.000         0.000                              
-rlvnt_prprtyb: 0.000  0.000         0.000         0.000                
-rlvnt_prprtys: 0.000  0.000         0.000         0.000  0.000         
+                (Intr) rlvnt_prprtyb rlvnt_prprtys shrpnH rlvnt_prprtyb:H
+rlvnt_prprtyb   0.000                                                    
+rlvnt_prprtys   0.000  0.001                                             
+sharpnssHgh     0.000  0.000         0.000                               
+rlvnt_prprtyb:H 0.000  0.000         0.000         0.000                 
+rlvnt_prprtys:H 0.000  0.000         0.000         0.000  0.000          
 optimizer (Nelder_Mead) convergence code: 0 (OK)
 Model failed to converge with max|grad| = 0.0752492 (tol = 0.002, component 1)
 Model is nearly unidentifiable: very large eigenvalue
@@ -63,7 +63,7 @@ m_sf_full    8 2400.7 2449.3 -1192.3   2384.7 31.388  2  1.528e-07 ***
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
---- Sharpness main effect ---
+--- Size-discriminability main effect ---
 Data: df_prod_raw
 Models:
 m_sf_rel: size_first ~ relevant_property + (1 | id) + (1 | item)
@@ -72,7 +72,7 @@ m_sf_add: size_first ~ relevant_property + sharpness + (1 | id) + (1 | item)
 m_sf_rel    5 2426.9 2457.2 -1208.4   2416.9                     
 m_sf_add    6 2428.1 2464.5 -1208.0   2416.1 0.7883  1     0.3746
 
---- Relevance main effect ---
+--- Referential-context main effect ---
 Data: df_prod_raw
 Models:
 m_sf_null: size_first ~ 1 + (1 | id) + (1 | item)
@@ -108,23 +108,23 @@ Random effects:
 Number of obs: 3196, groups:  id, 113; item, 27
 
 Fixed effects:
-                                       Estimate Std. Error z value Pr(>|z|)    
-(Intercept)                              2.8274     0.2529  11.181  < 2e-16 ***
-relevant_propertyboth                   -3.2957     0.1951 -16.891  < 2e-16 ***
-relevant_propertysecond                 -3.7162     0.2008 -18.509  < 2e-16 ***
-sharpnesssharp                          -2.1237     0.3204  -6.629 3.39e-11 ***
-relevant_propertyboth:sharpnesssharp     1.8619     0.2475   7.523 5.34e-14 ***
-relevant_propertysecond:sharpnesssharp   1.5931     0.2567   6.205 5.46e-10 ***
+                                      Estimate Std. Error z value Pr(>|z|)    
+(Intercept)                             2.8274     0.2529  11.181  < 2e-16 ***
+relevant_propertyboth                  -3.2957     0.1951 -16.891  < 2e-16 ***
+relevant_propertysecond                -3.7162     0.2008 -18.509  < 2e-16 ***
+sharpnessHigh                          -2.1237     0.3204  -6.629 3.39e-11 ***
+relevant_propertyboth:sharpnessHigh     1.8619     0.2475   7.523 5.34e-14 ***
+relevant_propertysecond:sharpnessHigh   1.5931     0.2567   6.205 5.46e-10 ***
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 Correlation of Fixed Effects:
-               (Intr) rlvnt_prprtyb rlvnt_prprtys shrpns rlvnt_prprtyb:
-rlvnt_prprtyb  -0.552                                                  
-rlvnt_prprtys  -0.548  0.733                                           
-shrpnssshrp    -0.698  0.431         0.428                             
-rlvnt_prprtyb:  0.425 -0.775        -0.564        -0.487               
-rlvnt_prprtys:  0.415 -0.556        -0.762        -0.477  0.641        
+                (Intr) rlvnt_prprtyb rlvnt_prprtys shrpnH rlvnt_prprtyb:H
+rlvnt_prprtyb   -0.552                                                   
+rlvnt_prprtys   -0.548  0.733                                            
+sharpnssHgh     -0.698  0.431         0.428                              
+rlvnt_prprtyb:H  0.425 -0.775        -0.564        -0.487                
+rlvnt_prprtys:H  0.415 -0.556        -0.762        -0.477  0.641         
 
 --- Interaction (additive vs full) ---
 Data: df_prod_raw
@@ -137,7 +137,7 @@ m_oi_full    8 3236.8 3285.4 -1610.4   3220.8 63.768  2  1.422e-14 ***
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
---- Sharpness main effect ---
+--- Size-discriminability main effect ---
 Data: df_prod_raw
 Models:
 m_oi_rel: over_informative ~ relevant_property + (1 | id) + (1 | item)
@@ -148,7 +148,7 @@ m_oi_add    6 3296.6 3333.0 -1642.3   3284.6 10.266  1   0.001355 **
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
---- Relevance main effect ---
+--- Referential-context main effect ---
 Data: df_prod_raw
 Models:
 m_oi_null: over_informative ~ 1 + (1 | id) + (1 | item)

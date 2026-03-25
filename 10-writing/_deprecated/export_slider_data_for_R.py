@@ -29,17 +29,18 @@ sys.path.insert(0, SLIDER_DIR)
 from modelSpecification import import_dataset
 
 # ── Config ────────────────────────────────────────────────────────────────────
-INFER_GAMMA = False
-gamma_tag = "fix_gamma"
-NW, NS, NC = 1000, 1000, 4
+NW, NS, NC = 500, 500, 4
 TAG = f"warmup{NW}_samples{NS}_chains{NC}"
 
+# 2×2 speaker × semantics (all hierarchical)
 MODEL_SPECS = {
-    "incremental":  f"mcmc_results_incremental_speaker_{gamma_tag}_{TAG}.nc",
-    "global":       f"mcmc_results_global_speaker_{gamma_tag}_{TAG}.nc",
-    "inc_hier":     f"mcmc_results_incremental_speaker_hier_{gamma_tag}_{TAG}.nc",
-    "global_hier":  f"mcmc_results_global_speaker_hier_{gamma_tag}_{TAG}.nc",
+    "incremental_recursive": f"mcmc_results_incremental_speaker_hier_{TAG}.nc",
+    "incremental_static":    f"mcmc_results_incremental_static_speaker_hier_{TAG}.nc",
+    "global_recursive":      f"mcmc_results_global_speaker_hier_{TAG}.nc",
+    "global_static":         f"mcmc_results_global_static_speaker_hier_{TAG}.nc",
 }
+
+BEST_MODEL = "incremental_recursive"
 
 # ── 1. Load empirical data ───────────────────────────────────────────────────
 states_train, empirical_train, df = import_dataset()

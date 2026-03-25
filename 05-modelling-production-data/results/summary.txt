@@ -1,0 +1,72 @@
+Dataset: 3196 observations, 15 utterance types
+
+=== incremental_recursive ===
+           mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
+alpha     1.074  0.062   0.964    1.191      0.002    0.001     625.0    1084.0    1.0
+log_beta -0.208  0.032  -0.269   -0.149      0.001    0.001    3353.0    1781.0    1.0
+tau       0.559  0.053   0.466    0.660      0.002    0.001     887.0    1323.0    1.0
+
+
+  Participant intercepts (incremental_recursive): n=113, mean(δ)=-0.0028, sd(δ)=0.4886, τ=0.5588
+
+=== incremental_static ===
+           mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
+alpha     1.045  0.062   0.927    1.157      0.002    0.001     687.0     921.0   1.00
+log_beta -0.211  0.033  -0.273   -0.151      0.001    0.001    2716.0    1593.0   1.00
+tau       0.560  0.053   0.468    0.669      0.002    0.001     679.0    1017.0   1.01
+
+
+  Participant intercepts (incremental_static): n=113, mean(δ)=-0.0019, sd(δ)=0.4920, τ=0.5600
+
+=== global_recursive ===
+           mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
+alpha     0.752  0.047   0.657    0.835      0.002    0.001     780.0    1196.0   1.00
+log_beta -0.199  0.030  -0.252   -0.143      0.001    0.001    2505.0    1772.0   1.00
+tau       0.385  0.048   0.299    0.474      0.003    0.001     318.0     827.0   1.01
+
+
+  Participant intercepts (global_recursive): n=113, mean(δ)=-0.0010, sd(δ)=0.2942, τ=0.3848
+
+=== global_static ===
+           mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
+alpha     0.788  0.048   0.694    0.875      0.002    0.001     785.0    1158.0   1.00
+log_beta -0.202  0.029  -0.257   -0.149      0.001    0.001    2461.0    1808.0   1.00
+tau       0.390  0.048   0.310    0.494      0.003    0.001     318.0     847.0   1.02
+
+
+  Participant intercepts (global_static): n=113, mean(δ)=-0.0013, sd(δ)=0.2954, τ=0.3902
+
+=== incremental_extended ===
+           mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
+alpha_D   6.944  0.319   6.370    7.560      0.034    0.011      86.0     295.0   1.05
+alpha_C   1.847  0.134   1.608    2.093      0.015    0.005      79.0     305.0   1.05
+alpha_F   1.887  0.224   1.442    2.319      0.021    0.010     110.0     217.0   1.03
+log_beta  2.052  0.053   1.953    2.151      0.005    0.002     106.0     466.0   1.04
+gamma     2.321  0.125   2.102    2.571      0.012    0.004     114.0     422.0   1.03
+epsilon   0.227  0.010   0.206    0.246      0.000    0.000     477.0     685.0   1.01
+tau       0.916  0.086   0.748    1.067      0.012    0.002      55.0     498.0   1.07
+
+
+  Participant intercepts (incremental_extended): n=113, mean(δ)=0.0085, sd(δ)=0.8171, τ=0.9163
+
+LOO Model Comparison:
+                       rank     elpd_loo       p_loo   elpd_diff    weight         se        dse  warning scale
+incremental_recursive     0 -7179.725793  105.740126    0.000000  0.799576  53.729516   0.000000    False   log
+incremental_static        1 -7198.660758  108.677467   18.934965  0.000000  53.650945   1.842058    False   log
+global_static             2 -7625.833146   53.820482  446.107352  0.000000  38.440138  40.266478    False   log
+global_recursive          3 -7627.903898   55.015375  448.178105  0.200424  38.425649  40.686532    False   log
+
+Best: incremental_recursive vs incremental_static: Δelpd=18.93, dse=1.84, |Δ|/dse=10.28
+
+Ablation LOO:
+LOO Model Comparison:
+                       rank     elpd_loo       p_loo    elpd_diff    weight         se        dse  warning scale
+incremental_extended      0 -6386.123485   82.099997     0.000000  0.876638  61.908413   0.000000     True   log
+incremental_recursive     1 -7179.725793  105.740126   793.602309  0.032198  53.729516  46.730932    False   log
+incremental_static        2 -7198.660758  108.677467   812.537273  0.000000  53.650945  47.082744    False   log
+global_static             3 -7625.833146   53.820482  1239.709661  0.000000  38.440138  55.790461    False   log
+global_recursive          4 -7627.903898   55.015375  1241.780414  0.091163  38.425649  56.472217    False   log
+
+Best: incremental_extended vs incremental_recursive: Δelpd=793.60, dse=46.73, |Δ|/dse=16.98
+
+  Correlation (Production: incremental_recursive): r=0.5881, r²=0.3458, p=1.10e-09

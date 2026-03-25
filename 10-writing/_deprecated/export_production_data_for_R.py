@@ -29,15 +29,18 @@ sys.path.insert(0, PROD_DIR)
 from helper import import_dataset
 
 # ── Config ────────────────────────────────────────────────────────────────────
-NW, NS, NC = 1000, 1000, 4
+NW, NS, NC = 500, 500, 4
 TAG = f"warmup{NW}_samples{NS}_chains{NC}"
 
+# 2×2 speaker × semantics (all hierarchical)
 MODEL_SPECS = {
-    "incremental":  f"mcmc_results_incremental_speaker_gamma_{TAG}.nc",
-    "global":       f"mcmc_results_global_speaker_gamma_{TAG}.nc",
-    "inc_hier":     f"mcmc_results_incremental_speaker_hier_gamma_{TAG}.nc",
-    "global_hier":  f"mcmc_results_global_speaker_hier_gamma_{TAG}.nc",
+    "incremental_recursive": f"mcmc_results_incremental_speaker_hier_{TAG}.nc",
+    "incremental_static":    f"mcmc_results_incremental_static_speaker_hier_{TAG}.nc",
+    "global_recursive":      f"mcmc_results_global_speaker_hier_{TAG}.nc",
+    "global_static":         f"mcmc_results_global_static_speaker_hier_{TAG}.nc",
 }
+
+BEST_MODEL = "incremental_recursive"
 
 FLAT_TO_CAT = {
     0: "D",   1: "DC",  2: "DCF",  3: "DF",   4: "DFC",
@@ -140,8 +143,8 @@ if all_model_dfs:
     df_model_all.to_csv(os.path.join(DATA_DIR, "production_predictions.csv"), index=False)
     print(f"[✓] production_predictions.csv  ({len(df_model_all)} rows)")
 
-# ── 4. Correlation data: human + inc_hier merged ─────────────────────────────
-inc_hier_pred = [m for m in all_model_dfs if m["model"].iloc[0] == "inc_hier"]
+# ── 4. Correlation data: human + best model merged ───────────────────────────
+inc_hier_pred = [m for m in all_model_dfs if m["model"].iloc[0] == BEST_MODEL]
 if inc_hier_pred:
     df_inc_hier = inc_hier_pred[0].copy()
     df_corr = df_human.merge(
