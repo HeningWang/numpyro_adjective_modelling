@@ -56,6 +56,9 @@ CLAUDE.md
 10-writing/analysis_plan.md
 10-writing/sword_model_analysis.md
 
+# Presentation data (large, regenerable)
+09-presentation/20250710_LMBayes/posteriorSamples_*.csv
+
 # Thesis draft
 10-writing/Masterarbeit_Hening_Wang_1_Entwurf/
 meeting-agenda-*.md
