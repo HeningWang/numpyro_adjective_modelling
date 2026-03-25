@@ -17,6 +17,7 @@ Full simulation run uses `02-simulation-fast.py` (single-process, batched vmap).
 |---|---|---|
 | `nobj` | 2, 6, 10, 14, 18, 22, 26, 30 | 8 |
 | `speaker` | incremental, global | 2 |
+| `semantics` | recursive, static | 2 |
 | `color_semvalue` | 0.90, 0.92, 0.94, 0.96, 0.98 | 5 |
 | `k` | 0.1, 0.3, 0.5, 0.7, 0.9 | 5 |
 | `wf` | 0.1, 0.2, 0.3, 0.5, 0.8 | 5 |
@@ -24,7 +25,7 @@ Full simulation run uses `02-simulation-fast.py` (single-process, batched vmap).
 
 **Fixed:** `alpha = 1`, `bias = 0`, `world_length = 2`, `sample_size = 1000`
 
-Total rows: 8 × 2 × 5 × 5 × 5 × 3 × 1000 = 6,000,000
+Total rows: 8 × 2 × 2 × 5 × 5 × 5 × 3 × 1000 = 12,000,000
 
 **Outcome variables**
 
@@ -69,6 +70,10 @@ data <- data %>%
     speaker_label = recode(speaker,
       "incremental_speaker" = "Incremental",
       "global_speaker"      = "Global"
+    ),
+    semantics_label = recode(semantics,
+      "recursive" = "Recursive",
+      "static"    = "Static"
     ),
     sd_label = factor(
       sd_spread,
@@ -353,7 +358,7 @@ ggsave("sim_heatmap_csv_sd.png", p_heat2, width = 10, height = 4, dpi = 300)
 
 ```{r adv-nobj-sd}
 p_inter <- data %>%
-  group_by(speaker_label, nobj, sd_label) %>%
+  group_by(speaker_label, semantics_label, nobj, sd_label) %>%
   summarise(
     mean_adv = mean(size_first_advantage),
     se_adv   = sd(size_first_advantage) / sqrt(n()),
@@ -366,14 +371,14 @@ p_inter <- data %>%
                   ymax = mean_adv + 2 * se_adv,
                   fill = sd_label), alpha = 0.15, colour = NA) +
   geom_hline(yintercept = 0, lty = 2, colour = "grey30") +
-  facet_wrap(~ speaker_label) +
+  facet_grid(semantics_label ~ speaker_label) +
   scale_x_continuous(breaks = unique(data$nobj)) +
   labs(title   = "Size-first advantage by nobj and sharpness",
        x = "N objects", y = "Advantage (big blue − blue big)",
        colour = "Context", fill = "Context")
 
 p_inter
-ggsave("sim_advantage_nobj_sd.png", p_inter, width = 9, height = 5, dpi = 300)
+ggsave("sim_advantage_nobj_sd.png", p_inter, width = 9, height = 7, dpi = 300)
 ```
 
 # Descriptive summary table

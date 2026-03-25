@@ -8,9 +8,9 @@ Optimisations over 01-simulation-random-states.py:
      (sd_spread × color_semvalue × k × wf × sample) grid is executed in a
      single vmapped call instead of one Python subprocess per parameter combo.
 
-Total outer Python iterations: 2 speakers × 8 nobj = 16.
+Total outer Python iterations: 2 semantics × 2 speakers × 8 nobj = 32.
 Each iteration fires one JIT-compiled vmap over (n_sd=3, P=125, S=1000) contexts.
-Total output rows: 2 × 8 × 5 × 5 × 5 × 3 × 1000 = 6,000,000.
+Total output rows: 2 × 2 × 8 × 5 × 5 × 5 × 3 × 1000 = 12,000,000.
 """
 
 import itertools
@@ -54,12 +54,21 @@ OBJ_P        = 0.5
 # ── parameter sweep ──────────────────────────────────────────────────────────
 NOBJ_LIST           = list(range(2, 31, 4))                     # [2, 6, …, 30]  8 values
 SPEAKER_LIST        = ["incremental_speaker", "global_speaker"]  # 2 values
+SEMANTICS_LIST      = ["recursive", "static"]                    # 2 values
 COLOR_SEMVALUE_LIST = [round(0.90 + 0.02 * i, 10) for i in range(5)]  # [0.90 … 0.98]  5 values
 K_LIST              = [round(0.10 + 0.20 * i, 10) for i in range(5)]  # [0.1 … 0.9]    5 values
 WF_LIST             = [0.1, 0.2, 0.3, 0.5, 0.8]                # perceptual blur  5 values
 SD_SPREAD_LIST      = [2.0, 7.75, 15.0]                        # 3 values
 
-# Total rows = 2 * 8 * 5 * 5 * 5 * 3 * 1000 = 6,000,000
+# Map (semantics, speaker) → pragmatic_listener speaker string
+SPEAKER_KEY_MAP = {
+    ("recursive", "incremental_speaker"): "incremental_speaker",
+    ("recursive", "global_speaker"):      "global_speaker",
+    ("static",    "incremental_speaker"): "incremental_speaker_static",
+    ("static",    "global_speaker"):      "global_speaker_static",
+}
+
+# Total rows = 2 * 2 * 8 * 5 * 5 * 5 * 3 * 1000 = 12,000,000
 OUTPUT_FILE = "../04-simulation-w-randomstates/simulation_full_run.csv"
 
 
@@ -119,7 +128,8 @@ def make_batch_fn(speaker: str):
 
 
 # ── output helpers ────────────────────────────────────────────────────────────
-def build_df(results: jnp.ndarray, speaker: str, nobj: int) -> pd.DataFrame:
+def build_df(results: jnp.ndarray, speaker: str, semantics: str,
+             nobj: int) -> pd.DataFrame:
     """
     results : (n_sd, P, S, 2)
     Returns a DataFrame with n_sd * P * S rows.
@@ -139,7 +149,7 @@ def build_df(results: jnp.ndarray, speaker: str, nobj: int) -> pd.DataFrame:
     cols: dict = {k: [] for k in [
         "probs_big_blue", "probs_blue_big",
         "alpha", "bias", "nobj", "color_semvalue",
-        "wf", "k", "speaker", "size_distribution",
+        "wf", "k", "speaker", "semantics", "size_distribution",
         "sd_spread", "sample_size", "world_length",
     ]}
 
@@ -155,6 +165,7 @@ def build_df(results: jnp.ndarray, speaker: str, nobj: int) -> pd.DataFrame:
             cols["wf"]               .extend([float(wfs_flat[i_p])] * S)
             cols["k"]                .extend([float(ks_flat[i_p])]  * S)
             cols["speaker"]          .extend([speaker]              * S)
+            cols["semantics"]        .extend([semantics]            * S)
             cols["size_distribution"].extend([SIZE_DIST]            * S)
             cols["sd_spread"]        .extend([sd_spread]            * S)
             cols["sample_size"]      .extend([S]                    * S)
@@ -164,7 +175,7 @@ def build_df(results: jnp.ndarray, speaker: str, nobj: int) -> pd.DataFrame:
 
 
 def write_df(df: pd.DataFrame, first: bool) -> None:
-    if first and not os.path.isfile(OUTPUT_FILE):
+    if first:
         df.to_csv(OUTPUT_FILE, index=False)
     else:
         df.to_csv(OUTPUT_FILE, mode="a", header=False, index=False)
@@ -178,40 +189,49 @@ def main():
     ks_jnp   = jnp.array(k_grid.ravel(),   dtype=jnp.float32)
     wfs_jnp  = jnp.array(wf_grid.ravel(),  dtype=jnp.float32)
 
-    n_total   = len(SPEAKER_LIST) * len(NOBJ_LIST)
+    n_total   = len(SEMANTICS_LIST) * len(SPEAKER_LIST) * len(NOBJ_LIST)
     counter   = 0
     first     = True
     t0        = time.time()
 
-    for speaker in SPEAKER_LIST:
-        print(f"\n=== Speaker: {speaker} — building JIT (first nobj will be slower) ===")
-        batch_fn = make_batch_fn(speaker)
+    # Remove old output file so header is written fresh
+    if os.path.isfile(OUTPUT_FILE):
+        os.remove(OUTPUT_FILE)
 
-        for nobj in NOBJ_LIST:
-            counter += 1
-            t_iter = time.time()
+    for semantics in SEMANTICS_LIST:
+        for speaker in SPEAKER_LIST:
+            speaker_key = SPEAKER_KEY_MAP[(semantics, speaker)]
+            print(f"\n=== Semantics: {semantics} | Speaker: {speaker} "
+                  f"(key={speaker_key}) — building JIT ===")
+            batch_fn = make_batch_fn(speaker_key)
 
-            # 1. Generate contexts for every sd_spread (NumPy, outside JAX)
-            all_states = jnp.stack([
-                generate_modified_contexts(nobj, sd_spread, SAMPLE_SIZE)
-                for sd_spread in SD_SPREAD_LIST
-            ])  # (n_sd, S, nobj, 3)
+            for nobj in NOBJ_LIST:
+                counter += 1
+                t_iter = time.time()
 
-            # 2. One batched JAX call over (n_sd=3, P=125, S=1000)
-            results = batch_fn(all_states, csvs_jnp, ks_jnp, wfs_jnp)
-            results.block_until_ready()  # (n_sd, P, S, 2)
+                # 1. Generate contexts for every sd_spread (NumPy, outside JAX)
+                all_states = jnp.stack([
+                    generate_modified_contexts(nobj, sd_spread, SAMPLE_SIZE)
+                    for sd_spread in SD_SPREAD_LIST
+                ])  # (n_sd, S, nobj, 3)
 
-            # 3. Build DataFrame and write
-            df_block = build_df(results, speaker, nobj)
-            write_df(df_block, first)
-            first = False
+                # 2. One batched JAX call over (n_sd=3, P=125, S=1000)
+                results = batch_fn(all_states, csvs_jnp, ks_jnp, wfs_jnp)
+                results.block_until_ready()  # (n_sd, P, S, 2)
 
-            elapsed       = time.time() - t_iter
-            total_elapsed = time.time() - t0
-            print(
-                f"  [{counter:2d}/{n_total}]  speaker={speaker:<22s}  nobj={nobj:2d}"
-                f"  rows={len(df_block):>7,}  iter={elapsed:.1f}s  total={total_elapsed:.0f}s"
-            )
+                # 3. Build DataFrame and write
+                df_block = build_df(results, speaker, semantics, nobj)
+                write_df(df_block, first)
+                first = False
+
+                elapsed       = time.time() - t_iter
+                total_elapsed = time.time() - t0
+                print(
+                    f"  [{counter:2d}/{n_total}]  sem={semantics:<10s}  "
+                    f"speaker={speaker:<22s}  nobj={nobj:2d}"
+                    f"  rows={len(df_block):>7,}  iter={elapsed:.1f}s  "
+                    f"total={total_elapsed:.0f}s"
+                )
 
     print(f"\nDone. Output: {OUTPUT_FILE}")
     print(f"Total time: {time.time() - t0:.1f}s")
