@@ -45,13 +45,13 @@ df_loo   <- read_csv("data/slider_loo_comparison.csv") %>%
 
 # ── Nicer labels ─────────────────────────────────────────────────────────────
 rp_labels <- c(
-  "both"   = "Both relevant",
-  "first"  = "Size relevant",
-  "second" = "Colour relevant"
+  "both"   = "Both necessary",
+  "first"  = "Size sufficient",
+  "second" = "Colour sufficient"
 )
 sharp_labels <- c(
-  "sharp"   = "Sharp",
-  "blurred" = "Blurred"
+  "sharp"   = "High",
+  "blurred" = "Low"
 )
 
 df_emp <- df_emp %>%
@@ -82,9 +82,9 @@ fig1 <- df_emp %>%
     position = position_dodge(0.8), width = 0.2, linewidth = 0.6
   ) +
   geom_hline(yintercept = 0, linetype = "dashed", colour = "grey40") +
-  scale_fill_manual(values = CSP_colors[1:2], name = "Sharpness") +
+  scale_fill_manual(values = CSP_colors[1:2], name = "Size discriminability") +
   labs(
-    x = "Relevant property",
+    x = "Referential context",
     y = "Mean slider rating (centered)"
   ) +
   theme_model() +
@@ -96,7 +96,7 @@ cat("[✓] slider_empirical.pdf\n")
 
 
 # =============================================================================
-#  Slider lmer analysis: relevance × sharpness interaction
+#  Slider lmer analysis: referential-context × size-discriminability interaction
 # =============================================================================
 library(lme4)
 library(lmerTest)
@@ -104,8 +104,8 @@ library(lmerTest)
 df_lmer <- df_emp %>%
   mutate(
     rp = factor(relevant_property,
-                levels = c("Size relevant", "Both relevant", "Colour relevant")),
-    sh = factor(sharpness, levels = c("Blurred", "Sharp"))
+                levels = c("Size sufficient", "Both necessary", "Colour sufficient")),
+    sh = factor(sharpness, levels = c("Low", "High"))
   )
 
 m_full <- lmer(slider_centered ~ rp * sh + (1 | id) + (1 | item), data = df_lmer)
@@ -119,10 +119,10 @@ print(anova(m_full))
 cat("\n=== Model comparison: interaction (additive vs full) ===\n")
 print(anova(m_add, m_full))
 
-cat("\n=== Model comparison: sharpness main effect ===\n")
+cat("\n=== Model comparison: size-discriminability main effect ===\n")
 print(anova(m_rel, m_add))
 
-cat("\n=== Model comparison: relevance main effect ===\n")
+cat("\n=== Model comparison: referential-context main effect ===\n")
 print(anova(m_null, m_rel))
 
 # Save summary to text file
@@ -133,9 +133,9 @@ cat("\n=== ANOVA (Type III) ===\n")
 print(anova(m_full))
 cat("\n=== Model comparison: interaction ===\n")
 print(anova(m_add, m_full))
-cat("\n=== Model comparison: sharpness main effect ===\n")
+cat("\n=== Model comparison: size-discriminability main effect ===\n")
 print(anova(m_rel, m_add))
-cat("\n=== Model comparison: relevance main effect ===\n")
+cat("\n=== Model comparison: referential-context main effect ===\n")
 print(anova(m_null, m_rel))
 sink()
 cat("[✓] slider_lmer_summary.txt\n")
@@ -156,25 +156,25 @@ df_corr <- df_cond %>%
   )
 
 # Compute R²
-r_sq <- cor(df_corr$emp_mean, df_corr$pred_mean_inc_hier)^2
+r_sq <- cor(df_corr$emp_mean, df_corr$pred_mean_incremental_recursive)^2
 
 fig2 <- df_corr %>%
-  ggplot(aes(x = emp_mean, y = pred_mean_inc_hier)) +
+  ggplot(aes(x = emp_mean, y = pred_mean_incremental_recursive)) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed", colour = "grey50") +
   geom_errorbar(
-    aes(ymin = pred_lo_inc_hier, ymax = pred_hi_inc_hier),
+    aes(ymin = pred_lo_incremental_recursive, ymax = pred_hi_incremental_recursive),
     width = 0.005, linewidth = 0.5, colour = "grey60"
   ) +
   geom_point(aes(colour = cond_label), size = 4) +
   scale_colour_manual(values = CSP_colors[1:6], name = "Condition") +
   annotate(
-    "text", x = min(df_corr$emp_mean), y = max(df_corr$pred_hi_inc_hier),
+    "text", x = min(df_corr$emp_mean), y = max(df_corr$pred_hi_incremental_recursive),
     label = paste0("italic(R)^2 == ", formatC(r_sq, format = "f", digits = 3)),
     parse = TRUE, hjust = 0, vjust = 1, size = 5, colour = "grey30"
   ) +
   labs(
     x = "Empirical mean slider rating",
-    y = "Predicted mean (inc. hier., 95% CI)"
+    y = "Predicted mean (inc. context-updating, 95% CI)"
   ) +
   coord_fixed() +
   theme_model() +
@@ -186,64 +186,45 @@ cat("[✓] slider_correlation_inc_hier.pdf\n")
 
 
 # =============================================================================
-#  FIGURE 3 — Model comparison (LOO ELPD)
+#  FIGURE 3 — Model comparison (LOO ELPD) — 2×2 speaker × semantics
 # =============================================================================
 
 model_labels <- c(
-  "inc_hier"    = "Incremental hier.",
-  "global_hier" = "Global hier.",
-  "incremental" = "Incremental",
-  "global"      = "Global"
+  "incremental_recursive" = "Incremental, context-updating",
+  "incremental_static"    = "Incremental, context-fixed",
+  "global_recursive"      = "Global, context-updating",
+  "global_static"         = "Global, context-fixed"
 )
 
+# Best model in red, others in blue
 df_loo_plot <- df_loo %>%
   mutate(
-    model_label = factor(model_labels[model], levels = rev(model_labels)),
-    is_best     = rank == 0
+    model_label = factor(model_labels[model],
+                         levels = rev(model_labels[order(match(names(model_labels), model))])),
+    is_best = rank == 0
   )
 
-# Compute strength label from elpd_diff / dse for second-best
-best_model  <- df_loo_plot %>% filter(rank == 0) %>% pull(model)
-second_row  <- df_loo_plot %>% filter(rank == 1)
-ratio       <- abs(second_row$elpd_diff) / second_row$dse
-strength    <- case_when(
-  ratio > 8 ~ "very strong",
-  ratio > 4 ~ "strong",
-  ratio > 2 ~ "meaningful",
-  TRUE       ~ "not significant"
-)
-
 fig3 <- df_loo_plot %>%
-  ggplot(aes(x = elpd_loo, y = model_label, colour = is_best)) +
+  ggplot(aes(x = -elpd_diff, y = model_label, colour = is_best)) +
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "grey60") +
   geom_pointrange(
-    aes(xmin = elpd_loo - se, xmax = elpd_loo + se),
+    aes(xmin = -elpd_diff - dse, xmax = -elpd_diff + dse),
     size = 0.8, linewidth = 0.9
   ) +
-  geom_text(
-    aes(label = paste0(round(elpd_loo, 0), " ± ", round(se, 0))),
-    hjust = -0.15, vjust = -0.6, size = 3.8, show.legend = FALSE
+  scale_colour_manual(
+    values = c("TRUE" = CSP_colors[3], "FALSE" = CSP_colors[1]),
+    guide = "none"
   ) +
-  scale_colour_manual(values = c("TRUE" = CSP_colors[1], "FALSE" = CSP_colors[3]),
-                      guide = "none") +
-  annotate(
-    "text",
-    x = min(df_loo_plot$elpd_loo - df_loo_plot$se),
-    y = 0.6,
-    label = paste0("|Delta elpd|/dse = ", formatC(ratio, format = "f", digits = 1),
-                   " (", strength, ")"),
-    hjust = 0, size = 4.2, colour = "grey30"
-  ) +
+  scale_x_continuous(expand = expansion(mult = c(0.02, 0.05))) +
   labs(
-    x = "ELPD (LOO)",
+    x = expression(Delta * "ELPD (LOO) relative to best model"),
     y = NULL
   ) +
   theme_model() +
-  theme(
-    axis.text.y = element_text(size = 13)
-  )
+  theme(axis.text.y = element_text(size = 13))
 
 ggsave(file.path(fig_dir, "slider_model_comparison.pdf"), fig3,
-       width = 7.5, height = 4, dpi = 300)
+       width = 7.5, height = 3.5, dpi = 300)
 cat("[✓] slider_model_comparison.pdf\n")
 
 cat("\n[Done] All slider figures saved to", fig_dir, "\n")
@@ -311,7 +292,7 @@ fig4 <- df_prod_emp_top %>%
     position = position_dodge(0.7), height = 0.25, linewidth = 0.5
   ) +
   facet_wrap(~ relevant_property, ncol = 3) +
-  scale_fill_manual(values = CSP_colors[1:2], name = "Sharpness") +
+  scale_fill_manual(values = CSP_colors[1:2], name = "Size discriminability") +
   labs(
     x = "Proportion",
     y = "Utterance type"
@@ -358,7 +339,7 @@ fig5 <- df_prod_corr_nz %>%
   ) +
   labs(
     x = "Empirical proportion",
-    y = "Predicted proportion (inc. hier., 95% CI)"
+    y = "Predicted proportion (inc. context-updating, 95% CI)"
   ) +
   coord_fixed() +
   theme_model() +
@@ -370,56 +351,37 @@ cat("[✓] production_correlation_inc_hier.pdf\n")
 
 
 # =============================================================================
-#  FIGURE 6 — Model comparison (LOO ELPD) — Production
+#  FIGURE 6 — Model comparison (LOO ELPD) — Production, 2×2 speaker × semantics
 # =============================================================================
 
 df_prod_loo_plot <- df_prod_loo %>%
   mutate(
-    model_label = factor(model_labels[model], levels = rev(model_labels)),
-    is_best     = rank == 0
+    model_label = factor(model_labels[model],
+                         levels = rev(model_labels[order(match(names(model_labels), model))])),
+    is_best = rank == 0
   )
 
-best_prod   <- df_prod_loo_plot %>% filter(rank == 0) %>% pull(model)
-second_prod <- df_prod_loo_plot %>% filter(rank == 1)
-ratio_prod  <- abs(second_prod$elpd_diff) / second_prod$dse
-strength_prod <- case_when(
-  ratio_prod > 8 ~ "very strong",
-  ratio_prod > 4 ~ "strong",
-  ratio_prod > 2 ~ "meaningful",
-  TRUE            ~ "not significant"
-)
-
 fig6 <- df_prod_loo_plot %>%
-  ggplot(aes(x = elpd_loo, y = model_label, colour = is_best)) +
+  ggplot(aes(x = -elpd_diff, y = model_label, colour = is_best)) +
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "grey60") +
   geom_pointrange(
-    aes(xmin = elpd_loo - se, xmax = elpd_loo + se),
+    aes(xmin = -elpd_diff - dse, xmax = -elpd_diff + dse),
     size = 0.8, linewidth = 0.9
   ) +
-  geom_text(
-    aes(label = paste0(round(elpd_loo, 0), " +/- ", round(se, 0))),
-    hjust = -0.15, vjust = -0.6, size = 3.8, show.legend = FALSE
+  scale_colour_manual(
+    values = c("TRUE" = CSP_colors[3], "FALSE" = CSP_colors[1]),
+    guide = "none"
   ) +
-  scale_colour_manual(values = c("TRUE" = CSP_colors[1], "FALSE" = CSP_colors[3]),
-                      guide = "none") +
-  annotate(
-    "text",
-    x = min(df_prod_loo_plot$elpd_loo - df_prod_loo_plot$se),
-    y = 0.6,
-    label = paste0("|Delta elpd|/dse = ", formatC(ratio_prod, format = "f", digits = 1),
-                   " (", strength_prod, ")"),
-    hjust = 0, size = 4.2, colour = "grey30"
-  ) +
+  scale_x_continuous(expand = expansion(mult = c(0.02, 0.05))) +
   labs(
-    x = "ELPD (LOO)",
+    x = expression(Delta * "ELPD (LOO) relative to best model"),
     y = NULL
   ) +
   theme_model() +
-  theme(
-    axis.text.y = element_text(size = 13)
-  )
+  theme(axis.text.y = element_text(size = 13))
 
 ggsave(file.path(fig_dir, "production_model_comparison.pdf"), fig6,
-       width = 7.5, height = 4, dpi = 300)
+       width = 7.5, height = 3.5, dpi = 300)
 cat("[✓] production_model_comparison.pdf\n")
 
 
@@ -435,7 +397,8 @@ df_prod_raw <- read_csv("../01-dataset/01-production-data-preprocessed.csv",
   mutate(
     relevant_property = factor(relevant_property,
                                levels = c("first", "both", "second")),
-    sharpness = factor(sharpness, levels = c("blurred", "sharp"))
+    sharpness = factor(sharpness, levels = c("blurred", "sharp"),
+                       labels = c("Low", "High"))
   )
 
 cat("\nProduction trial-level N:", nrow(df_prod_raw), "\n")
@@ -462,16 +425,16 @@ cat("\n=== Size-first: Full model summary ===\n")
 print(summary(m_sf_full))
 cat("\n=== Size-first: interaction (additive vs full) ===\n")
 print(anova(m_sf_add, m_sf_full))
-cat("\n=== Size-first: sharpness main effect ===\n")
+cat("\n=== Size-first: size-discriminability main effect ===\n")
 print(anova(m_sf_rel, m_sf_add))
-cat("\n=== Size-first: relevance main effect ===\n")
+cat("\n=== Size-first: referential-context main effect ===\n")
 print(anova(m_sf_null, m_sf_rel))
 
 # --- Analysis 2: Over-informative utterance ---
 # Coding:
-#   both-relevant:     3-adjective = over-informative (DCF, DFC, CDF, CFD, FDC, FCD)
-#   size-relevant:     multi-word besides D = over-informative
-#   colour-relevant:   multi-word besides C = over-informative
+#   both-necessary:    3-adjective = over-informative (DCF, DFC, CDF, CFD, FDC, FCD)
+#   size-sufficient:   multi-word besides D = over-informative
+#   colour-sufficient: multi-word besides C = over-informative
 df_prod_raw <- df_prod_raw %>%
   mutate(
     n_adj = nchar(annotation),
@@ -502,9 +465,9 @@ cat("\n=== Over-informative: Full model summary ===\n")
 print(summary(m_oi_full))
 cat("\n=== Over-informative: interaction (additive vs full) ===\n")
 print(anova(m_oi_add, m_oi_full))
-cat("\n=== Over-informative: sharpness main effect ===\n")
+cat("\n=== Over-informative: size-discriminability main effect ===\n")
 print(anova(m_oi_rel, m_oi_add))
-cat("\n=== Over-informative: relevance main effect ===\n")
+cat("\n=== Over-informative: referential-context main effect ===\n")
 print(anova(m_oi_null, m_oi_rel))
 
 # Save to text file
@@ -514,18 +477,18 @@ cat("--- Full model summary ---\n")
 print(summary(m_sf_full))
 cat("\n--- Interaction (additive vs full) ---\n")
 print(anova(m_sf_add, m_sf_full))
-cat("\n--- Sharpness main effect ---\n")
+cat("\n--- Size-discriminability main effect ---\n")
 print(anova(m_sf_rel, m_sf_add))
-cat("\n--- Relevance main effect ---\n")
+cat("\n--- Referential-context main effect ---\n")
 print(anova(m_sf_null, m_sf_rel))
 cat("\n\n=== OVER-INFORMATIVE UTTERANCES ===\n\n")
 cat("--- Full model summary ---\n")
 print(summary(m_oi_full))
 cat("\n--- Interaction (additive vs full) ---\n")
 print(anova(m_oi_add, m_oi_full))
-cat("\n--- Sharpness main effect ---\n")
+cat("\n--- Size-discriminability main effect ---\n")
 print(anova(m_oi_rel, m_oi_add))
-cat("\n--- Relevance main effect ---\n")
+cat("\n--- Referential-context main effect ---\n")
 print(anova(m_oi_null, m_oi_rel))
 sink()
 cat("[✓] production_glmer_summary.txt\n")
@@ -685,7 +648,7 @@ ggsave(file.path(fig_dir, "sim_colorsemval.pdf"), fig9,
 cat("[✓] sim_colorsemval.pdf\n")
 
 # =============================================================================
-#  FIGURE 10 — Size-first advantage by nobj × sharpness, faceted by speaker
+#  FIGURE 10 — Size-first advantage by nobj × size discriminability, faceted by speaker
 # =============================================================================
 
 df_sim <- df_sim %>%

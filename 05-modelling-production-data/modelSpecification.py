@@ -1,10 +1,10 @@
+"""Production experiment RSA model library.
+
+This module defines speaker models, listener functions, semantics, likelihood
+functions for the production experiment. It is a pure library with no CLI or
+side effects — use run_inference.py as the entry point.
+"""
 import os
-os.environ["JAX_PLATFORMS"] = "cpu"        # ← force CPU before JAX init  
-os.environ["JAX_TRACEBACK_FILTERING"] = "off"  # optional: full tracebacks  
-os.environ["XLA_FLAGS"] = "--xla_force_host_platform_device_count=4"  
-
-
-import argparse
 import pandas as pd
 import numpy as np
 import jax.numpy as jnp
@@ -55,11 +55,7 @@ LM_PRIOR_15 = jnp.array([
     0.02651604, 0.01232579, 0.03122547, 0.0363892, 0.01536951
 ])
 
-# Fixed sharpness-conditioned size gain (Option B, non-inferred start values)
-GAMMA_BLURRED = 0.9
-GAMMA_SHARP = 2
-
-# =============================================================================  
+# =============================================================================
 # 2. UTTERANCE COST  (LM-derived, temperature-scaled)  
 # =============================================================================  
 
@@ -84,14 +80,13 @@ def utterance_cost_jax(beta: float = 1.0) -> jnp.ndarray:
 # 3. SIZE SEMANTICS  (context-sensitive, graded)  
 # =============================================================================  
 
-def compute_size_semantics(  
-    states:      jnp.ndarray,   # (n_obj, 3)  
-    state_prior: jnp.ndarray,   # (n_obj,)  sums to 1  
-    k:           float,         # threshold interpolation ∈ (0, 1)  
-    wf:          float,         # sigmoid width / slack > 0  
-    gamma:       float = 1.0,   # size gain / discriminability
-    q_low:       float = 0.2,  
-    q_high:      float = 0.8,  
+def compute_size_semantics(
+    states:      jnp.ndarray,   # (n_obj, 3)
+    state_prior: jnp.ndarray,   # (n_obj,)  sums to 1
+    k:           float,         # threshold interpolation ∈ (0, 1)
+    wf:          float,         # sigmoid width / slack > 0
+    q_low:       float = 0.2,
+    q_high:      float = 0.8,
 ) -> jnp.ndarray:  
     """  
     Graded size semantics ⟦D⟧_C(s) via prior-weighted CDF thresholding.  
@@ -121,7 +116,7 @@ def compute_size_semantics(
 
     eps   = 1e-8  
     denom = wf * jnp.sqrt(sizes ** 2 + theta_k ** 2 + eps)  
-    z     = gamma * (sizes - theta_k) / denom  
+    z     = (sizes - theta_k) / denom  
     return 0.5 * (1.0 + lax.erf(z / jnp.sqrt(2.0)))    # (n_obj,) 
 
 
@@ -135,7 +130,6 @@ def compute_size_semantics_fast(
     posterior: jnp.ndarray,        # (n_obj,)  current per-utt posterior
     k:         float,              # threshold interpolation ∈ (0, 1)
     wf:        float,              # sigmoid width > 0
-    gamma:     float = 1.0,        # size gain / discriminability
     q_low:     float = 0.2,
     q_high:    float = 0.8,
 ) -> jnp.ndarray:                  # (n_obj,) ∈ (0, 1)
@@ -167,7 +161,7 @@ def compute_size_semantics_fast(
     #   denom = wf · √(x² + θ_k²)   ← NOT wf·σ_context
     #   This scales with the absolute magnitudes of sizes and threshold
     denom = wf * jnp.sqrt(sizes ** 2 + theta_k ** 2 + eps)  # (n_obj,)
-    z     = gamma * (sizes - theta_k) / denom                # (n_obj,)
+    z     = (sizes - theta_k) / denom                # (n_obj,)
 
     return 0.5 * (1.0 + lax.erf(z / jnp.sqrt(2.0)))         # (n_obj,) ∈ (0,1)
 
@@ -179,7 +173,6 @@ def compute_size_semantics_fast_presorted(
     posterior:    jnp.ndarray,      # (n_obj,)
     k:            float,
     wf:           float,
-    gamma:        float = 1.0,
     q_low:        float = 0.2,
     q_high:       float = 0.8,
 ) -> jnp.ndarray:
@@ -197,7 +190,7 @@ def compute_size_semantics_fast_presorted(
     theta_k = x_max_mid - k * (x_max_mid - x_min_mid)
 
     denom = wf * jnp.sqrt(sizes ** 2 + theta_k ** 2 + eps)
-    z = gamma * (sizes - theta_k) / denom
+    z = (sizes - theta_k) / denom
     return 0.5 * (1.0 + lax.erf(z / jnp.sqrt(2.0)))
 
 
@@ -206,15 +199,14 @@ def compute_size_semantics_fast_presorted(
 # 4. INCREMENTAL LITERAL LISTENER  (right-to-left scan)  
 # =============================================================================  
 
-def incremental_semantics_jax(  
-    states:      jnp.ndarray,          # (n_obj, 3)  
-    color_sem:   float = 0.95,         # ∈ (0.5, 1)  
-    form_sem:    float = 0.80,         # ∈ (0.5, 1)  
-    k:           float = 0.5,          # ∈ (0, 1)  
-    wf:          float = 0.5,          # > 0  
-    gamma:       float = 1.0,          # size gain / discriminability
-    state_prior: jnp.ndarray = None,   # (n_obj,)  
-    utterances:  jnp.ndarray = None,   # (n_utt, T)  
+def incremental_semantics_jax(
+    states:      jnp.ndarray,          # (n_obj, 3)
+    color_sem:   float = 0.95,         # ∈ (0.5, 1)
+    form_sem:    float = 0.80,         # ∈ (0.5, 1)
+    k:           float = 0.5,          # ∈ (0, 1)
+    wf:          float = 0.5,          # > 0
+    state_prior: jnp.ndarray = None,   # (n_obj,)
+    utterances:  jnp.ndarray = None,   # (n_utt, T)
 ) -> jnp.ndarray:  
     """  
     Literal listener matrix M[u, s] = P(s | u).  
@@ -258,7 +250,7 @@ def incremental_semantics_jax(
         """Update a single utterance's running posterior by one token."""  
         # Normalise running posterior for size-semantics context  
         prior_norm = prior_i / jnp.clip(prior_i.sum(), 1e-20)  
-        size_vec = compute_size_semantics(states, prior_norm, k, wf, gamma=gamma)  
+        size_vec = compute_size_semantics(states, prior_norm, k, wf)  
         def skip(_):   return prior_i  
         def apply(_):  
             return lax.switch(  
@@ -277,127 +269,215 @@ def incremental_semantics_jax(
     final, _ = lax.scan(step, prior0, tokens_rev)   # (n_utt, n_obj)  
 
     row_sums = jnp.clip(final.sum(axis=1, keepdims=True), 1e-20)  
-    return final / row_sums                          # (n_utt, n_obj)  
+    return final / row_sums                          # (n_utt, n_obj)
 
-# =============================================================================  
-# 5. GLOBAL RSA SPEAKER  
-# =============================================================================  
 
-def global_speaker(  
-    states:       jnp.ndarray,   # (n_obj, 3)  one trial  
-    alpha:        float = 3.0,   # rationality  
-    color_sem:    float = 0.95,  # ∈ (0.5, 1)  
-    form_sem:     float = 0.80,  # ∈ (0.5, 1)  
-    k:            float = 0.5,   # ∈ (0, 1)  
-    wf:           float = 0.5,   # > 0  
-    beta:         float = 1.0,   # LM cost temperature  
-    gamma:        float = 1.0,   # size gain / discriminability
-) -> jnp.ndarray:  
-    """  
-    P(u | s_referent) under global RSA with LM-based utterance cost.  
+def incremental_semantics_jax_frozen(
+    states:      jnp.ndarray,          # (n_obj, 3)
+    color_sem:   float = 0.95,         # ∈ (0.5, 1)
+    form_sem:    float = 0.80,         # ∈ (0.5, 1)
+    k:           float = 0.5,          # ∈ (0, 1)
+    wf:          float = 0.5,          # > 0
+    state_prior: jnp.ndarray = None,   # (n_obj,)
+    utterances:  jnp.ndarray = None,   # (n_utt, T)
+) -> jnp.ndarray:
+    """
+    Literal listener matrix M[u, s] = P(s | u) with STATIC size semantics.
 
-    Utility:  U(u, s) = α · log L(s | u) − cost(u)  
-    Speaker:  P(u | s) ∝ exp U(u, s)  
+    Same as incremental_semantics_jax, but size semantics are computed once
+    from the initial uniform prior and held fixed throughout composition.
+    This removes context-recursive threshold adaptation while preserving
+    incremental belief update for the posterior itself.
 
-    The referent is always states[0].  
+    Returns
+    -------
+    M : (n_utt, n_obj)  each row sums to 1
+    """
+    if utterances is None:
+        utterances = utterance_list
 
-    Returns  
-    -------  
-    probs : (n_utt,)  probability over utterances for the referent  
-    """  
-    eps = 1e-8  
+    n_utt, T = utterances.shape
+    n_obj    = states.shape[0]
 
-    costs      = utterance_cost_jax(beta=beta)           # (n_utt,)  
-    M_listener = incremental_semantics_jax(              # (n_utt, n_obj)  
-        states      = states,  
-        color_sem   = color_sem,  
-        form_sem    = form_sem,  
-        k           = k,  
-        wf          = wf,  
-        gamma       = gamma,
-    )  
+    if state_prior is None:
+        state_prior = jnp.ones(n_obj) / n_obj
 
-    log_L = jnp.log(jnp.clip(M_listener.T, eps))        # (n_obj, n_utt)  
-    util  = alpha * log_L - costs[None, :]               # (n_obj, n_utt)  
-    M_speaker = jax.nn.softmax(util, axis=-1)            # (n_obj, n_utt)  
+    # Pre-compute ALL semantics once (size uses the initial prior, not running)
+    colors    = states[:, 1]
+    forms     = states[:, 2]
+    color_vec = jnp.where(colors == 1, color_sem, 1.0 - color_sem)
+    form_vec  = jnp.where(forms  == 1, form_sem,  1.0 - form_sem)
+    size_vec  = compute_size_semantics(states, state_prior, k, wf)
+
+    prior0     = jnp.broadcast_to(state_prior, (n_utt, n_obj))
+    tokens_rev = jnp.flip(utterances, axis=1).T
+
+    def update_one(prior_i, token_i):
+        def skip(_):   return prior_i
+        def apply(_):
+            return lax.switch(
+                token_i,
+                [lambda _: prior_i * size_vec,
+                 lambda _: prior_i * color_vec,
+                 lambda _: prior_i * form_vec],
+                operand=None,
+            )
+        return lax.cond(token_i < 0, skip, apply, operand=None)
+
+    def step(prior_all, tokens_t):
+        return jax.vmap(update_one)(prior_all, tokens_t), None
+
+    final, _ = lax.scan(step, prior0, tokens_rev)
+
+    row_sums = jnp.clip(final.sum(axis=1, keepdims=True), 1e-20)
+    return final / row_sums
+
+
+# =============================================================================
+# 5. GLOBAL RSA SPEAKER
+# =============================================================================
+
+def global_speaker(
+    states:       jnp.ndarray,   # (n_obj, 3)  one trial
+    alpha:        float = 3.0,   # rationality
+    color_sem:    float = 0.95,  # ∈ (0.5, 1)
+    form_sem:     float = 0.80,  # ∈ (0.5, 1)
+    k:            float = 0.5,   # ∈ (0, 1)
+    wf:           float = 0.5,   # > 0
+    beta:         float = 1.0,   # LM cost temperature
+    gamma:        float = 0.0,   # length bias
+    epsilon:      float = 0.01,  # lapse rate
+) -> jnp.ndarray:
+    """
+    P(u | s_referent) under global RSA with LM-based utterance cost.
+
+    Utility:  U(u, s) = α · log L(s | u) − cost(u) + γ · N_WORDS
+    Speaker:  P(u | s) ∝ exp U(u, s), then mixed with uniform lapse.
+
+    The referent is always states[0].
+
+    Returns
+    -------
+    probs : (n_utt,)  probability over utterances for the referent
+    """
+    eps = 1e-8
+
+    costs      = utterance_cost_jax(beta=beta)           # (n_utt,)
+    M_listener = incremental_semantics_jax(              # (n_utt, n_obj)
+        states      = states,
+        color_sem   = color_sem,
+        form_sem    = form_sem,
+        k           = k,
+        wf          = wf,
+    )
+
+    log_L = jnp.log(jnp.clip(M_listener.T, eps))        # (n_obj, n_utt)
+    util  = alpha * log_L - costs[None, :] + gamma * N_WORDS[None, :]  # (n_obj, n_utt)
+    M_speaker = jax.nn.softmax(util, axis=-1)            # (n_obj, n_utt)
+    M_speaker = (1.0 - epsilon) * M_speaker + epsilon / M_listener.shape[0]  # lapse
 
     return M_speaker[0, :]                               # referent = index 0  
 
-# Vectorise over trials (axis 0 of states batch)  
-vectorized_global_speaker = jax.vmap(  
-    global_speaker,  
-    in_axes=(0,    # states  — one trial per row  
-             None, # alpha  
-             None, # color_sem  
-             None, # form_sem  
-             None, # k  
-             None, # wf  
-             None, # beta  
-             0,    # gamma (per-trial sharpness-conditioned gain)
-             ),  
-)  
+# Vectorise over trials (axis 0 of states batch)
+vectorized_global_speaker = jax.vmap(
+    global_speaker,
+    in_axes=(0,    # states  — one trial per row
+             None, # alpha
+             None, # color_sem
+             None, # form_sem
+             None, # k
+             None, # wf
+             None, # beta
+             None, # gamma
+             None, # epsilon
+             ),
+)
 
-# ── Pre JIT ──────────────────────────────────────────────────────  
-@jax.jit  
-def jitted_global_speaker(states, alpha, color_semval, form_semval, k, wf, beta, gamma):  
-    return vectorized_global_speaker(  
-        states, alpha, color_semval, form_semval, k, wf, beta, gamma  
-    )  
-def likelihood_function_global_speaker(states = None, empirical = None, sharpness_idx = None):
-    # # ── Semantic parameters ──────────────────────────────────────────────────  
-    # phi_color = numpyro.sample("phi_color", dist.HalfNormal(2.0))  
-    # color_sem = jax.nn.sigmoid(phi_color)          # ∈ (0.5, 1)  
 
-    # phi_form  = numpyro.sample("phi_form",  dist.HalfNormal(1.0))  
-    # form_sem  = jax.nn.sigmoid(phi_form)           # ∈ (0.5, 1)  
+def global_speaker_static(
+    states:       jnp.ndarray,
+    alpha:        float = 3.0,
+    color_sem:    float = 0.95,
+    form_sem:     float = 0.80,
+    k:            float = 0.5,
+    wf:           float = 0.5,
+    beta:         float = 1.0,
+    gamma:        float = 0.0,
+    epsilon:      float = 0.01,
+) -> jnp.ndarray:
+    """
+    P(u | s_referent) under global RSA with STATIC size semantics.
 
-    # fixed color and form semantics
-    color_sem = 0.8
-    form_sem  = 0.7
+    Same as global_speaker, but uses incremental_semantics_jax_frozen so that
+    the size threshold is computed once from the uniform prior and not
+    recomputed from the running posterior during composition.
+    """
+    eps = 1e-8
 
-    # Infer k
-    # phi_k     = numpyro.sample("phi_k",     dist.Normal(0.0, 1.0))  
-    # k         = jax.nn.sigmoid(phi_k)             # ∈ (0, 1), prior mean 0.5  
+    costs      = utterance_cost_jax(beta=beta)
+    M_listener = incremental_semantics_jax_frozen(
+        states    = states,
+        color_sem = color_sem,
+        form_sem  = form_sem,
+        k         = k,
+        wf        = wf,
+    )
 
-    # Fixed k
-    k = 0.5
+    log_L = jnp.log(jnp.clip(M_listener.T, eps))
+    util  = alpha * log_L - costs[None, :] + gamma * N_WORDS[None, :]
+    M_speaker = jax.nn.softmax(util, axis=-1)
+    M_speaker = (1.0 - epsilon) * M_speaker + epsilon / M_listener.shape[0]
 
-    # Infer wf
-    # log_wf = numpyro.sample("log_wf", dist.TruncatedNormal(0.0, 0.5, low=-1.0, high=1.0))
-    # wf     = jnp.exp(log_wf)                   # prior mean ≈ 1.0
+    return M_speaker[0, :]
 
-    # Fixed wf
-    wf        = 1.0
 
-    # Infe beta
-    log_beta  = numpyro.sample("log_beta",  dist.Normal(0.0, 0.5))  
-    beta      = jnp.exp(log_beta)                  # prior mean ≈ 1.0
+vectorized_global_speaker_static = jax.vmap(
+    global_speaker_static,
+    in_axes=(0,    # states
+             None, # alpha
+             None, # color_sem
+             None, # form_sem
+             None, # k
+             None, # wf
+             None, # beta
+             None, # gamma
+             None, # epsilon
+             ),
+)
 
-    if sharpness_idx is None:
-        sharpness_idx = jnp.zeros((len(states),), dtype=jnp.float32)
-    gamma = jnp.where(sharpness_idx > 0.5, GAMMA_SHARP, GAMMA_BLURRED)
 
-    # Infer alpha
-    alpha = numpyro.sample("alpha", dist.HalfNormal(5.0))  # prior mean ≈ 4.0, but with long tail
+# ── Pre JIT ──────────────────────────────────────────────────────
+@jax.jit
+def jitted_global_speaker(states, alpha, color_semval, form_semval, k, wf, beta, gamma, epsilon):
+    return vectorized_global_speaker(
+        states, alpha, color_semval, form_semval, k, wf, beta, gamma, epsilon
+    )
 
-    #  ── Fixed parameters ─────────────────────────────────
-    # beta      = 1.0
-    # alpha     = 3.0     
+@jax.jit
+def jitted_global_speaker_static(states, alpha, color_semval, form_semval, k, wf, beta, gamma, epsilon):
+    return vectorized_global_speaker_static(
+        states, alpha, color_semval, form_semval, k, wf, beta, gamma, epsilon
+    )
 
-    # Define the likelihood function
+def likelihood_function_global_speaker(states=None, empirical=None):
+    # ── Semantic parameters (fixed from global_static posterior) ──────────────
+    color_sem = 0.971
+    form_sem  = 0.50
+
+    k  = 0.5
+    wf = 1.0
+
+    log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
+    beta     = jnp.exp(log_beta)
+
+    alpha   = numpyro.sample("alpha", dist.HalfNormal(5.0))
+    gamma   = numpyro.sample("gamma", dist.Normal(0.0, 1.0))
+    epsilon = numpyro.sample("epsilon", dist.Beta(1.0, 50.0))
+
     with numpyro.plate("data", len(states)):
-        # Get vectorized global speaker output for all states
-        # For single output, it is shape (n_utt, n_obj)
-        probs = jitted_global_speaker(  
-            states,  
-            alpha,  
-            color_sem,  
-            form_sem,  
-            k,  
-            wf,  
-            beta,  
-            gamma,
-        )  
+        probs = jitted_global_speaker(
+            states, alpha, color_sem, form_sem, k, wf, beta, gamma, epsilon
+        )
         if empirical is None:
             numpyro.sample("obs", dist.Categorical(probs=probs))
         else:
@@ -469,24 +549,38 @@ for t in range(T):
             actual_onehot_np[t, u, tok] = 1.0
 ACTUAL_TOK_ONEHOT = jnp.asarray(actual_onehot_np)   # (T, n_utt, 3)
 
-# =============================================================================  
-# INCREMENTAL SPEAKER  
-# =============================================================================  
+# ── Number of words per utterance (for length bias) ──────────────────────────
+N_WORDS = jnp.sum(jnp.array(utterance_list) >= 0, axis=1).astype(jnp.float32)  # (n_utt,)
+
+# ── First word of each utterance (for first-word intercepts) ─────────────────
+# D=0, C=1, F=2 → one-hot masks for first-word bias
+FIRST_WORD = jnp.array(utterance_list)[:, 0]  # (n_utt,) first token of each utterance
+# Binary masks: which utterances start with C / F (D is reference)
+STARTS_C = (FIRST_WORD == 1).astype(jnp.float32)  # (n_utt,)
+STARTS_F = (FIRST_WORD == 2).astype(jnp.float32)  # (n_utt,)
+
+# =============================================================================
+# INCREMENTAL SPEAKER
+# =============================================================================
 
 def incremental_speaker(
     states:       jnp.ndarray,
-    alpha:        float = 3.0,
+    alpha_D:      float = 3.0,
+    alpha_C:      float = 3.0,
+    alpha_F:      float = 3.0,
     color_semval: float = 0.95,
     form_semval:  float = 0.80,
     k:            float = 0.50,
     wf:           float = 1.00,
     beta:         float = 1.00,
-    gamma:        float = 1.00,
+    gamma:        float = 0.0,
+    epsilon:      float = 0.01,
 ) -> jnp.ndarray:
 
     eps            = 1e-8
     referent_index = 0
     n_obj          = states.shape[0]
+    alpha_vec      = jnp.array([alpha_D, alpha_C, alpha_F])
 
     # ── NEW: extract sizes once here ──────────────────────────────────────────
     # states[:, 0] would be re-executed inside every vmap call without this
@@ -530,7 +624,6 @@ def incremental_speaker(
                 post,
                 k,
                 wf,
-                gamma,
             )
             return jnp.log(jnp.clip(sv, eps))
 
@@ -568,7 +661,7 @@ def incremental_speaker(
         # ── Step 4: masked softmax ─────────────────────────────────────────────
         logits      = jnp.where(
             cand_mask_t,
-            alpha * log_L_ref,
+            alpha_vec[None, :] * log_L_ref,
             -1e9,
         )
         local_probs = jax.nn.softmax(logits, axis=-1)                # (n_utt, 3)
@@ -598,31 +691,36 @@ def incremental_speaker(
         new_per_utt_posts = jnp.exp(log_updated_post - log_Z_post)  # (n_utt, n_obj)
 
         return (log_scores + log_chosen, new_per_utt_posts), None
-    
+
     (log_final_scores, _), _ = lax.scan(
         step,
         (init_scores, init_posts),
         jnp.arange(T),
     )
 
-    log_unnorm = log_P_beta + log_final_scores                        # (n_utt,)
-    return jax.nn.softmax(log_unnorm)                                 # (n_utt,)
+    log_unnorm = log_P_beta + log_final_scores + gamma * N_WORDS      # (n_utt,)
+    model_probs = jax.nn.softmax(log_unnorm)                           # (n_utt,)
+    return (1.0 - epsilon) * model_probs + epsilon / n_utt
 
 
 def incremental_speaker_frozen(
     states:       jnp.ndarray,
-    alpha:        float = 3.0,
+    alpha_D:      float = 3.0,
+    alpha_C:      float = 3.0,
+    alpha_F:      float = 3.0,
     color_semval: float = 0.95,
     form_semval:  float = 0.80,
     k:            float = 0.50,
     wf:           float = 1.00,
     beta:         float = 1.00,
-    gamma:        float = 1.00,
+    gamma:        float = 0.0,
+    epsilon:      float = 0.01,
 ) -> jnp.ndarray:
 
     eps            = 1e-8
     referent_index = 0
     n_obj          = states.shape[0]
+    alpha_vec      = jnp.array([alpha_D, alpha_C, alpha_F])
 
     sizes = states[:, 0]
     size_sort_idx = jnp.argsort(sizes)
@@ -653,7 +751,6 @@ def incremental_speaker_frozen(
             post,
             k,
             wf,
-            gamma,
         )
         return jnp.log(jnp.clip(sv, eps))
 
@@ -681,7 +778,7 @@ def incremental_speaker_frozen(
         log_norm = log_updated - log_Z[:, :, None]
         log_L_ref = log_norm[:, :, referent_index]
 
-        logits = jnp.where(cand_mask_t, alpha * log_L_ref, -1e9)
+        logits = jnp.where(cand_mask_t, alpha_vec[None, :] * log_L_ref, -1e9)
         local_probs = jax.nn.softmax(logits, axis=-1)
 
         chosen = jnp.sum(local_probs * ACTUAL_TOK_ONEHOT[t], axis=-1)
@@ -702,57 +799,414 @@ def incremental_speaker_frozen(
 
     (log_final_scores, _), _ = lax.scan(step, (init_scores, init_posts), jnp.arange(T))
 
+    log_unnorm = log_P_beta + log_final_scores + gamma * N_WORDS
+    model_probs = jax.nn.softmax(log_unnorm)
+    return (1.0 - epsilon) * model_probs + epsilon / n_utt
+
+
+def incremental_speaker_lookahead(
+    states:       jnp.ndarray,
+    alpha:        float = 3.0,
+    color_semval: float = 0.95,
+    form_semval:  float = 0.80,
+    k:            float = 0.50,
+    wf:           float = 1.00,
+    beta:         float = 1.00,
+) -> jnp.ndarray:
+    """Incremental speaker with d=1 lookahead at step 0, greedy at steps 1+.
+
+    At step 0, each candidate first token is scored by the BEST 2-token
+    continuation (max over valid second tokens), not by immediate
+    informativeness.  Steps 1+ are identical to the greedy incremental speaker.
+    """
+
+    eps            = 1e-8
+    referent_index = 0
+    n_obj          = states.shape[0]
+
+    sizes = states[:, 0]
+    size_sort_idx = jnp.argsort(sizes)
+    sizes_sorted  = sizes[size_sort_idx]
+
+    lm_scaled  = jnp.power(jnp.clip(LM_PRIOR_15, eps), beta)
+    log_P_beta = jnp.log(lm_scaled / jnp.sum(lm_scaled))
+
+    colors = states[:, 1]
+    forms  = states[:, 2]
+    log_color_sem = jnp.log(
+        jnp.where(colors == 1, color_semval, 1.0 - color_semval) + eps
+    )
+    log_form_sem = jnp.log(
+        jnp.where(forms == 1, form_semval, 1.0 - form_semval) + eps
+    )
+
+    uniform     = jnp.ones(n_obj) / n_obj
+    init_scores = jnp.zeros(n_utt)
+    init_posts  = jnp.broadcast_to(uniform, (n_utt, n_obj))
+
+    # ── Lookahead precomputation ────────────────────────────────────
+    # Size semantics at step 0 (from uniform prior)
+    size_sem_0 = compute_size_semantics_fast_presorted(
+        sizes, size_sort_idx, sizes_sorted, uniform, k, wf
+    )
+    log_size_sem_0 = jnp.log(jnp.clip(size_sem_0, eps))
+
+    # Per-dimension log-semantics: (3, n_obj)  [D=size, C=color, F=form]
+    log_sem_all = jnp.stack([log_size_sem_0, log_color_sem, log_form_sem])
+
+    # Posterior after each possible first token: post_a ∝ uniform · sem(a)
+    log_post_1 = jnp.log(uniform + eps)[None, :] + log_sem_all   # (3, n_obj)
+    log_post_1 = log_post_1 - jax.scipy.special.logsumexp(
+        log_post_1, axis=-1, keepdims=True
+    )
+    post_1 = jnp.exp(log_post_1)                                  # (3, n_obj)
+
+    # Recursive size semantics recomputed from each updated posterior
+    def _size_after(post):
+        sv = compute_size_semantics_fast_presorted(
+            sizes, size_sort_idx, sizes_sorted, post, k, wf
+        )
+        return jnp.log(jnp.clip(sv, eps))
+    log_size_after = jax.vmap(_size_after)(post_1)                 # (3, n_obj)
+
+    # Step-1 sem table conditioned on first token:
+    # log_sem_1[a, dim, obj]  (3, 3, n_obj)
+    log_sem_1 = jnp.stack([
+        log_size_after,
+        jnp.broadcast_to(log_color_sem[None, :], (3, n_obj)),
+        jnp.broadcast_to(log_form_sem[None, :],  (3, n_obj)),
+    ], axis=1)
+
+    # L(s* | first=a, second=a') for all 3×3 pairs
+    log_joint = log_post_1[:, None, :] + log_sem_1                 # (3, 3, n_obj)
+    log_Z_la  = jax.scipy.special.logsumexp(log_joint, axis=-1)    # (3, 3)
+    log_L_2   = log_joint[:, :, referent_index] - log_Z_la         # (3, 3)
+
+    # Mask self-repetition (can't use same dimension twice)
+    valid = 1.0 - jnp.eye(3)
+    log_L_2_masked = jnp.where(valid > 0, log_L_2, -1e9)
+
+    # Lookahead value per first token = max over valid second tokens
+    lookahead_val = jnp.max(log_L_2_masked, axis=-1)              # (3,)
+
+    # ── Scan (step 0 → lookahead, steps 1-2 → greedy) ──────────────
+    def step(carry, t):
+        log_scores, per_utt_posts = carry
+        cand_mask_t = CANDIDATE_MASK[t]
+        active_t    = ACTIVE_POS[t]
+
+        # Size semantics per utterance (recursive)
+        def size_log_sem_for_utt(post):
+            sv = compute_size_semantics_fast_presorted(
+                sizes, size_sort_idx, sizes_sorted, post, k, wf,
+            )
+            return jnp.log(jnp.clip(sv, eps))
+        size_log_sems = jax.vmap(size_log_sem_for_utt)(per_utt_posts)
+
+        log_sem_static = jnp.stack([log_color_sem, log_form_sem], axis=0)
+        log_sem_table = jnp.concatenate([
+            size_log_sems[:, None, :],
+            jnp.broadcast_to(log_sem_static[None, :, :], (n_utt, 2, n_obj)),
+        ], axis=1)
+
+        # Greedy candidate scores
+        token_pres_t = TOKEN_PRESENT[t]
+        log_prod_sem = jnp.einsum(
+            "uav, uvo -> uao", token_pres_t, log_sem_table
+        )
+        log_per_utt_posts = jnp.log(jnp.clip(per_utt_posts, eps))
+        log_updated = log_per_utt_posts[:, None, :] + log_prod_sem
+        log_Z_step  = jax.scipy.special.logsumexp(log_updated, axis=-1)
+        log_L_ref   = log_updated[:, :, referent_index] - log_Z_step
+
+        greedy_logits = jnp.where(cand_mask_t, alpha * log_L_ref, -1e9)
+
+        # Lookahead logits (broadcast: same value for all utterances at step 0)
+        la_logits = jnp.where(
+            cand_mask_t,
+            alpha * jnp.broadcast_to(lookahead_val[None, :], (n_utt, 3)),
+            -1e9,
+        )
+
+        logits      = jnp.where(t == 0, la_logits, greedy_logits)
+        local_probs = jax.nn.softmax(logits, axis=-1)
+
+        chosen     = jnp.sum(local_probs * ACTUAL_TOK_ONEHOT[t], axis=-1)
+        chosen     = jnp.where(active_t, chosen, 1.0)
+        log_chosen = jnp.where(active_t, jnp.log(jnp.clip(chosen, eps)), 0.0)
+
+        # Posterior update
+        selected_log_sem = jnp.einsum(
+            "uv, uvo -> uo", ACTUAL_TOK_ONEHOT[t], log_sem_table,
+        )
+        log_updated_post = log_per_utt_posts + jnp.where(
+            active_t[:, None], selected_log_sem, 0.0,
+        )
+        log_Z_post        = jax.scipy.special.logsumexp(
+            log_updated_post, axis=-1, keepdims=True
+        )
+        new_per_utt_posts = jnp.exp(log_updated_post - log_Z_post)
+
+        return (log_scores + log_chosen, new_per_utt_posts), None
+
+    (log_final_scores, _), _ = lax.scan(
+        step, (init_scores, init_posts), jnp.arange(T),
+    )
+
     log_unnorm = log_P_beta + log_final_scores
     return jax.nn.softmax(log_unnorm)
 
-# ── Vectorise over trials ──────────────────────────────────────────────────────  
-vectorized_incremental_speaker = jax.vmap(  
-    incremental_speaker,  
-    in_axes=(0,    # states      — one trial per row  
-             None, # alpha  
-             None, # color_semval  
-             None, # form_semval  
-             None, # k  
-             None, # wf  
-             None, # beta  
-             0,    # gamma (per-trial sharpness-conditioned gain)
-             ),  
-)  
 
-vectorized_incremental_speaker_frozen = jax.vmap(
-    incremental_speaker_frozen,
-    in_axes=(0,
-             None,
-             None,
-             None,
-             None,
-             None,
-             None,
-             0,
+# =============================================================================
+# EXTENDED INCREMENTAL SPEAKER (per-dim alpha, length bias, lapse rate)
+# =============================================================================
+
+def incremental_speaker_extended(
+    states:       jnp.ndarray,
+    alpha:        float = 3.0,
+    color_semval: float = 0.971,
+    form_semval:  float = 0.50,
+    k:            float = 0.50,
+    wf:           float = 1.00,
+    beta:         float = 1.00,
+    gamma:        float = 0.00,
+    epsilon:      float = 0.01,
+    mu_C:         float = 0.00,
+    mu_F:         float = 0.00,
+) -> jnp.ndarray:
+    """Incremental speaker with shared rationality, step-level mention biases,
+    length bias, and lapse rate.
+
+    Parameters
+    ----------
+    alpha : shared rationality (scales informativeness for all dimensions)
+    gamma : length bias (positive → prefer longer utterances)
+    epsilon : lapse rate (mixture weight on uniform)
+    mu_C, mu_F : step-level mention biases (D = 0 reference).
+        Positive values increase the tendency to mention that dimension
+        regardless of informativeness (captures redundant modification).
+    """
+
+    eps            = 1e-8
+    referent_index = 0
+    n_obj          = states.shape[0]
+
+    sizes = states[:, 0]
+    size_sort_idx = jnp.argsort(sizes)
+    sizes_sorted = sizes[size_sort_idx]
+
+    mu_vec = jnp.array([0.0, mu_C, mu_F])                     # (3,)
+
+    lm_scaled  = jnp.power(jnp.clip(LM_PRIOR_15, eps), beta)
+    log_P_beta = jnp.log(lm_scaled / jnp.sum(lm_scaled))
+
+    colors = states[:, 1]
+    forms  = states[:, 2]
+
+    log_color_sem = jnp.log(
+        jnp.where(colors == 1, color_semval, 1.0 - color_semval) + eps
+    )
+    log_form_sem  = jnp.log(
+        jnp.where(forms  == 1, form_semval,  1.0 - form_semval)  + eps
+    )
+
+    uniform     = jnp.ones(n_obj) / n_obj
+    init_scores = jnp.zeros(n_utt)
+    init_posts  = jnp.broadcast_to(uniform, (n_utt, n_obj))
+
+    def step(carry, t):
+        log_scores, per_utt_posts = carry
+
+        cand_mask_t = CANDIDATE_MASK[t]
+        active_t    = ACTIVE_POS[t]
+
+        # Size log-semantics per utterance (recursive)
+        def size_log_sem_for_utt(post):
+            sv = compute_size_semantics_fast_presorted(
+                sizes, size_sort_idx, sizes_sorted, post, k, wf,
+            )
+            return jnp.log(jnp.clip(sv, eps))
+
+        size_log_sems = jax.vmap(size_log_sem_for_utt)(per_utt_posts)
+
+        log_sem_static = jnp.stack([log_color_sem, log_form_sem], axis=0)
+        log_sem_table = jnp.concatenate([
+            size_log_sems[:, None, :],
+            jnp.broadcast_to(log_sem_static[None, :, :], (n_utt, 2, n_obj)),
+        ], axis=1)
+
+        # Candidate scores via TOKEN_PRESENT einsum
+        token_pres_t = TOKEN_PRESENT[t]
+        log_prod_sem = jnp.einsum(
+            "uav, uvo -> uao", token_pres_t, log_sem_table
+        )
+
+        log_per_utt_posts = jnp.log(jnp.clip(per_utt_posts, eps))
+        log_updated = log_per_utt_posts[:, None, :] + log_prod_sem
+
+        log_Z    = jax.scipy.special.logsumexp(log_updated, axis=-1)
+        log_norm = log_updated - log_Z[:, :, None]
+        log_L_ref = log_norm[:, :, referent_index]
+
+        # Shared alpha * informativeness + per-dimension mention bias
+        logits = jnp.where(
+            cand_mask_t,
+            alpha * log_L_ref + mu_vec[None, :],
+            -1e9,
+        )
+        local_probs = jax.nn.softmax(logits, axis=-1)
+
+        chosen = jnp.sum(local_probs * ACTUAL_TOK_ONEHOT[t], axis=-1)
+        chosen     = jnp.where(active_t, chosen, 1.0)
+        log_chosen = jnp.where(active_t, jnp.log(jnp.clip(chosen, eps)), 0.0)
+
+        # Posterior update
+        selected_log_sem = jnp.einsum(
+            "uv, uvo -> uo", ACTUAL_TOK_ONEHOT[t], log_sem_table,
+        )
+        log_updated_post = log_per_utt_posts + jnp.where(
+            active_t[:, None], selected_log_sem, 0.0,
+        )
+        log_Z_post        = jax.scipy.special.logsumexp(
+            log_updated_post, axis=-1, keepdims=True
+        )
+        new_per_utt_posts = jnp.exp(log_updated_post - log_Z_post)
+
+        return (log_scores + log_chosen, new_per_utt_posts), None
+
+    (log_final_scores, _), _ = lax.scan(
+        step, (init_scores, init_posts), jnp.arange(T),
+    )
+
+    # Length bias (mu already applied at each step inside the scan)
+    log_unnorm = log_P_beta + log_final_scores + gamma * N_WORDS
+
+    # Model probs before lapse
+    model_probs = jax.nn.softmax(log_unnorm)
+
+    # Lapse: mix with uniform
+    probs = (1.0 - epsilon) * model_probs + epsilon / n_utt
+
+    return probs
+
+
+# ── Vectorise over trials ──────────────────────────────────────────────────────
+vectorized_incremental_speaker = jax.vmap(
+    incremental_speaker,
+    in_axes=(0,    # states      — one trial per row
+             None, # alpha_D
+             None, # alpha_C
+             None, # alpha_F
+             None, # color_semval
+             None, # form_semval
+             None, # k
+             None, # wf
+             None, # beta
+             None, # gamma
+             None, # epsilon
              ),
 )
 
-# ── Pre JIT ──────────────────────────────────────────────────────  
-@jax.jit  
-def jitted_speaker(states, alpha, color_semval, form_semval, k, wf, beta, gamma):  
-    return vectorized_incremental_speaker(  
-        states, alpha, color_semval, form_semval, k, wf, beta, gamma  
-    )  
+vectorized_incremental_speaker_frozen = jax.vmap(
+    incremental_speaker_frozen,
+    in_axes=(0,    # states
+             None, # alpha_D
+             None, # alpha_C
+             None, # alpha_F
+             None, # color_semval
+             None, # form_semval
+             None, # k
+             None, # wf
+             None, # beta
+             None, # gamma
+             None, # epsilon
+             ),
+)
 
+vectorized_incremental_speaker_lookahead = jax.vmap(
+    incremental_speaker_lookahead,
+    in_axes=(0, None, None, None, None, None, None),
+)
 
+# ── Pre JIT ──────────────────────────────────────────────────────
 @jax.jit
-def jitted_speaker_frozen(states, alpha, color_semval, form_semval, k, wf, beta, gamma):
-    return vectorized_incremental_speaker_frozen(
-        states, alpha, color_semval, form_semval, k, wf, beta, gamma
+def jitted_speaker(states, alpha_D, alpha_C, alpha_F, color_semval, form_semval, k, wf, beta, gamma, epsilon):
+    return vectorized_incremental_speaker(
+        states, alpha_D, alpha_C, alpha_F, color_semval, form_semval, k, wf, beta, gamma, epsilon
     )
 
-# Warm it up with dummy values matching your actual shapes/dtypes  
-_dummy_states = jnp.ones((len(states), 6, 3))  
-_dummy_gamma = jnp.ones((len(states),), dtype=jnp.float32)
-_ = jitted_speaker(_dummy_states, 3.0, 0.95, 0.80, 0.5, 1.0, 1.0, _dummy_gamma)  
-_.block_until_ready()  
-_ = jitted_speaker_frozen(_dummy_states, 3.0, 0.95, 0.80, 0.5, 1.0, 1.0, _dummy_gamma)
-_.block_until_ready()
+@jax.jit
+def jitted_speaker_frozen(states, alpha_D, alpha_C, alpha_F, color_semval, form_semval, k, wf, beta, gamma, epsilon):
+    return vectorized_incremental_speaker_frozen(
+        states, alpha_D, alpha_C, alpha_F, color_semval, form_semval, k, wf, beta, gamma, epsilon
+    )
+
+@jax.jit
+def jitted_speaker_lookahead(states, alpha, color_semval, form_semval, k, wf, beta):
+    return vectorized_incremental_speaker_lookahead(
+        states, alpha, color_semval, form_semval, k, wf, beta
+    )
+
+# ── Extended speaker vectorize + JIT ─────────────────────────────────────────
+vectorized_incremental_speaker_extended = jax.vmap(
+    incremental_speaker_extended,
+    in_axes=(0,    # states
+             None, # alpha
+             None, # color_semval
+             None, # form_semval
+             None, # k
+             None, # wf
+             None, # beta
+             None, # gamma
+             None, # epsilon
+             None, # mu_C
+             None, # mu_F
+             ),
+)
+
+@jax.jit
+def jitted_speaker_extended(states, alpha, color_semval, form_semval,
+                             k, wf, beta, gamma, epsilon, mu_C, mu_F):
+    return vectorized_incremental_speaker_extended(
+        states, alpha, color_semval, form_semval, k, wf, beta,
+        gamma, epsilon, mu_C, mu_F,
+    )
+
+# Hierarchical: per-trial alpha
+vectorized_incremental_speaker_extended_hier = jax.vmap(
+    incremental_speaker_extended,
+    in_axes=(0,    # states
+             0,    # alpha  ← per-trial
+             None, # color_semval
+             None, # form_semval
+             None, # k
+             None, # wf
+             None, # beta
+             None, # gamma
+             None, # epsilon
+             None, # mu_C
+             None, # mu_F
+             ),
+)
+
+@jax.jit
+def jitted_speaker_extended_hier(states, alpha_per_trial, color_semval,
+                                  form_semval, k, wf, beta, gamma, epsilon,
+                                  mu_C, mu_F):
+    return vectorized_incremental_speaker_extended_hier(
+        states, alpha_per_trial, color_semval, form_semval, k, wf, beta,
+        gamma, epsilon, mu_C, mu_F,
+    )
+
+# Warm up JIT with dummy values
+_dummy_states = jnp.ones((len(states), 6, 3))
+try:
+    _ = jitted_speaker(_dummy_states, 3.0, 3.0, 3.0, 0.95, 0.80, 0.5, 1.0, 1.0, 0.0, 0.01)
+    _.block_until_ready()
+    _ = jitted_speaker_frozen(_dummy_states, 3.0, 3.0, 3.0, 0.95, 0.80, 0.5, 1.0, 1.0, 0.0, 0.01)
+    _.block_until_ready()
+except Exception as e:
+    print(f"JIT warmup skipped: {e}")
 
 
 
@@ -769,75 +1223,126 @@ vectorized_global_speaker_hier = jax.vmap(
              None, # k
              None, # wf
              None, # beta
-             0,    # gamma (per-trial sharpness-conditioned gain)
+             None, # gamma
+             None, # epsilon
              ),
 )
 
 @jax.jit
-def jitted_global_speaker_hier(states, alpha_per_trial, color_semval, form_semval, k, wf, beta, gamma):
+def jitted_global_speaker_hier(states, alpha_per_trial, color_semval, form_semval, k, wf, beta, gamma, epsilon):
     return vectorized_global_speaker_hier(
-        states, alpha_per_trial, color_semval, form_semval, k, wf, beta, gamma
+        states, alpha_per_trial, color_semval, form_semval, k, wf, beta, gamma, epsilon
     )
 
 vectorized_incremental_speaker_hier = jax.vmap(
     incremental_speaker,
     in_axes=(0,    # states
-             0,    # alpha  ← per-trial
+             0,    # alpha_D  ← per-trial
+             0,    # alpha_C  ← per-trial
+             0,    # alpha_F  ← per-trial
              None, # color_semval
              None, # form_semval
              None, # k
              None, # wf
              None, # beta
-             0,    # gamma
+             None, # gamma
+             None, # epsilon
              ),
 )
 
 @jax.jit
-def jitted_speaker_hier(states, alpha_per_trial, color_semval, form_semval, k, wf, beta, gamma):
+def jitted_speaker_hier(states, alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+                         color_semval, form_semval, k, wf, beta, gamma, epsilon):
     return vectorized_incremental_speaker_hier(
-        states, alpha_per_trial, color_semval, form_semval, k, wf, beta, gamma
+        states, alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+        color_semval, form_semval, k, wf, beta, gamma, epsilon
+    )
+
+# --- Static-semantics hierarchical vmaps ---
+
+vectorized_global_speaker_static_hier = jax.vmap(
+    global_speaker_static,
+    in_axes=(0,    # states
+             0,    # alpha  ← per-trial
+             None, # color_sem
+             None, # form_sem
+             None, # k
+             None, # wf
+             None, # beta
+             None, # gamma
+             None, # epsilon
+             ),
+)
+
+@jax.jit
+def jitted_global_speaker_static_hier(states, alpha_per_trial, color_semval, form_semval, k, wf, beta, gamma, epsilon):
+    return vectorized_global_speaker_static_hier(
+        states, alpha_per_trial, color_semval, form_semval, k, wf, beta, gamma, epsilon
+    )
+
+vectorized_incremental_speaker_frozen_hier = jax.vmap(
+    incremental_speaker_frozen,
+    in_axes=(0,    # states
+             0,    # alpha_D  ← per-trial
+             0,    # alpha_C  ← per-trial
+             0,    # alpha_F  ← per-trial
+             None, # color_semval
+             None, # form_semval
+             None, # k
+             None, # wf
+             None, # beta
+             None, # gamma
+             None, # epsilon
+             ),
+)
+
+@jax.jit
+def jitted_speaker_frozen_hier(states, alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+                                color_semval, form_semval, k, wf, beta, gamma, epsilon):
+    return vectorized_incremental_speaker_frozen_hier(
+        states, alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+        color_semval, form_semval, k, wf, beta, gamma, epsilon
+    )
+
+vectorized_incremental_speaker_lookahead_hier = jax.vmap(
+    incremental_speaker_lookahead,
+    in_axes=(0, 0, None, None, None, None, None),
+)
+
+@jax.jit
+def jitted_speaker_lookahead_hier(states, alpha_per_trial, color_semval, form_semval, k, wf, beta):
+    return vectorized_incremental_speaker_lookahead_hier(
+        states, alpha_per_trial, color_semval, form_semval, k, wf, beta
     )
 
 
 def likelihood_function_global_speaker_hier(
-    states=None, empirical=None, sharpness_idx=None,
+    states=None, empirical=None,
     participant_idx=None, n_participants=None,
 ):
-    """Global speaker with per-participant random effects on alpha.
-
-    Population priors:
-        alpha    ~ HalfNormal(5.0)
-        log_beta ~ Normal(0.0, 0.5)
-    Participant-level random intercepts:
-        tau     ~ HalfNormal(0.2)   # SD of rationality shifts
-        delta_i ~ Normal(0, tau)    # per-participant alpha offset
-    Observation model:
-        alpha_j = max(alpha + delta[participant_idx[j]], 0)
-        obs_j  ~ Categorical(global_speaker(state_j, alpha_j, ...))
-    """
-    color_sem = 0.8
-    form_sem  = 0.7
+    """Global speaker with per-participant random effects on alpha."""
+    color_sem = 0.971
+    form_sem  = 0.50
     k         = 0.5
     wf        = 1.0
 
     log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
     beta     = jnp.exp(log_beta)
 
-    alpha = numpyro.sample("alpha", dist.HalfNormal(5.0))
-    tau   = numpyro.sample("tau",   dist.HalfNormal(0.2))
+    alpha   = numpyro.sample("alpha", dist.HalfNormal(5.0))
+    # gamma and epsilon fixed at incremental posterior means (not identifiable in global)
+    gamma   = 2.32
+    epsilon = 0.23
+    tau     = numpyro.sample("tau",   dist.HalfNormal(0.2))
 
     with numpyro.plate("participants", n_participants):
         delta = numpyro.sample("delta", dist.Normal(0.0, tau))
-
-    if sharpness_idx is None:
-        sharpness_idx = jnp.zeros((len(states),), dtype=jnp.float32)
-    gamma = jnp.where(sharpness_idx > 0.5, GAMMA_SHARP, GAMMA_BLURRED)
 
     alpha_per_trial = jnp.maximum(alpha + delta[participant_idx], 0.0)
 
     with numpyro.plate("data", len(states)):
         probs = jitted_global_speaker_hier(
-            states, alpha_per_trial, color_sem, form_sem, k, wf, beta, gamma
+            states, alpha_per_trial, color_sem, form_sem, k, wf, beta, gamma, epsilon
         )
         if empirical is None:
             numpyro.sample("obs", dist.Categorical(probs=probs))
@@ -846,18 +1351,261 @@ def likelihood_function_global_speaker_hier(
 
 
 def likelihood_function_incremental_speaker_hier(
-    states=None, empirical=None, sharpness_idx=None,
+    states=None, empirical=None,
     participant_idx=None, n_participants=None,
 ):
-    """Incremental speaker with per-participant random effects on alpha.
-
-    Same structure as likelihood_function_global_speaker_hier but uses
-    the incremental RSA speaker.
-    """
-    color_semval = 0.8
-    form_semval  = 0.7
+    """Incremental speaker with per-participant random effects on alpha."""
+    color_semval = 0.971
+    form_semval  = 0.50
     k            = 0.5
     wf           = 1.0
+
+    log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
+    beta     = jnp.exp(log_beta)
+
+    alpha_D  = numpyro.sample("alpha_D", dist.HalfNormal(5.0))
+    alpha_C  = numpyro.sample("alpha_C", dist.HalfNormal(5.0))
+    alpha_F  = numpyro.sample("alpha_F", dist.HalfNormal(5.0))
+    gamma    = numpyro.sample("gamma", dist.Normal(0.0, 1.0))
+    epsilon  = numpyro.sample("epsilon", dist.Beta(1.0, 50.0))
+    tau      = numpyro.sample("tau",   dist.HalfNormal(0.2))
+
+    with numpyro.plate("participants", n_participants):
+        delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+    alpha_D_per_trial = jnp.maximum(alpha_D + delta[participant_idx], 0.0)
+    alpha_C_per_trial = jnp.maximum(alpha_C + delta[participant_idx], 0.0)
+    alpha_F_per_trial = jnp.maximum(alpha_F + delta[participant_idx], 0.0)
+
+    with numpyro.plate("data", len(states)):
+        probs = jitted_speaker_hier(
+            states, alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+            color_semval, form_semval, k, wf, beta, gamma, epsilon
+        )
+        if empirical is None:
+            numpyro.sample("obs", dist.Categorical(probs=probs))
+        else:
+            numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+
+
+def likelihood_function_incremental_speaker(states=None, empirical=None):
+    color_semval = 0.971
+    form_semval  = 0.50
+    k  = 0.5
+    wf = 1.0
+
+    alpha_D  = numpyro.sample("alpha_D", dist.HalfNormal(5.0))
+    alpha_C  = numpyro.sample("alpha_C", dist.HalfNormal(5.0))
+    alpha_F  = numpyro.sample("alpha_F", dist.HalfNormal(5.0))
+    log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
+    beta     = jnp.exp(log_beta)
+    gamma    = numpyro.sample("gamma", dist.Normal(0.0, 1.0))
+    epsilon  = numpyro.sample("epsilon", dist.Beta(1.0, 50.0))
+
+    with numpyro.plate("data", len(states)):
+        probs = jitted_speaker(
+            states, alpha_D, alpha_C, alpha_F, color_semval, form_semval, k, wf, beta, gamma, epsilon
+        )
+        if empirical is None:
+            numpyro.sample("obs", dist.Categorical(probs=probs))
+        else:
+            numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+
+
+# =============================================================================
+# STATIC-SEMANTICS LIKELIHOOD FUNCTIONS
+# =============================================================================
+
+def likelihood_function_global_speaker_static(states=None, empirical=None):
+    """Global speaker with STATIC size semantics (no context recursion)."""
+    color_sem = 0.971
+    form_sem  = 0.50
+    k  = 0.5
+    wf = 1.0
+
+    log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
+    beta     = jnp.exp(log_beta)
+    alpha    = numpyro.sample("alpha", dist.HalfNormal(5.0))
+    gamma    = numpyro.sample("gamma", dist.Normal(0.0, 1.0))
+    epsilon  = numpyro.sample("epsilon", dist.Beta(1.0, 50.0))
+
+    with numpyro.plate("data", len(states)):
+        probs = jitted_global_speaker_static(states, alpha, color_sem, form_sem, k, wf, beta, gamma, epsilon)
+        if empirical is None:
+            numpyro.sample("obs", dist.Categorical(probs=probs))
+        else:
+            numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+
+
+def likelihood_function_global_speaker_static_hier(
+    states=None, empirical=None,
+    participant_idx=None, n_participants=None,
+):
+    """Global speaker hierarchical + STATIC size semantics."""
+    color_sem = 0.971
+    form_sem  = 0.50
+    k  = 0.5
+    wf = 1.0
+
+    log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
+    beta     = jnp.exp(log_beta)
+    alpha    = numpyro.sample("alpha", dist.HalfNormal(5.0))
+    # gamma and epsilon fixed at incremental posterior means (not identifiable in global)
+    gamma    = 2.32
+    epsilon  = 0.23
+    tau      = numpyro.sample("tau",   dist.HalfNormal(0.2))
+
+    with numpyro.plate("participants", n_participants):
+        delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+    alpha_per_trial = jnp.maximum(alpha + delta[participant_idx], 0.0)
+
+    with numpyro.plate("data", len(states)):
+        probs = jitted_global_speaker_static_hier(states, alpha_per_trial, color_sem, form_sem, k, wf, beta, gamma, epsilon)
+        if empirical is None:
+            numpyro.sample("obs", dist.Categorical(probs=probs))
+        else:
+            numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+
+
+def likelihood_function_incremental_speaker_frozen(states=None, empirical=None):
+    """Incremental speaker with FROZEN (static) size semantics."""
+    color_semval = 0.971
+    form_semval  = 0.50
+    k  = 0.5
+    wf = 1.0
+
+    alpha_D  = numpyro.sample("alpha_D", dist.HalfNormal(5.0))
+    alpha_C  = numpyro.sample("alpha_C", dist.HalfNormal(5.0))
+    alpha_F  = numpyro.sample("alpha_F", dist.HalfNormal(5.0))
+    log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
+    beta     = jnp.exp(log_beta)
+    gamma    = numpyro.sample("gamma", dist.Normal(0.0, 1.0))
+    epsilon  = numpyro.sample("epsilon", dist.Beta(1.0, 50.0))
+
+    with numpyro.plate("data", len(states)):
+        probs = jitted_speaker_frozen(states, alpha_D, alpha_C, alpha_F, color_semval, form_semval, k, wf, beta, gamma, epsilon)
+        if empirical is None:
+            numpyro.sample("obs", dist.Categorical(probs=probs))
+        else:
+            numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+
+
+def likelihood_function_incremental_speaker_frozen_hier(
+    states=None, empirical=None,
+    participant_idx=None, n_participants=None,
+):
+    """Incremental speaker hierarchical + FROZEN (static) size semantics."""
+    color_semval = 0.971
+    form_semval  = 0.50
+    k  = 0.5
+    wf = 1.0
+
+    log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
+    beta     = jnp.exp(log_beta)
+    alpha_D  = numpyro.sample("alpha_D", dist.HalfNormal(5.0))
+    alpha_C  = numpyro.sample("alpha_C", dist.HalfNormal(5.0))
+    alpha_F  = numpyro.sample("alpha_F", dist.HalfNormal(5.0))
+    gamma    = numpyro.sample("gamma", dist.Normal(0.0, 1.0))
+    epsilon  = numpyro.sample("epsilon", dist.Beta(1.0, 50.0))
+    tau      = numpyro.sample("tau",   dist.HalfNormal(0.2))
+
+    with numpyro.plate("participants", n_participants):
+        delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+    alpha_D_per_trial = jnp.maximum(alpha_D + delta[participant_idx], 0.0)
+    alpha_C_per_trial = jnp.maximum(alpha_C + delta[participant_idx], 0.0)
+    alpha_F_per_trial = jnp.maximum(alpha_F + delta[participant_idx], 0.0)
+
+    with numpyro.plate("data", len(states)):
+        probs = jitted_speaker_frozen_hier(
+            states, alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+            color_semval, form_semval, k, wf, beta, gamma, epsilon
+        )
+        if empirical is None:
+            numpyro.sample("obs", dist.Categorical(probs=probs))
+        else:
+            numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+
+
+# =============================================================================
+# LM-PRIOR ABLATION LIKELIHOOD FUNCTIONS
+# =============================================================================
+
+def likelihood_function_incremental_lm_only_hier(
+    states=None, empirical=None,
+    participant_idx=None, n_participants=None,
+):
+    """LM-only ablation: alpha=0 (no RSA informativeness), infer only log_beta."""
+    color_semval = 0.971
+    form_semval  = 0.50
+    k, wf = 0.5, 1.0
+
+    log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
+    beta     = jnp.exp(log_beta)
+    gamma    = numpyro.sample("gamma", dist.Normal(0.0, 1.0))
+    epsilon  = numpyro.sample("epsilon", dist.Beta(1.0, 50.0))
+
+    alpha_zero = jnp.zeros(len(states))
+
+    with numpyro.plate("data", len(states)):
+        probs = jitted_speaker_hier(
+            states, alpha_zero, alpha_zero, alpha_zero,
+            color_semval, form_semval, k, wf, beta, gamma, epsilon
+        )
+        if empirical is None:
+            numpyro.sample("obs", dist.Categorical(probs=probs))
+        else:
+            numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+
+
+def likelihood_function_incremental_rsa_only_hier(
+    states=None, empirical=None,
+    participant_idx=None, n_participants=None,
+):
+    """RSA-only ablation: beta=0 (uniform LM prior), infer alpha + hier."""
+    color_semval = 0.971
+    form_semval  = 0.50
+    k, wf = 0.5, 1.0
+    beta = 0.0
+
+    alpha_D  = numpyro.sample("alpha_D", dist.HalfNormal(5.0))
+    alpha_C  = numpyro.sample("alpha_C", dist.HalfNormal(5.0))
+    alpha_F  = numpyro.sample("alpha_F", dist.HalfNormal(5.0))
+    gamma    = numpyro.sample("gamma", dist.Normal(0.0, 1.0))
+    epsilon  = numpyro.sample("epsilon", dist.Beta(1.0, 50.0))
+    tau      = numpyro.sample("tau",   dist.HalfNormal(0.2))
+
+    with numpyro.plate("participants", n_participants):
+        delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+    alpha_D_per_trial = jnp.maximum(alpha_D + delta[participant_idx], 0.0)
+    alpha_C_per_trial = jnp.maximum(alpha_C + delta[participant_idx], 0.0)
+    alpha_F_per_trial = jnp.maximum(alpha_F + delta[participant_idx], 0.0)
+
+    with numpyro.plate("data", len(states)):
+        probs = jitted_speaker_hier(
+            states, alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+            color_semval, form_semval, k, wf, beta, gamma, epsilon
+        )
+        if empirical is None:
+            numpyro.sample("obs", dist.Categorical(probs=probs))
+        else:
+            numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+
+
+# =============================================================================
+# LOOKAHEAD SPEAKER LIKELIHOOD FUNCTION
+# =============================================================================
+
+def likelihood_function_incremental_speaker_lookahead_hier(
+    states=None, empirical=None,
+    participant_idx=None, n_participants=None,
+):
+    """Incremental speaker with d=1 lookahead, per-participant random effects."""
+    color_semval = 0.971
+    form_semval  = 0.841
+    k, wf = 0.5, 1.0
 
     log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
     beta     = jnp.exp(log_beta)
@@ -868,15 +1616,11 @@ def likelihood_function_incremental_speaker_hier(
     with numpyro.plate("participants", n_participants):
         delta = numpyro.sample("delta", dist.Normal(0.0, tau))
 
-    if sharpness_idx is None:
-        sharpness_idx = jnp.zeros((len(states),), dtype=jnp.float32)
-    gamma = jnp.where(sharpness_idx > 0.5, GAMMA_SHARP, GAMMA_BLURRED)
-
     alpha_per_trial = jnp.maximum(alpha + delta[participant_idx], 0.0)
 
     with numpyro.plate("data", len(states)):
-        probs = jitted_speaker_hier(
-            states, alpha_per_trial, color_semval, form_semval, k, wf, beta, gamma
+        probs = jitted_speaker_lookahead_hier(
+            states, alpha_per_trial, color_semval, form_semval, k, wf, beta
         )
         if empirical is None:
             numpyro.sample("obs", dist.Categorical(probs=probs))
@@ -884,192 +1628,49 @@ def likelihood_function_incremental_speaker_hier(
             numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
 
 
-def likelihood_function_incremental_speaker(states = None, empirical = None, sharpness_idx = None, incremental_fast_mode: bool = False):
-    # ── Semantic parameters ───────────────────────────────────────────────────  
-    # # Infer color and form semantics; size semantics are computed from these via the
-    # phi_color  = numpyro.sample("phi_color", dist.HalfNormal(2.0))  
-    # color_semval = jax.nn.sigmoid(phi_color)           # ∈ (0.5, 1)  
+# =============================================================================
+# EXTENDED SPEAKER LIKELIHOOD FUNCTION
+# =============================================================================
 
-    # phi_form   = numpyro.sample("phi_form",  dist.HalfNormal(1.0))  
-    # form_semval  = jax.nn.sigmoid(phi_form)            # ∈ (0.5, 1)  
-
-    # Fixed color and form semantics
-    color_semval = 0.8
-    form_semval  = 0.7
-    # Infer k
-    # k    = numpyro.sample("k",     dist.Beta(2.0, 2.0))
-    # Fixed k
-    k = 0.5
-
-    # Infer wf 
-    # log_wf = numpyro.sample("log_wf", dist.TruncatedNormal(0.0, 0.5,  low=-1.0,  high=1.0))  
-    # wf        = jnp.exp(log_wf)                   # prior mean ≈ 1.0  
-    # Fixed wf
-    wf = 1.0
-
-    # Infer alpha
-    alpha = numpyro.sample("alpha", dist.HalfNormal(5.0))  # prior mean ≈ 4.0, but with long tail
-    
-    # Fixed alpha
-    #alpha  = 3.0    # fixed 
-
-    # Infer beta
-    log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
-    beta     = jnp.exp(log_beta)                 # prior mean ≈ 1.0 
-
-    if sharpness_idx is None:
-        sharpness_idx = jnp.zeros((len(states),), dtype=jnp.float32)
-    gamma = jnp.where(sharpness_idx > 0.5, GAMMA_SHARP, GAMMA_BLURRED)
-
-    # Fixed beta
-    #beta   = 1.0    # fixed: posterior was ~ exp(-0.03) ≈ 1.0  
-
-    # Define the likelihood function
-    with numpyro.plate("data", len(states)):
-        # Get vectorized incremental speaker output for all states
-        # For single output, it is shape (n_utt, n_obj)
-        speaker_fn = jitted_speaker_frozen if incremental_fast_mode else jitted_speaker
-        probs = speaker_fn(
-            states,
-            alpha,
-            color_semval,
-            form_semval,
-            k,
-            wf,
-            beta,
-            gamma,
-        )                                              # (N, n_utt)
-        if empirical is None:
-            numpyro.sample("obs", dist.Categorical(probs=probs))
-        else:
-            numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
-
-
-# ========================
-# Gamma-inferred variants
-# ========================
-
-def likelihood_function_global_speaker_gamma(states=None, empirical=None, sharpness_idx=None):
-    """Global speaker with inferred size-discriminability (gamma) per sharpness condition."""
-    color_sem = 0.8
-    form_sem  = 0.7
-    k         = 0.5
-    wf        = 1.0
-
-    log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
-    beta     = jnp.exp(log_beta)
-    alpha    = numpyro.sample("alpha", dist.HalfNormal(5.0))
-
-    log_gamma_blurred = numpyro.sample("log_gamma_blurred", dist.Normal(jnp.log(GAMMA_BLURRED), 0.5))
-    log_gamma_sharp   = numpyro.sample("log_gamma_sharp",   dist.Normal(jnp.log(GAMMA_SHARP),   0.5))
-
-    if sharpness_idx is None:
-        sharpness_idx = jnp.zeros((len(states),), dtype=jnp.float32)
-    gamma = jnp.where(sharpness_idx > 0.5, jnp.exp(log_gamma_sharp), jnp.exp(log_gamma_blurred))
-
-    with numpyro.plate("data", len(states)):
-        probs = jitted_global_speaker(states, alpha, color_sem, form_sem, k, wf, beta, gamma)
-        if empirical is None:
-            numpyro.sample("obs", dist.Categorical(probs=probs))
-        else:
-            numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
-
-
-def likelihood_function_incremental_speaker_gamma(states=None, empirical=None, sharpness_idx=None,
-                                                   incremental_fast_mode: bool = False):
-    """Incremental speaker with inferred size-discriminability (gamma) per sharpness condition."""
-    color_semval = 0.8
-    form_semval  = 0.7
-    k    = 0.5
-    wf   = 1.0
-
-    log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
-    beta     = jnp.exp(log_beta)
-    alpha    = numpyro.sample("alpha", dist.HalfNormal(5.0))
-
-    log_gamma_blurred = numpyro.sample("log_gamma_blurred", dist.Normal(jnp.log(GAMMA_BLURRED), 0.5))
-    log_gamma_sharp   = numpyro.sample("log_gamma_sharp",   dist.Normal(jnp.log(GAMMA_SHARP),   0.5))
-
-    if sharpness_idx is None:
-        sharpness_idx = jnp.zeros((len(states),), dtype=jnp.float32)
-    gamma = jnp.where(sharpness_idx > 0.5, jnp.exp(log_gamma_sharp), jnp.exp(log_gamma_blurred))
-
-    with numpyro.plate("data", len(states)):
-        speaker_fn = jitted_speaker_frozen if incremental_fast_mode else jitted_speaker
-        probs = speaker_fn(states, alpha, color_semval, form_semval, k, wf, beta, gamma)
-        if empirical is None:
-            numpyro.sample("obs", dist.Categorical(probs=probs))
-        else:
-            numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
-
-
-def likelihood_function_global_speaker_hier_gamma(
-    states=None, empirical=None, sharpness_idx=None,
+def likelihood_function_incremental_speaker_extended_hier(
+    states=None, empirical=None,
     participant_idx=None, n_participants=None,
 ):
-    """Global speaker hierarchical + inferred gamma."""
-    color_sem = 0.8
-    form_sem  = 0.7
-    k         = 0.5
-    wf        = 1.0
-
-    log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
-    beta     = jnp.exp(log_beta)
-    alpha    = numpyro.sample("alpha", dist.HalfNormal(5.0))
-    tau      = numpyro.sample("tau",   dist.HalfNormal(0.2))
-
-    with numpyro.plate("participants", n_participants):
-        delta = numpyro.sample("delta", dist.Normal(0.0, tau))
-
-    log_gamma_blurred = numpyro.sample("log_gamma_blurred", dist.Normal(jnp.log(GAMMA_BLURRED), 0.5))
-    log_gamma_sharp   = numpyro.sample("log_gamma_sharp",   dist.Normal(jnp.log(GAMMA_SHARP),   0.5))
-
-    if sharpness_idx is None:
-        sharpness_idx = jnp.zeros((len(states),), dtype=jnp.float32)
-    gamma = jnp.where(sharpness_idx > 0.5, jnp.exp(log_gamma_sharp), jnp.exp(log_gamma_blurred))
-
-    alpha_per_trial = jnp.maximum(alpha + delta[participant_idx], 0.0)
-
-    with numpyro.plate("data", len(states)):
-        probs = jitted_global_speaker_hier(
-            states, alpha_per_trial, color_sem, form_sem, k, wf, beta, gamma
-        )
-        if empirical is None:
-            numpyro.sample("obs", dist.Categorical(probs=probs))
-        else:
-            numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
-
-
-def likelihood_function_incremental_speaker_hier_gamma(
-    states=None, empirical=None, sharpness_idx=None,
-    participant_idx=None, n_participants=None,
-):
-    """Incremental speaker hierarchical + inferred gamma."""
-    color_semval = 0.8
-    form_semval  = 0.7
+    """Extended incremental speaker: per-dim alpha, step-level mention biases,
+    length bias, lapse rate."""
+    color_semval = 0.971
+    form_semval  = 0.50
     k            = 0.5
     wf           = 1.0
 
     log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
     beta     = jnp.exp(log_beta)
-    alpha    = numpyro.sample("alpha", dist.HalfNormal(5.0))
-    tau      = numpyro.sample("tau",   dist.HalfNormal(0.2))
+
+    # Shared rationality
+    alpha = numpyro.sample("alpha", dist.HalfNormal(5.0))
+
+    # Step-level mention biases (D = 0 reference)
+    mu_C = numpyro.sample("mu_C", dist.Normal(0.0, 2.0))
+    mu_F = numpyro.sample("mu_F", dist.Normal(0.0, 2.0))
+
+    # Length bias (positive = prefer longer utterances)
+    gamma = numpyro.sample("gamma", dist.Normal(0.0, 1.0))
+
+    # Lapse rate (tighter prior)
+    epsilon = numpyro.sample("epsilon", dist.Beta(2.0, 98.0))
+
+    # Hierarchical: participant offset on alpha
+    tau = numpyro.sample("tau", dist.HalfNormal(0.2))
 
     with numpyro.plate("participants", n_participants):
         delta = numpyro.sample("delta", dist.Normal(0.0, tau))
 
-    log_gamma_blurred = numpyro.sample("log_gamma_blurred", dist.Normal(jnp.log(GAMMA_BLURRED), 0.5))
-    log_gamma_sharp   = numpyro.sample("log_gamma_sharp",   dist.Normal(jnp.log(GAMMA_SHARP),   0.5))
-
-    if sharpness_idx is None:
-        sharpness_idx = jnp.zeros((len(states),), dtype=jnp.float32)
-    gamma = jnp.where(sharpness_idx > 0.5, jnp.exp(log_gamma_sharp), jnp.exp(log_gamma_blurred))
-
     alpha_per_trial = jnp.maximum(alpha + delta[participant_idx], 0.0)
 
     with numpyro.plate("data", len(states)):
-        probs = jitted_speaker_hier(
-            states, alpha_per_trial, color_semval, form_semval, k, wf, beta, gamma
+        probs = jitted_speaker_extended_hier(
+            states, alpha_per_trial, color_semval, form_semval,
+            k, wf, beta, gamma, epsilon, mu_C, mu_F,
         )
         if empirical is None:
             numpyro.sample("obs", dist.Categorical(probs=probs))
@@ -1078,385 +1679,23 @@ def likelihood_function_incremental_speaker_hier_gamma(
 
 
 # ========================
-def run_inference(speaker_type: str = "global",
-                    num_warmup: int = 100,
-                    num_samples: int = 250,
-                    num_chains: int = 4,
-                    incremental_fast_mode: bool = False,
-                    infer_gamma: bool = False,
-                    device: str = "cpu",
-                  ):
+def canonicalize_speaker_type(speaker_type: str) -> str:
+    """Map legacy CLI aliases to the canonical public model name."""
+    if speaker_type == "incremental_frozen":
+        return "incremental_static"
+    return speaker_type
 
-    # Setup output file name
-    gamma_suffix = "_gamma" if infer_gamma else ""
-    output_file_name = f"./inference_data/mcmc_results_{speaker_type}_speaker{gamma_suffix}_warmup{num_warmup}_samples{num_samples}_chains{num_chains}.nc"
-
-    # Delete if exists  
-    if os.path.exists(output_file_name):  
-        os.remove(output_file_name)  
-        print(f"Deleted existing file: {output_file_name}")  
-
-     
-    # Import dataset
-    data = import_dataset()
-    states_train = data["states_train"]
-    empirical_train_seq_flat = data["empirical_seq_flat"]
-    sharpness_idx = data["sharpness_idx"]
-
-    # Some printing for debugging
-    print("States train shape:", states_train.shape)
-    print("Empirical train flat shape:", empirical_train_seq_flat.shape)
-    print("Sharpness index shape:", sharpness_idx.shape)
-    print("Output file name:" , output_file_name)
-    
-    # run_from_map
-    MAP_GLOBAL = {"phi_color": 1.25, "phi_form": 1.0}  
-    MAP_INC    = {"phi_color": 1.20, "phi_form": 0.7} 
-    # Define the MCMC kernel and the number of samples
-    rng_key = random.PRNGKey(4711)
-    rng_key, rng_key_ = random.split(rng_key)
-
-    if speaker_type == "global":
-        model = likelihood_function_global_speaker_gamma if infer_gamma else likelihood_function_global_speaker
-        target_accept_prob = 0.9
-        max_tree_depth = 3
-    elif speaker_type == "incremental":
-        model = likelihood_function_incremental_speaker_gamma if infer_gamma else likelihood_function_incremental_speaker
-        target_accept_prob = 0.85
-        max_tree_depth = 2
-    else:
-        raise ValueError(f"Unknown speaker_type: {speaker_type}")
-    
-    kernel = NUTS(model, target_accept_prob=target_accept_prob, max_tree_depth=max_tree_depth)
-    mcmc = MCMC(kernel, num_warmup=num_warmup,num_samples=num_samples, num_chains=num_chains,
-                    chain_method="vectorized",           # ← vectorized chains for speed
-                    )
-    if speaker_type == "incremental":
-        mcmc.run(rng_key_, states_train, empirical_train_seq_flat, sharpness_idx, incremental_fast_mode)
-    else:
-        mcmc.run(rng_key_, states_train, empirical_train_seq_flat, sharpness_idx)
-
-    # print the summary of the posterior distribution
-    mcmc.print_summary()
-
-    # Get the MCMC samples and convert to a numpyro ArviZ InferenceData object
-    posterior_samples = mcmc.get_samples() 
-    if speaker_type == "incremental":
-        posterior_predictive = Predictive(model, posterior_samples)(
-            PRNGKey(1), states_train, None, sharpness_idx, incremental_fast_mode
-        )
-        prior = Predictive(model, num_samples=500)(
-            PRNGKey(2), states_train, None, sharpness_idx, incremental_fast_mode
-        )
-    else:
-        posterior_predictive = Predictive(model, posterior_samples)(
-            PRNGKey(1), states_train, None, sharpness_idx
-        )
-        prior = Predictive(model, num_samples=500)(
-            PRNGKey(2), states_train, None, sharpness_idx
-        )
-
-    N = states_train.shape[0]  # 3196
-
-    numpyro_data = az.from_numpyro(
-        mcmc,
-        prior=prior,
-        posterior_predictive=posterior_predictive,
-        coords={"item": np.arange(N)},
-        dims={"obs": ["item"]},
-    )
-
-    # Write the inference data to a netcdf file
-    az.to_netcdf(numpyro_data, output_file_name)
-
-def run_inference_hier(
-    speaker_type: str = "global",
-    num_warmup: int = 1000,
-    num_samples: int = 1000,
-    num_chains: int = 4,
-    infer_gamma: bool = False,
-    device: str = "cpu",
-):
-    """Run MCMC for the hierarchical (random participant alpha) speaker model.
-
-    Saves results to
-        ./inference_data/mcmc_results_{speaker_type}_speaker_hier[_gamma]_warmup{W}_samples{S}_chains{C}.nc
-    """
-    gamma_suffix = "_gamma" if infer_gamma else ""
-    output_file_name = (
-        f"./inference_data/mcmc_results_{speaker_type}_speaker_hier{gamma_suffix}"
-        f"_warmup{num_warmup}_samples{num_samples}_chains{num_chains}.nc"
-    )
-    if os.path.exists(output_file_name):
-        os.remove(output_file_name)
-        print(f"Deleted existing file: {output_file_name}")
-
-    data = import_dataset_hier()
-    states_train          = data["states_train"]
-    empirical_seq_flat    = data["empirical_seq_flat"]
-    sharpness_idx         = data["sharpness_idx"]
-    participant_idx       = data["participant_idx"]
-    n_participants        = data["n_participants"]
-
-    print(f"Hierarchical model: {n_participants} participants, {len(states_train)} observations")
-    print(f"Output file: {output_file_name}")
-
-    rng_key = random.PRNGKey(4711)
-    rng_key, rng_key_ = random.split(rng_key)
-
-    if speaker_type == "global":
-        model = likelihood_function_global_speaker_hier_gamma if infer_gamma else likelihood_function_global_speaker_hier
-        target_accept_prob = 0.9
-        max_tree_depth     = 3
-    elif speaker_type == "incremental":
-        model = likelihood_function_incremental_speaker_hier_gamma if infer_gamma else likelihood_function_incremental_speaker_hier
-        target_accept_prob = 0.85
-        max_tree_depth     = 2
-    else:
-        raise ValueError(f"Unknown speaker_type: {speaker_type}")
-
-    kernel = NUTS(model, target_accept_prob=target_accept_prob, max_tree_depth=max_tree_depth)
-    mcmc = MCMC(
-        kernel,
-        num_warmup=num_warmup,
-        num_samples=num_samples,
-        num_chains=num_chains,
-        chain_method="vectorized",
-    )
-    mcmc.run(
-        rng_key_,
-        states_train, empirical_seq_flat, sharpness_idx,
-        participant_idx, n_participants,
-    )
-    mcmc.print_summary(exclude_deterministic=False)
-
-    posterior_samples = mcmc.get_samples()
-    posterior_predictive = Predictive(model, posterior_samples)(
-        PRNGKey(1), states_train, None, sharpness_idx, participant_idx, n_participants
-    )
-    prior = Predictive(model, num_samples=500)(
-        PRNGKey(2), states_train, None, sharpness_idx, participant_idx, n_participants
-    )
-
-    N = states_train.shape[0]
-    numpyro_data = az.from_numpyro(
-        mcmc,
-        prior=prior,
-        posterior_predictive=posterior_predictive,
-        coords={
-            "item":         np.arange(N),
-            "participants": np.arange(n_participants),
-        },
-        dims={"obs": ["item"], "delta": ["participants"]},
-    )
-    az.to_netcdf(numpyro_data, output_file_name)
-    assert os.path.exists(output_file_name), f"Save failed: {output_file_name} not found"
-    print(f"Saved: {output_file_name}")
-
-
-def profile_likelihood_function(speaker_type: str = "global"):
-        # ── Run this BEFORE the full inference ───────────────────────────────────────
-    # Grid search over (phi_color, phi_k) to visualise the log-posterior surface
-
-    phi_color_grid = np.linspace(0.5, 3.5, 40)
-    phi_k_grid     = np.linspace(-3.0, 5.0, 40)
-    phi_form_fixed = 0.85   # fix phi_form at plausible value
-    states_jnp = import_dataset()["states_train"].astype(jnp.float32)
-    empirical_all = import_dataset()["empirical_seq_flat"].astype(jnp.int32)
-    log_post = np.zeros((40, 40))
-
-    for i, pc in enumerate(phi_color_grid):
-        for j, pk in enumerate(phi_k_grid):
-
-            color_sv = float(jax.nn.sigmoid(pc))
-            form_sv  = float(jax.nn.sigmoid(phi_form_fixed))
-            k_val    = float(jax.nn.sigmoid(pk))
-
-            if speaker_type == "global":
-                speaker = vectorized_global_speaker
-            elif speaker_type == "incremental":
-                speaker = jitted_speaker
-            probs    = np.array(speaker(
-                states_jnp, 3.0, color_sv, form_sv, k_val, 1.0, 1.0
-            ))
-
-            # Log likelihood
-            ll = np.sum(np.log(probs[np.arange(len(empirical_all)),
-                                    empirical_all] + 1e-8))
-
-            # Log prior (Normal(2.0, 0.75) for phi_color, Normal(0, 1) for phi_k)
-            lp = (
-                -0.5 * ((pc - 2.0) / 0.75)**2
-                - 0.5 * ((pk - 0.0) / 1.0)**2
-            )
-            log_post[i, j] = ll + lp
-
-    # ── Plot ──────────────────────────────────────────────────────────────────────
-    fig, ax = plt.subplots(figsize=(9, 7))
-    cf = ax.contourf(
-        phi_k_grid, phi_color_grid, log_post,
-        levels=40, cmap="viridis"
-    )
-    plt.colorbar(cf, ax=ax, label="Log posterior")
-    ax.set_xlabel("phi_k  (→ k = sigmoid(phi_k))", fontsize=11)
-    ax.set_ylabel("phi_color  (→ color_semval = sigmoid(phi_color))", fontsize=11)
-    ax.set_title(
-        "Log-posterior surface: phi_color × phi_k\n"
-        "(phi_form fixed at 0.85)\n"
-        "Multiple peaks = true multimodality,  single ridge = sampler issue",
-        fontsize=10
-    )
-
-    # Annotate k values on x-axis
-    ax2 = ax.twiny()
-    ax2.set_xlim(ax.get_xlim())
-    k_ticks = [-2, -1, 0, 1, 2, 3, 4]
-    ax2.set_xticks(k_ticks)
-    ax2.set_xticklabels([f"{jax.nn.sigmoid(jnp.array(float(v))):.2f}" for v in k_ticks])
-    ax2.set_xlabel("k = sigmoid(phi_k)", fontsize=10)
-
-    plt.tight_layout()
-    plt.savefig("./figures/log_posterior_surface_global.png", dpi=150, bbox_inches="tight")
-    plt.show()
-def profile_likelihood_function_color_form(speaker_type: str = "global"):
-        # ── Confirm bimodality BEFORE fixing sampler ──────────────────────────────────
-    phi_color_grid = np.linspace(0.5, 3.5, 50)
-    phi_form_grid  = np.linspace(-2.0, 3.0, 50)
-    log_post_2d    = np.zeros((50, 50))
-    states_jnp = import_dataset()["states_train"].astype(jnp.float32)
-    empirical_all = import_dataset()["empirical_seq_flat"].astype(jnp.int32)
-    if speaker_type == "global":
-        speaker = vectorized_global_speaker
-    elif speaker_type == "incremental":
-        speaker = jitted_speaker
-
-    for i, pc in enumerate(phi_color_grid):
-        for j, pf in enumerate(phi_form_grid):
-            color_sv = float(jax.nn.sigmoid(pc))
-            form_sv  = float(jax.nn.sigmoid(pf))
-
-            probs = np.array(speaker(
-                states_jnp, 3.0, color_sv, form_sv, 1.0, 1.0, 1.0
-            ))
-            ll = np.sum(np.log(
-                probs[np.arange(len(empirical_all)), empirical_all] + 1e-8
-            ))
-            lp = (
-                -0.5 * ((pc - 2.0) / 0.75)**2
-            + -0.5 * ((pf - 1.0) / 0.75)**2
-            )
-            log_post_2d[i, j] = ll + lp
-
-    # ── Plot ──────────────────────────────────────────────────────────────────────
-    fig, ax = plt.subplots(figsize=(9, 7))
-    cf = ax.contourf(phi_form_grid, phi_color_grid, log_post_2d,
-                    levels=40, cmap="viridis")
-    plt.colorbar(cf, ax=ax, label="Log posterior")
-    ax.set_xlabel("phi_form → form_semval = sigmoid(phi_form)")
-    ax.set_ylabel("phi_color → color_semval = sigmoid(phi_color)")
-    ax.set_title(
-        "Profile posterior: phi_color × phi_form\n"
-        "Single peak = sampler issue  |  Two peaks = true bimodality"
-    )
-    # Mark all local maxima
-    from scipy.ndimage import maximum_filter
-    local_max = (log_post_2d == maximum_filter(log_post_2d, size=5))
-    rows, cols = np.where(local_max & (log_post_2d > log_post_2d.max() - 50))
-    for r, c in zip(rows, cols):
-        ax.scatter(phi_form_grid[c], phi_color_grid[r],
-                color="red", s=100, marker="*", zorder=5)
-    plt.tight_layout()
-    plt.savefig("./figures/profile_post_color_form_gb.png", dpi=150)
-    plt.show()
 
 def test():
-    """
-    Main function to run the script.
-    """
-    # Import dataset
+    """Quick sanity check of model functions."""
     data = import_dataset()
     states_train = data["states_train"]
-    empirical_train_seq = data["empirical_seq"]
-    empirical_train_flat = data["empirical_flat"]
-    empirical_train_seq_flat = data["empirical_seq_flat"]
-    uttSeq_list = jnp.unique(empirical_train_seq, axis=0)  # shape (U, L), U ≤ N
-
-    # Get example state and utterance
-    example_index = 3
     example_state = states_train[2]
-    example_empirical = empirical_train_seq_flat[example_index]
-    example_empirical_seq = empirical_train_seq[example_index]
 
-    # Print example state and utterance
     print("Example state:", example_state)
-    # print("Example empirical utterance:", example_empirical)
-    # print("Example empirical utterance sequence:", example_empirical_seq)
-    # print("Seq to Flat mapping:", uttSeq_list)
-
-    # Compute the incremental semantics for the example state
     example_incremental_semantics = incremental_semantics_jax(example_state, 0.95, 0.95, 0.5, 0.5)
     print("Example incremental semantics:", example_incremental_semantics)
-    # Compute the global speaker for the example state
     example_global_speaker = global_speaker(example_state, 0.5, 0.95, 0.5)
     print("Example global speaker:", example_global_speaker[0,])
-    # Compute the incremental speaker for the example state
     example_incremental_speaker = incremental_speaker(example_state, 0.5, 0.95, 0.5)
     print("Example incremental speaker:", example_incremental_speaker)
-    #print("Example incremental speaker shape:", example_incremental_speaker.shape)
-
-    # example_states_array = states_train[0:2]
-    # # Test the vectorized global speaker
-    # example_vectorized_global_speaker = vectorized_global_speaker(example_states_array, 1, 0.95, 0.5, 1)
-    # utt_probs_conditionedReferent = example_vectorized_global_speaker[:,0,:] # Get the probs of utterances given the first state, referent is always the first state
-    # print("Example vectorized global speaker distilled result shape:", utt_probs_conditionedReferent.shape)
-    # print("Example vectorized global speaker distilled result shape:", utt_probs_conditionedReferent)
-
-    # # Test the vectorized incremental speaker
-    # example_vectorized_incremental_speaker = vectorized_incremental_speaker(example_states_array, 1, 0.95, 0.5, 1)
-    # utt_probs_conditionedReferent = example_vectorized_incremental_speaker # Get the probs of utterances given the first state, referent is always the first state
-    # print("Example vectorized incremental speaker distilled result shape:", utt_probs_conditionedReferent.shape)
-    # print("Example vectorized incremental speaker distilled result shape:", utt_probs_conditionedReferent)
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run speaker inference with NumPyro.")
-    parser.add_argument("--speaker_type", type=str, choices=["global", "incremental"], default="incremental",
-                        help="Choose the speaker model type.")
-    parser.add_argument("--num_samples", type=int, default=500, help="Number of posterior samples.")
-    parser.add_argument("--num_warmup", type=int, default=500, help="Number of warm-up iterations.")
-    parser.add_argument("--num_chains", type=int, default=4, help="Number of MCMC chains.")
-    parser.add_argument("--incremental_fast_mode", action="store_true",
-                        help="Use faster approximate incremental speaker with frozen size-semantics updates.")
-    parser.add_argument("--test", action="store_true", help="Run test function and exit.")
-    parser.add_argument(
-        "--hierarchical", action="store_true",
-        help="Run hierarchical model with random per-participant alpha intercepts.",
-    )
-    parser.add_argument(
-        "--infer_gamma", action="store_true",
-        help="Infer gamma (size discriminability) per sharpness condition instead of using fixed values.",
-    )
-
-    args = parser.parse_args()
-
-    # Place to test functions
-    #profile_likelihood_function(args.speaker_type)
-
-    if args.test:
-        test()
-    elif args.hierarchical:
-        run_inference_hier(
-            speaker_type=args.speaker_type,
-            num_samples=args.num_samples,
-            num_warmup=args.num_warmup,
-            num_chains=args.num_chains,
-            infer_gamma=args.infer_gamma,
-        )
-    else:
-        run_inference(
-            speaker_type=args.speaker_type,
-            num_samples=args.num_samples,
-            num_warmup=args.num_warmup,
-            num_chains=args.num_chains,
-            infer_gamma=args.infer_gamma,
-            incremental_fast_mode=args.incremental_fast_mode,
-        )

@@ -1,6 +1,8 @@
 jax-metal/
 jax/
 .DS_Store
+
+# LaTeX build artifacts
 10-writing/build/
 10-writing/*.aux
 10-writing/*.fdb_latexmk
@@ -8,70 +10,52 @@ jax/
 10-writing/*.log
 10-writing/*.out
 10-writing/*.synctex.gz
+10-writing/*.bbl
+10-writing/*.blg
+10-writing/*.fff
+10-writing/*.ttt
 /*.aux
 /*.fdb_latexmk
 /*.fls
 /*.log
 /*.out
-analysis/regression/.DS_Store
-analysis/regression/production/.DS_Store
-analysis/.DS_Store
-analysis/regression/production/.Rhistory
+
+# R
 .Rproj.user
-02-core-models/__pycache__/
-.DS_Store
-analysis/.DS_Store
-analysis/regression/.DS_Store
-analysis/regression/production/.DS_Store
-09-presentation/20250710_LMBayes/posteriorSamples_global_soft_production.csv
-09-presentation/20250710_LMBayes/posteriorSamples_incremental_soft_production.csv
+analysis/regression/production/.Rhistory
+
+# Python
 __pycache__/
 *.pyc
-05-modelling-production-data/__pycache__/
-05-modelling-production-data/__pycache__/helper.cpython-311.pyc
-05-modelling-production-data/__pycache__/modelSpecification.cpython-311.pyc
-05-modelling-production-data/__pycache__/helper.cpython-311.pyc
-05-modelling-production-data/__pycache__/modelSpecification.cpython-311.pyc
-# everthing in the inference_data folder, which contains large MCMC result files
-# 05-modelling-production-data/inference_data/
-05-modelling-production-data/__pycache__/helper.cpython-311.pyc
-05-modelling-production-data/__pycache__/modelSpecification.cpython-311.pyc
-05-modelling-production-data/__pycache__/helper.cpython-311.pyc
-05-modelling-production-data/__pycache__/modelSpecification.cpython-311.pyc
-05-modelling-production-data/inference_data/mcmc_results_global_speaker_warmup5_samples5_chains1.nc
-05-modelling-production-data/inference_data/mcmc_results_global_speaker_warmup500_samples500_chains4.nc
-05-modelling-production-data/inference_data/mcmc_results_incremental_speaker_warmup500_samples500_chains4.nc
-03-modelling-slider-data/inference_data/mcmc_results_incremental_speaker_warmup1000_samples1000_chains4.nc
-03-modelling-slider-data/inference_data/mcmc_results_incremental_speaker_warmup500_samples500_chains4.nc
-03-modelling-slider-data/inference_data/mcmc_results_incremental_speaker_hier_warmup1000_samples1000_chains4.nc
-03-modelling-slider-data/inference_data/mcmc_results_global_speaker_warmup500_samples500_chains4.nc
-03-modelling-slider-data/inference_data/mcmc_results_global_speaker_hier_warmup1000_samples1000_chains4.nc
-03-modelling-slider-data/inference_data/mcmc_results_global_speaker_warmup1000_samples1000_chains4.nc
-.claude/settings.json
-05-modelling-production-data/inference_data/mcmc_results_global_speaker_warmup500_samples500_chains4.nc
-05-modelling-production-data/inference_data/mcmc_results_incremental_speaker_warmup500_samples500_chains4.nc
-05-modelling-production-data/__pycache__/helper.cpython-311.pyc
-05-modelling-production-data/__pycache__/helper.cpython-311.pyc
-.DS_Store
+
+# MCMC inference data (large .nc files, regenerable)
+03-modelling-slider-data/inference_data/*.nc
+05-modelling-production-data/inference_data/*.nc
 
 # Simulation output CSVs (large, regenerable)
 04-simulation-w-randomstates/simulation_full_run*.csv
 04-simulation-w-randomstates/simulation_test*.csv
-.DS_Store
-.DS_Store
 
 # Claude Code / AI assistant config
 CLAUDE.md
 .mcp.json
 .claude/
 
-# Copilot / AI skills
+# AI skills
 .github/skills/
+
+# Literature (local PDFs and AI-generated notes)
 10-writing/literatures/
 10-writing/literature-notes/
-10-writing/broader_literature_connection_memo.md
-10-writing/captioning_pragmatics_followup_memo.md
-10-writing/communicative_efficiency_framing_memo.md
-10-writing/incremental_model_comparison_memo.md
-10-writing/subjectivity_contribution_memo.md
+
+# AI-generated memos (internal working notes, not for version control)
+10-writing/*_memo.md
+
+# Other AI working files
+10-writing/session_start.md
+10-writing/analysis_plan.md
 10-writing/sword_model_analysis.md
+
+# Thesis draft
+10-writing/Masterarbeit_Hening_Wang_1_Entwurf/
+meeting-agenda-*.md

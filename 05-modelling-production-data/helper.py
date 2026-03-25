@@ -116,9 +116,17 @@ def import_dataset(
     }
 
 def import_dataset_hier(
-    file_path: Optional[Union[str, Path]] = None
+    file_path: Optional[Union[str, Path]] = None,
+    min_proportion: float = 0.0,
 ):
     """Extends import_dataset() with participant indices for hierarchical models.
+
+    Parameters
+    ----------
+    min_proportion : float
+        If > 0, drop trials whose utterance type never exceeds this proportion
+        in any condition (relevant_property × sharpness).  E.g., 0.02 keeps
+        only utterance types that reach ≥ 2 % in at least one condition.
 
     Returns all keys from import_dataset() plus:
         participant_idx : jnp.ndarray  shape (N,) int32  — 0-indexed participant ID
@@ -129,6 +137,38 @@ def import_dataset_hier(
     dataset_path = Path(file_path) if file_path is not None else DEFAULT_DATASET_PATH
     df_raw = pd.read_csv(dataset_path).dropna(subset=["annotation"])
     df_raw = df_raw[df_raw["conditions"].isin(CONDITIONS_OF_INTEREST)].copy()
+
+    # ── Optional: filter to top utterance types ──────────────────────────────
+    if min_proportion > 0:
+        df = base["df"]
+        # Compute max proportion per utterance type across conditions
+        cond_props = (
+            df.groupby(["relevant_property", "sharpness", "annotation_seq_flat"])
+            .size()
+            .groupby(level=[0, 1])
+            .transform(lambda x: x / x.sum())
+            .reset_index(name="prop")
+        )
+        max_prop = cond_props.groupby("annotation_seq_flat")["prop"].max()
+        top_codes = set(max_prop[max_prop >= min_proportion].index)
+
+        keep_mask = df["annotation_seq_flat"].isin(top_codes).to_numpy()
+        n_before = len(df)
+        n_after = keep_mask.sum()
+
+        base["states_train"] = base["states_train"][keep_mask]
+        base["empirical_seq_flat"] = base["empirical_seq_flat"][keep_mask]
+        base["empirical_flat"] = base["empirical_flat"][keep_mask]
+        base["empirical_seq"] = base["empirical_seq"][keep_mask]
+        base["seq_mask"] = base["seq_mask"][keep_mask]
+        base["sharpness_idx"] = base["sharpness_idx"][keep_mask]
+        base["df"] = df[keep_mask].reset_index(drop=True)
+
+        # Update df_raw to match
+        df_raw = df_raw.iloc[np.where(keep_mask)[0]].copy()
+
+        print(f"  [filter] Kept {n_after}/{n_before} trials "
+              f"({len(top_codes)} utterance types with max proportion >= {min_proportion})")
 
     # Participant IDs from the 'id' column; encode as 0-indexed integers
     unique_participants = sorted(df_raw["id"].unique())
