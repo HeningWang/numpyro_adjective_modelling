@@ -16,7 +16,11 @@ import seaborn as sns
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DATASET_PATH = REPO_ROOT / "01-dataset" / "01-production-data-preprocessed.csv"
-CONDITIONS_OF_INTEREST = ("erdc", "zrdc", "brdc")
+CONDITIONS_OF_INTEREST = (
+    "erdc", "zrdc", "brdc",   # dimension × colour
+    "erdf", "zrdf", "brdf",   # dimension × form
+    "ercf", "zrcf", "brcf",   # colour × form
+)
 SYMBOL_TO_INDEX: Dict[str, int] = {"D": 0, "C": 1, "F": 2}
 MAX_UTTERANCE_LEN = 3
 FLAT_TO_CATEGORIES: Dict[str, str] = {
