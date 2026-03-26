@@ -1350,42 +1350,85 @@ def likelihood_function_global_speaker_hier(
             numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
 
 
-def likelihood_function_incremental_speaker_hier(
-    states=None, empirical=None,
-    participant_idx=None, n_participants=None,
-):
-    """Incremental speaker with per-participant random effects on alpha."""
-    color_semval = 0.971
-    form_semval  = 0.50
-    k            = 0.5
-    wf           = 1.0
+# ── Reported model (paper): single alpha, log_beta, tau, delta ───────────
 
-    log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
-    beta     = jnp.exp(log_beta)
+def _make_reported_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
+    """Factory for the reported model with fixed semantics."""
+    def model(states=None, empirical=None,
+              participant_idx=None, n_participants=None):
+        alpha    = numpyro.sample("alpha", dist.HalfNormal(5.0))
+        log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
+        beta     = jnp.exp(log_beta)
+        tau      = numpyro.sample("tau", dist.HalfNormal(0.2))
 
-    alpha_D  = numpyro.sample("alpha_D", dist.HalfNormal(5.0))
-    alpha_C  = numpyro.sample("alpha_C", dist.HalfNormal(5.0))
-    alpha_F  = numpyro.sample("alpha_F", dist.HalfNormal(5.0))
-    gamma    = numpyro.sample("gamma", dist.Normal(0.0, 1.0))
-    epsilon  = numpyro.sample("epsilon", dist.Beta(1.0, 50.0))
-    tau      = numpyro.sample("tau",   dist.HalfNormal(0.2))
+        with numpyro.plate("participants", n_participants):
+            delta = numpyro.sample("delta", dist.Normal(0.0, tau))
 
-    with numpyro.plate("participants", n_participants):
-        delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+        alpha_per_trial = jnp.maximum(alpha + delta[participant_idx], 0.0)
 
-    alpha_D_per_trial = jnp.maximum(alpha_D + delta[participant_idx], 0.0)
-    alpha_C_per_trial = jnp.maximum(alpha_C + delta[participant_idx], 0.0)
-    alpha_F_per_trial = jnp.maximum(alpha_F + delta[participant_idx], 0.0)
+        with numpyro.plate("data", len(states)):
+            probs = jitted_speaker_hier(
+                states, alpha_per_trial, alpha_per_trial, alpha_per_trial,
+                color_semval, form_semval, k, wf, beta, 0.0, 0.0,
+            )
+            if empirical is None:
+                numpyro.sample("obs", dist.Categorical(probs=probs))
+            else:
+                numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+    return model
 
-    with numpyro.plate("data", len(states)):
-        probs = jitted_speaker_hier(
-            states, alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
-            color_semval, form_semval, k, wf, beta, gamma, epsilon
-        )
-        if empirical is None:
-            numpyro.sample("obs", dist.Categorical(probs=probs))
-        else:
-            numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+
+likelihood_function_reported_hier = _make_reported_model(
+    color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0,
+)
+
+likelihood_function_reported_lowcol_hier = _make_reported_model(
+    color_semval=0.85, form_semval=0.50, k=0.5, wf=1.0,
+)
+
+
+# ── Extended v1: per-dim alpha, gamma, epsilon ───────────────────────────
+
+def _make_extended_v1_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
+    """Factory for extended v1 with fixed semantics."""
+    def model(states=None, empirical=None,
+              participant_idx=None, n_participants=None):
+        log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
+        beta     = jnp.exp(log_beta)
+
+        alpha_D  = numpyro.sample("alpha_D", dist.HalfNormal(5.0))
+        alpha_C  = numpyro.sample("alpha_C", dist.HalfNormal(5.0))
+        alpha_F  = numpyro.sample("alpha_F", dist.HalfNormal(5.0))
+        gamma    = numpyro.sample("gamma", dist.Normal(0.0, 1.0))
+        epsilon  = numpyro.sample("epsilon", dist.Beta(1.0, 50.0))
+        tau      = numpyro.sample("tau",   dist.HalfNormal(0.2))
+
+        with numpyro.plate("participants", n_participants):
+            delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+        alpha_D_per_trial = jnp.maximum(alpha_D + delta[participant_idx], 0.0)
+        alpha_C_per_trial = jnp.maximum(alpha_C + delta[participant_idx], 0.0)
+        alpha_F_per_trial = jnp.maximum(alpha_F + delta[participant_idx], 0.0)
+
+        with numpyro.plate("data", len(states)):
+            probs = jitted_speaker_hier(
+                states, alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+                color_semval, form_semval, k, wf, beta, gamma, epsilon
+            )
+            if empirical is None:
+                numpyro.sample("obs", dist.Categorical(probs=probs))
+            else:
+                numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+    return model
+
+
+likelihood_function_incremental_speaker_hier = _make_extended_v1_model(
+    color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0,
+)
+
+likelihood_function_incremental_speaker_lowcol_hier = _make_extended_v1_model(
+    color_semval=0.85, form_semval=0.50, k=0.5, wf=1.0,
+)
 
 
 def likelihood_function_incremental_speaker(states=None, empirical=None):
@@ -1671,6 +1714,196 @@ def likelihood_function_incremental_speaker_extended_hier(
         probs = jitted_speaker_extended_hier(
             states, alpha_per_trial, color_semval, form_semval,
             k, wf, beta, gamma, epsilon, mu_C, mu_F,
+        )
+        if empirical is None:
+            numpyro.sample("obs", dist.Categorical(probs=probs))
+        else:
+            numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+
+
+# ── Mixture model: two incremental speaker components ────────────────────
+
+def incremental_speaker_mixture(
+    states:       jnp.ndarray,
+    alpha1_D:     float = 5.0,
+    alpha1_C:     float = 3.0,
+    alpha1_F:     float = 3.0,
+    alpha2_D:     float = 1.0,
+    alpha2_C:     float = 1.0,
+    alpha2_F:     float = 1.0,
+    color_semval: float = 0.971,
+    form_semval:  float = 0.50,
+    k:            float = 0.50,
+    wf:           float = 1.00,
+    beta:         float = 1.00,
+    gamma1:       float = 0.0,
+    gamma2:       float = 0.0,
+    epsilon:      float = 0.01,
+    pi:           float = 0.50,
+) -> jnp.ndarray:
+    """Mixture of two incremental speakers with shared semantics/beta.
+
+    Component 1 ("deliberative"): per-dim alphas + gamma1, no lapse.
+    Component 2 ("habitual"):     per-dim alphas + gamma2, no lapse.
+    The mixture is: pi * comp1 + (1-pi) * comp2, then lapse with epsilon.
+    """
+    probs1 = incremental_speaker(
+        states, alpha1_D, alpha1_C, alpha1_F,
+        color_semval, form_semval, k, wf, beta, gamma1, 0.0,
+    )
+    probs2 = incremental_speaker(
+        states, alpha2_D, alpha2_C, alpha2_F,
+        color_semval, form_semval, k, wf, beta, gamma2, 0.0,
+    )
+    mixed = pi * probs1 + (1.0 - pi) * probs2
+    return (1.0 - epsilon) * mixed + epsilon / n_utt
+
+
+# Vmap: per-trial axes for component 1 alphas (hierarchical offsets),
+# everything else shared across trials.
+vectorized_incremental_speaker_mixture_hier = jax.vmap(
+    incremental_speaker_mixture,
+    in_axes=(0,    # states
+             0,    # alpha1_D  ← per-trial
+             0,    # alpha1_C  ← per-trial
+             0,    # alpha1_F  ← per-trial
+             None, # alpha2_D
+             None, # alpha2_C
+             None, # alpha2_F
+             None, # color_semval
+             None, # form_semval
+             None, # k
+             None, # wf
+             None, # beta
+             None, # gamma1
+             None, # gamma2
+             None, # epsilon
+             None, # pi
+             ),
+)
+
+
+@jax.jit
+def jitted_speaker_mixture_hier(
+    states, alpha1_D_pt, alpha1_C_pt, alpha1_F_pt,
+    alpha2_D, alpha2_C, alpha2_F,
+    color_semval, form_semval, k, wf, beta,
+    gamma1, gamma2, epsilon, pi,
+):
+    return vectorized_incremental_speaker_mixture_hier(
+        states, alpha1_D_pt, alpha1_C_pt, alpha1_F_pt,
+        alpha2_D, alpha2_C, alpha2_F,
+        color_semval, form_semval, k, wf, beta,
+        gamma1, gamma2, epsilon, pi,
+    )
+
+
+def likelihood_function_incremental_speaker_mixture_hier(
+    states=None, empirical=None,
+    participant_idx=None, n_participants=None,
+):
+    """Mixture of two incremental speakers (per-dim alpha each).
+
+    Component 1 ("deliberative"): higher alphas, hierarchical offsets.
+    Component 2 ("habitual"): lower alphas, no hierarchical offsets.
+    Shared: beta, semantics, k, wf.  Separate: gamma per component.
+    """
+    color_semval = 0.971
+    form_semval  = 0.50
+    k            = 0.5
+    wf           = 1.0
+
+    log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
+    beta     = jnp.exp(log_beta)
+
+    # Component 1 ("deliberative") — per-dim alpha with hier offsets
+    alpha1_D = numpyro.sample("alpha1_D", dist.HalfNormal(5.0))
+    alpha1_C = numpyro.sample("alpha1_C", dist.HalfNormal(5.0))
+    alpha1_F = numpyro.sample("alpha1_F", dist.HalfNormal(5.0))
+    gamma1   = numpyro.sample("gamma1",   dist.Normal(0.0, 1.0))
+
+    # Component 2 ("habitual") — per-dim alpha, no hier offsets
+    # Ordering constraint: alpha1_D > alpha2_D to break label switching.
+    # Sample gap_D > 0, then alpha2_D = alpha1_D - gap_D (clamped ≥ 0).
+    gap_D    = numpyro.sample("gap_D",    dist.HalfNormal(3.0))
+    alpha2_D = numpyro.deterministic("alpha2_D", jnp.maximum(alpha1_D - gap_D, 0.0))
+    alpha2_C = numpyro.sample("alpha2_C", dist.HalfNormal(3.0))
+    alpha2_F = numpyro.sample("alpha2_F", dist.HalfNormal(3.0))
+    gamma2   = numpyro.sample("gamma2",   dist.Normal(0.0, 1.0))
+
+    # Mixing weight and lapse
+    pi      = numpyro.sample("pi",      dist.Beta(2.0, 2.0))
+    epsilon = numpyro.sample("epsilon", dist.Beta(2.0, 98.0))
+
+    # Hierarchical offsets on component 1 only
+    tau = numpyro.sample("tau", dist.HalfNormal(0.2))
+
+    with numpyro.plate("participants", n_participants):
+        delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+    alpha1_D_pt = jnp.maximum(alpha1_D + delta[participant_idx], 0.0)
+    alpha1_C_pt = jnp.maximum(alpha1_C + delta[participant_idx], 0.0)
+    alpha1_F_pt = jnp.maximum(alpha1_F + delta[participant_idx], 0.0)
+
+    with numpyro.plate("data", len(states)):
+        probs = jitted_speaker_mixture_hier(
+            states, alpha1_D_pt, alpha1_C_pt, alpha1_F_pt,
+            alpha2_D, alpha2_C, alpha2_F,
+            color_semval, form_semval, k, wf, beta,
+            gamma1, gamma2, epsilon, pi,
+        )
+        if empirical is None:
+            numpyro.sample("obs", dist.Categorical(probs=probs))
+        else:
+            numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+
+
+def likelihood_function_incremental_speaker_mixture_simple_hier(
+    states=None, empirical=None,
+    participant_idx=None, n_participants=None,
+):
+    """Simplified mixture: single alpha per component (not per-dim).
+
+    Component 1 ("deliberative"): high alpha, hier offsets, gamma1.
+    Component 2 ("habitual"):     low alpha, no hier offsets, gamma2.
+    Ordering: alpha1 > alpha2 via gap parameterisation.
+    """
+    color_semval = 0.971
+    form_semval  = 0.50
+    k            = 0.5
+    wf           = 1.0
+
+    log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
+    beta     = jnp.exp(log_beta)
+
+    # Component 1 — single alpha (applied to all dims)
+    alpha1  = numpyro.sample("alpha1", dist.HalfNormal(5.0))
+    gamma1  = numpyro.sample("gamma1", dist.Normal(0.0, 1.0))
+
+    # Component 2 — alpha1 - gap (ordered)
+    gap     = numpyro.sample("gap", dist.HalfNormal(3.0))
+    alpha2  = numpyro.deterministic("alpha2", jnp.maximum(alpha1 - gap, 0.0))
+    gamma2  = numpyro.sample("gamma2", dist.Normal(0.0, 1.0))
+
+    # Mixing weight and lapse
+    pi      = numpyro.sample("pi",      dist.Beta(2.0, 2.0))
+    epsilon = numpyro.sample("epsilon", dist.Beta(2.0, 98.0))
+
+    # Hierarchical offsets on component 1 only
+    tau = numpyro.sample("tau", dist.HalfNormal(0.2))
+
+    with numpyro.plate("participants", n_participants):
+        delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+    # Broadcast single alpha to all 3 dims for component 1
+    alpha1_pt = jnp.maximum(alpha1 + delta[participant_idx], 0.0)
+
+    with numpyro.plate("data", len(states)):
+        probs = jitted_speaker_mixture_hier(
+            states, alpha1_pt, alpha1_pt, alpha1_pt,
+            alpha2, alpha2, alpha2,
+            color_semval, form_semval, k, wf, beta,
+            gamma1, gamma2, epsilon, pi,
         )
         if empirical is None:
             numpyro.sample("obs", dist.Categorical(probs=probs))

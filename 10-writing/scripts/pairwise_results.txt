@@ -1,0 +1,362 @@
+=== Pairwise comparisons of context within each discriminability level ===
+$emmeans
+discrim = blurred:
+ context emmean   SE  df asymp.LCL asymp.UCL
+ brcf      55.6 2.25 Inf      51.2      60.0
+ brdc      74.1 2.27 Inf      69.6      78.5
+ brdf      73.4 2.26 Inf      68.9      77.8
+ ercf      67.5 2.25 Inf      63.1      71.9
+ erdc      79.4 2.32 Inf      74.8      83.9
+ erdf      80.0 2.31 Inf      75.5      84.5
+ zrcf      43.2 2.25 Inf      38.8      47.6
+ zrdc      55.7 2.25 Inf      51.3      60.1
+ zrdf      58.9 2.25 Inf      54.5      63.3
+
+discrim = sharp:
+ context emmean   SE  df asymp.LCL asymp.UCL
+ brcf      58.0 2.35 Inf      53.4      62.6
+ brdc      69.8 2.35 Inf      65.2      74.4
+ brdf      75.3 2.35 Inf      70.7      79.9
+ ercf      70.9 2.35 Inf      66.3      75.5
+ erdc      83.8 2.35 Inf      79.1      88.4
+ erdf      84.8 2.35 Inf      80.2      89.4
+ zrcf      38.4 2.35 Inf      33.8      43.0
+ zrdc      53.8 2.35 Inf      49.2      58.4
+ zrdf      56.8 2.35 Inf      52.2      61.4
+
+Degrees-of-freedom method: asymptotic 
+Confidence level used: 0.95 
+
+$contrasts
+discrim = blurred:
+ contrast    estimate   SE  df z.ratio p.value
+ brcf - brdc -18.4589 2.00 Inf  -9.251  <.0001
+ brcf - brdf -17.7349 1.98 Inf  -8.941  <.0001
+ brcf - ercf -11.8971 1.97 Inf  -6.041  <.0001
+ brcf - erdc -23.7324 2.05 Inf -11.601  <.0001
+ brcf - erdf -24.3805 2.04 Inf -11.958  <.0001
+ brcf - zrcf  12.4066 1.97 Inf   6.304  <.0001
+ brcf - zrdc  -0.0311 1.97 Inf  -0.016  1.0000
+ brcf - zrdf  -3.2199 1.97 Inf  -1.635  1.0000
+ brdc - brdf   0.7240 2.01 Inf   0.361  1.0000
+ brdc - ercf   6.5618 1.99 Inf   3.290  0.0361
+ brdc - erdc  -5.2735 2.07 Inf  -2.551  0.3871
+ brdc - erdf  -5.9216 2.06 Inf  -2.872  0.1468
+ brdc - zrcf  30.8655 1.99 Inf  15.487  <.0001
+ brdc - zrdc  18.4278 1.99 Inf   9.242  <.0001
+ brdc - zrdf  15.2390 1.99 Inf   7.643  <.0001
+ brdf - ercf   5.8378 1.98 Inf   2.944  0.1165
+ brdf - erdc  -5.9974 2.06 Inf  -2.916  0.1277
+ brdf - erdf  -6.6456 2.05 Inf  -3.243  0.0426
+ brdf - zrcf  30.1415 1.98 Inf  15.214  <.0001
+ brdf - zrdc  17.7038 1.98 Inf   8.929  <.0001
+ brdf - zrdf  14.5150 1.98 Inf   7.327  <.0001
+ ercf - erdc -11.8352 2.05 Inf  -5.787  <.0001
+ ercf - erdf -12.4834 2.04 Inf  -6.125  <.0001
+ ercf - zrcf  24.3037 1.97 Inf  12.355  <.0001
+ ercf - zrdc  11.8660 1.97 Inf   6.024  <.0001
+ ercf - zrdf   8.6772 1.97 Inf   4.407  0.0004
+ erdc - erdf  -0.6482 2.11 Inf  -0.307  1.0000
+ erdc - zrcf  36.1390 2.04 Inf  17.684  <.0001
+ erdc - zrdc  23.7013 2.04 Inf  11.592  <.0001
+ erdc - zrdf  20.5125 2.04 Inf  10.034  <.0001
+ erdf - zrcf  36.7871 2.04 Inf  18.064  <.0001
+ erdf - zrdc  24.3495 2.04 Inf  11.946  <.0001
+ erdf - zrdf  21.1606 2.04 Inf  10.391  <.0001
+ zrcf - zrdc -12.4377 1.97 Inf  -6.319  <.0001
+ zrcf - zrdf -15.6265 1.97 Inf  -7.943  <.0001
+ zrdc - zrdf  -3.1888 1.97 Inf  -1.620  1.0000
+
+discrim = sharp:
+ contrast    estimate   SE  df z.ratio p.value
+ brcf - brdc -11.8246 2.06 Inf  -5.742  <.0001
+ brcf - brdf -17.2448 2.06 Inf  -8.378  <.0001
+ brcf - ercf -12.8730 2.06 Inf  -6.240  <.0001
+ brcf - erdc -25.7367 2.06 Inf -12.468  <.0001
+ brcf - erdf -26.7390 2.06 Inf -12.973  <.0001
+ brcf - zrcf  19.5930 2.06 Inf   9.523  <.0001
+ brcf - zrdc   4.2036 2.06 Inf   2.039  1.0000
+ brcf - zrdf   1.2221 2.06 Inf   0.594  1.0000
+ brdc - brdf  -5.4202 2.06 Inf  -2.633  0.3045
+ brdc - ercf  -1.0484 2.06 Inf  -0.508  1.0000
+ brdc - erdc -13.9121 2.06 Inf  -6.740  <.0001
+ brdc - erdf -14.9144 2.06 Inf  -7.236  <.0001
+ brdc - zrcf  31.4176 2.06 Inf  15.270  <.0001
+ brdc - zrdc  16.0282 2.06 Inf   7.773  <.0001
+ brdc - zrdf  13.0467 2.06 Inf   6.341  <.0001
+ brdf - ercf   4.3718 2.06 Inf   2.120  1.0000
+ brdf - erdc  -8.4919 2.06 Inf  -4.116  0.0014
+ brdf - erdf  -9.4942 2.06 Inf  -4.608  0.0001
+ brdf - zrcf  36.8378 2.06 Inf  17.912  <.0001
+ brdf - zrdc  21.4484 2.06 Inf  10.406  <.0001
+ brdf - zrdf  18.4669 2.06 Inf   8.979  <.0001
+ ercf - erdc -12.8637 2.07 Inf  -6.221  <.0001
+ ercf - erdf -13.8660 2.06 Inf  -6.715  <.0001
+ ercf - zrcf  32.4660 2.06 Inf  15.751  <.0001
+ ercf - zrdc  17.0766 2.07 Inf   8.267  <.0001
+ ercf - zrdf  14.0951 2.06 Inf   6.838  <.0001
+ erdc - erdf  -1.0023 2.07 Inf  -0.485  1.0000
+ erdc - zrcf  45.3297 2.06 Inf  21.980  <.0001
+ erdc - zrdc  29.9403 2.07 Inf  14.488  <.0001
+ erdc - zrdf  26.9588 2.06 Inf  13.072  <.0001
+ erdf - zrcf  46.3320 2.06 Inf  22.498  <.0001
+ erdf - zrdc  30.9426 2.06 Inf  14.993  <.0001
+ erdf - zrdf  27.9611 2.06 Inf  13.578  <.0001
+ zrcf - zrdc -15.3894 2.06 Inf  -7.470  <.0001
+ zrcf - zrdf -18.3709 2.06 Inf  -8.937  <.0001
+ zrdc - zrdf  -2.9815 2.06 Inf  -1.447  1.0000
+
+Degrees-of-freedom method: asymptotic 
+P value adjustment: bonferroni method for 36 tests 
+
+
+
+=== Pairwise comparisons of discriminability within each context ===
+$emmeans
+context = brcf:
+ discrim emmean   SE  df asymp.LCL asymp.UCL
+ blurred   55.6 2.25 Inf      51.2      60.0
+ sharp     58.0 2.35 Inf      53.4      62.6
+
+context = brdc:
+ discrim emmean   SE  df asymp.LCL asymp.UCL
+ blurred   74.1 2.27 Inf      69.6      78.5
+ sharp     69.8 2.35 Inf      65.2      74.4
+
+context = brdf:
+ discrim emmean   SE  df asymp.LCL asymp.UCL
+ blurred   73.4 2.26 Inf      68.9      77.8
+ sharp     75.3 2.35 Inf      70.7      79.9
+
+context = ercf:
+ discrim emmean   SE  df asymp.LCL asymp.UCL
+ blurred   67.5 2.25 Inf      63.1      71.9
+ sharp     70.9 2.35 Inf      66.3      75.5
+
+context = erdc:
+ discrim emmean   SE  df asymp.LCL asymp.UCL
+ blurred   79.4 2.32 Inf      74.8      83.9
+ sharp     83.8 2.35 Inf      79.1      88.4
+
+context = erdf:
+ discrim emmean   SE  df asymp.LCL asymp.UCL
+ blurred   80.0 2.31 Inf      75.5      84.5
+ sharp     84.8 2.35 Inf      80.2      89.4
+
+context = zrcf:
+ discrim emmean   SE  df asymp.LCL asymp.UCL
+ blurred   43.2 2.25 Inf      38.8      47.6
+ sharp     38.4 2.35 Inf      33.8      43.0
+
+context = zrdc:
+ discrim emmean   SE  df asymp.LCL asymp.UCL
+ blurred   55.7 2.25 Inf      51.3      60.1
+ sharp     53.8 2.35 Inf      49.2      58.4
+
+context = zrdf:
+ discrim emmean   SE  df asymp.LCL asymp.UCL
+ blurred   58.9 2.25 Inf      54.5      63.3
+ sharp     56.8 2.35 Inf      52.2      61.4
+
+Degrees-of-freedom method: asymptotic 
+Confidence level used: 0.95 
+
+$contrasts
+context = brcf:
+ contrast        estimate   SE  df z.ratio p.value
+ blurred - sharp    -2.37 3.17 Inf  -0.750  0.4535
+
+context = brdc:
+ contrast        estimate   SE  df z.ratio p.value
+ blurred - sharp     4.26 3.18 Inf   1.338  0.1809
+
+context = brdf:
+ contrast        estimate   SE  df z.ratio p.value
+ blurred - sharp    -1.88 3.18 Inf  -0.594  0.5528
+
+context = ercf:
+ contrast        estimate   SE  df z.ratio p.value
+ blurred - sharp    -3.35 3.17 Inf  -1.057  0.2905
+
+context = erdc:
+ contrast        estimate   SE  df z.ratio p.value
+ blurred - sharp    -4.38 3.22 Inf  -1.361  0.1736
+
+context = erdf:
+ contrast        estimate   SE  df z.ratio p.value
+ blurred - sharp    -4.73 3.21 Inf  -1.474  0.1406
+
+context = zrcf:
+ contrast        estimate   SE  df z.ratio p.value
+ blurred - sharp     4.81 3.17 Inf   1.520  0.1285
+
+context = zrdc:
+ contrast        estimate   SE  df z.ratio p.value
+ blurred - sharp     1.86 3.17 Inf   0.587  0.5573
+
+context = zrdf:
+ contrast        estimate   SE  df z.ratio p.value
+ blurred - sharp     2.07 3.17 Inf   0.653  0.5138
+
+Degrees-of-freedom method: asymptotic 
+
+
+
+=== All pairwise comparisons (context x discrim cells) ===
+ contrast                    estimate   SE  df z.ratio p.value
+ brcf blurred - brdc blurred -18.4589 2.00 Inf  -9.251  <.0001
+ brcf blurred - brdf blurred -17.7349 1.98 Inf  -8.941  <.0001
+ brcf blurred - ercf blurred -11.8971 1.97 Inf  -6.041  <.0001
+ brcf blurred - erdc blurred -23.7324 2.05 Inf -11.601  <.0001
+ brcf blurred - erdf blurred -24.3805 2.04 Inf -11.958  <.0001
+ brcf blurred - zrcf blurred  12.4066 1.97 Inf   6.304  <.0001
+ brcf blurred - zrdc blurred  -0.0311 1.97 Inf  -0.016  1.0000
+ brcf blurred - zrdf blurred  -3.2199 1.97 Inf  -1.635  1.0000
+ brcf blurred - brcf sharp    -2.3747 3.17 Inf  -0.750  1.0000
+ brcf blurred - brdc sharp   -14.1993 3.17 Inf  -4.482  0.0011
+ brcf blurred - brdf sharp   -19.6195 3.17 Inf  -6.194  <.0001
+ brcf blurred - ercf sharp   -15.2477 3.17 Inf  -4.809  0.0002
+ brcf blurred - erdc sharp   -28.1114 3.17 Inf  -8.865  <.0001
+ brcf blurred - erdf sharp   -29.1137 3.17 Inf  -9.186  <.0001
+ brcf blurred - zrcf sharp    17.2183 3.17 Inf   5.437  <.0001
+ brcf blurred - zrdc sharp     1.8289 3.17 Inf   0.577  1.0000
+ brcf blurred - zrdf sharp    -1.1526 3.17 Inf  -0.364  1.0000
+ brdc blurred - brdf blurred   0.7240 2.01 Inf   0.361  1.0000
+ brdc blurred - ercf blurred   6.5618 1.99 Inf   3.290  0.1534
+ brdc blurred - erdc blurred  -5.2735 2.07 Inf  -2.551  1.0000
+ brdc blurred - erdf blurred  -5.9216 2.06 Inf  -2.872  0.6239
+ brdc blurred - zrcf blurred  30.8655 1.99 Inf  15.487  <.0001
+ brdc blurred - zrdc blurred  18.4278 1.99 Inf   9.242  <.0001
+ brdc blurred - zrdf blurred  15.2390 1.99 Inf   7.643  <.0001
+ brdc blurred - brcf sharp    16.0842 3.18 Inf   5.053  0.0001
+ brdc blurred - brdc sharp     4.2596 3.18 Inf   1.338  1.0000
+ brdc blurred - brdf sharp    -1.1606 3.18 Inf  -0.365  1.0000
+ brdc blurred - ercf sharp     3.2112 3.19 Inf   1.008  1.0000
+ brdc blurred - erdc sharp    -9.6525 3.19 Inf  -3.029  0.3750
+ brdc blurred - erdf sharp   -10.6548 3.18 Inf  -3.346  0.1255
+ brdc blurred - zrcf sharp    35.6772 3.18 Inf  11.212  <.0001
+ brdc blurred - zrdc sharp    20.2878 3.19 Inf   6.370  <.0001
+ brdc blurred - zrdf sharp    17.3063 3.18 Inf   5.439  <.0001
+ brdf blurred - ercf blurred   5.8378 1.98 Inf   2.944  0.4952
+ brdf blurred - erdc blurred  -5.9974 2.06 Inf  -2.916  0.5427
+ brdf blurred - erdf blurred  -6.6456 2.05 Inf  -3.243  0.1813
+ brdf blurred - zrcf blurred  30.1415 1.98 Inf  15.214  <.0001
+ brdf blurred - zrdc blurred  17.7038 1.98 Inf   8.929  <.0001
+ brdf blurred - zrdf blurred  14.5150 1.98 Inf   7.327  <.0001
+ brdf blurred - brcf sharp    15.3602 3.18 Inf   4.837  0.0002
+ brdf blurred - brdc sharp     3.5357 3.18 Inf   1.113  1.0000
+ brdf blurred - brdf sharp    -1.8845 3.18 Inf  -0.594  1.0000
+ brdf blurred - ercf sharp     2.4872 3.18 Inf   0.783  1.0000
+ brdf blurred - erdc sharp   -10.3765 3.18 Inf  -3.264  0.1680
+ brdf blurred - erdf sharp   -11.3788 3.18 Inf  -3.582  0.0522
+ brdf blurred - zrcf sharp    34.9532 3.17 Inf  11.010  <.0001
+ brdf blurred - zrdc sharp    19.5639 3.18 Inf   6.157  <.0001
+ brdf blurred - zrdf sharp    16.5823 3.17 Inf   5.223  <.0001
+ ercf blurred - erdc blurred -11.8352 2.05 Inf  -5.787  <.0001
+ ercf blurred - erdf blurred -12.4834 2.04 Inf  -6.125  <.0001
+ ercf blurred - zrcf blurred  24.3037 1.97 Inf  12.355  <.0001
+ ercf blurred - zrdc blurred  11.8660 1.97 Inf   6.024  <.0001
+ ercf blurred - zrdf blurred   8.6772 1.97 Inf   4.407  0.0016
+ ercf blurred - brcf sharp     9.5224 3.17 Inf   3.006  0.4048
+ ercf blurred - brdc sharp    -2.3021 3.17 Inf  -0.727  1.0000
+ ercf blurred - brdf sharp    -7.7223 3.17 Inf  -2.438  1.0000
+ ercf blurred - ercf sharp    -3.3506 3.17 Inf  -1.057  1.0000
+ ercf blurred - erdc sharp   -16.2143 3.17 Inf  -5.114  <.0001
+ ercf blurred - erdf sharp   -17.2166 3.17 Inf  -5.433  <.0001
+ ercf blurred - zrcf sharp    29.1154 3.17 Inf   9.195  <.0001
+ ercf blurred - zrdc sharp    13.7261 3.17 Inf   4.331  0.0023
+ ercf blurred - zrdf sharp    10.7445 3.17 Inf   3.393  0.1057
+ erdc blurred - erdf blurred  -0.6482 2.11 Inf  -0.307  1.0000
+ erdc blurred - zrcf blurred  36.1390 2.04 Inf  17.684  <.0001
+ erdc blurred - zrdc blurred  23.7013 2.04 Inf  11.592  <.0001
+ erdc blurred - zrdf blurred  20.5125 2.04 Inf  10.034  <.0001
+ erdc blurred - brcf sharp    21.3577 3.22 Inf   6.643  <.0001
+ erdc blurred - brdc sharp     9.5331 3.22 Inf   2.965  0.4630
+ erdc blurred - brdf sharp     4.1129 3.21 Inf   1.279  1.0000
+ erdc blurred - ercf sharp     8.4847 3.22 Inf   2.637  1.0000
+ erdc blurred - erdc sharp    -4.3790 3.22 Inf  -1.361  1.0000
+ erdc blurred - erdf sharp    -5.3813 3.22 Inf  -1.673  1.0000
+ erdc blurred - zrcf sharp    40.9507 3.21 Inf  12.741  <.0001
+ erdc blurred - zrdc sharp    25.5613 3.22 Inf   7.946  <.0001
+ erdc blurred - zrdf sharp    22.5798 3.21 Inf   7.026  <.0001
+ erdf blurred - zrcf blurred  36.7871 2.04 Inf  18.064  <.0001
+ erdf blurred - zrdc blurred  24.3495 2.04 Inf  11.946  <.0001
+ erdf blurred - zrdf blurred  21.1606 2.04 Inf  10.391  <.0001
+ erdf blurred - brcf sharp    22.0058 3.21 Inf   6.854  <.0001
+ erdf blurred - brdc sharp    10.1813 3.21 Inf   3.171  0.2324
+ erdf blurred - brdf sharp     4.7611 3.21 Inf   1.483  1.0000
+ erdf blurred - ercf sharp     9.1328 3.21 Inf   2.843  0.6848
+ erdf blurred - erdc sharp    -3.7309 3.21 Inf  -1.161  1.0000
+ erdf blurred - erdf sharp    -4.7332 3.21 Inf  -1.474  1.0000
+ erdf blurred - zrcf sharp    41.5988 3.21 Inf  12.962  <.0001
+ erdf blurred - zrdc sharp    26.2095 3.21 Inf   8.159  <.0001
+ erdf blurred - zrdf sharp    23.2279 3.21 Inf   7.237  <.0001
+ zrcf blurred - zrdc blurred -12.4377 1.97 Inf  -6.319  <.0001
+ zrcf blurred - zrdf blurred -15.6265 1.97 Inf  -7.943  <.0001
+ zrcf blurred - brcf sharp   -14.7813 3.17 Inf  -4.668  0.0005
+ zrcf blurred - brdc sharp   -26.6059 3.17 Inf  -8.402  <.0001
+ zrcf blurred - brdf sharp   -32.0261 3.17 Inf -10.115  <.0001
+ zrcf blurred - ercf sharp   -27.6543 3.17 Inf  -8.726  <.0001
+ zrcf blurred - erdc sharp   -40.5180 3.17 Inf -12.783  <.0001
+ zrcf blurred - erdf sharp   -41.5203 3.17 Inf -13.106  <.0001
+ zrcf blurred - zrcf sharp     4.8117 3.17 Inf   1.520  1.0000
+ zrcf blurred - zrdc sharp   -10.5777 3.17 Inf  -3.338  0.1289
+ zrcf blurred - zrdf sharp   -13.5592 3.17 Inf  -4.283  0.0028
+ zrdc blurred - zrdf blurred  -3.1888 1.97 Inf  -1.620  1.0000
+ zrdc blurred - brcf sharp    -2.3436 3.17 Inf  -0.740  1.0000
+ zrdc blurred - brdc sharp   -14.1682 3.17 Inf  -4.473  0.0012
+ zrdc blurred - brdf sharp   -19.5884 3.17 Inf  -6.185  <.0001
+ zrdc blurred - ercf sharp   -15.2166 3.17 Inf  -4.800  0.0002
+ zrdc blurred - erdc sharp   -28.0803 3.17 Inf  -8.856  <.0001
+ zrdc blurred - erdf sharp   -29.0826 3.17 Inf  -9.178  <.0001
+ zrdc blurred - zrcf sharp    17.2494 3.17 Inf   5.447  <.0001
+ zrdc blurred - zrdc sharp     1.8600 3.17 Inf   0.587  1.0000
+ zrdc blurred - zrdf sharp    -1.1215 3.17 Inf  -0.354  1.0000
+ zrdf blurred - brcf sharp     0.8452 3.17 Inf   0.267  1.0000
+ zrdf blurred - brdc sharp   -10.9794 3.17 Inf  -3.467  0.0807
+ zrdf blurred - brdf sharp   -16.3996 3.17 Inf  -5.179  <.0001
+ zrdf blurred - ercf sharp   -12.0278 3.17 Inf  -3.795  0.0226
+ zrdf blurred - erdc sharp   -24.8915 3.17 Inf  -7.851  <.0001
+ zrdf blurred - erdf sharp   -25.8938 3.17 Inf  -8.173  <.0001
+ zrdf blurred - zrcf sharp    20.4382 3.17 Inf   6.456  <.0001
+ zrdf blurred - zrdc sharp     5.0488 3.17 Inf   1.593  1.0000
+ zrdf blurred - zrdf sharp     2.0673 3.17 Inf   0.653  1.0000
+ brcf sharp - brdc sharp     -11.8246 2.06 Inf  -5.742  <.0001
+ brcf sharp - brdf sharp     -17.2448 2.06 Inf  -8.378  <.0001
+ brcf sharp - ercf sharp     -12.8730 2.06 Inf  -6.240  <.0001
+ brcf sharp - erdc sharp     -25.7367 2.06 Inf -12.468  <.0001
+ brcf sharp - erdf sharp     -26.7390 2.06 Inf -12.973  <.0001
+ brcf sharp - zrcf sharp      19.5930 2.06 Inf   9.523  <.0001
+ brcf sharp - zrdc sharp       4.2036 2.06 Inf   2.039  1.0000
+ brcf sharp - zrdf sharp       1.2221 2.06 Inf   0.594  1.0000
+ brdc sharp - brdf sharp      -5.4202 2.06 Inf  -2.633  1.0000
+ brdc sharp - ercf sharp      -1.0484 2.06 Inf  -0.508  1.0000
+ brdc sharp - erdc sharp     -13.9121 2.06 Inf  -6.740  <.0001
+ brdc sharp - erdf sharp     -14.9144 2.06 Inf  -7.236  <.0001
+ brdc sharp - zrcf sharp      31.4176 2.06 Inf  15.270  <.0001
+ brdc sharp - zrdc sharp      16.0282 2.06 Inf   7.773  <.0001
+ brdc sharp - zrdf sharp      13.0467 2.06 Inf   6.341  <.0001
+ brdf sharp - ercf sharp       4.3718 2.06 Inf   2.120  1.0000
+ brdf sharp - erdc sharp      -8.4919 2.06 Inf  -4.116  0.0059
+ brdf sharp - erdf sharp      -9.4942 2.06 Inf  -4.608  0.0006
+ brdf sharp - zrcf sharp      36.8378 2.06 Inf  17.912  <.0001
+ brdf sharp - zrdc sharp      21.4484 2.06 Inf  10.406  <.0001
+ brdf sharp - zrdf sharp      18.4669 2.06 Inf   8.979  <.0001
+ ercf sharp - erdc sharp     -12.8637 2.07 Inf  -6.221  <.0001
+ ercf sharp - erdf sharp     -13.8660 2.06 Inf  -6.715  <.0001
+ ercf sharp - zrcf sharp      32.4660 2.06 Inf  15.751  <.0001
+ ercf sharp - zrdc sharp      17.0766 2.07 Inf   8.267  <.0001
+ ercf sharp - zrdf sharp      14.0951 2.06 Inf   6.838  <.0001
+ erdc sharp - erdf sharp      -1.0023 2.07 Inf  -0.485  1.0000
+ erdc sharp - zrcf sharp      45.3297 2.06 Inf  21.980  <.0001
+ erdc sharp - zrdc sharp      29.9403 2.07 Inf  14.488  <.0001
+ erdc sharp - zrdf sharp      26.9588 2.06 Inf  13.072  <.0001
+ erdf sharp - zrcf sharp      46.3320 2.06 Inf  22.498  <.0001
+ erdf sharp - zrdc sharp      30.9426 2.06 Inf  14.993  <.0001
+ erdf sharp - zrdf sharp      27.9611 2.06 Inf  13.578  <.0001
+ zrcf sharp - zrdc sharp     -15.3894 2.06 Inf  -7.470  <.0001
+ zrcf sharp - zrdf sharp     -18.3709 2.06 Inf  -8.937  <.0001
+ zrdc sharp - zrdf sharp      -2.9815 2.06 Inf  -1.447  1.0000
+
+Degrees-of-freedom method: asymptotic 
+P value adjustment: bonferroni method for 153 tests 

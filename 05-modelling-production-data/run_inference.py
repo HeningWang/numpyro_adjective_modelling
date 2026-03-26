@@ -27,12 +27,17 @@ from modelSpecification import (
     likelihood_function_incremental_speaker_frozen,
     likelihood_function_global_speaker_hier,
     likelihood_function_incremental_speaker_hier,
+    likelihood_function_incremental_speaker_lowcol_hier,
     likelihood_function_global_speaker_static_hier,
     likelihood_function_incremental_speaker_frozen_hier,
     likelihood_function_incremental_lm_only_hier,
     likelihood_function_incremental_rsa_only_hier,
     likelihood_function_incremental_speaker_lookahead_hier,
     likelihood_function_incremental_speaker_extended_hier,
+    likelihood_function_incremental_speaker_mixture_hier,
+    likelihood_function_incremental_speaker_mixture_simple_hier,
+    likelihood_function_reported_hier,
+    likelihood_function_reported_lowcol_hier,
 )
 
 
@@ -53,6 +58,11 @@ HIER_MODELS = {
     "incremental_rsa_only": (likelihood_function_incremental_rsa_only_hier, 0.85, 5),
     "incremental_lookahead": (likelihood_function_incremental_speaker_lookahead_hier, 0.85, 5),
     "incremental_extended": (likelihood_function_incremental_speaker_extended_hier, 0.85, 5),
+    "incremental_mixture": (likelihood_function_incremental_speaker_mixture_hier, 0.80, 5),
+    "incremental_mixture_simple": (likelihood_function_incremental_speaker_mixture_simple_hier, 0.80, 5),
+    "reported": (likelihood_function_reported_hier, 0.85, 5),
+    "reported_lowcol": (likelihood_function_reported_lowcol_hier, 0.85, 5),
+    "incremental_lowcol": (likelihood_function_incremental_speaker_lowcol_hier, 0.85, 5),
 }
 
 
@@ -202,7 +212,9 @@ if __name__ == "__main__":
                         choices=["global", "incremental", "global_static", "incremental_static",
                                  "incremental_frozen", "incremental_lm_only",
                                  "incremental_rsa_only", "incremental_lookahead",
-                                 "incremental_extended"],
+                                 "incremental_extended", "incremental_mixture",
+                                 "incremental_mixture_simple",
+                                 "reported", "reported_lowcol", "incremental_lowcol"],
                         default="incremental",
                         help="Choose the speaker model type.")
     parser.add_argument("--num_samples", type=int, default=500, help="Number of posterior samples.")
