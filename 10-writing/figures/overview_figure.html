@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Figure 1 — Overview of the Present Study</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background: #fff;
+    color: #222;
+    display: flex;
+    justify-content: center;
+    padding: 12px;
+  }
+
+  /* ── Main figure grid: 2×2 ── */
+  .fig {
+    width: 1100px;
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    grid-template-rows: auto auto;
+    gap: 6px;
+  }
+
+  /* ── Panel styling ── */
+  .panel {
+    border: 1.4px solid #bbb;
+    border-radius: 4px;
+    background: #fff;
+    position: relative;
+    padding: 6px 8px 6px;
+  }
+
+  .panel-label {
+    position: absolute;
+    top: 6px;
+    left: 8px;
+    font-size: 18px;
+    font-weight: 800;
+    color: #222;
+    line-height: 1;
+  }
+
+  .panel-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #444;
+    text-align: center;
+    margin: 0 0 4px;
+    padding-top: 2px;
+    letter-spacing: 0.3px;
+  }
+
+  /* ── CSP / Okabe-Ito inspired palette ── */
+  :root {
+    --blue: #2166AC;
+    --blue-light: #EFF6FC;
+    --blue-border: #92C5DE;
+    --orange: #D95F02;
+    --orange-light: #FFF4EC;
+    --orange-border: #F4A582;
+    --green: #1B7837;
+    --green-light: #E8F5E9;
+    --green-border: #A6D96A;
+    --red: #B2182B;
+    --red-light: #FDE8EA;
+    --red-border: #F4A5A5;
+    --purple: #7B3294;
+    --purple-light: #F3E5F5;
+    --purple-border: #C2A5CF;
+    --gray: #666;
+    --gray-light: #F5F5F5;
+    --gray-border: #CCC;
+  }
+
+  /* ═══════════════════════════════════════════
+     PANEL A — Visual Stimuli & Design
+     ═══════════════════════════════════════════ */
+  .p-scene {
+    grid-column: 1; grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #fafafa;
+  }
+
+  .scene-display {
+    background: #fff;
+    border: 1.2px solid #ddd;
+    border-radius: 4px;
+    padding: 6px 8px 4px;
+    margin-bottom: 4px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .scene-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 68px);
+    grid-template-rows: repeat(2, 58px);
+    gap: 4px;
+    justify-content: center;
+    margin-bottom: 6px;
+  }
+  .scene-grid > div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fafafa;
+    border-radius: 3px;
+  }
+
+  .scene-caption {
+    font-size: 12px;
+    color: #333;
+    font-style: italic;
+    text-align: center;
+    margin-bottom: 2px;
+  }
+  .scene-sub {
+    font-size: 10px;
+    color: #888;
+    text-align: center;
+  }
+
+  /* Factorial design table */
+  .design-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9.5px;
+    margin-top: 8px;
+  }
+  .design-table caption {
+    font-size: 11px;
+    font-weight: 700;
+    color: #555;
+    margin-bottom: 4px;
+    text-align: center;
+  }
+  .design-table th {
+    background: #eee;
+    color: #555;
+    font-weight: 600;
+    padding: 4px 5px;
+    border: 1px solid #ccc;
+    text-align: center;
+    font-size: 10px;
+  }
+  .design-table td {
+    padding: 4px 5px;
+    border: 1px solid #ddd;
+    text-align: center;
+    color: #555;
+    font-size: 10px;
+    line-height: 1.35;
+  }
+  .design-table .ctx-label {
+    font-weight: 600;
+    color: #444;
+    background: #f5f5f5;
+    text-align: left;
+    padding-left: 6px;
+    white-space: nowrap;
+  }
+
+  /* ═══════════════════════════════════════════
+     PANEL B — RSA Model
+     ═══════════════════════════════════════════ */
+  .p-model {
+    grid-column: 2; grid-row: 1;
+    padding: 6px 10px 6px;
+  }
+
+  .model-section {
+    margin-bottom: 4px;
+  }
+  .model-section:last-child {
+    margin-bottom: 0;
+  }
+
+  .section-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    text-align: center;
+    margin-bottom: 4px;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 2px;
+  }
+
+  /* Semantics: two side-by-side cards */
+  .sem-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .sem-card {
+    border-radius: 4px;
+    padding: 6px 8px 4px;
+    border: 1.4px solid;
+    text-align: center;
+  }
+  .sem-title {
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 3px;
+  }
+  .sem-desc {
+    font-size: 10px;
+    color: #666;
+    line-height: 1.3;
+    margin-bottom: 4px;
+  }
+  .sem-fixed {
+    background: var(--gray-light);
+    border-color: var(--gray-border);
+  }
+  .sem-fixed .sem-title { color: var(--gray); }
+  .sem-updating {
+    background: var(--green-light);
+    border-color: var(--green-border);
+  }
+  .sem-updating .sem-title { color: var(--green); }
+
+  /* Speaker: two side-by-side cards */
+  .arch-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .arch-card {
+    border-radius: 4px;
+    padding: 6px 8px 4px;
+    border: 1.4px solid;
+    text-align: center;
+  }
+  .arch-title {
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 3px;
+  }
+  .arch-desc {
+    font-size: 10px;
+    color: #666;
+    line-height: 1.3;
+    margin-bottom: 4px;
+  }
+  .arch-global {
+    background: var(--blue-light);
+    border-color: var(--blue-border);
+  }
+  .arch-global .arch-title { color: var(--blue); }
+  .arch-inc {
+    background: var(--orange-light);
+    border-color: var(--orange-border);
+  }
+  .arch-inc .arch-title { color: var(--orange); }
+
+  /* ═══════════════════════════════════════════
+     PANEL C — Experiments
+     ═══════════════════════════════════════════ */
+  .p-exps {
+    grid-column: 1; grid-row: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .exp-card {
+    border-radius: 4px;
+    padding: 5px 8px;
+    border: 1.4px solid;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .exp-card .et {
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 3px;
+  }
+  .exp-card .ed {
+    font-size: 10px;
+    color: #555;
+    line-height: 1.4;
+  }
+
+  .e-slider {
+    background: var(--red-light);
+    border-color: var(--red-border);
+  }
+  .e-slider .et { color: var(--red); }
+  .e-prod {
+    background: var(--purple-light);
+    border-color: var(--purple-border);
+  }
+  .e-prod .et { color: var(--purple); }
+
+  .mini-slider {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 5px;
+    width: 80%;
+  }
+  .mini-slider .track {
+    flex: 1;
+    height: 4px;
+    background: #ddd;
+    border-radius: 2px;
+    position: relative;
+  }
+  .mini-slider .thumb {
+    position: absolute;
+    top: -5px;
+    left: 62%;
+    width: 14px;
+    height: 14px;
+    background: var(--red);
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .mini-slider .el {
+    font-size: 10px;
+    color: #999;
+    font-weight: 600;
+  }
+
+  .mini-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 30px;
+    margin-top: 5px;
+    width: 80%;
+    justify-content: center;
+  }
+  .mini-bars .bar {
+    flex: 1;
+    background: var(--purple-border);
+    border-radius: 1.5px 1.5px 0 0;
+    min-width: 8px;
+    max-width: 16px;
+  }
+
+  /* ═══════════════════════════════════════════
+     PANEL D — 2×2 Comparison & Findings
+     ═══════════════════════════════════════════ */
+  .p-results {
+    grid-column: 2; grid-row: 2;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    align-content: center;
+    padding: 6px 10px;
+  }
+
+  /* 2×2 grid sub-panel */
+  .comp-sub {
+    padding: 0;
+  }
+  .comp-sub .panel-title { margin-bottom: 6px; }
+
+  .cg {
+    display: grid;
+    grid-template-columns: 90px 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 0;
+    width: 100%;
+  }
+  .cg-corner { }
+  .cg-ch {
+    text-align: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: #555;
+    padding: 4px 2px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .cg-ch .sub {
+    font-size: 9.5px;
+    font-weight: 400;
+    color: #999;
+    font-style: italic;
+  }
+  .cg-rh {
+    font-size: 10px;
+    font-weight: 700;
+    color: #555;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    line-height: 1.3;
+  }
+  .cg-rh .sub {
+    font-size: 9.5px;
+    font-weight: 400;
+    color: #999;
+    font-style: italic;
+  }
+
+  .cc {
+    margin: 2px;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 4px;
+    border: 1.3px solid;
+    min-height: 48px;
+  }
+  .cc .cl { font-size: 10px; font-weight: 600; color: #444; }
+  .cc .cs { font-size: 10px; margin-top: 2px; }
+
+  .cc-base { background: #f5f5f5; border-color: #ccc; }
+  .cc-better { background: #FFF8E1; border-color: #F9A825; }
+  .cc-better .cs { color: #E65100; font-weight: 600; }
+  .cc-best { background: #E8F5E9; border-color: var(--green); border-width: 2px; }
+  .cc-best .cl { color: var(--green); }
+  .cc-best .cs { color: var(--green); font-weight: 700; }
+
+  /* Findings sub-panel */
+  .find-sub {
+    padding: 0;
+  }
+
+  .fq {
+    margin-bottom: 8px;
+    padding-left: 2px;
+  }
+  .fq:last-child { margin-bottom: 0; }
+  .fq-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--blue);
+    margin-bottom: 1px;
+  }
+  .fq-text {
+    font-size: 10px;
+    color: #333;
+    line-height: 1.45;
+  }
+  .fq-text .hl {
+    color: var(--green);
+    font-weight: 700;
+  }
+  .fq-arrow {
+    color: #999;
+    font-size: 10px;
+  }
+
+  /* ── Utility ── */
+  .dim-label {
+    font-size: 10px;
+    color: #999;
+    font-style: italic;
+    text-align: center;
+  }
+  .cross-label {
+    font-size: 13px;
+    font-weight: 800;
+    color: #bbb;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+  }
+</style>
+</head>
+<body>
+
+<div class="fig">
+
+  <!-- ═══════════════════════════════════════════
+       PANEL A — Visual Stimuli & Experimental Design
+       ═══════════════════════════════════════════ -->
+  <div class="panel p-scene">
+    <div class="panel-label">a</div>
+    <div class="panel-title">Experimental Paradigm</div>
+
+    <div class="scene-display">
+      <div class="scene-grid">
+        <!-- Row 1: big blue circle (TARGET), small blue square, medium red circle -->
+        <div><svg width="52" height="52">
+          <circle cx="26" cy="26" r="22" fill="#56B4E9" stroke="#0072B2" stroke-width="1.2"/>
+          <rect x="1" y="1" width="50" height="50" rx="3" fill="none" stroke="#D55E00" stroke-width="2.4" stroke-dasharray="5 3"/>
+        </svg></div>
+        <div><svg width="34" height="34">
+          <rect x="4" y="4" width="26" height="26" rx="3" fill="#56B4E9" stroke="#0072B2" stroke-width="1"/>
+        </svg></div>
+        <div><svg width="40" height="40">
+          <circle cx="20" cy="20" r="16" fill="#E69F00" stroke="#CC7A00" stroke-width="1"/>
+        </svg></div>
+        <!-- Row 2: medium red triangle, small green square, medium green circle -->
+        <div><svg width="38" height="38">
+          <polygon points="19,3 36,34 2,34" fill="#E69F00" stroke="#CC7A00" stroke-width="1"/>
+        </svg></div>
+        <div><svg width="28" height="28">
+          <rect x="3" y="3" width="22" height="22" rx="2" fill="#009E73" stroke="#007A57" stroke-width="1"/>
+        </svg></div>
+        <div><svg width="36" height="36">
+          <circle cx="18" cy="18" r="14" fill="#009E73" stroke="#007A57" stroke-width="1"/>
+        </svg></div>
+      </div>
+
+      <div class="scene-caption">"the big blue circle sticker"</div>
+      <div class="scene-sub">target = dashed frame &middot; 6 objects per display</div>
+    </div>
+
+    <!-- Factorial design as visual illustration -->
+    <div style="margin-top:8px; width:100%;">
+      <div style="font-size:11px; font-weight:700; color:#555; text-align:center; margin-bottom:6px;">Factorial Design (size-colour)</div>
+
+      <!-- Referential context — word descriptions -->
+      <div style="font-size:10px; font-weight:700; color:#555; margin-bottom:4px;">Referential context <span style="font-weight:400; color:#999;">(within-subj.)</span></div>
+      <div style="display:flex; flex-direction:column; gap:3px; width:100%;">
+        <div style="padding:4px 8px; background:#EFF6FC; border:1px solid #92C5DE; border-radius:3px;">
+          <span style="font-size:10px; font-weight:700; color:#2166AC;">Size-sufficient</span>
+          <span style="font-size:10px; color:#555;"> &mdash; size alone identifies target</span>
+        </div>
+        <div style="padding:4px 8px; background:#FFF8E1; border:1px solid #F9A825; border-radius:3px;">
+          <span style="font-size:10px; font-weight:700; color:#E65100;">Both-necessary</span>
+          <span style="font-size:10px; color:#555;"> &mdash; size + colour both needed</span>
+        </div>
+        <div style="padding:4px 8px; background:#E8F5E9; border:1px solid #A6D96A; border-radius:3px;">
+          <span style="font-size:10px; font-weight:700; color:#1B7837;">Colour-sufficient</span>
+          <span style="font-size:10px; color:#555;"> &mdash; colour alone identifies target</span>
+        </div>
+      </div>
+
+      <!-- Size discriminability -->
+      <div style="font-size:10px; font-weight:700; color:#555; margin-top:8px; margin-bottom:3px;">Size discriminability <span style="font-weight:400; color:#999;">(between-subj.)</span></div>
+      <div style="display:flex; gap:6px; width:100%;">
+        <div style="flex:1; padding:4px 8px; background:#f0f0f0; border:1px solid #ccc; border-radius:3px; text-align:center;">
+          <span style="font-size:10px; font-weight:700; color:#444;">High</span><br>
+          <span style="font-size:9px; color:#777;">strong size contrast</span>
+        </div>
+        <div style="flex:1; padding:4px 8px; background:#f0f0f0; border:1px solid #ccc; border-radius:3px; text-align:center;">
+          <span style="font-size:10px; font-weight:700; color:#444;">Low</span><br>
+          <span style="font-size:9px; color:#777;">weak size contrast</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════
+       PANEL B — RSA Model Architecture
+       ═══════════════════════════════════════════ -->
+  <div class="panel p-model">
+    <div class="panel-label">b</div>
+    <div class="panel-title">Incremental RSA Model</div>
+
+    <!-- B.1: Compositional Semantics -->
+    <div class="model-section">
+      <div class="section-label">Literal Listener L&#x2080; &mdash; Compositional Semantics (right-to-left, noun-outward)</div>
+      <div class="sem-row">
+
+        <!-- Context-Fixed -->
+        <div class="sem-card sem-fixed">
+          <div class="sem-title">Context-Fixed</div>
+          <svg width="100%" height="118" viewBox="0 0 340 118">
+            <!-- Direction arrow -->
+            <defs>
+              <marker id="arr-gray" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto">
+                <polygon points="0 0,6 2.5,0 5" fill="#999"/>
+              </marker>
+              <marker id="arr-red" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto">
+                <polygon points="0 0,6 2.5,0 5" fill="#B2182B"/>
+              </marker>
+            </defs>
+
+            <!-- Composition direction -->
+            <line x1="300" y1="6" x2="50" y2="6" stroke="#999" stroke-width="1.2" marker-end="url(#arr-gray)"/>
+            <text x="175" y="5" text-anchor="middle" font-size="7.5" fill="#999" font-style="italic">composition direction</text>
+
+            <!-- Step labels -->
+            <text x="280" y="22" text-anchor="middle" font-size="8" fill="#888">noun</text>
+            <text x="195" y="22" text-anchor="middle" font-size="8" fill="#888">"blue"</text>
+            <text x="100" y="22" text-anchor="middle" font-size="8" fill="#888">"big"</text>
+
+            <!-- Row 1: all 6 objects, prior -->
+            <text x="8" y="40" font-size="7.5" fill="#888" font-style="italic">prior</text>
+            <line x1="40" y1="40" x2="320" y2="40" stroke="#ddd" stroke-width="0.8"/>
+            <circle cx="70" cy="40" r="3" fill="#ddd" stroke="#999" stroke-width="0.5" opacity="0.5"/>
+            <circle cx="100" cy="40" r="3" fill="#ddd" stroke="#999" stroke-width="0.5" opacity="0.5"/>
+            <circle cx="140" cy="40" r="3.5" fill="#E69F00" stroke="#CC7A00" stroke-width="0.6" opacity="0.6"/>
+            <circle cx="210" cy="40" r="4" fill="#56B4E9" stroke="#0072B2" stroke-width="0.8"/>
+            <circle cx="260" cy="40" r="3" fill="#009E73" stroke="#007A57" stroke-width="0.6"/>
+            <circle cx="300" cy="40" r="3" fill="#009E73" stroke="#007A57" stroke-width="0.6" opacity="0.6"/>
+            <!-- theta -->
+            <line x1="170" y1="33" x2="170" y2="47" stroke="#B2182B" stroke-width="1.5" stroke-dasharray="3 2"/>
+            <text x="174" y="35" font-size="7" fill="#B2182B" font-weight="700">&theta;</text>
+
+            <!-- Row 2: after "blue" filters — same theta -->
+            <text x="8" y="62" font-size="7.5" fill="#888" font-style="italic">+ "blue"</text>
+            <line x1="40" y1="62" x2="320" y2="62" stroke="#ddd" stroke-width="0.8"/>
+            <circle cx="70" cy="62" r="3" fill="#ddd" stroke="#999" stroke-width="0.5" opacity="0.15"/>
+            <circle cx="100" cy="62" r="3" fill="#ddd" stroke="#999" stroke-width="0.5" opacity="0.15"/>
+            <circle cx="140" cy="62" r="3.5" fill="#ddd" stroke="#999" stroke-width="0.5" opacity="0.15"/>
+            <circle cx="210" cy="62" r="4" fill="#56B4E9" stroke="#0072B2" stroke-width="0.8"/>
+            <circle cx="260" cy="62" r="3" fill="#ddd" stroke="#999" stroke-width="0.5" opacity="0.15"/>
+            <circle cx="300" cy="62" r="3" fill="#ddd" stroke="#999" stroke-width="0.5" opacity="0.15"/>
+            <!-- same theta position -->
+            <line x1="170" y1="55" x2="170" y2="69" stroke="#B2182B" stroke-width="1.5" stroke-dasharray="3 2"/>
+            <text x="174" y="57" font-size="7" fill="#B2182B" font-weight="700">&theta;</text>
+
+            <!-- Row 3: after "big" — still same theta -->
+            <text x="8" y="84" font-size="7.5" fill="#888" font-style="italic">+ "big"</text>
+            <line x1="40" y1="84" x2="320" y2="84" stroke="#ddd" stroke-width="0.8"/>
+            <circle cx="210" cy="84" r="4.5" fill="#56B4E9" stroke="#0072B2" stroke-width="1"/>
+            <!-- same theta -->
+            <line x1="170" y1="77" x2="170" y2="91" stroke="#B2182B" stroke-width="1.5" stroke-dasharray="3 2"/>
+            <text x="174" y="79" font-size="7" fill="#B2182B" font-weight="700">&theta;</text>
+
+            <!-- Annotation -->
+            <text x="170" y="100" text-anchor="middle" font-size="9" fill="#666" font-weight="600">&theta; from scene prior, held constant</text>
+            <text x="170" y="110" text-anchor="middle" font-size="9" fill="#888">&rArr; "big blue N" = "blue big N"</text>
+          </svg>
+        </div>
+
+        <!-- Context-Updating -->
+        <div class="sem-card sem-updating">
+          <div class="sem-title">Context-Updating (Recursive)</div>
+          <svg width="100%" height="118" viewBox="0 0 340 118">
+            <defs>
+              <marker id="arr-green" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto">
+                <polygon points="0 0,6 2.5,0 5" fill="#1B7837"/>
+              </marker>
+              <marker id="arr-green-sm" markerWidth="5" markerHeight="4" refX="4" refY="2" orient="auto">
+                <polygon points="0 0,5 2,0 4" fill="#1B7837"/>
+              </marker>
+            </defs>
+
+            <!-- Composition direction -->
+            <line x1="300" y1="6" x2="50" y2="6" stroke="#999" stroke-width="1.2" marker-end="url(#arr-gray)"/>
+            <text x="175" y="5" text-anchor="middle" font-size="7.5" fill="#999" font-style="italic">composition direction</text>
+
+            <!-- Step labels -->
+            <text x="280" y="22" text-anchor="middle" font-size="8" fill="#888">noun</text>
+            <text x="195" y="22" text-anchor="middle" font-size="8" fill="#888">"blue"</text>
+            <text x="100" y="22" text-anchor="middle" font-size="8" fill="#888">"big"</text>
+
+            <!-- Row 1: all 6 objects, prior -->
+            <text x="8" y="40" font-size="7.5" fill="#888" font-style="italic">prior</text>
+            <line x1="40" y1="40" x2="320" y2="40" stroke="#ddd" stroke-width="0.8"/>
+            <circle cx="70" cy="40" r="3" fill="#ddd" stroke="#999" stroke-width="0.5" opacity="0.5"/>
+            <circle cx="100" cy="40" r="3" fill="#ddd" stroke="#999" stroke-width="0.5" opacity="0.5"/>
+            <circle cx="140" cy="40" r="3.5" fill="#E69F00" stroke="#CC7A00" stroke-width="0.6" opacity="0.6"/>
+            <circle cx="210" cy="40" r="4" fill="#56B4E9" stroke="#0072B2" stroke-width="0.8"/>
+            <circle cx="260" cy="40" r="3" fill="#009E73" stroke="#007A57" stroke-width="0.6"/>
+            <circle cx="300" cy="40" r="3" fill="#009E73" stroke="#007A57" stroke-width="0.6" opacity="0.6"/>
+            <!-- theta_1 -->
+            <line x1="170" y1="33" x2="170" y2="47" stroke="#1B7837" stroke-width="1.5" stroke-dasharray="3 2"/>
+            <text x="174" y="35" font-size="7" fill="#1B7837" font-weight="700">&theta;&#x2081;</text>
+
+            <!-- Row 2: after "blue" — posterior narrows, theta shifts -->
+            <text x="8" y="62" font-size="7.5" fill="#888" font-style="italic">+ "blue"</text>
+            <line x1="40" y1="62" x2="320" y2="62" stroke="#ddd" stroke-width="0.8"/>
+            <circle cx="70" cy="62" r="3" fill="#ddd" stroke="#999" stroke-width="0.5" opacity="0.15"/>
+            <circle cx="100" cy="62" r="3" fill="#ddd" stroke="#999" stroke-width="0.5" opacity="0.15"/>
+            <circle cx="140" cy="62" r="3.5" fill="#ddd" stroke="#999" stroke-width="0.5" opacity="0.15"/>
+            <circle cx="210" cy="62" r="4" fill="#56B4E9" stroke="#0072B2" stroke-width="0.8"/>
+            <circle cx="260" cy="62" r="3" fill="#ddd" stroke="#999" stroke-width="0.5" opacity="0.15"/>
+            <circle cx="300" cy="62" r="3" fill="#ddd" stroke="#999" stroke-width="0.5" opacity="0.15"/>
+            <!-- theta_2 shifted right -->
+            <line x1="200" y1="55" x2="200" y2="69" stroke="#1B7837" stroke-width="1.5" stroke-dasharray="3 2"/>
+            <text x="204" y="57" font-size="7" fill="#1B7837" font-weight="700">&theta;&#x2082;</text>
+
+            <!-- Shift arrow theta_1 -> theta_2 -->
+            <line x1="172" y1="50" x2="196" y2="50" stroke="#1B7837" stroke-width="1.3" marker-end="url(#arr-green-sm)"/>
+            <text x="184" y="48" text-anchor="middle" font-size="6" fill="#1B7837" font-weight="600">shift</text>
+
+            <!-- Row 3: after "big" — further narrowing -->
+            <text x="8" y="84" font-size="7.5" fill="#888" font-style="italic">+ "big"</text>
+            <line x1="40" y1="84" x2="320" y2="84" stroke="#ddd" stroke-width="0.8"/>
+            <circle cx="210" cy="84" r="4.5" fill="#56B4E9" stroke="#0072B2" stroke-width="1"/>
+
+            <!-- Recursive feedback arrow -->
+            <path d="M 205,70 C 225,70 230,56 215,56" stroke="#1B7837" stroke-width="1.2" fill="none" stroke-dasharray="2 1.5" marker-end="url(#arr-green-sm)"/>
+            <text x="232" y="64" font-size="7" fill="#1B7837" font-weight="600">posterior</text>
+            <text x="232" y="72" font-size="7" fill="#1B7837" font-weight="600">feedback</text>
+
+            <!-- Annotation -->
+            <text x="170" y="100" text-anchor="middle" font-size="9" fill="#1B7837" font-weight="600">&theta; recomputed from listener posterior</text>
+            <text x="170" y="110" text-anchor="middle" font-size="9" fill="#555">&rArr; "big blue N" &ne; "blue big N"</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- B.2: Speaker Architecture -->
+    <div class="model-section">
+      <div class="section-label">Pragmatic Speaker S&#x2081; &mdash; Production (left-to-right)</div>
+      <div class="arch-row">
+
+        <!-- Global Speaker -->
+        <div class="arch-card arch-global">
+          <div class="arch-title">Global Speaker</div>
+          <svg width="100%" height="90" viewBox="0 0 340 90">
+            <defs>
+              <marker id="arr-blue" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto">
+                <polygon points="0 0,6 2.5,0 5" fill="#2166AC"/>
+              </marker>
+            </defs>
+
+            <!-- Production direction arrow -->
+            <line x1="18" y1="6" x2="320" y2="6" stroke="#999" stroke-width="1" marker-end="url(#arr-gray)"/>
+            <text x="170" y="5" text-anchor="middle" font-size="7.5" fill="#999" font-style="italic">production direction</text>
+
+            <!-- Utility formula -->
+            <rect x="15" y="14" width="310" height="26" rx="5" fill="#EFF6FC" stroke="#92C5DE" stroke-width="1"/>
+            <text x="170" y="26" text-anchor="middle" font-size="10" font-weight="700" fill="#2166AC">U(u) = &alpha; &middot; (log L&#x2080;(o* | u) &minus; cost(u))</text>
+            <text x="170" y="37" text-anchor="middle" font-size="8.5" fill="#5A9BBF" font-style="italic">informativeness via L&#x2080; vs. utterance cost</text>
+
+            <!-- Arrow down -->
+            <line x1="170" y1="40" x2="170" y2="48" stroke="#2166AC" stroke-width="1.4" marker-end="url(#arr-blue)"/>
+
+            <!-- Utterance-level scoring -->
+            <rect x="15" y="50" width="310" height="18" rx="4" fill="#EFF6FC" stroke="#92C5DE" stroke-width="0.8"/>
+            <text x="170" y="63" text-anchor="middle" font-size="9" fill="#2166AC" font-weight="600">"big blue N" &middot; "blue big N" &middot; "big N" &middot; "blue N" &middot; ...</text>
+          </svg>
+        </div>
+
+        <!-- Incremental Speaker -->
+        <div class="arch-card arch-inc">
+          <div class="arch-title">Incremental Speaker</div>
+          <svg width="100%" height="90" viewBox="0 0 340 90">
+            <defs>
+              <marker id="arr-orange" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto">
+                <polygon points="0 0,6 2.5,0 5" fill="#D95F02"/>
+              </marker>
+              <marker id="arr-orange-sm" markerWidth="5" markerHeight="4" refX="4" refY="2" orient="auto">
+                <polygon points="0 0,5 2,0 4" fill="#D95F02"/>
+              </marker>
+            </defs>
+
+            <!-- Production direction arrow -->
+            <line x1="18" y1="6" x2="320" y2="6" stroke="#999" stroke-width="1" marker-end="url(#arr-gray)"/>
+            <text x="170" y="5" text-anchor="middle" font-size="7.5" fill="#999" font-style="italic">production direction</text>
+
+            <!-- Horizontal pipeline: 3 stages connected by arrows -->
+            <!-- Stage 1: pick word 1 -->
+            <rect x="6" y="18" width="90" height="50" rx="4" fill="#FFF4EC" stroke="#F4A582" stroke-width="1"/>
+            <text x="51" y="30" text-anchor="middle" font-size="8" fill="#888">t = 1</text>
+            <text x="51" y="42" text-anchor="middle" font-size="8.5" fill="#D95F02" font-weight="700">pick best w&#x2081;</text>
+            <text x="51" y="54" text-anchor="middle" font-size="8" fill="#D95F02">S&#x2081;(w|o*) via L&#x2080;</text>
+            <!-- Result below -->
+            <rect x="16" y="72" width="70" height="14" rx="3" fill="#FDE8CD" stroke="#D95F02" stroke-width="0.7"/>
+            <text x="51" y="83" text-anchor="middle" font-size="8.5" fill="#D95F02" font-weight="600">"big"</text>
+
+            <!-- Arrow 1→2 -->
+            <line x1="96" y1="43" x2="118" y2="43" stroke="#D95F02" stroke-width="1.5" marker-end="url(#arr-orange-sm)"/>
+            <text x="107" y="38" text-anchor="middle" font-size="6.5" fill="#D95F02">L&#x2080;</text>
+
+            <!-- Stage 2: pick word 2 given context -->
+            <rect x="120" y="18" width="100" height="50" rx="4" fill="#FFF4EC" stroke="#F4A582" stroke-width="1"/>
+            <text x="170" y="30" text-anchor="middle" font-size="8" fill="#888">t = 2</text>
+            <text x="170" y="42" text-anchor="middle" font-size="8.5" fill="#D95F02" font-weight="700">pick best w&#x2082;</text>
+            <text x="170" y="54" text-anchor="middle" font-size="8" fill="#D95F02">S&#x2081;(w|"big",o*)</text>
+            <!-- Result below -->
+            <rect x="126" y="72" width="88" height="14" rx="3" fill="#FDE8CD" stroke="#D95F02" stroke-width="0.7"/>
+            <text x="170" y="83" text-anchor="middle" font-size="8.5" fill="#D95F02" font-weight="600">"big blue"</text>
+
+            <!-- Arrow 2→3 -->
+            <line x1="220" y1="43" x2="242" y2="43" stroke="#D95F02" stroke-width="1.5" marker-end="url(#arr-orange-sm)"/>
+            <text x="231" y="38" text-anchor="middle" font-size="6.5" fill="#D95F02">L&#x2080;</text>
+
+            <!-- Stage 3: stop -->
+            <rect x="244" y="18" width="88" height="50" rx="4" fill="#FFF4EC" stroke="#F4A582" stroke-width="1"/>
+            <text x="288" y="30" text-anchor="middle" font-size="8" fill="#888">t = 3</text>
+            <text x="288" y="42" text-anchor="middle" font-size="8.5" fill="#D95F02" font-weight="700">STOP</text>
+            <text x="288" y="54" text-anchor="middle" font-size="8" fill="#D95F02">&#x2713; done</text>
+            <!-- Final result below -->
+            <rect x="244" y="72" width="88" height="14" rx="3" fill="#FDDCB5" stroke="#D95F02" stroke-width="1"/>
+            <text x="288" y="83" text-anchor="middle" font-size="8.5" fill="#D95F02" font-weight="700">"big blue N"</text>
+          </svg>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════
+       PANEL C — Experiments
+       ═══════════════════════════════════════════ -->
+  <div class="panel p-exps">
+    <div class="panel-label">c</div>
+    <div class="panel-title">Experiments</div>
+
+    <!-- Exp 1: Slider — mini bar chart with real data -->
+    <div class="exp-card e-slider">
+      <div class="et">Exp 1: Slider Rating</div>
+      <div class="ed" style="font-size:10px;">Mean size-first preference (centered)</div>
+      <svg width="240" height="90" viewBox="0 0 240 90" style="margin-top:4px;">
+        <!-- Y axis -->
+        <line x1="40" y1="8" x2="40" y2="78" stroke="#ccc" stroke-width="0.8"/>
+        <text x="36" y="12" text-anchor="end" font-size="7" fill="#999">0.4</text>
+        <line x1="38" y1="10" x2="40" y2="10" stroke="#ccc" stroke-width="0.6"/>
+        <text x="36" y="45" text-anchor="end" font-size="7" fill="#999">0.2</text>
+        <line x1="38" y1="43" x2="40" y2="43" stroke="#ccc" stroke-width="0.6"/>
+        <text x="36" y="78" text-anchor="end" font-size="7" fill="#999">0.0</text>
+        <line x1="38" y1="76" x2="235" y2="76" stroke="#ccc" stroke-width="0.6"/>
+        <!-- Bars: Both necessary -->
+        <!-- high: 0.20 → h=34px, low: 0.25 → h=42px from baseline y=76 -->
+        <rect x="50" y="42" width="14" height="34" rx="1" fill="#7B68AE" opacity="0.8"/>
+        <rect x="66" y="34" width="14" height="42" rx="1" fill="#A8D8B9" opacity="0.8"/>
+        <text x="65" y="88" text-anchor="middle" font-size="7" fill="#666">Both</text>
+        <!-- Size sufficient -->
+        <!-- high: 0.34 → h=58px, low: 0.30 → h=51px -->
+        <rect x="105" y="18" width="14" height="58" rx="1" fill="#7B68AE" opacity="0.8"/>
+        <rect x="121" y="25" width="14" height="51" rx="1" fill="#A8D8B9" opacity="0.8"/>
+        <text x="120" y="88" text-anchor="middle" font-size="7" fill="#666">Size</text>
+        <!-- Colour sufficient -->
+        <!-- high: 0.05 → h=8.5px, low: 0.07 → h=12px -->
+        <rect x="160" y="67.5" width="14" height="8.5" rx="1" fill="#7B68AE" opacity="0.8"/>
+        <rect x="176" y="64" width="14" height="12" rx="1" fill="#A8D8B9" opacity="0.8"/>
+        <text x="175" y="88" text-anchor="middle" font-size="7" fill="#666">Colour</text>
+        <!-- Legend -->
+        <rect x="195" y="16" width="8" height="8" rx="1" fill="#7B68AE" opacity="0.8"/>
+        <text x="206" y="23" font-size="7" fill="#666">High</text>
+        <rect x="195" y="28" width="8" height="8" rx="1" fill="#A8D8B9" opacity="0.8"/>
+        <text x="206" y="35" font-size="7" fill="#666">Low</text>
+      </svg>
+    </div>
+
+    <!-- Exp 2: Production — 3 categories × 3 contexts × 2 discriminabilities -->
+    <div class="exp-card e-prod">
+      <div class="et">Exp 2: Free Production</div>
+      <div class="ed" style="font-size:10px;">Proportion by utterance category</div>
+      <svg width="260" height="100" viewBox="0 0 260 100" style="margin-top:2px;">
+        <!-- Stacked horizontal bars: size-first | colour-first | other -->
+        <!-- bar height=8, group spacing: high at y, low at y+12, next group at y+34 -->
+
+        <!-- Both necessary -->
+        <text x="48" y="11" text-anchor="end" font-size="8" fill="#666" font-weight="600">Both</text>
+        <!-- High -->
+        <text x="48" y="20" text-anchor="end" font-size="7" fill="#999">high</text>
+        <rect x="52" y="5" width="97" height="8" rx="1.5" fill="#2166AC" opacity="0.75"/>
+        <rect x="149" y="5" width="37" height="8" rx="1.5" fill="#D95F02" opacity="0.75"/>
+        <rect x="186" y="5" width="16" height="8" rx="1.5" fill="#999" opacity="0.5"/>
+        <!-- Low -->
+        <text x="48" y="30" text-anchor="end" font-size="7" fill="#999">low</text>
+        <rect x="52" y="17" width="74" height="8" rx="1.5" fill="#2166AC" opacity="0.45"/>
+        <rect x="126" y="17" width="51" height="8" rx="1.5" fill="#D95F02" opacity="0.45"/>
+        <rect x="177" y="17" width="25" height="8" rx="1.5" fill="#999" opacity="0.3"/>
+
+        <!-- Separator line -->
+        <line x1="52" y1="29" x2="202" y2="29" stroke="#e0e0e0" stroke-width="0.5"/>
+
+        <!-- Size sufficient -->
+        <text x="48" y="43" text-anchor="end" font-size="8" fill="#666" font-weight="600">Size</text>
+        <!-- High -->
+        <text x="48" y="52" text-anchor="end" font-size="7" fill="#999">high</text>
+        <rect x="52" y="37" width="116" height="8" rx="1.5" fill="#2166AC" opacity="0.75"/>
+        <rect x="168" y="37" width="17" height="8" rx="1.5" fill="#D95F02" opacity="0.75"/>
+        <rect x="185" y="37" width="17" height="8" rx="1.5" fill="#999" opacity="0.5"/>
+        <!-- Low -->
+        <text x="48" y="62" text-anchor="end" font-size="7" fill="#999">low</text>
+        <rect x="52" y="49" width="119" height="8" rx="1.5" fill="#2166AC" opacity="0.45"/>
+        <rect x="171" y="49" width="20" height="8" rx="1.5" fill="#D95F02" opacity="0.45"/>
+        <rect x="191" y="49" width="11" height="8" rx="1.5" fill="#999" opacity="0.3"/>
+
+        <!-- Separator line -->
+        <line x1="52" y1="61" x2="202" y2="61" stroke="#e0e0e0" stroke-width="0.5"/>
+
+        <!-- Colour sufficient -->
+        <text x="48" y="75" text-anchor="end" font-size="8" fill="#666" font-weight="600">Colour</text>
+        <!-- High -->
+        <text x="48" y="84" text-anchor="end" font-size="7" fill="#999">high</text>
+        <rect x="52" y="69" width="1.5" height="8" rx="0.5" fill="#2166AC" opacity="0.75"/>
+        <rect x="53.5" y="69" width="142.5" height="8" rx="1.5" fill="#D95F02" opacity="0.75"/>
+        <rect x="196" y="69" width="6" height="8" rx="1" fill="#999" opacity="0.5"/>
+        <!-- Low -->
+        <text x="48" y="93" text-anchor="end" font-size="7" fill="#999">low</text>
+        <rect x="52" y="81" width="6" height="8" rx="1" fill="#2166AC" opacity="0.45"/>
+        <rect x="58" y="81" width="134" height="8" rx="1.5" fill="#D95F02" opacity="0.45"/>
+        <rect x="192" y="81" width="10" height="8" rx="1" fill="#999" opacity="0.3"/>
+
+        <!-- Legend -->
+        <rect x="210" y="8" width="8" height="7" rx="1" fill="#2166AC" opacity="0.75"/>
+        <text x="221" y="14" font-size="7.5" fill="#666">size-1st</text>
+        <rect x="210" y="19" width="8" height="7" rx="1" fill="#D95F02" opacity="0.75"/>
+        <text x="221" y="25" font-size="7.5" fill="#666">col-1st</text>
+        <rect x="210" y="30" width="8" height="7" rx="1" fill="#999" opacity="0.5"/>
+        <text x="221" y="36" font-size="7.5" fill="#666">other</text>
+      </svg>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════
+       PANEL D — 2×2 Model Comparison & Findings
+       ═══════════════════════════════════════════ -->
+  <div class="panel p-results">
+    <div class="panel-label">d</div>
+    <div class="panel-title" style="grid-column: 1 / 3;">Model Comparison &amp; Key Findings</div>
+
+    <!-- 2×2 grid -->
+    <div class="comp-sub">
+      <div style="font-size:10px; font-weight:700; color:#555; text-align:center; margin-bottom:4px;">
+        2 &times; 2 Comparison (PSIS-LOO)
+      </div>
+      <div class="cg">
+        <div class="cg-corner"></div>
+        <div class="cg-ch">Context-Fixed<span class="sub">static &theta;</span></div>
+        <div class="cg-ch">Context-Updating<span class="sub">recursive &theta;</span></div>
+
+        <div class="cg-rh">Global<span class="sub">utterance-level</span></div>
+        <div class="cc cc-base"><span class="cl">Global &times; Fixed</span></div>
+        <div class="cc cc-base"><span class="cl">Global &times; Updating</span></div>
+
+        <div class="cg-rh">Incremental<span class="sub">word-by-word</span></div>
+        <div class="cc cc-better"><span class="cl">Incremental &times; Fixed</span><span class="cs">better</span></div>
+        <div class="cc cc-best"><span class="cl">Incremental &times; Updating</span><span class="cs">&#9733; best</span></div>
+      </div>
+    </div>
+
+    <!-- Findings -->
+    <div class="find-sub">
+      <div style="font-size:10px; font-weight:700; color:#555; text-align:center; margin-bottom:6px;">
+        Research Questions
+      </div>
+
+      <div class="fq">
+        <div class="fq-label">Q1: Compositional context update alone sufficient?</div>
+        <div class="fq-text"><span class="fq-arrow">&rarr;</span> Yes: context-updating semantics yields <span class="hl">baseline size-first preference</span> (simulation)</div>
+      </div>
+      <div class="fq">
+        <div class="fq-label">Q2: Incremental speaker needed?</div>
+        <div class="fq-text"><span class="fq-arrow">&rarr;</span> Yes: <span class="hl">incremental &gt; global</span> across both datasets</div>
+      </div>
+      <div class="fq">
+        <div class="fq-label">Q3: Interaction between incremental speaker and context-updating?</div>
+        <div class="fq-text"><span class="fq-arrow">&rarr;</span> Context-updating helps only with incremental speaker &rarr; <span class="hl">synergistic interaction</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
