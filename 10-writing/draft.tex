@@ -61,14 +61,14 @@ We argue that adjective ordering in referential communication is best understood
 \label{sec:intro}
 % =============================================================================
 
-When English speakers modify a noun with multiple adjectives, some orderings feel markedly more natural than others: ``big brown bag'' is preferred over ``brown big bag.''
-These preferences have been documented across typologically diverse languages and have resisted a single explanatory account for over a century \citep{sweet1898,whorf1945grammatical,martin1969a,quirk1972,dixon1982,sproat1991,cinque1994,scott2002,scontras2023adjective}.
-The phenomenon is theoretically interesting precisely because it sits at the intersection of stable regularity and contextual flexibility: adjective ordering is too robust to be accidental, too cross-linguistically consistent to be a quirk of English syntax, and yet too context-sensitive to be fully captured by a fixed hierarchy \citep{trotzke2019,fukumura2018ordering,dyer2023evaluating}.
+When multiple adjectives modify a noun, speakers across typologically diverse languages prefer similar orderings --- ``big brown bag'' over ``brown big bag'' \citep{scontras2023adjective,sproat1991}.
+Previous research (for an overview, see \citealp{scontras2023adjective}) has linked these preferences to meaning-based factors such as closeness to the noun and inherentness \citep{sweet1898,whorf1945grammatical,martin1969a}, to class-based hierarchies \citep{quirk1972,dixon1982,cinque1994,scott2002}, and to information-theoretic measures \citep{Hahn_information_2018,futrell-etal-2020-determines,dyer2023evaluating}.
+However, no single factor has proven sufficient; even the best individual predictors leave complementary variance unexplained \citep{dyer2023evaluating}.
+Furthermore, the preferences are context-sensitive in ways that fixed hierarchies do not fully capture \citep{trotzke2019,fukumura2018ordering}.
 
-Recent work has reframed the question around two complementary notions of communicative efficiency.
+We focus on two lines of recent work that ground ordering preferences in communicative efficiency.
 \citet{scontras2017subjectivity} showed that \emph{subjectivity} is a strong predictor of preferred adjective distance from the noun, and subsequent work argued that this regularity follows from restrictive composition and sequential context update: less subjective adjectives contribute more useful information at the inner, more restricted stage of modification \citep{franke2019subjectivity,scontras2019grammatical,scontras2020incremental}.
-Separately, \citet{fukumura2018ordering} demonstrated that speakers in referential tasks tend to place the more \emph{discriminating} adjective first, maximising informativeness in the given context.
-\citet{rubio2021wordorder} generalised this into an \emph{incremental efficiency} hypothesis: the utility of a modifier should be evaluated at the point in the utterance where it is encountered, not only after the full description has been heard.
+Separately, \citet{fukumura2018ordering} demonstrated that speakers in referential tasks tend to place the more \emph{discriminating} adjective first, maximising informativeness in the given context, and \citet{rubio2021wordorder} generalised this into an \emph{incremental efficiency} hypothesis: the utility of a modifier should be evaluated at the point in the utterance where it is encountered, not only after the full description has been heard.
 
 Both lines of work appeal to communicative efficiency, but they locate it at different levels --- one in the compositional semantics, the other in the online production process.
 The central question of this paper is how these two levels interact.
@@ -98,11 +98,10 @@ In the production data, context-updating semantics provides a significant furthe
   \centering
   \includegraphics[width=\textwidth]{overview_figure.png}
   \caption{Overview of the present study.
-  Left: participants view a six-object display and refer to a framed target using size, colour, and form adjectives; referential context and size discriminability vary across trials.
-  Centre: the RSA model pairs a literal listener that composes meaning right-to-left (noun-outward) with a pragmatic speaker.
-  The speaker either evaluates complete utterances at once (global) or chooses one word at a time left-to-right (incremental); size semantics is either fixed from the scene prior (context-fixed) or recomputed from the listener's running posterior (context-updating).
-  Right: the model is fitted to two complementary experiments --- graded slider ratings and free production over 15 utterance forms.
-  Bottom: a $2 \times 2$ comparison (speaker $\times$ semantics) evaluated with Bayesian PSIS-LOO reveals that incremental production is the dominant mechanism (Q2), context-updating semantics helps only when paired with incremental production (Q3), and simulation confirms that context-updating composition alone already yields a baseline ordering preference (Q1).}
+  (\textbf{a})~Experimental paradigm: six-object displays varying in referential context (within-subj.) and size discriminability (between-subj.).
+  (\textbf{b})~The RSA model crosses two dimensions: compositional semantics (context-fixed vs.\ context-updating $\theta$, right-to-left) and speaker architecture (global vs.\ incremental, left-to-right).
+  (\textbf{c})~Empirical results: slider ratings of ordering preference and production proportions by utterance category.
+  (\textbf{d})~$2 \times 2$ model comparison (PSIS-LOO) and key findings (Q1--Q3).}
   \label{fig:overview}
 \end{figure}
 
