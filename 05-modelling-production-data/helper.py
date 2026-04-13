@@ -21,6 +21,7 @@ CONDITIONS_OF_INTEREST = (
     "erdf", "zrdf", "brdf",   # dimension × form
     "ercf", "zrcf", "brcf",   # colour × form
 )
+COLOUR_SUFFICIENT_CONDITIONS = ("ercf", "zrcf", "brcf")
 SYMBOL_TO_INDEX: Dict[str, int] = {"D": 0, "C": 1, "F": 2}
 MAX_UTTERANCE_LEN = 3
 FLAT_TO_CATEGORIES: Dict[str, str] = {
@@ -58,6 +59,9 @@ def import_dataset(
 
     df = pd.read_csv(dataset_path).dropna(subset=["annotation"]).copy()
     df = df[df["conditions"].isin(CONDITIONS_OF_INTEREST)].copy()
+
+    is_colour_sufficient_np = df["conditions"].isin(COLOUR_SUFFICIENT_CONDITIONS).to_numpy(dtype=np.float32)
+    is_colour_sufficient = jnp.array(is_colour_sufficient_np, dtype=jnp.float32)
 
     sharpness_idx_np = (df["sharpness"].astype(str) == "sharp").to_numpy(dtype=np.int32)
     sharpness_idx = jnp.array(sharpness_idx_np, dtype=jnp.float32)
@@ -117,6 +121,7 @@ def import_dataset(
         "empirical_seq_flat": empirical_seq_flat,
         "empirical_dist_by_condition": empirical_dist_by_condition,
         "sharpness_idx": sharpness_idx,
+        "is_colour_sufficient": is_colour_sufficient,
     }
 
 def import_dataset_hier(
