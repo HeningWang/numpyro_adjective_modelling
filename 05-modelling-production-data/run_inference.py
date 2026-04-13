@@ -5,9 +5,11 @@ Usage:
         --num_warmup 500 --num_samples 500 --num_chains 4
 """
 import os
-os.environ["JAX_PLATFORMS"] = "cpu"
+# Default to CPU with 4 host devices, but honour env overrides so callers
+# can switch to GPU mode via `JAX_PLATFORMS='' XLA_FLAGS='' python ...`.
+os.environ.setdefault("JAX_PLATFORMS", "cpu")
+os.environ.setdefault("XLA_FLAGS", "--xla_force_host_platform_device_count=4")
 os.environ["JAX_TRACEBACK_FILTERING"] = "off"
-os.environ["XLA_FLAGS"] = "--xla_force_host_platform_device_count=4"
 
 import argparse
 import numpy as np
