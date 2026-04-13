@@ -38,6 +38,9 @@ from modelSpecification import (
     likelihood_function_incremental_speaker_mixture_simple_hier,
     likelihood_function_reported_hier,
     likelihood_function_reported_lowcol_hier,
+    likelihood_function_v5_hier,
+    likelihood_function_v5a_hier,
+    likelihood_function_v5b_hier,
 )
 
 
@@ -63,6 +66,9 @@ HIER_MODELS = {
     "reported": (likelihood_function_reported_hier, 0.85, 5),
     "reported_lowcol": (likelihood_function_reported_lowcol_hier, 0.85, 5),
     "incremental_lowcol": (likelihood_function_incremental_speaker_lowcol_hier, 0.85, 5),
+    "v5":  (likelihood_function_v5_hier,  0.85, 5),
+    "v5a": (likelihood_function_v5a_hier, 0.85, 5),
+    "v5b": (likelihood_function_v5b_hier, 0.85, 5),
 }
 
 
@@ -150,6 +156,10 @@ def run_inference_hier(
     empirical_seq_flat = data["empirical_seq_flat"]
     participant_idx    = data["participant_idx"]
     n_participants     = data["n_participants"]
+    is_colour_sufficient = data.get("is_colour_sufficient")  # only present for v5 family
+
+    V5_FAMILY = {"v5", "v5a", "v5b"}
+    is_v5 = canonical_speaker_type in V5_FAMILY
 
     print(f"Hierarchical model: {n_participants} participants, {len(states_train)} observations")
     print(f"Output file: {output_file_name}")
@@ -172,20 +182,26 @@ def run_inference_hier(
         num_chains=num_chains,
         chain_method="vectorized",
     )
-    mcmc.run(
-        rng_key_,
-        states_train, empirical_seq_flat,
-        participant_idx, n_participants,
+
+    base_kwargs = dict(
+        states=states_train,
+        empirical=empirical_seq_flat,
+        participant_idx=participant_idx,
+        n_participants=n_participants,
     )
+    if is_v5:
+        if is_colour_sufficient is None:
+            raise RuntimeError("v5 family requires is_colour_sufficient in data dict; rebuild dataset")
+        base_kwargs["is_colour_sufficient"] = is_colour_sufficient
+
+    mcmc.run(rng_key_, **base_kwargs)
     mcmc.print_summary(exclude_deterministic=False)
 
     posterior_samples = mcmc.get_samples()
-    posterior_predictive = Predictive(model, posterior_samples)(
-        PRNGKey(1), states_train, None, participant_idx, n_participants
-    )
-    prior = Predictive(model, num_samples=500)(
-        PRNGKey(2), states_train, None, participant_idx, n_participants
-    )
+    pp_kwargs = dict(base_kwargs)
+    pp_kwargs["empirical"] = None  # generate, not condition
+    posterior_predictive = Predictive(model, posterior_samples)(PRNGKey(1), **pp_kwargs)
+    prior = Predictive(model, num_samples=500)(PRNGKey(2), **pp_kwargs)
 
     N = states_train.shape[0]
     coords = {"item": np.arange(N)}
@@ -214,7 +230,8 @@ if __name__ == "__main__":
                                  "incremental_rsa_only", "incremental_lookahead",
                                  "incremental_extended", "incremental_mixture",
                                  "incremental_mixture_simple",
-                                 "reported", "reported_lowcol", "incremental_lowcol"],
+                                 "reported", "reported_lowcol", "incremental_lowcol",
+                                 "v5", "v5a", "v5b"],
                         default="incremental",
                         help="Choose the speaker model type.")
     parser.add_argument("--num_samples", type=int, default=500, help="Number of posterior samples.")
