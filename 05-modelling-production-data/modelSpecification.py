@@ -1090,6 +1090,157 @@ def incremental_speaker_extended(
     return probs
 
 
+def incremental_speaker_v5(
+    states:                jnp.ndarray,
+    is_colour_sufficient:  float,
+    alpha_D:               float = 3.0,
+    alpha_C:               float = 3.0,
+    alpha_F:               float = 3.0,
+    lambda_C:              float = 0.0,
+    color_semval:          float = 0.95,
+    form_semval:           float = 0.80,
+    k:                     float = 0.50,
+    wf:                    float = 1.00,
+    beta:                  float = 1.00,
+    gamma_1:               float = 0.0,
+    gamma_2:               float = 0.0,
+    epsilon:               float = 0.01,
+) -> jnp.ndarray:
+    """Incremental speaker v5: condition-gated lambda_C boost and saturating two-step length bias."""
+
+    eps            = 1e-8
+    referent_index = 0
+    n_obj          = states.shape[0]
+    alpha_vec      = jnp.array([alpha_D, alpha_C, alpha_F])
+
+    # ── NEW: extract sizes once here ──────────────────────────────────────────
+    # states[:, 0] would be re-executed inside every vmap call without this
+    sizes = states[:, 0]                                              # (n_obj,)
+    size_sort_idx = jnp.argsort(sizes)                                # (n_obj,)
+    sizes_sorted = sizes[size_sort_idx]                               # (n_obj,)
+    # ─────────────────────────────────────────────────────────────────────────
+
+    # ── LM utterance prior ────────────────────────────────────────────────────
+    lm_scaled  = jnp.power(jnp.clip(LM_PRIOR_15, eps), beta)
+    log_P_beta = jnp.log(lm_scaled / jnp.sum(lm_scaled))            # (n_utt,)
+
+    # ── Context-independent log-semantics (color, form) ───────────────────────
+    colors = states[:, 1]
+    forms  = states[:, 2]
+
+    log_color_sem = jnp.log(
+        jnp.where(colors == 1, color_semval, 1.0 - color_semval) + eps
+    )                                                                  # (n_obj,)
+    log_form_sem  = jnp.log(
+        jnp.where(forms  == 1, form_semval,  1.0 - form_semval)  + eps
+    )                                                                  # (n_obj,)
+
+    # ── Scan carry ────────────────────────────────────────────────────────────
+    uniform     = jnp.ones(n_obj) / n_obj
+    init_scores = jnp.zeros(n_utt)
+    init_posts  = jnp.broadcast_to(uniform, (n_utt, n_obj))          # (n_utt, n_obj)
+
+    def step(carry, t):
+        log_scores, per_utt_posts = carry
+
+        cand_mask_t = CANDIDATE_MASK[t]    # (n_utt, 3)
+        active_t    = ACTIVE_POS[t]        # (n_utt,)
+
+        # ── Step 1: size log-semantics per utterance (reuse pre-sorted sizes) ─
+        def size_log_sem_for_utt(post):
+            sv = compute_size_semantics_fast_presorted(
+                sizes,
+                size_sort_idx,
+                sizes_sorted,
+                post,
+                k,
+                wf,
+            )
+            return jnp.log(jnp.clip(sv, eps))
+
+        size_log_sems = jax.vmap(size_log_sem_for_utt)(per_utt_posts)   # (n_utt, n_obj)
+
+        # ── Step 2: full log-sem table  (n_utt, 3, n_obj) ────────────────────
+        log_sem_static = jnp.stack(
+            [log_color_sem, log_form_sem], axis=0                    # (2, n_obj)
+        )
+        log_sem_table = jnp.concatenate([
+            size_log_sems[:, None, :],                               # (n_utt, 1, n_obj)
+            jnp.broadcast_to(
+                log_sem_static[None, :, :], (n_utt, 2, n_obj)
+            ),                                                        # (n_utt, 2, n_obj)
+        ], axis=1)                                                    # (n_utt, 3, n_obj)
+
+        # ── Step 3: candidate scores via TOKEN_PRESENT einsum ─────────────────
+        token_pres_t = TOKEN_PRESENT[t]                              # (n_utt, 3, 3)
+
+        log_prod_sem = jnp.einsum(
+            "uav, uvo -> uao",
+            token_pres_t,      # (n_utt, 3, 3)
+            log_sem_table,     # (n_utt, 3, n_obj)
+        )                                                             # (n_utt, 3, n_obj)
+
+        log_per_utt_posts = jnp.log(jnp.clip(per_utt_posts, eps))     # (n_utt, n_obj)
+        log_prior = log_per_utt_posts
+
+        log_updated = log_prior[:, None, :] + log_prod_sem           # (n_utt, 3, n_obj)
+
+        log_Z    = jax.scipy.special.logsumexp(log_updated, axis=-1) # (n_utt, 3)
+        log_norm = log_updated - log_Z[:, :, None]                   # (n_utt, 3, n_obj)
+        log_L_ref = log_norm[:, :, referent_index]                   # (n_utt, 3)
+
+        # ── Step 4: masked softmax (with condition-gated lambda_C boost) ──────
+        boost_vec = jnp.array([0.0, lambda_C * is_colour_sufficient, 0.0])  # (3,)
+        logits_with_boost = jnp.where(
+            cand_mask_t,
+            alpha_vec[None, :] * log_L_ref + boost_vec[None, :],
+            -1e9,
+        )
+        local_probs = jax.nn.softmax(logits_with_boost, axis=-1)     # (n_utt, 3)
+
+        # ── Step 5: probability of actual token ───────────────────────────────
+        chosen = jnp.sum(
+            local_probs * ACTUAL_TOK_ONEHOT[t], axis=-1
+        )                                                             # (n_utt,)
+        chosen     = jnp.where(active_t, chosen, 1.0)
+        log_chosen = jnp.where(active_t, jnp.log(jnp.clip(chosen, eps)), 0.0)
+
+        # ── Step 6: posterior update ───────────────────────────────────────────
+        selected_log_sem = jnp.einsum(
+            "uv, uvo -> uo",
+            ACTUAL_TOK_ONEHOT[t],    # (n_utt, 3)
+            log_sem_table,           # (n_utt, 3, n_obj)
+        )                                                             # (n_utt, n_obj)
+
+        log_updated_post = log_per_utt_posts + jnp.where(
+            active_t[:, None],
+            selected_log_sem,
+            0.0,
+        )
+        log_Z_post        = jax.scipy.special.logsumexp(
+            log_updated_post, axis=-1, keepdims=True
+        )
+        new_per_utt_posts = jnp.exp(log_updated_post - log_Z_post)  # (n_utt, n_obj)
+
+        return (log_scores + log_chosen, new_per_utt_posts), None
+
+    (log_final_scores, _), _ = lax.scan(
+        step,
+        (init_scores, init_posts),
+        jnp.arange(T),
+    )
+
+    # ── Saturating two-step length bias ───────────────────────────────────────
+    k_extra = jnp.maximum(N_WORDS - 1, 0)   # length minus 1; k_extra ∈ {0, 1, 2}
+    length_bonus = (
+        gamma_1 * (k_extra >= 1).astype(jnp.float32)
+        + gamma_2 * (k_extra >= 2).astype(jnp.float32)
+    )
+    log_unnorm = log_P_beta + log_final_scores + length_bonus        # (n_utt,)
+    model_probs = jax.nn.softmax(log_unnorm)                          # (n_utt,)
+    return (1.0 - epsilon) * model_probs + epsilon / n_utt
+
+
 # ── Vectorise over trials ──────────────────────────────────────────────────────
 vectorized_incremental_speaker = jax.vmap(
     incremental_speaker,
@@ -1196,6 +1347,40 @@ def jitted_speaker_extended_hier(states, alpha_per_trial, color_semval,
     return vectorized_incremental_speaker_extended_hier(
         states, alpha_per_trial, color_semval, form_semval, k, wf, beta,
         gamma, epsilon, mu_C, mu_F,
+    )
+
+# Hierarchical: per-trial alpha_D, alpha_C, alpha_F and per-trial is_colour_sufficient
+vectorized_incremental_speaker_v5_hier = jax.vmap(
+    incremental_speaker_v5,
+    in_axes=(0,    # states
+             0,    # is_colour_sufficient ← per-trial
+             0,    # alpha_D ← per-trial
+             0,    # alpha_C ← per-trial
+             0,    # alpha_F ← per-trial
+             None, # lambda_C
+             None, # color_semval
+             None, # form_semval
+             None, # k
+             None, # wf
+             None, # beta
+             None, # gamma_1
+             None, # gamma_2
+             None, # epsilon
+             ),
+)
+
+@jax.jit
+def jitted_speaker_v5_hier(
+    states, is_colour_sufficient,
+    alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+    lambda_C, color_semval, form_semval, k, wf, beta,
+    gamma_1, gamma_2, epsilon,
+):
+    return vectorized_incremental_speaker_v5_hier(
+        states, is_colour_sufficient,
+        alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+        lambda_C, color_semval, form_semval, k, wf, beta,
+        gamma_1, gamma_2, epsilon,
     )
 
 # Warm up JIT with dummy values
