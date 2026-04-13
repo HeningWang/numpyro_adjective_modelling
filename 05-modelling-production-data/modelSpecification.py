@@ -1616,6 +1616,137 @@ likelihood_function_incremental_speaker_lowcol_hier = _make_extended_v1_model(
 )
 
 
+# =============================================================================
+# V5 LIKELIHOOD FACTORIES  (v5: full, v5a: lambda_C only, v5b: gamma only)
+# =============================================================================
+
+def _make_v5_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
+    """Factory for v5: ext-v1 + condition-gated lambda_C + saturating gamma_1, gamma_2."""
+    def model(states=None, empirical=None,
+              participant_idx=None, n_participants=None,
+              is_colour_sufficient=None):
+        log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
+        beta     = jnp.exp(log_beta)
+
+        alpha_D  = numpyro.sample("alpha_D",  dist.HalfNormal(5.0))
+        alpha_C  = numpyro.sample("alpha_C",  dist.HalfNormal(5.0))
+        alpha_F  = numpyro.sample("alpha_F",  dist.HalfNormal(5.0))
+        lambda_C = numpyro.sample("lambda_C", dist.Normal(0.0, 1.0))
+        gamma_1  = numpyro.sample("gamma_1",  dist.Normal(0.0, 1.0))
+        gamma_2  = numpyro.sample("gamma_2",  dist.Normal(0.0, 1.0))
+        epsilon  = numpyro.sample("epsilon",  dist.Beta(1.0, 50.0))
+        tau      = numpyro.sample("tau",      dist.HalfNormal(0.2))
+
+        with numpyro.plate("participants", n_participants):
+            delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+        alpha_D_per_trial = jnp.maximum(alpha_D + delta[participant_idx], 0.0)
+        alpha_C_per_trial = jnp.maximum(alpha_C + delta[participant_idx], 0.0)
+        alpha_F_per_trial = jnp.maximum(alpha_F + delta[participant_idx], 0.0)
+
+        with numpyro.plate("data", len(states)):
+            probs = jitted_speaker_v5_hier(
+                states, is_colour_sufficient,
+                alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+                lambda_C, color_semval, form_semval, k, wf, beta,
+                gamma_1, gamma_2, epsilon,
+            )
+            if empirical is None:
+                numpyro.sample("obs", dist.Categorical(probs=probs))
+            else:
+                numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+    return model
+
+
+likelihood_function_v5_hier = _make_v5_model(
+    color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0,
+)
+
+
+def _make_v5a_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
+    """v5a: lambda_C added on top of ext-v1; linear gamma retained (gamma_2 := gamma_1)."""
+    def model(states=None, empirical=None,
+              participant_idx=None, n_participants=None,
+              is_colour_sufficient=None):
+        log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
+        beta     = jnp.exp(log_beta)
+
+        alpha_D  = numpyro.sample("alpha_D",  dist.HalfNormal(5.0))
+        alpha_C  = numpyro.sample("alpha_C",  dist.HalfNormal(5.0))
+        alpha_F  = numpyro.sample("alpha_F",  dist.HalfNormal(5.0))
+        lambda_C = numpyro.sample("lambda_C", dist.Normal(0.0, 1.0))
+        gamma    = numpyro.sample("gamma",    dist.Normal(0.0, 1.0))
+        epsilon  = numpyro.sample("epsilon",  dist.Beta(1.0, 50.0))
+        tau      = numpyro.sample("tau",      dist.HalfNormal(0.2))
+
+        with numpyro.plate("participants", n_participants):
+            delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+        alpha_D_per_trial = jnp.maximum(alpha_D + delta[participant_idx], 0.0)
+        alpha_C_per_trial = jnp.maximum(alpha_C + delta[participant_idx], 0.0)
+        alpha_F_per_trial = jnp.maximum(alpha_F + delta[participant_idx], 0.0)
+
+        with numpyro.plate("data", len(states)):
+            probs = jitted_speaker_v5_hier(
+                states, is_colour_sufficient,
+                alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+                lambda_C, color_semval, form_semval, k, wf, beta,
+                gamma, gamma, epsilon,
+            )
+            if empirical is None:
+                numpyro.sample("obs", dist.Categorical(probs=probs))
+            else:
+                numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+    return model
+
+
+likelihood_function_v5a_hier = _make_v5a_model(
+    color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0,
+)
+
+
+def _make_v5b_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
+    """v5b: saturating gamma_1, gamma_2 added on top of ext-v1; no lambda_C."""
+    def model(states=None, empirical=None,
+              participant_idx=None, n_participants=None,
+              is_colour_sufficient=None):
+        log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
+        beta     = jnp.exp(log_beta)
+
+        alpha_D  = numpyro.sample("alpha_D", dist.HalfNormal(5.0))
+        alpha_C  = numpyro.sample("alpha_C", dist.HalfNormal(5.0))
+        alpha_F  = numpyro.sample("alpha_F", dist.HalfNormal(5.0))
+        gamma_1  = numpyro.sample("gamma_1", dist.Normal(0.0, 1.0))
+        gamma_2  = numpyro.sample("gamma_2", dist.Normal(0.0, 1.0))
+        epsilon  = numpyro.sample("epsilon", dist.Beta(1.0, 50.0))
+        tau      = numpyro.sample("tau",     dist.HalfNormal(0.2))
+
+        with numpyro.plate("participants", n_participants):
+            delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+        alpha_D_per_trial = jnp.maximum(alpha_D + delta[participant_idx], 0.0)
+        alpha_C_per_trial = jnp.maximum(alpha_C + delta[participant_idx], 0.0)
+        alpha_F_per_trial = jnp.maximum(alpha_F + delta[participant_idx], 0.0)
+
+        with numpyro.plate("data", len(states)):
+            probs = jitted_speaker_v5_hier(
+                states, is_colour_sufficient,
+                alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+                0.0, color_semval, form_semval, k, wf, beta,
+                gamma_1, gamma_2, epsilon,
+            )
+            if empirical is None:
+                numpyro.sample("obs", dist.Categorical(probs=probs))
+            else:
+                numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+    return model
+
+
+likelihood_function_v5b_hier = _make_v5b_model(
+    color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0,
+)
+
+
 def likelihood_function_incremental_speaker(states=None, empirical=None):
     color_semval = 0.971
     form_semval  = 0.50
