@@ -140,13 +140,28 @@ def run_inference_hier(
     num_samples: int = 1000,
     num_chains: int = 4,
     min_proportion: float = 0.0,
+    condition_subset: str = "",
 ):
-    """Run MCMC for the hierarchical (random participant alpha) speaker model."""
+    """Run MCMC for the hierarchical (random participant alpha) speaker model.
+
+    condition_subset : str
+        Comma-separated condition codes (e.g., "erdc,zrdc,brdc") to filter trials.
+        Empty = use all 9 conditions. Adds suffix "_<tag>" to output filename.
+    """
     canonical_speaker_type = canonicalize_speaker_type(speaker_type)
+
+    subset_tag = ""
+    if condition_subset:
+        subset_codes = tuple(s.strip() for s in condition_subset.split(",") if s.strip())
+        # Compact tag: hash-free, derive from condition stems (third+fourth chars).
+        stems = sorted({c[2:4] for c in subset_codes})
+        subset_tag = f"_{''.join(stems)}"
+    else:
+        subset_codes = None
 
     tag = f"_top" if min_proportion > 0 else ""
     output_file_name = (
-        f"./inference_data/mcmc_results_{canonical_speaker_type}_speaker_hier{tag}"
+        f"./inference_data/mcmc_results_{canonical_speaker_type}_speaker_hier{tag}{subset_tag}"
         f"_warmup{num_warmup}_samples{num_samples}_chains{num_chains}.nc"
     )
     if os.path.exists(output_file_name):
@@ -154,6 +169,36 @@ def run_inference_hier(
         print(f"Deleted existing file: {output_file_name}")
 
     data = import_dataset_hier(min_proportion=min_proportion)
+
+    if subset_codes is not None:
+        df = data["df"]
+        keep_mask_np = df["conditions"].isin(subset_codes).to_numpy()
+        n_before = len(df)
+        n_after = int(keep_mask_np.sum())
+        if n_after == 0:
+            raise ValueError(f"condition_subset {subset_codes} matched zero trials.")
+        keep_idx = np.where(keep_mask_np)[0]
+        keep_idx_jnp = jax.numpy.asarray(keep_idx)
+
+        # Filter every per-trial array; participant_idx must stay 0-indexed dense.
+        for k in ("states_train", "empirical_seq_flat", "empirical_flat",
+                  "empirical_seq", "seq_mask", "sharpness_idx",
+                  "is_colour_sufficient"):
+            if k in data and data[k] is not None:
+                data[k] = data[k][keep_idx_jnp]
+        data["df"] = df.iloc[keep_idx].reset_index(drop=True)
+
+        # Re-index participants to 0..n-1 over the filtered trials.
+        old_pid = np.asarray(data["participant_idx"])[keep_idx]
+        unique_p = sorted(set(old_pid.tolist()))
+        remap = {p: i for i, p in enumerate(unique_p)}
+        new_pid = np.array([remap[p] for p in old_pid], dtype=np.int32)
+        data["participant_idx"] = jax.numpy.asarray(new_pid, dtype=jax.numpy.int32)
+        data["n_participants"] = len(unique_p)
+
+        print(f"  [subset] Kept {n_after}/{n_before} trials in conditions {subset_codes} "
+              f"({len(unique_p)} participants)")
+
     states_train       = data["states_train"]
     empirical_seq_flat = data["empirical_seq_flat"]
     participant_idx    = data["participant_idx"]
@@ -248,6 +293,10 @@ if __name__ == "__main__":
         "--min-proportion", type=float, default=0.0,
         help="Filter training data to utterance types with max proportion >= this in any condition.",
     )
+    parser.add_argument(
+        "--condition-subset", type=str, default="",
+        help="Comma-separated condition codes (e.g. 'erdc,zrdc,brdc') to filter trials. Empty = all 9.",
+    )
 
     args = parser.parse_args()
 
@@ -261,6 +310,7 @@ if __name__ == "__main__":
             num_warmup=args.num_warmup,
             num_chains=args.num_chains,
             min_proportion=args.min_proportion,
+            condition_subset=args.condition_subset,
         )
     else:
         run_inference(
