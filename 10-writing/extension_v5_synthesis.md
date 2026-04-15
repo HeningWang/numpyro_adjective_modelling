@@ -44,6 +44,7 @@ All runs: hierarchical (per-participant α offset δ\_p), warmup 2000 / samples 
 | v5 (F1) | −6250 | +907 | **+137** | 0.16 | λ_C + sat γ + δγ |
 | v5 (C1, i.e. F1 + μ_noncanon) | −5323 | +1834 | **+1063** | 0.10 | canonical ordering added |
 | **v5 (F2, final)** | **−5294** | **+1863** | **+1093** | **0.10** | C1 + sharpness-dependent η |
+| v5_no_lm (F3 ablation) | −5314 | +1843 | +1073 | 0.10 | F2 with β = 0 (LM prior removed) |
 
 ### Key posterior means for v5 (F2)
 
@@ -155,6 +156,34 @@ Four concrete decisions come out of this work:
 3. **The `COLOUR_SUFFICIENT_CONDITIONS = (ercf, zrdc)` correction.** This is independent of everything else; it clarifies which trials humans actually treat colour as sufficient. Probably belongs in the main text even if v5 doesn't.
 
 4. **Subset choice.** All v5 analysis is on the `dc` subset (N = 3196). Running the same exploration on the `df` subset (size + form) and the `cf` subset (colour + form) would test whether the F2 mechanisms generalise — particularly, whether a symmetric "form-sufficient" flag would be needed.
+
+## 7b. LM-prior ablation (F3)
+
+**Question**: with μ_noncanon (−5.08) + the γ/δγ/η terms in place, is the LM prior still doing useful work, or is it redundant?
+
+**Test**: fit v5 (F2) with β = 0 (LM prior flattened to uniform; every utterance gets the same log-prior contribution, which drops out of the softmax). Every other parameter free and identical to F2.
+
+**Result**:
+
+| Model | ELPD | Δ vs F2 | R² (emp ≥ .02) | L1 |
+|---|---|---|---|---|
+| v5 (F2) | **−5294** | 0 | **.928** | **1.22** |
+| v5_no_lm (F3) | −5314 | **−20.3** | .915 | 1.30 |
+
+**Posterior compensation** when LM is removed (v5_no_lm - v5_F2):
+- λ_C: 3.09 → 3.33 (+0.24) — colour-boost works harder
+- γ_2: 1.58 → 1.32 (−0.26) — some 3-word preference re-absorbed into shorter
+- δγ_1: −2.16 → −2.39 (−0.23) — colour-sufficient trials get a stronger short-utterance pull
+- μ_noncanon, γ_1, η_1, η_2, ε: essentially unchanged
+
+**Interpretation**:
+
+- The LM prior carries ~20 ELPD of residual signal beyond what the explicit F2 mechanisms absorb. Not large, but above noise.
+- What it's capturing: utterance-level frequency structure that is *beyond* canonical-ordering (μ_noncanon) + length (γ + δγ + η) + colour salience (λ_C). Probably relative frequencies among same-shape canonical utterances (e.g., "D" vs "DC" vs "DCF").
+- The non-zero ablation gap is reassuring: if the explicit mechanisms were just re-fitting what the LM encodes, removing the LM should cost 0. Getting a 20-ELPD gap means the mechanisms are capturing **structurally distinct** signal from the LM, not just a relabeling.
+- **β dropped from 7.8 (ext-v1) to 0.84 (F2)**: the LM prior's *sharpening* role — enforcing canonical ordering via `LM_PRIOR^β` — was fully absorbed by μ_noncanon. What remains (β ≈ 0.84, near unsharpened) is the base frequency structure.
+
+**Decision**: keep the LM prior in the final F2 model. The one-parameter cost is minor; the +20 ELPD is real.
 
 ## 8. Open questions flagged but not resolved
 
