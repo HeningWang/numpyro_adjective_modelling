@@ -555,6 +555,10 @@ N_WORDS = jnp.sum(jnp.array(utterance_list) >= 0, axis=1).astype(jnp.float32)  #
 # ── First word of each utterance (for first-word intercepts) ─────────────────
 # D=0, C=1, F=2 → one-hot masks for first-word bias
 FIRST_WORD = jnp.array(utterance_list)[:, 0]  # (n_utt,) first token of each utterance
+
+# ── C-initial mask for global-speaker v5 lambda_C boost ──────────────────────
+# 1 if the utterance starts with C (mention index 1), else 0.
+C_INITIAL_MASK = (FIRST_WORD == 1).astype(jnp.float32)  # (n_utt,)
 # Binary masks: which utterances start with C / F (D is reference)
 STARTS_C = (FIRST_WORD == 1).astype(jnp.float32)  # (n_utt,)
 STARTS_F = (FIRST_WORD == 2).astype(jnp.float32)  # (n_utt,)
@@ -1253,6 +1257,206 @@ def incremental_speaker_v5(
     return (1.0 - epsilon) * model_probs + epsilon / n_utt
 
 
+def incremental_speaker_frozen_v5(
+    states:                jnp.ndarray,
+    is_colour_sufficient:  float,
+    alpha_D:               float = 3.0,
+    alpha_C:               float = 3.0,
+    alpha_F:               float = 3.0,
+    lambda_C:              float = 0.0,
+    color_semval:          float = 0.95,
+    form_semval:           float = 0.80,
+    k:                     float = 0.50,
+    wf:                    float = 1.00,
+    beta:                  float = 1.00,
+    gamma_1:               float = 0.0,
+    gamma_2:               float = 0.0,
+    delta_gamma_1:         float = 0.0,
+    delta_gamma_2:         float = 0.0,
+    epsilon:               float = 0.01,
+) -> jnp.ndarray:
+    """v5 with FROZEN (context-fixed) size semantics."""
+    eps            = 1e-8
+    referent_index = 0
+    n_obj          = states.shape[0]
+    alpha_vec      = jnp.array([alpha_D, alpha_C, alpha_F])
+
+    sizes = states[:, 0]
+    size_sort_idx = jnp.argsort(sizes)
+    sizes_sorted = sizes[size_sort_idx]
+
+    lm_scaled  = jnp.power(jnp.clip(LM_PRIOR_15, eps), beta)
+    log_P_beta = jnp.log(lm_scaled / jnp.sum(lm_scaled))
+
+    colors = states[:, 1]
+    forms  = states[:, 2]
+
+    log_color_sem = jnp.log(
+        jnp.where(colors == 1, color_semval, 1.0 - color_semval) + eps
+    )
+    log_form_sem  = jnp.log(
+        jnp.where(forms  == 1, form_semval,  1.0 - form_semval)  + eps
+    )
+
+    uniform     = jnp.ones(n_obj) / n_obj
+    init_scores = jnp.zeros(n_utt)
+    init_posts  = jnp.broadcast_to(uniform, (n_utt, n_obj))
+
+    def size_log_sem_for_utt(post):
+        sv = compute_size_semantics_fast_presorted(
+            sizes, size_sort_idx, sizes_sorted, post, k, wf,
+        )
+        return jnp.log(jnp.clip(sv, eps))
+
+    size_log_sems_frozen = jax.vmap(size_log_sem_for_utt)(init_posts)
+    log_sem_static = jnp.stack([log_color_sem, log_form_sem], axis=0)
+    log_sem_table_frozen = jnp.concatenate([
+        size_log_sems_frozen[:, None, :],
+        jnp.broadcast_to(log_sem_static[None, :, :], (n_utt, 2, n_obj)),
+    ], axis=1)
+
+    def step(carry, t):
+        log_scores, per_utt_posts = carry
+        cand_mask_t = CANDIDATE_MASK[t]
+        active_t    = ACTIVE_POS[t]
+
+        token_pres_t = TOKEN_PRESENT[t]
+        log_prod_sem = jnp.einsum("uav, uvo -> uao", token_pres_t, log_sem_table_frozen)
+
+        log_per_utt_posts = jnp.log(jnp.clip(per_utt_posts, eps))
+        log_updated = log_per_utt_posts[:, None, :] + log_prod_sem
+        log_Z = jax.scipy.special.logsumexp(log_updated, axis=-1)
+        log_norm = log_updated - log_Z[:, :, None]
+        log_L_ref = log_norm[:, :, referent_index]
+
+        # R1: lambda_C active only at step 0
+        first_step_gate = (t == 0).astype(jnp.float32)
+        boost_vec = jnp.array(
+            [0.0, lambda_C * is_colour_sufficient * first_step_gate, 0.0]
+        )
+        logits = jnp.where(
+            cand_mask_t,
+            alpha_vec[None, :] * log_L_ref + boost_vec[None, :],
+            -1e9,
+        )
+        local_probs = jax.nn.softmax(logits, axis=-1)
+
+        chosen = jnp.sum(local_probs * ACTUAL_TOK_ONEHOT[t], axis=-1)
+        chosen = jnp.where(active_t, chosen, 1.0)
+        log_chosen = jnp.where(active_t, jnp.log(jnp.clip(chosen, eps)), 0.0)
+
+        selected_log_sem = jnp.einsum(
+            "uv, uvo -> uo", ACTUAL_TOK_ONEHOT[t], log_sem_table_frozen,
+        )
+        log_updated_post = log_per_utt_posts + jnp.where(active_t[:, None], selected_log_sem, 0.0)
+        log_Z_post = jax.scipy.special.logsumexp(log_updated_post, axis=-1, keepdims=True)
+        new_per_utt_posts = jnp.exp(log_updated_post - log_Z_post)
+        return (log_scores + log_chosen, new_per_utt_posts), None
+
+    (log_final_scores, _), _ = lax.scan(step, (init_scores, init_posts), jnp.arange(T))
+
+    k_extra = jnp.maximum(N_WORDS - 1, 0)
+    gamma_1_eff = gamma_1 + delta_gamma_1 * is_colour_sufficient
+    gamma_2_eff = gamma_2 + delta_gamma_2 * is_colour_sufficient
+    length_bonus = (
+        gamma_1_eff * (k_extra >= 1).astype(jnp.float32)
+        + gamma_2_eff * (k_extra >= 2).astype(jnp.float32)
+    )
+    log_unnorm = log_P_beta + log_final_scores + length_bonus
+    model_probs = jax.nn.softmax(log_unnorm)
+    return (1.0 - epsilon) * model_probs + epsilon / n_utt
+
+
+def global_speaker_v5(
+    states:                jnp.ndarray,
+    is_colour_sufficient:  float,
+    alpha:                 float = 3.0,
+    lambda_C:              float = 0.0,
+    color_sem:             float = 0.95,
+    form_sem:              float = 0.80,
+    k:                     float = 0.5,
+    wf:                    float = 1.0,
+    beta:                  float = 1.0,
+    gamma_1:               float = 0.0,
+    gamma_2:               float = 0.0,
+    delta_gamma_1:         float = 0.0,
+    delta_gamma_2:         float = 0.0,
+    epsilon:               float = 0.01,
+) -> jnp.ndarray:
+    """Global speaker with v5 mechanisms: lambda_C lifts C-initial utterances on
+    colour-sufficient trials; saturating two-step length bias with condition
+    offsets (F1)."""
+    eps = 1e-8
+    costs = utterance_cost_jax(beta=beta)
+    M_listener = incremental_semantics_jax(
+        states=states, color_sem=color_sem, form_sem=form_sem, k=k, wf=wf,
+    )
+    log_L = jnp.log(jnp.clip(M_listener.T, eps))              # (n_obj, n_utt)
+
+    k_extra = jnp.maximum(N_WORDS - 1, 0)
+    gamma_1_eff = gamma_1 + delta_gamma_1 * is_colour_sufficient
+    gamma_2_eff = gamma_2 + delta_gamma_2 * is_colour_sufficient
+    length_bonus = (
+        gamma_1_eff * (k_extra >= 1).astype(jnp.float32)
+        + gamma_2_eff * (k_extra >= 2).astype(jnp.float32)
+    )                                                          # (n_utt,)
+    c_boost = lambda_C * is_colour_sufficient * C_INITIAL_MASK  # (n_utt,)
+
+    util = (
+        alpha * log_L
+        - costs[None, :]
+        + length_bonus[None, :]
+        + c_boost[None, :]
+    )
+    M_speaker = jax.nn.softmax(util, axis=-1)
+    M_speaker = (1.0 - epsilon) * M_speaker + epsilon / M_listener.shape[0]
+    return M_speaker[0, :]
+
+
+def global_speaker_static_v5(
+    states:                jnp.ndarray,
+    is_colour_sufficient:  float,
+    alpha:                 float = 3.0,
+    lambda_C:              float = 0.0,
+    color_sem:             float = 0.95,
+    form_sem:              float = 0.80,
+    k:                     float = 0.5,
+    wf:                    float = 1.0,
+    beta:                  float = 1.0,
+    gamma_1:               float = 0.0,
+    gamma_2:               float = 0.0,
+    delta_gamma_1:         float = 0.0,
+    delta_gamma_2:         float = 0.0,
+    epsilon:               float = 0.01,
+) -> jnp.ndarray:
+    """Global static (frozen size semantics) with v5 mechanisms."""
+    eps = 1e-8
+    costs = utterance_cost_jax(beta=beta)
+    M_listener = incremental_semantics_jax_frozen(
+        states=states, color_sem=color_sem, form_sem=form_sem, k=k, wf=wf,
+    )
+    log_L = jnp.log(jnp.clip(M_listener.T, eps))
+
+    k_extra = jnp.maximum(N_WORDS - 1, 0)
+    gamma_1_eff = gamma_1 + delta_gamma_1 * is_colour_sufficient
+    gamma_2_eff = gamma_2 + delta_gamma_2 * is_colour_sufficient
+    length_bonus = (
+        gamma_1_eff * (k_extra >= 1).astype(jnp.float32)
+        + gamma_2_eff * (k_extra >= 2).astype(jnp.float32)
+    )
+    c_boost = lambda_C * is_colour_sufficient * C_INITIAL_MASK
+
+    util = (
+        alpha * log_L
+        - costs[None, :]
+        + length_bonus[None, :]
+        + c_boost[None, :]
+    )
+    M_speaker = jax.nn.softmax(util, axis=-1)
+    M_speaker = (1.0 - epsilon) * M_speaker + epsilon / M_listener.shape[0]
+    return M_speaker[0, :]
+
+
 # ── Vectorise over trials ──────────────────────────────────────────────────────
 vectorized_incremental_speaker = jax.vmap(
     incremental_speaker,
@@ -1396,6 +1600,69 @@ def jitted_speaker_v5_hier(
         lambda_C, color_semval, form_semval, k, wf, beta,
         gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, epsilon,
     )
+
+
+# ── v5: incremental frozen (context-fixed) — per-trial alpha + flag ─────────
+vectorized_incremental_speaker_frozen_v5_hier = jax.vmap(
+    incremental_speaker_frozen_v5,
+    in_axes=(0, 0, 0, 0, 0, None, None, None, None, None, None,
+             None, None, None, None, None),
+)
+
+@jax.jit
+def jitted_speaker_frozen_v5_hier(
+    states, is_colour_sufficient,
+    alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+    lambda_C, color_semval, form_semval, k, wf, beta,
+    gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, epsilon,
+):
+    return vectorized_incremental_speaker_frozen_v5_hier(
+        states, is_colour_sufficient,
+        alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+        lambda_C, color_semval, form_semval, k, wf, beta,
+        gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, epsilon,
+    )
+
+
+# ── v5: global (context-updating) — per-trial alpha (single) + flag ─────────
+vectorized_global_speaker_v5_hier = jax.vmap(
+    global_speaker_v5,
+    in_axes=(0, 0, 0, None, None, None, None, None, None,
+             None, None, None, None, None),
+)
+
+@jax.jit
+def jitted_global_speaker_v5_hier(
+    states, is_colour_sufficient, alpha_per_trial,
+    lambda_C, color_semval, form_semval, k, wf, beta,
+    gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, epsilon,
+):
+    return vectorized_global_speaker_v5_hier(
+        states, is_colour_sufficient, alpha_per_trial,
+        lambda_C, color_semval, form_semval, k, wf, beta,
+        gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, epsilon,
+    )
+
+
+# ── v5: global static (context-fixed) ──────────────────────────────────────
+vectorized_global_speaker_static_v5_hier = jax.vmap(
+    global_speaker_static_v5,
+    in_axes=(0, 0, 0, None, None, None, None, None, None,
+             None, None, None, None, None),
+)
+
+@jax.jit
+def jitted_global_speaker_static_v5_hier(
+    states, is_colour_sufficient, alpha_per_trial,
+    lambda_C, color_semval, form_semval, k, wf, beta,
+    gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, epsilon,
+):
+    return vectorized_global_speaker_static_v5_hier(
+        states, is_colour_sufficient, alpha_per_trial,
+        lambda_C, color_semval, form_semval, k, wf, beta,
+        gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, epsilon,
+    )
+
 
 # Warm up JIT with dummy values
 _dummy_states = jnp.ones((len(states), 6, 3))
@@ -1760,6 +2027,109 @@ def _make_v5b_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
 
 likelihood_function_v5b_hier = _make_v5b_model(
     color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0,
+)
+
+
+# =============================================================================
+# V5 2×2 FACTORIES: incremental-static, global-recursive, global-static
+# For global variants: per memo §5.1 convention, gamma/delta/epsilon are fixed
+# at the v5 (incremental-recursive) posterior means since they are not jointly
+# identifiable with the single alpha under a global softmax. λ_C and α (+ τ, δ)
+# are sampled.
+# =============================================================================
+
+V5_FIXED = dict(
+    gamma_1=2.56, gamma_2=0.92,
+    delta_gamma_1=-1.89, delta_gamma_2=-3.51,
+    epsilon=0.16,
+)
+
+
+def _make_v5_inc_static_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
+    """v5 + frozen (context-fixed) incremental speaker."""
+    def model(states=None, empirical=None,
+              participant_idx=None, n_participants=None,
+              is_colour_sufficient=None):
+        log_beta      = numpyro.sample("log_beta",      dist.Normal(0.0, 0.5))
+        beta          = jnp.exp(log_beta)
+        alpha_D       = numpyro.sample("alpha_D",       dist.HalfNormal(5.0))
+        alpha_C       = numpyro.sample("alpha_C",       dist.HalfNormal(5.0))
+        alpha_F       = numpyro.sample("alpha_F",       dist.HalfNormal(5.0))
+        lambda_C      = numpyro.sample("lambda_C",      dist.Normal(0.0, 1.0))
+        gamma_1       = numpyro.sample("gamma_1",       dist.Normal(0.0, 1.0))
+        gamma_2       = numpyro.sample("gamma_2",       dist.Normal(0.0, 1.0))
+        delta_gamma_1 = numpyro.sample("delta_gamma_1", dist.Normal(0.0, 1.0))
+        delta_gamma_2 = numpyro.sample("delta_gamma_2", dist.Normal(0.0, 1.0))
+        epsilon       = numpyro.sample("epsilon",       dist.Beta(1.0, 50.0))
+        tau           = numpyro.sample("tau",           dist.HalfNormal(0.2))
+
+        with numpyro.plate("participants", n_participants):
+            delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+        alpha_D_per_trial = jnp.maximum(alpha_D + delta[participant_idx], 0.0)
+        alpha_C_per_trial = jnp.maximum(alpha_C + delta[participant_idx], 0.0)
+        alpha_F_per_trial = jnp.maximum(alpha_F + delta[participant_idx], 0.0)
+
+        with numpyro.plate("data", len(states)):
+            probs = jitted_speaker_frozen_v5_hier(
+                states, is_colour_sufficient,
+                alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+                lambda_C, color_semval, form_semval, k, wf, beta,
+                gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, epsilon,
+            )
+            if empirical is None:
+                numpyro.sample("obs", dist.Categorical(probs=probs))
+            else:
+                numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+    return model
+
+
+likelihood_function_v5_inc_static_hier = _make_v5_inc_static_model(
+    color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0,
+)
+
+
+def _make_v5_global_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0,
+                          static: bool = False):
+    """v5 + global speaker. gamma/delta/epsilon fixed at v5 posterior means
+    (not jointly identifiable with single global alpha)."""
+    jit_fn = jitted_global_speaker_static_v5_hier if static else jitted_global_speaker_v5_hier
+
+    def model(states=None, empirical=None,
+              participant_idx=None, n_participants=None,
+              is_colour_sufficient=None):
+        log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
+        beta     = jnp.exp(log_beta)
+        alpha    = numpyro.sample("alpha",    dist.HalfNormal(5.0))
+        lambda_C = numpyro.sample("lambda_C", dist.Normal(0.0, 1.0))
+        tau      = numpyro.sample("tau",      dist.HalfNormal(0.2))
+
+        with numpyro.plate("participants", n_participants):
+            delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+        alpha_per_trial = jnp.maximum(alpha + delta[participant_idx], 0.0)
+
+        with numpyro.plate("data", len(states)):
+            probs = jit_fn(
+                states, is_colour_sufficient, alpha_per_trial,
+                lambda_C, color_semval, form_semval, k, wf, beta,
+                V5_FIXED["gamma_1"], V5_FIXED["gamma_2"],
+                V5_FIXED["delta_gamma_1"], V5_FIXED["delta_gamma_2"],
+                V5_FIXED["epsilon"],
+            )
+            if empirical is None:
+                numpyro.sample("obs", dist.Categorical(probs=probs))
+            else:
+                numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+    return model
+
+
+likelihood_function_v5_global_hier = _make_v5_global_model(
+    color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0, static=False,
+)
+
+likelihood_function_v5_global_static_hier = _make_v5_global_model(
+    color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0, static=True,
 )
 
 
