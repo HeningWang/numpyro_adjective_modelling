@@ -353,6 +353,73 @@ $\varepsilon$ stays at $0.10$; 0 divergences; all $\hat R \leq 1.02$.
 \end{frame}
 
 % ====================================================================
+\begin{frame}{Full LOO \& fit record --- all stages}
+\footnotesize
+\begin{center}
+\begin{tabular}{l rrrr rr}
+\toprule
+Stage & ELPD LOO & $\Delta$ vs baseline & $\Delta$ vs ext-v1 & $R^2$ & L1 & $\varepsilon$ \\
+\midrule
+baseline        & $-7157$ & $0$       & ---       & $.35$ & $3.17$ & ---   \\
+ext-v1          & $-6387$ & $+770$    & $0$       & $.60$ & $3.17$ & $.22$ \\
+\acct{v5a ($\lambda_C$ only)}         & $-6265$ & $+892$  & $+122$   & ---   & ---     & ---   \\
+\acct{v5b (sat.\ $\gamma$ only)}      & $-6381$ & $+776$  & $+6$     & ---   & ---     & ---   \\
+\main{v5 (F1: $\lambda_C + \delta\gamma$)}   & $-5933$ & $+1224$ & $+454$   & $.67$ & $2.70$  & $.16$ \\
+\main{v5 (C1: + $\mu_\mathrm{nc}$)}          & $-5323$ & $+1834$ & $+1063$  & $.91$ & $1.34$  & $.10$ \\
+\emp{v5 (F2: + $\eta$)}                      & $-5294$ & $+1863$ & $+1093$  & $.94$ & $1.22$  & $.10$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{0.6em}
+\begin{itemize}\itemsep0.15em
+  \item LOO, $R^2$ (emp $\geq .02$), L1 (sum of $|\Delta|$ over 37 cells), $\varepsilon$ lapse posterior mean.
+  \item v5a and v5b: isolated mechanism probes (no full R²/L1 reported in memo).
+  \item Every add-on moves metrics monotonically in the right direction except v5b (sat $\gamma$ alone) which is null.
+\end{itemize}
+\end{frame}
+
+% ====================================================================
+\begin{frame}{Full parameter record --- posterior means across stages}
+\scriptsize
+\begin{center}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{l ccccccc}
+\toprule
+Parameter & baseline & ext-v1 & v5a & v5b & v5 (F1) & v5 (C1) & v5 (F2) \\
+\midrule
+$\alpha_D$            & single $\alpha$ & $6.94$ & $\sim 6.9$ & $\sim 6.9$ & hier.\   & hier.\   & hier.\   \\
+$\alpha_C$            &                 & $1.84$ & $\sim 1.8$ & $\sim 1.9$ & hier.\   & hier.\   & hier.\   \\
+$\alpha_F$            &                 & $1.88$ & $\sim 1.9$ & $\sim 1.9$ & hier.\   & hier.\   & hier.\   \\
+\midrule
+$\lambda_C$           & ---   & ---   & \main{$+3.4$} & ---     & \main{$+5.0$}  & \main{$+3.06$} & \main{$+3.09$} \\
+$\gamma$ (linear)     & ---   & $2.32$& ---   & ---    & ---    & ---    & ---     \\
+$\gamma_1$            & ---   & ---   & ---   & $+1.9$ & $+2.56$ & $+1.99$ & $+2.32$ \\
+$\gamma_2$            & ---   & ---   & ---   & $+0.8$ & $+0.92$ & $+1.42$ & $+1.58$ \\
+$\delta\gamma_1$      & ---   & ---   & ---   & ---    & $-1.89$ & $-2.10$ & $-2.16$ \\
+$\delta\gamma_2$      & ---   & ---   & ---   & ---    & $-3.51$ & $-0.66$ & $-0.58$ \\
+$\eta_1$              & ---   & ---   & ---   & ---    & ---    & ---    & $-0.61$ \\
+$\eta_2$              & ---   & ---   & ---   & ---    & ---    & ---    & $-0.34$ \\
+$\mu_\mathrm{nc}$     & ---   & ---   & ---   & ---    & ---    & \emp{$-5.07$} & \emp{$-5.08$} \\
+\midrule
+$\log\beta$           & $\sim 2$ & $2.05$ & $\sim 2$ & $\sim 2$ & $2.05$ & $-0.18$ & $-0.17$ \\
+$\varepsilon$         & ---   & $0.22$ & ---   & ---    & $0.16$ & $0.10$ & $0.10$ \\
+$\tau$                & ---   & $\sim 0.9$ & ---   & ---    & $0.94$ & $0.60$ & $0.62$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{0.6em}
+\scriptsize
+\begin{itemize}\itemsep0.1em
+  \item \muted{"hier."} = $\alpha$ sampled hierarchically with per-participant $\delta_p$; population means close to ext-v1's values.
+  \item Each new parameter enters with a clear, stable sign and keeps its sign across subsequent stages.
+  \item $\log\beta$ drops sharply when $\mu_\mathrm{nc}$ is added --- canonical ordering absorbs what the LM prior was partially encoding.
+  \item $\delta\gamma_2$ shrinks from $-3.51$ (F1) to $\sim\!-0.6$ (C1/F2) --- $\mu_\mathrm{nc}$ and $\eta$ absorb part of the 3-word-penalty work.
+\end{itemize}
+\end{frame}
+
+% ====================================================================
 \begin{frame}{Final v5 (F2) parameters --- full record}
 \small
 \begin{center}
