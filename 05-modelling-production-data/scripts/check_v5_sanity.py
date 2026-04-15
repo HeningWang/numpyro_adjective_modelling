@@ -12,6 +12,7 @@ from modelSpecification import jitted_speaker_hier, jitted_speaker_v5_hier
 data   = import_dataset()
 states = data["states_train"][:8]                     # 8-trial subset
 flag   = data["is_colour_sufficient"][:8]
+sharp  = data["sharpness_idx"][:8]
 N      = states.shape[0]
 
 # Identical alpha per trial for both models (ext-v1 posterior means).
@@ -34,10 +35,10 @@ probs_v1 = jitted_speaker_hier(
 
 # v5 with lambda_C=0 and gamma_2=gamma_1 and deltas=0 should match v1's softmax output exactly.
 probs_v5 = jitted_speaker_v5_hier(
-    states, flag,
+    states, flag, sharp,
     alpha_D, alpha_C, alpha_F,
     0.0, color_semval, form_semval, k, wf, beta,
-    gamma, gamma, 0.0, 0.0, 0.0, epsilon,
+    gamma, gamma, 0.0, 0.0, 0.0, 0.0, 0.0, epsilon,
 )
 
 max_diff = float(jnp.max(jnp.abs(probs_v1 - probs_v5)))
@@ -46,10 +47,10 @@ assert max_diff < 1e-5, f"v5 does not reduce to v1: max diff {max_diff:.2e}"
 
 # Now turn lambda_C on; only colour-sufficient trials should change.
 probs_v5_boosted = jitted_speaker_v5_hier(
-    states, flag,
+    states, flag, sharp,
     alpha_D, alpha_C, alpha_F,
     2.0, color_semval, form_semval, k, wf, beta,
-    gamma, gamma, 0.0, 0.0, 0.0, epsilon,
+    gamma, gamma, 0.0, 0.0, 0.0, 0.0, 0.0, epsilon,
 )
 diff_per_trial = jnp.max(jnp.abs(probs_v5 - probs_v5_boosted), axis=-1)
 print("Per-trial max diff with lambda_C=2:")
