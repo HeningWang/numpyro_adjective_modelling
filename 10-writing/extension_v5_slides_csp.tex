@@ -200,6 +200,40 @@ Posterior: $\alpha_D = 6.92,\ \alpha_C = 1.85,\ \alpha_F = 1.89,\ \gamma = 2.31,
 \end{frame}
 
 % ====================================================================
+\begin{frame}{Rejected pre-v5 extensions (memo \S4.2--4.4)}
+\footnotesize
+Before v5, three condition-independent biases were tested. \emp{All rejected}:
+
+\vspace{0.6em}
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{p{2.0cm} p{4.6cm} rr p{5.0cm}}
+\toprule
+Variant & Mechanism & $R^2$ & ELPD & Outcome \\
+\midrule
+\emp{v2} \muted{(first-word intercepts)} &
+$\phi_C, \phi_F$ on the chosen utterance type's first adjective (S = reference) &
+$.62$ & $-6337$ &
+\emp{Wrong sign.} $\phi_C = -6.89$ (penalty) instead of boost. Misfit is \main{context-dependent}; condition-independent intercepts can't capture ``C up in csuff, C down in both-necessary''. \\
+\midrule
+\emp{v3} \muted{(step-level $\bm{\mu}$ w/ per-dim $\alpha$)} &
+$\text{logits} = \alpha_\text{vec} \cdot \log L_\text{ref} + \bm{\mu}_\text{vec}$ &
+--- & --- &
+\emp{Non-identifiable.} $n_\text{eff} \approx 2$, $\hat R$ up to $14.7$ for $\mu_C$. $\alpha$ and $\mu$ trade off on the same logit scale. Fundamental, not a sampling fix. \\
+\midrule
+\emp{v4} \muted{(step-level $\bm{\mu}$ w/ single $\alpha$)} &
+Dropped per-dim $\alpha$; kept $\mu_C$, $\mu_F$ to avoid v3's identifiability &
+$.54$ & $-6449$ &
+\emp{Worse than ext-v1.} Losing per-dim $\alpha$ hurt more than $\mu$ helped. Per-dim $\alpha$ captures something $\mu$ cannot. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{0.5em}
+\main{Lesson for v5}: the misfit is \emph{context-dependent}, not a global utterance-type tilt. This motivated the \emp{condition-gated} $\lambda_C$ in v5a.
+\end{frame}
+
+% ====================================================================
 \begin{frame}{Stage 2a: $\lambda_C$ alone (v5a)}
 Step-0 logit boost for \emp{C} when \texttt{is\_colour\_sufficient} $= 1$.
 
@@ -362,6 +396,9 @@ Stage & ELPD LOO & $\Delta$ vs baseline & $\Delta$ vs ext-v1 & $R^2$ & L1 & $\va
 \midrule
 baseline        & $-7157$ & $0$       & ---       & $.35$ & $3.17$ & ---   \\
 ext-v1          & $-6387$ & $+770$    & $0$       & $.60$ & $3.17$ & $.23$  \\
+\muted{v2 (first-word intercepts) --- rejected}  & $-6337$ & $+820$  & $+50$   & $.62$ & ---     & ---   \\
+\muted{v3 (step-level $\mu$, per-dim $\alpha$) --- rejected} & \multicolumn{6}{l}{non-identifiable ($\hat R \leq 14.7$)} \\
+\muted{v4 (step-level $\mu$, single $\alpha$) --- rejected} & $-6449$ & $+708$  & $-62$   & $.54$ & ---     & ---   \\
 \acct{v5a ($\lambda_C$ only)}         & $-6265$ & $+892$  & $+122$   & ---   & ---     & ---   \\
 \acct{v5b (sat.\ $\gamma$ only)}      & $-6381$ & $+776$  & $+6$     & ---   & ---     & ---   \\
 \main{v5 (F1: $\lambda_C + \delta\gamma$)}   & $-5933$ & $+1224$ & $+454$   & $.67$ & $2.70$  & $.16$ \\
@@ -375,8 +412,9 @@ ext-v1          & $-6387$ & $+770$    & $0$       & $.60$ & $3.17$ & $.23$  \\
 \begin{itemize}\itemsep0.15em
   \item LOO, $R^2$ (emp $\geq .02$), L1 (sum of $|\Delta|$ over 37 cells), $\varepsilon$ lapse posterior mean.
   \item \main{Baseline has no lapse and no length bias} --- $\gamma$ and $\varepsilon$ are \emph{hardcoded to $0$} in \texttt{likelihood\_function\_reported\_hier}, not sampled. All columns marked "---" are structurally absent, not just unreported.
+  \item \emp{v2--v4}: rejected exploratory variants from memo \S4 --- see previous slide for reasons.
   \item v5a and v5b: isolated mechanism probes (no full R²/L1 reported in memo).
-  \item Every add-on moves metrics monotonically in the right direction except v5b (sat $\gamma$ alone) which is null.
+  \item Every add-on moves metrics monotonically in the right direction except v5b (sat $\gamma$ alone, null) and v4 (which made things worse than ext-v1).
 \end{itemize}
 \end{frame}
 
@@ -384,31 +422,39 @@ ext-v1          & $-6387$ & $+770$    & $0$       & $.60$ & $3.17$ & $.23$  \\
 \begin{frame}{Full parameter record --- posterior means across stages}
 \scriptsize
 \begin{center}
-\renewcommand{\arraystretch}{1.15}
-\begin{tabular}{l ccccccc}
+\renewcommand{\arraystretch}{1.10}
+\begin{tabular}{l cc cc ccccc}
 \toprule
-Parameter & baseline & ext-v1 & v5a & v5b & v5 (F1) & v5 (C1) & v5 (F2) \\
+Parameter & baseline & ext-v1 & \muted{v2} & \muted{v4} & v5a & v5b & v5 (F1) & v5 (C1) & v5 (F2) \\
 \midrule
-$\alpha_D$            & single $\alpha$ & $6.94$ & $\sim 6.9$ & $\sim 6.9$ & hier.\   & hier.\   & hier.\   \\
-$\alpha_C$            &                 & $1.84$ & $\sim 1.8$ & $\sim 1.9$ & hier.\   & hier.\   & hier.\   \\
-$\alpha_F$            &                 & $1.88$ & $\sim 1.9$ & $\sim 1.9$ & hier.\   & hier.\   & hier.\   \\
+$\alpha_D$           & single $\alpha$ & $6.92$ & $\sim 6.9$ & single $\alpha$ & $\sim 6.9$ & $\sim 6.9$ & hier. & hier. & hier. \\
+$\alpha_C$           &                 & $1.85$ & $\sim 1.8$ &                 & $\sim 1.8$ & $\sim 1.9$ & hier. & hier. & hier. \\
+$\alpha_F$           &                 & $1.89$ & $\sim 1.9$ &                 & $\sim 1.9$ & $\sim 1.9$ & hier. & hier. & hier. \\
 \midrule
-$\lambda_C$           & ---   & ---   & \main{$+3.4$} & ---     & \main{$+5.0$}  & \main{$+3.06$} & \main{$+3.09$} \\
-$\gamma$ (linear)     & ---   & $2.32$& ---   & ---    & ---    & ---    & ---     \\
-$\gamma_1$            & ---   & ---   & ---   & $+1.9$ & $+2.56$ & $+1.99$ & $+2.32$ \\
-$\gamma_2$            & ---   & ---   & ---   & $+0.8$ & $+0.92$ & $+1.42$ & $+1.58$ \\
-$\delta\gamma_1$      & ---   & ---   & ---   & ---    & $-1.89$ & $-2.10$ & $-2.16$ \\
-$\delta\gamma_2$      & ---   & ---   & ---   & ---    & $-3.51$ & $-0.66$ & $-0.58$ \\
-$\eta_1$              & ---   & ---   & ---   & ---    & ---    & ---    & $-0.61$ \\
-$\eta_2$              & ---   & ---   & ---   & ---    & ---    & ---    & $-0.34$ \\
-$\mu_\mathrm{nc}$     & ---   & ---   & ---   & ---    & ---    & \emp{$-5.07$} & \emp{$-5.08$} \\
+$\phi_C$ (first-word) & ---   & ---    & \emp{$-6.89$} & ---    & ---   & ---    & ---    & ---    & ---     \\
+$\phi_F$ (first-word) & ---   & ---    & \emp{$-5.90$} & ---    & ---   & ---    & ---    & ---    & ---     \\
+$\mu_C$ (step-level)  & ---   & ---    & ---    & fitted & ---   & ---    & ---    & ---    & ---     \\
+$\mu_F$ (step-level)  & ---   & ---    & ---    & fitted & ---   & ---    & ---    & ---    & ---     \\
 \midrule
-$\log\beta$           & $\sim 2$ & $2.05$ & $\sim 2$ & $\sim 2$ & $2.05$ & $-0.18$ & $-0.17$ \\
-$\varepsilon$         & ---   & $0.22$ & ---   & ---    & $0.16$ & $0.10$ & $0.10$ \\
-$\tau$                & ---   & $\sim 0.9$ & ---   & ---    & $0.94$ & $0.60$ & $0.62$ \\
+$\lambda_C$           & ---   & ---    & ---    & ---    & \main{$+3.4$} & ---    & \main{$+5.0$} & \main{$+3.06$} & \main{$+3.09$} \\
+$\gamma$ (linear)     & ---   & $2.31$ & $\sim 2$ & $\sim 2$ & ---   & ---    & ---    & ---    & ---    \\
+$\gamma_1$            & ---   & ---    & ---    & ---    & ---   & $+1.9$ & $+2.56$ & $+1.99$ & $+2.32$ \\
+$\gamma_2$            & ---   & ---    & ---    & ---    & ---   & $+0.8$ & $+0.92$ & $+1.42$ & $+1.58$ \\
+$\delta\gamma_1$      & ---   & ---    & ---    & ---    & ---   & ---    & $-1.89$ & $-2.10$ & $-2.16$ \\
+$\delta\gamma_2$      & ---   & ---    & ---    & ---    & ---   & ---    & $-3.51$ & $-0.66$ & $-0.58$ \\
+$\eta_1$              & ---   & ---    & ---    & ---    & ---   & ---    & ---    & ---    & $-0.61$ \\
+$\eta_2$              & ---   & ---    & ---    & ---    & ---   & ---    & ---    & ---    & $-0.34$ \\
+$\mu_\mathrm{nc}$     & ---   & ---    & ---    & ---    & ---   & ---    & ---    & \emp{$-5.07$} & \emp{$-5.08$} \\
+\midrule
+$\log\beta$           & $\sim 2$ & $2.05$ & $\sim 2$ & $\sim 2$ & $\sim 2$ & $\sim 2$ & $2.05$ & $-0.18$ & $-0.17$ \\
+$\varepsilon$         & ---   & $0.23$ & $\sim .2$ & $\sim .2$ & ---      & ---      & $0.16$ & $0.10$ & $0.10$ \\
+$\tau$                & ---   & $0.92$ & ---    & ---    & ---   & ---    & $0.94$ & $0.60$ & $0.62$ \\
 \bottomrule
 \end{tabular}
 \end{center}
+
+{\scriptsize \muted{v3 omitted (non-identifiable). v2 / v4 columns show posterior means as reported in memo \S4.2 / \S4.4.}}
+
 
 \vspace{0.6em}
 \scriptsize
