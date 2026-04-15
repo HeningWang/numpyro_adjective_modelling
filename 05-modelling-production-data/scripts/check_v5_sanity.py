@@ -32,12 +32,12 @@ probs_v1 = jitted_speaker_hier(
     color_semval, form_semval, k, wf, beta, gamma, epsilon,
 )
 
-# v5 with lambda_C=0 and gamma_2=gamma_1 should match v1's softmax output exactly.
+# v5 with lambda_C=0 and gamma_2=gamma_1 and deltas=0 should match v1's softmax output exactly.
 probs_v5 = jitted_speaker_v5_hier(
     states, flag,
     alpha_D, alpha_C, alpha_F,
     0.0, color_semval, form_semval, k, wf, beta,
-    gamma, gamma, epsilon,
+    gamma, gamma, 0.0, 0.0, epsilon,
 )
 
 max_diff = float(jnp.max(jnp.abs(probs_v1 - probs_v5)))
@@ -49,7 +49,7 @@ probs_v5_boosted = jitted_speaker_v5_hier(
     states, flag,
     alpha_D, alpha_C, alpha_F,
     2.0, color_semval, form_semval, k, wf, beta,
-    gamma, gamma, epsilon,
+    gamma, gamma, 0.0, 0.0, epsilon,
 )
 diff_per_trial = jnp.max(jnp.abs(probs_v5 - probs_v5_boosted), axis=-1)
 print("Per-trial max diff with lambda_C=2:")

@@ -1104,9 +1104,14 @@ def incremental_speaker_v5(
     beta:                  float = 1.00,
     gamma_1:               float = 0.0,
     gamma_2:               float = 0.0,
+    delta_gamma_1:         float = 0.0,
+    delta_gamma_2:         float = 0.0,
     epsilon:               float = 0.01,
 ) -> jnp.ndarray:
-    """Incremental speaker v5: condition-gated lambda_C boost and saturating two-step length bias."""
+    """Incremental speaker v5: condition-gated lambda_C boost (R1: first-step only) +
+    saturating two-step length bias with optional condition-dependent offsets
+    (F1: delta_gamma_* applied additively on colour-sufficient trials to allow the
+    length bonus to shrink there, pushing mass toward bare C over C-prefix compounds)."""
 
     eps            = 1e-8
     referent_index = 0
@@ -1235,11 +1240,13 @@ def incremental_speaker_v5(
         jnp.arange(T),
     )
 
-    # ── Saturating two-step length bias ───────────────────────────────────────
+    # ── Saturating two-step length bias with F1 condition-dependent offsets ──
     k_extra = jnp.maximum(N_WORDS - 1, 0)   # length minus 1; k_extra ∈ {0, 1, 2}
+    gamma_1_eff = gamma_1 + delta_gamma_1 * is_colour_sufficient
+    gamma_2_eff = gamma_2 + delta_gamma_2 * is_colour_sufficient
     length_bonus = (
-        gamma_1 * (k_extra >= 1).astype(jnp.float32)
-        + gamma_2 * (k_extra >= 2).astype(jnp.float32)
+        gamma_1_eff * (k_extra >= 1).astype(jnp.float32)
+        + gamma_2_eff * (k_extra >= 2).astype(jnp.float32)
     )
     log_unnorm = log_P_beta + log_final_scores + length_bonus        # (n_utt,)
     model_probs = jax.nn.softmax(log_unnorm)                          # (n_utt,)
@@ -1370,6 +1377,8 @@ vectorized_incremental_speaker_v5_hier = jax.vmap(
              None, # beta
              None, # gamma_1
              None, # gamma_2
+             None, # delta_gamma_1
+             None, # delta_gamma_2
              None, # epsilon
              ),
 )
@@ -1379,13 +1388,13 @@ def jitted_speaker_v5_hier(
     states, is_colour_sufficient,
     alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
     lambda_C, color_semval, form_semval, k, wf, beta,
-    gamma_1, gamma_2, epsilon,
+    gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, epsilon,
 ):
     return vectorized_incremental_speaker_v5_hier(
         states, is_colour_sufficient,
         alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
         lambda_C, color_semval, form_semval, k, wf, beta,
-        gamma_1, gamma_2, epsilon,
+        gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, epsilon,
     )
 
 # Warm up JIT with dummy values
@@ -1633,14 +1642,16 @@ def _make_v5_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
         log_beta = numpyro.sample("log_beta", dist.Normal(0.0, 0.5))
         beta     = jnp.exp(log_beta)
 
-        alpha_D  = numpyro.sample("alpha_D",  dist.HalfNormal(5.0))
-        alpha_C  = numpyro.sample("alpha_C",  dist.HalfNormal(5.0))
-        alpha_F  = numpyro.sample("alpha_F",  dist.HalfNormal(5.0))
-        lambda_C = numpyro.sample("lambda_C", dist.Normal(0.0, 1.0))
-        gamma_1  = numpyro.sample("gamma_1",  dist.Normal(0.0, 1.0))
-        gamma_2  = numpyro.sample("gamma_2",  dist.Normal(0.0, 1.0))
-        epsilon  = numpyro.sample("epsilon",  dist.Beta(1.0, 50.0))
-        tau      = numpyro.sample("tau",      dist.HalfNormal(0.2))
+        alpha_D       = numpyro.sample("alpha_D",       dist.HalfNormal(5.0))
+        alpha_C       = numpyro.sample("alpha_C",       dist.HalfNormal(5.0))
+        alpha_F       = numpyro.sample("alpha_F",       dist.HalfNormal(5.0))
+        lambda_C      = numpyro.sample("lambda_C",      dist.Normal(0.0, 1.0))
+        gamma_1       = numpyro.sample("gamma_1",       dist.Normal(0.0, 1.0))
+        gamma_2       = numpyro.sample("gamma_2",       dist.Normal(0.0, 1.0))
+        delta_gamma_1 = numpyro.sample("delta_gamma_1", dist.Normal(0.0, 1.0))
+        delta_gamma_2 = numpyro.sample("delta_gamma_2", dist.Normal(0.0, 1.0))
+        epsilon       = numpyro.sample("epsilon",       dist.Beta(1.0, 50.0))
+        tau           = numpyro.sample("tau",           dist.HalfNormal(0.2))
 
         with numpyro.plate("participants", n_participants):
             delta = numpyro.sample("delta", dist.Normal(0.0, tau))
@@ -1654,7 +1665,7 @@ def _make_v5_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
                 states, is_colour_sufficient,
                 alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
                 lambda_C, color_semval, form_semval, k, wf, beta,
-                gamma_1, gamma_2, epsilon,
+                gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, epsilon,
             )
             if empirical is None:
                 numpyro.sample("obs", dist.Categorical(probs=probs))
@@ -1696,7 +1707,7 @@ def _make_v5a_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
                 states, is_colour_sufficient,
                 alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
                 lambda_C, color_semval, form_semval, k, wf, beta,
-                gamma, gamma, epsilon,
+                gamma, gamma, 0.0, 0.0, epsilon,
             )
             if empirical is None:
                 numpyro.sample("obs", dist.Categorical(probs=probs))
@@ -1738,7 +1749,7 @@ def _make_v5b_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
                 states, is_colour_sufficient,
                 alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
                 0.0, color_semval, form_semval, k, wf, beta,
-                gamma_1, gamma_2, epsilon,
+                gamma_1, gamma_2, 0.0, 0.0, epsilon,
             )
             if empirical is None:
                 numpyro.sample("obs", dist.Categorical(probs=probs))
