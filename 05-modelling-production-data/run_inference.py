@@ -46,6 +46,8 @@ from modelSpecification import (
     likelihood_function_v5_inc_static_hier,
     likelihood_function_v5_global_hier,
     likelihood_function_v5_global_static_hier,
+    likelihood_function_v5_global_full_hier,
+    likelihood_function_v5_global_static_full_hier,
 )
 
 
@@ -77,6 +79,8 @@ HIER_MODELS = {
     "v5_inc_static":    (likelihood_function_v5_inc_static_hier,   0.85, 5),
     "v5_global":        (likelihood_function_v5_global_hier,        0.85, 5),
     "v5_global_static": (likelihood_function_v5_global_static_hier, 0.85, 5),
+    "v5_global_full":        (likelihood_function_v5_global_full_hier,        0.85, 5),
+    "v5_global_static_full": (likelihood_function_v5_global_static_full_hier, 0.85, 5),
 }
 
 
@@ -212,7 +216,8 @@ def run_inference_hier(
     is_colour_sufficient = data.get("is_colour_sufficient")  # only present for v5 family
     is_sharp             = data.get("sharpness_idx")         # 1 if sharp, 0 if blurred
 
-    V5_FAMILY = {"v5", "v5a", "v5b", "v5_inc_static", "v5_global", "v5_global_static"}
+    V5_FAMILY = {"v5", "v5a", "v5b", "v5_inc_static", "v5_global", "v5_global_static",
+                 "v5_global_full", "v5_global_static_full"}
     is_v5 = canonical_speaker_type in V5_FAMILY
 
     print(f"Hierarchical model: {n_participants} participants, {len(states_train)} observations")
@@ -289,7 +294,8 @@ if __name__ == "__main__":
                                  "incremental_mixture_simple",
                                  "reported", "reported_lowcol", "incremental_lowcol",
                                  "v5", "v5a", "v5b",
-                                 "v5_inc_static", "v5_global", "v5_global_static"],
+                                 "v5_inc_static", "v5_global", "v5_global_static",
+                                 "v5_global_full", "v5_global_static_full"],
                         default="incremental",
                         help="Choose the speaker model type.")
     parser.add_argument("--num_samples", type=int, default=500, help="Number of posterior samples.")

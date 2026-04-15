@@ -2180,6 +2180,57 @@ likelihood_function_v5_global_static_hier = _make_v5_global_model(
 )
 
 
+def _make_v5_global_full_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0,
+                                static: bool = False):
+    """v5 + global speaker, ALL params sampled (not fixed at V5_FIXED).
+    Tests whether the global-side semantic-regime effect survives when
+    γ/δγ/η/μ are allowed to move freely."""
+    jit_fn = jitted_global_speaker_static_v5_hier if static else jitted_global_speaker_v5_hier
+
+    def model(states=None, empirical=None,
+              participant_idx=None, n_participants=None,
+              is_colour_sufficient=None, is_sharp=None):
+        log_beta      = numpyro.sample("log_beta",      dist.Normal(0.0, 0.5))
+        beta          = jnp.exp(log_beta)
+        alpha         = numpyro.sample("alpha",         dist.HalfNormal(5.0))
+        lambda_C      = numpyro.sample("lambda_C",      dist.Normal(0.0, 1.0))
+        gamma_1       = numpyro.sample("gamma_1",       dist.Normal(0.0, 1.0))
+        gamma_2       = numpyro.sample("gamma_2",       dist.Normal(0.0, 1.0))
+        delta_gamma_1 = numpyro.sample("delta_gamma_1", dist.Normal(0.0, 1.0))
+        delta_gamma_2 = numpyro.sample("delta_gamma_2", dist.Normal(0.0, 1.0))
+        eta_1         = numpyro.sample("eta_1",         dist.Normal(0.0, 1.0))
+        eta_2         = numpyro.sample("eta_2",         dist.Normal(0.0, 1.0))
+        mu_noncanon   = numpyro.sample("mu_noncanon",   dist.Normal(0.0, 1.0))
+        epsilon       = numpyro.sample("epsilon",       dist.Beta(1.0, 50.0))
+        tau           = numpyro.sample("tau",           dist.HalfNormal(0.2))
+
+        with numpyro.plate("participants", n_participants):
+            delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+        alpha_per_trial = jnp.maximum(alpha + delta[participant_idx], 0.0)
+
+        with numpyro.plate("data", len(states)):
+            probs = jit_fn(
+                states, is_colour_sufficient, is_sharp, alpha_per_trial,
+                lambda_C, color_semval, form_semval, k, wf, beta,
+                gamma_1, gamma_2, delta_gamma_1, delta_gamma_2,
+                eta_1, eta_2, mu_noncanon, epsilon,
+            )
+            if empirical is None:
+                numpyro.sample("obs", dist.Categorical(probs=probs))
+            else:
+                numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+    return model
+
+
+likelihood_function_v5_global_full_hier = _make_v5_global_full_model(
+    color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0, static=False,
+)
+
+likelihood_function_v5_global_static_full_hier = _make_v5_global_full_model(
+    color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0, static=True,
+)
+
+
 def likelihood_function_incremental_speaker(states=None, empirical=None):
     color_semval = 0.971
     form_semval  = 0.50
