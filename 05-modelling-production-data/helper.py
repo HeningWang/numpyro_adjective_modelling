@@ -21,7 +21,7 @@ CONDITIONS_OF_INTEREST = (
     "erdf", "zrdf", "brdf",   # dimension × form
     "ercf", "zrcf", "brcf",   # colour × form
 )
-COLOUR_SUFFICIENT_CONDITIONS = ("ercf", "zrcf", "brcf")
+COLOUR_SUFFICIENT_CONDITIONS = ("ercf", "zrdc")  # colour alone identifies target: first-relevant in cf-pair, second-relevant in dc-pair
 SYMBOL_TO_INDEX: Dict[str, int] = {"D": 0, "C": 1, "F": 2}
 MAX_UTTERANCE_LEN = 3
 FLAT_TO_CATEGORIES: Dict[str, str] = {
