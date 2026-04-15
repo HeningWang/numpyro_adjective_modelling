@@ -559,6 +559,18 @@ FIRST_WORD = jnp.array(utterance_list)[:, 0]  # (n_utt,) first token of each utt
 # ── C-initial mask for global-speaker v5 lambda_C boost ──────────────────────
 # 1 if the utterance starts with C (mention index 1), else 0.
 C_INITIAL_MASK = (FIRST_WORD == 1).astype(jnp.float32)  # (n_utt,)
+
+# ── Canonical-ordering mask (C1): 1 if utterance violates size < colour < form
+# surface order; 0 if canonical. D=0, C=1, F=2 → earlier index must come first.
+# Canonical: D, C, F, DC, DF, CF, DCF (indices 0,1,3,5,8,10 plus DCF=2).
+# Non-canonical: CD(6), CDF(7), CFD(9), DFC(4), FD(11), FDC(12), FC(13), FCD(14).
+_canon_list = np.array(utterance_list, dtype=np.int64)  # (n_utt, 3), pad=-1
+_noncanon = np.zeros(n_utt, dtype=np.float32)
+for _u in range(n_utt):
+    toks = [t for t in _canon_list[_u] if t >= 0]
+    if any(toks[i] > toks[i + 1] for i in range(len(toks) - 1)):
+        _noncanon[_u] = 1.0
+NONCANON_MASK = jnp.asarray(_noncanon)                  # (n_utt,)
 # Binary masks: which utterances start with C / F (D is reference)
 STARTS_C = (FIRST_WORD == 1).astype(jnp.float32)  # (n_utt,)
 STARTS_F = (FIRST_WORD == 2).astype(jnp.float32)  # (n_utt,)
@@ -1110,6 +1122,7 @@ def incremental_speaker_v5(
     gamma_2:               float = 0.0,
     delta_gamma_1:         float = 0.0,
     delta_gamma_2:         float = 0.0,
+    mu_noncanon:           float = 0.0,
     epsilon:               float = 0.01,
 ) -> jnp.ndarray:
     """Incremental speaker v5: condition-gated lambda_C boost (R1: first-step only) +
@@ -1252,7 +1265,9 @@ def incremental_speaker_v5(
         gamma_1_eff * (k_extra >= 1).astype(jnp.float32)
         + gamma_2_eff * (k_extra >= 2).astype(jnp.float32)
     )
-    log_unnorm = log_P_beta + log_final_scores + length_bonus        # (n_utt,)
+    # C1: canonical-ordering bias — penalize utterances that violate size < colour < form
+    noncanon_bonus = mu_noncanon * NONCANON_MASK                      # (n_utt,)
+    log_unnorm = log_P_beta + log_final_scores + length_bonus + noncanon_bonus  # (n_utt,)
     model_probs = jax.nn.softmax(log_unnorm)                          # (n_utt,)
     return (1.0 - epsilon) * model_probs + epsilon / n_utt
 
@@ -1273,6 +1288,7 @@ def incremental_speaker_frozen_v5(
     gamma_2:               float = 0.0,
     delta_gamma_1:         float = 0.0,
     delta_gamma_2:         float = 0.0,
+    mu_noncanon:           float = 0.0,
     epsilon:               float = 0.01,
 ) -> jnp.ndarray:
     """v5 with FROZEN (context-fixed) size semantics."""
@@ -1362,7 +1378,8 @@ def incremental_speaker_frozen_v5(
         gamma_1_eff * (k_extra >= 1).astype(jnp.float32)
         + gamma_2_eff * (k_extra >= 2).astype(jnp.float32)
     )
-    log_unnorm = log_P_beta + log_final_scores + length_bonus
+    noncanon_bonus = mu_noncanon * NONCANON_MASK
+    log_unnorm = log_P_beta + log_final_scores + length_bonus + noncanon_bonus
     model_probs = jax.nn.softmax(log_unnorm)
     return (1.0 - epsilon) * model_probs + epsilon / n_utt
 
@@ -1381,11 +1398,12 @@ def global_speaker_v5(
     gamma_2:               float = 0.0,
     delta_gamma_1:         float = 0.0,
     delta_gamma_2:         float = 0.0,
+    mu_noncanon:           float = 0.0,
     epsilon:               float = 0.01,
 ) -> jnp.ndarray:
     """Global speaker with v5 mechanisms: lambda_C lifts C-initial utterances on
     colour-sufficient trials; saturating two-step length bias with condition
-    offsets (F1)."""
+    offsets (F1); canonical-ordering penalty (C1)."""
     eps = 1e-8
     costs = utterance_cost_jax(beta=beta)
     M_listener = incremental_semantics_jax(
@@ -1401,12 +1419,14 @@ def global_speaker_v5(
         + gamma_2_eff * (k_extra >= 2).astype(jnp.float32)
     )                                                          # (n_utt,)
     c_boost = lambda_C * is_colour_sufficient * C_INITIAL_MASK  # (n_utt,)
+    noncanon_bonus = mu_noncanon * NONCANON_MASK               # (n_utt,)
 
     util = (
         alpha * log_L
         - costs[None, :]
         + length_bonus[None, :]
         + c_boost[None, :]
+        + noncanon_bonus[None, :]
     )
     M_speaker = jax.nn.softmax(util, axis=-1)
     M_speaker = (1.0 - epsilon) * M_speaker + epsilon / M_listener.shape[0]
@@ -1427,6 +1447,7 @@ def global_speaker_static_v5(
     gamma_2:               float = 0.0,
     delta_gamma_1:         float = 0.0,
     delta_gamma_2:         float = 0.0,
+    mu_noncanon:           float = 0.0,
     epsilon:               float = 0.01,
 ) -> jnp.ndarray:
     """Global static (frozen size semantics) with v5 mechanisms."""
@@ -1445,12 +1466,14 @@ def global_speaker_static_v5(
         + gamma_2_eff * (k_extra >= 2).astype(jnp.float32)
     )
     c_boost = lambda_C * is_colour_sufficient * C_INITIAL_MASK
+    noncanon_bonus = mu_noncanon * NONCANON_MASK
 
     util = (
         alpha * log_L
         - costs[None, :]
         + length_bonus[None, :]
         + c_boost[None, :]
+        + noncanon_bonus[None, :]
     )
     M_speaker = jax.nn.softmax(util, axis=-1)
     M_speaker = (1.0 - epsilon) * M_speaker + epsilon / M_listener.shape[0]
@@ -1583,6 +1606,7 @@ vectorized_incremental_speaker_v5_hier = jax.vmap(
              None, # gamma_2
              None, # delta_gamma_1
              None, # delta_gamma_2
+             None, # mu_noncanon
              None, # epsilon
              ),
 )
@@ -1592,13 +1616,13 @@ def jitted_speaker_v5_hier(
     states, is_colour_sufficient,
     alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
     lambda_C, color_semval, form_semval, k, wf, beta,
-    gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, epsilon,
+    gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, mu_noncanon, epsilon,
 ):
     return vectorized_incremental_speaker_v5_hier(
         states, is_colour_sufficient,
         alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
         lambda_C, color_semval, form_semval, k, wf, beta,
-        gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, epsilon,
+        gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, mu_noncanon, epsilon,
     )
 
 
@@ -1606,7 +1630,7 @@ def jitted_speaker_v5_hier(
 vectorized_incremental_speaker_frozen_v5_hier = jax.vmap(
     incremental_speaker_frozen_v5,
     in_axes=(0, 0, 0, 0, 0, None, None, None, None, None, None,
-             None, None, None, None, None),
+             None, None, None, None, None, None),
 )
 
 @jax.jit
@@ -1614,13 +1638,13 @@ def jitted_speaker_frozen_v5_hier(
     states, is_colour_sufficient,
     alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
     lambda_C, color_semval, form_semval, k, wf, beta,
-    gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, epsilon,
+    gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, mu_noncanon, epsilon,
 ):
     return vectorized_incremental_speaker_frozen_v5_hier(
         states, is_colour_sufficient,
         alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
         lambda_C, color_semval, form_semval, k, wf, beta,
-        gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, epsilon,
+        gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, mu_noncanon, epsilon,
     )
 
 
@@ -1628,19 +1652,19 @@ def jitted_speaker_frozen_v5_hier(
 vectorized_global_speaker_v5_hier = jax.vmap(
     global_speaker_v5,
     in_axes=(0, 0, 0, None, None, None, None, None, None,
-             None, None, None, None, None),
+             None, None, None, None, None, None),
 )
 
 @jax.jit
 def jitted_global_speaker_v5_hier(
     states, is_colour_sufficient, alpha_per_trial,
     lambda_C, color_semval, form_semval, k, wf, beta,
-    gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, epsilon,
+    gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, mu_noncanon, epsilon,
 ):
     return vectorized_global_speaker_v5_hier(
         states, is_colour_sufficient, alpha_per_trial,
         lambda_C, color_semval, form_semval, k, wf, beta,
-        gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, epsilon,
+        gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, mu_noncanon, epsilon,
     )
 
 
@@ -1648,19 +1672,19 @@ def jitted_global_speaker_v5_hier(
 vectorized_global_speaker_static_v5_hier = jax.vmap(
     global_speaker_static_v5,
     in_axes=(0, 0, 0, None, None, None, None, None, None,
-             None, None, None, None, None),
+             None, None, None, None, None, None),
 )
 
 @jax.jit
 def jitted_global_speaker_static_v5_hier(
     states, is_colour_sufficient, alpha_per_trial,
     lambda_C, color_semval, form_semval, k, wf, beta,
-    gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, epsilon,
+    gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, mu_noncanon, epsilon,
 ):
     return vectorized_global_speaker_static_v5_hier(
         states, is_colour_sufficient, alpha_per_trial,
         lambda_C, color_semval, form_semval, k, wf, beta,
-        gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, epsilon,
+        gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, mu_noncanon, epsilon,
     )
 
 
@@ -1917,6 +1941,7 @@ def _make_v5_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
         gamma_2       = numpyro.sample("gamma_2",       dist.Normal(0.0, 1.0))
         delta_gamma_1 = numpyro.sample("delta_gamma_1", dist.Normal(0.0, 1.0))
         delta_gamma_2 = numpyro.sample("delta_gamma_2", dist.Normal(0.0, 1.0))
+        mu_noncanon   = numpyro.sample("mu_noncanon",   dist.Normal(0.0, 1.0))
         epsilon       = numpyro.sample("epsilon",       dist.Beta(1.0, 50.0))
         tau           = numpyro.sample("tau",           dist.HalfNormal(0.2))
 
@@ -1932,7 +1957,7 @@ def _make_v5_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
                 states, is_colour_sufficient,
                 alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
                 lambda_C, color_semval, form_semval, k, wf, beta,
-                gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, epsilon,
+                gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, mu_noncanon, epsilon,
             )
             if empirical is None:
                 numpyro.sample("obs", dist.Categorical(probs=probs))
@@ -1974,7 +1999,7 @@ def _make_v5a_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
                 states, is_colour_sufficient,
                 alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
                 lambda_C, color_semval, form_semval, k, wf, beta,
-                gamma, gamma, 0.0, 0.0, epsilon,
+                gamma, gamma, 0.0, 0.0, 0.0, epsilon,
             )
             if empirical is None:
                 numpyro.sample("obs", dist.Categorical(probs=probs))
@@ -2016,7 +2041,7 @@ def _make_v5b_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
                 states, is_colour_sufficient,
                 alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
                 0.0, color_semval, form_semval, k, wf, beta,
-                gamma_1, gamma_2, 0.0, 0.0, epsilon,
+                gamma_1, gamma_2, 0.0, 0.0, 0.0, epsilon,
             )
             if empirical is None:
                 numpyro.sample("obs", dist.Categorical(probs=probs))
@@ -2041,6 +2066,7 @@ likelihood_function_v5b_hier = _make_v5b_model(
 V5_FIXED = dict(
     gamma_1=2.56, gamma_2=0.92,
     delta_gamma_1=-1.89, delta_gamma_2=-3.51,
+    mu_noncanon=0.0,  # updated after C1 v5 run
     epsilon=0.16,
 )
 
@@ -2060,6 +2086,7 @@ def _make_v5_inc_static_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.
         gamma_2       = numpyro.sample("gamma_2",       dist.Normal(0.0, 1.0))
         delta_gamma_1 = numpyro.sample("delta_gamma_1", dist.Normal(0.0, 1.0))
         delta_gamma_2 = numpyro.sample("delta_gamma_2", dist.Normal(0.0, 1.0))
+        mu_noncanon   = numpyro.sample("mu_noncanon",   dist.Normal(0.0, 1.0))
         epsilon       = numpyro.sample("epsilon",       dist.Beta(1.0, 50.0))
         tau           = numpyro.sample("tau",           dist.HalfNormal(0.2))
 
@@ -2075,7 +2102,7 @@ def _make_v5_inc_static_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.
                 states, is_colour_sufficient,
                 alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
                 lambda_C, color_semval, form_semval, k, wf, beta,
-                gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, epsilon,
+                gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, mu_noncanon, epsilon,
             )
             if empirical is None:
                 numpyro.sample("obs", dist.Categorical(probs=probs))
@@ -2115,7 +2142,7 @@ def _make_v5_global_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0,
                 lambda_C, color_semval, form_semval, k, wf, beta,
                 V5_FIXED["gamma_1"], V5_FIXED["gamma_2"],
                 V5_FIXED["delta_gamma_1"], V5_FIXED["delta_gamma_2"],
-                V5_FIXED["epsilon"],
+                V5_FIXED["mu_noncanon"], V5_FIXED["epsilon"],
             )
             if empirical is None:
                 numpyro.sample("obs", dist.Categorical(probs=probs))
