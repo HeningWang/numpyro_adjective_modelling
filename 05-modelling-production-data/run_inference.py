@@ -210,6 +210,7 @@ def run_inference_hier(
     participant_idx    = data["participant_idx"]
     n_participants     = data["n_participants"]
     is_colour_sufficient = data.get("is_colour_sufficient")  # only present for v5 family
+    is_sharp             = data.get("sharpness_idx")         # 1 if sharp, 0 if blurred
 
     V5_FAMILY = {"v5", "v5a", "v5b", "v5_inc_static", "v5_global", "v5_global_static"}
     is_v5 = canonical_speaker_type in V5_FAMILY
@@ -245,7 +246,10 @@ def run_inference_hier(
     if is_v5:
         if is_colour_sufficient is None:
             raise RuntimeError("v5 family requires is_colour_sufficient in data dict; rebuild dataset")
+        if is_sharp is None:
+            raise RuntimeError("v5 family requires sharpness_idx in data dict; rebuild dataset")
         base_kwargs["is_colour_sufficient"] = is_colour_sufficient
+        base_kwargs["is_sharp"]             = is_sharp
 
     mcmc.run(rng_key_, **base_kwargs)
     mcmc.print_summary(exclude_deterministic=False)
