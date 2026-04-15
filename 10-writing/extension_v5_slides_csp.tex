@@ -404,6 +404,7 @@ ext-v1          & $-6387$ & $+770$    & $0$       & $.60$ & $3.17$ & $.23$  \\
 \main{v5 (F1: $\lambda_C + \delta\gamma$)}   & $-5933$ & $+1224$ & $+454$   & $.67$ & $2.70$  & $.16$ \\
 \main{v5 (C1: + $\mu_\mathrm{nc}$)}          & $-5323$ & $+1834$ & $+1063$  & $.91$ & $1.34$  & $.10$ \\
 \emp{v5 (F2: + $\eta$)}                      & $-5294$ & $+1863$ & $+1093$  & $.94$ & $1.22$  & $.10$ \\
+\muted{v5\_no\_lm (F3: F2 with $\beta=0$)}     & $-5314$ & $+1843$ & $+1073$  & $.92$ & $1.30$  & $.10$ \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -415,7 +416,38 @@ ext-v1          & $-6387$ & $+770$    & $0$       & $.60$ & $3.17$ & $.23$  \\
   \item \emp{v2--v4}: rejected exploratory variants from memo \S4 --- see previous slide for reasons.
   \item v5a and v5b: isolated mechanism probes (no full R²/L1 reported in memo).
   \item Every add-on moves metrics monotonically in the right direction except v5b (sat $\gamma$ alone, null) and v4 (which made things worse than ext-v1).
+  \item \main{F3 (LM prior removed)}: $-20$ ELPD vs F2 --- LM prior still contributes beyond $\mu_\mathrm{nc} + \gamma$. \emp{Keep it.}
 \end{itemize}
+\end{frame}
+
+% ====================================================================
+\begin{frame}{Ablation: is the LM prior still needed under F2?}
+\small
+\main{Test}: fit v5 (F2) with $\beta = 0$, effectively removing the LM prior. Every other mechanism identical.
+
+\vspace{0.6em}
+\begin{center}
+\begin{tabular}{lrrrr}
+\toprule
+Model         & ELPD    & $\Delta$ vs F2 & $R^2$ & L1 \\
+\midrule
+\main{v5 (F2)}   & \main{$-5294$} & $0$     & \main{$.928$} & \main{$1.22$} \\
+v5\_no\_lm (F3)  & $-5314$ & $-20.3$ & $.915$ & $1.30$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{0.6em}
+\main{Posterior compensation when LM is removed:}
+\begin{itemize}\itemsep0.15em
+  \item $\lambda_C$: $3.09 \to 3.33$ (colour-boost works harder)
+  \item $\gamma_2$: $1.58 \to 1.32$ (some 3-word preference re-absorbed)
+  \item $\delta\gamma_1$: $-2.16 \to -2.39$ (more negative on csuff)
+  \item $\mu_\mathrm{nc}, \gamma_1, \eta, \varepsilon$: essentially unchanged.
+\end{itemize}
+
+\vspace{0.6em}
+\emp{Interpretation.} LM prior contributes $\sim\!20$ ELPD of residual signal the explicit mechanisms don't absorb. Likely encoding frequency structure beyond canonical ordering + length (e.g., relative frequency among same-shape canonical utterances). Getting a non-zero gap is actually reassuring --- it means $\mu_\mathrm{nc} + \gamma + \eta$ are capturing structure \emph{distinct} from the LM prior, not just refitting it.
 \end{frame}
 
 % ====================================================================
