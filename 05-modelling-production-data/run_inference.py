@@ -41,6 +41,7 @@ from modelSpecification import (
     likelihood_function_reported_hier,
     likelihood_function_reported_lowcol_hier,
     likelihood_function_v5_hier,
+    likelihood_function_v5_no_lm_hier,
     likelihood_function_v5a_hier,
     likelihood_function_v5b_hier,
     likelihood_function_v5_inc_static_hier,
@@ -73,9 +74,10 @@ HIER_MODELS = {
     "reported": (likelihood_function_reported_hier, 0.85, 5),
     "reported_lowcol": (likelihood_function_reported_lowcol_hier, 0.85, 5),
     "incremental_lowcol": (likelihood_function_incremental_speaker_lowcol_hier, 0.85, 5),
-    "v5":  (likelihood_function_v5_hier,  0.85, 5),
-    "v5a": (likelihood_function_v5a_hier, 0.85, 5),
-    "v5b": (likelihood_function_v5b_hier, 0.85, 5),
+    "v5":        (likelihood_function_v5_hier,       0.85, 5),
+    "v5_no_lm":  (likelihood_function_v5_no_lm_hier, 0.85, 5),
+    "v5a":       (likelihood_function_v5a_hier,      0.85, 5),
+    "v5b":       (likelihood_function_v5b_hier,      0.85, 5),
     "v5_inc_static":    (likelihood_function_v5_inc_static_hier,   0.85, 5),
     "v5_global":        (likelihood_function_v5_global_hier,        0.85, 5),
     "v5_global_static": (likelihood_function_v5_global_static_hier, 0.85, 5),
@@ -216,7 +218,8 @@ def run_inference_hier(
     is_colour_sufficient = data.get("is_colour_sufficient")  # only present for v5 family
     is_sharp             = data.get("sharpness_idx")         # 1 if sharp, 0 if blurred
 
-    V5_FAMILY = {"v5", "v5a", "v5b", "v5_inc_static", "v5_global", "v5_global_static",
+    V5_FAMILY = {"v5", "v5_no_lm", "v5a", "v5b",
+                 "v5_inc_static", "v5_global", "v5_global_static",
                  "v5_global_full", "v5_global_static_full"}
     is_v5 = canonical_speaker_type in V5_FAMILY
 
@@ -293,7 +296,7 @@ if __name__ == "__main__":
                                  "incremental_extended", "incremental_mixture",
                                  "incremental_mixture_simple",
                                  "reported", "reported_lowcol", "incremental_lowcol",
-                                 "v5", "v5a", "v5b",
+                                 "v5", "v5_no_lm", "v5a", "v5b",
                                  "v5_inc_static", "v5_global", "v5_global_static",
                                  "v5_global_full", "v5_global_static_full"],
                         default="incremental",
