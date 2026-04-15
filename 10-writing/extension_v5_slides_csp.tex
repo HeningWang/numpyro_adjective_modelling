@@ -193,10 +193,10 @@ baseline & .35 & 3.17 \\
 \end{center}
 
 \vspace{0.5em}
-Posterior: $\alpha_D = 6.94,\ \alpha_C = 1.84,\ \alpha_F = 1.88,\ \gamma = 2.32,\ \varepsilon = 0.22$.
+Posterior: $\alpha_D = 6.92,\ \alpha_C = 1.85,\ \alpha_F = 1.89,\ \gamma = 2.31,\ \varepsilon = 0.23$.
 
 \vspace{0.5em}
-\emp{But}: seven memo \S5.3 misfits persist; $\varepsilon = 0.22$ uncomfortably high.
+\emp{But}: seven memo \S5.3 misfits persist; $\varepsilon = 0.23$ uncomfortably high.
 \end{frame}
 
 % ====================================================================
@@ -361,7 +361,7 @@ $\varepsilon$ stays at $0.10$; 0 divergences; all $\hat R \leq 1.02$.
 Stage & ELPD LOO & $\Delta$ vs baseline & $\Delta$ vs ext-v1 & $R^2$ & L1 & $\varepsilon$ \\
 \midrule
 baseline        & $-7157$ & $0$       & ---       & $.35$ & $3.17$ & ---   \\
-ext-v1          & $-6387$ & $+770$    & $0$       & $.60$ & $3.17$ & $.22$ \\
+ext-v1          & $-6387$ & $+770$    & $0$       & $.60$ & $3.17$ & $.23$  \\
 \acct{v5a ($\lambda_C$ only)}         & $-6265$ & $+892$  & $+122$   & ---   & ---     & ---   \\
 \acct{v5b (sat.\ $\gamma$ only)}      & $-6381$ & $+776$  & $+6$     & ---   & ---     & ---   \\
 \main{v5 (F1: $\lambda_C + \delta\gamma$)}   & $-5933$ & $+1224$ & $+454$   & $.67$ & $2.70$  & $.16$ \\
@@ -374,6 +374,7 @@ ext-v1          & $-6387$ & $+770$    & $0$       & $.60$ & $3.17$ & $.22$ \\
 \vspace{0.6em}
 \begin{itemize}\itemsep0.15em
   \item LOO, $R^2$ (emp $\geq .02$), L1 (sum of $|\Delta|$ over 37 cells), $\varepsilon$ lapse posterior mean.
+  \item \main{Baseline has no lapse and no length bias} --- $\gamma$ and $\varepsilon$ are \emph{hardcoded to $0$} in \texttt{likelihood\_function\_reported\_hier}, not sampled. All columns marked "---" are structurally absent, not just unreported.
   \item v5a and v5b: isolated mechanism probes (no full R²/L1 reported in memo).
   \item Every add-on moves metrics monotonically in the right direction except v5b (sat $\gamma$ alone) which is null.
 \end{itemize}
