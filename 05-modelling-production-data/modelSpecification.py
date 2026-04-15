@@ -2080,10 +2080,10 @@ likelihood_function_v5b_hier = _make_v5b_model(
 # =============================================================================
 
 V5_FIXED = dict(
-    gamma_1=1.99, gamma_2=1.42,
-    delta_gamma_1=-2.10, delta_gamma_2=-0.66,
-    eta_1=0.0, eta_2=0.0,  # updated after F2 run
-    mu_noncanon=-5.07,
+    gamma_1=2.32, gamma_2=1.58,
+    delta_gamma_1=-2.16, delta_gamma_2=-0.58,
+    eta_1=-0.61, eta_2=-0.34,
+    mu_noncanon=-5.08,
     epsilon=0.10,
 )
 
