@@ -1190,7 +1190,12 @@ def incremental_speaker_v5(
         log_L_ref = log_norm[:, :, referent_index]                   # (n_utt, 3)
 
         # ── Step 4: masked softmax (with condition-gated lambda_C boost) ──────
-        boost_vec = jnp.array([0.0, lambda_C * is_colour_sufficient, 0.0])  # (3,)
+        # R1: boost active only at the first mention step (t == 0) so that bare-C
+        # benefits but C-prefix compounds (CF, CDF) are not multiplied through.
+        first_step_gate = (t == 0).astype(jnp.float32)
+        boost_vec = jnp.array(
+            [0.0, lambda_C * is_colour_sufficient * first_step_gate, 0.0]
+        )                                                              # (3,)
         logits_with_boost = jnp.where(
             cand_mask_t,
             alpha_vec[None, :] * log_L_ref + boost_vec[None, :],
