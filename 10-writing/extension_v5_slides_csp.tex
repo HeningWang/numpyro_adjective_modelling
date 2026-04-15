@@ -548,6 +548,67 @@ $\tau$               & HalfN(0.2)  & $0.62$ (0.51, 0.73)      & 1.00\\
 \end{frame}
 
 % ====================================================================
+\begin{frame}{Parallel exploration: mixture-of-speakers}
+\small
+A separate thread (memo \S6 open question \#2, earlier 2026-03): \emp{strategy heterogeneity}. Two-component mixture, each an incremental recursive speaker with its own $\alpha$ and $\gamma$.
+
+\vspace{0.4em}
+\begin{itemize}\itemsep0.15em
+  \item Mixing weight $\pi \sim \mathrm{Beta}(2,2)$, lapse $\varepsilon \sim \mathrm{Beta}(2,98)$.
+  \item Label-switch fix: $\mathrm{gap}_D \sim \mathrm{HalfN}(3)$, $\alpha_{2,D} = \max(\alpha_{1,D} - \mathrm{gap}_D, 0)$.
+  \item Two variants: \main{per-dim $\alpha$} (9 per-component params) and \main{simple single-$\alpha$} (2 per-component params).
+\end{itemize}
+
+\vspace{0.6em}
+\main{Most informative run: per-dim mixture, FULL data (N=9586)}
+\begin{center}\footnotesize
+\begin{tabular}{lrr|l}
+\toprule
+Parameter & Speaker 1 & Speaker 2 & Interpretation \\
+\midrule
+$\alpha_D$ & $14.82$ & $8.57$ & both deliberate about size \\
+$\alpha_C$ & \main{$20.85$} & \emp{$1.24$} & \main{speaker 1 super-rational on colour; 2 barely} \\
+$\alpha_F$ & $6.79$  & $1.29$ & speaker 1 deeper on form also \\
+$\gamma$   & \main{$-2.29$} & \emp{$+1.76$} & \main{1: penalises length; 2: rewards length} \\
+$\pi$      & \multicolumn{2}{c|}{$0.40 \leftrightarrow 0.60$} & $\sim\!40\%$ ``careful'' / $60\%$ ``mention-more'' \\
+$\varepsilon$ & \multicolumn{2}{c|}{$0.15$} & \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{0.5em}
+\emp{Caveat.} All mixture runs show $\hat R \in [1.4, 2.8]$ despite $0$ divergences. NUTS finds the two modes but chains don't mix.
+\end{frame}
+
+% ====================================================================
+\begin{frame}{Mixture takeaways and unresolved issues}
+\small
+\main{The qualitative story works:}
+\begin{itemize}\itemsep0.15em
+  \item Two sub-populations \emph{fall out of the data} cleanly in the long run.
+  \item \main{Speaker 1} ($\alpha_C = 20.9$, $\gamma = -2.3$): utility-reasoning, minimum-description style.
+  \item \main{Speaker 2} ($\alpha_C = 1.2$, $\gamma = +1.76$): low-$\alpha$, mention-more default.
+  \item This is \emp{exactly the strategy-heterogeneity hypothesis} that ext-v1's high $\varepsilon = 0.23$ was absorbing.
+\end{itemize}
+
+\vspace{0.6em}
+\main{The quantitative story doesn't yet work:}
+\begin{itemize}\itemsep0.15em
+  \item Every variant: $\hat R \geq 1.4$ on key parameters; posteriors are multi-modal / weakly identified.
+  \item On the subset (short run) components don't even separate ($\mathrm{gap}_D \approx 0.1$).
+  \item Simple single-$\alpha$ variant (5000-warmup long): $\alpha_1$ converges ($\hat R = 1.04$) but $\alpha_2$ ($\hat R = 2.80$) and $\gamma_2$ don't.
+\end{itemize}
+
+\vspace{0.6em}
+\main{Relation to v5.}
+\begin{itemize}\itemsep0.15em
+  \item v5 fits a \emph{single-strategy} model with context-dependent mechanisms ($\lambda_C$, $\mu_\mathrm{nc}$, $\delta\gamma$, $\eta$).
+  \item Mixture fits a \emph{strategy-heterogeneous} model without those mechanisms.
+  \item A combined v5 + mixture model would test whether the two accounts are redundant or complementary. Not yet run.
+\end{itemize}
+\end{frame}
+
+% ====================================================================
 \begin{frame}{The $2\!\times\!2$ question: does the paper story survive?}
 Under F2 mechanisms we re-ran the $2\!\times\!2$ (speaker architecture $\times$ semantics regime) on the dc subset.
 

@@ -185,6 +185,50 @@ Four concrete decisions come out of this work:
 
 **Decision**: keep the LM prior in the final F2 model. The one-parameter cost is minor; the +20 ELPD is real.
 
+## 7c. Parallel exploration: mixture-of-speakers
+
+**Motivation**. Memo §6 (open question #2) flagged strategy heterogeneity as a possible alternative explanation for the high ε = 0.22 in ext-v1: maybe some participants are utility-reasoners (high α, short utterances), others are mention-salient (low α, longer overspecification), and averaging their responses into a single-strategy model pushes ε up.
+
+**Implementation** (in `modelSpecification.py`, predates v5):
+
+- `incremental_speaker_mixture` + `likelihood_function_incremental_speaker_mixture_hier` — two components, each per-dim α + γ, hierarchical δ only on component 1.
+- `likelihood_function_incremental_speaker_mixture_simple_hier` — simpler: single α per component.
+- Label-switch fix in both: `gap ~ HalfN(3)`, component 2's α = max(component 1's α − gap, 0).
+- Mixing weight π ~ Beta(2, 2); lapse ε ~ Beta(2, 98).
+
+**Runs completed**:
+
+| NC file | Data | π mean | r̂ (median) |
+|---|---|---|---|
+| `mcmc_results_incremental_mixture_speaker_hier_warmup2000_samples1000_chains4.nc` | dc subset (N=3196) | 0.54 | 1.93 |
+| `mcmc_results_incremental_mixture_fulldata_speaker_hier_warmup2000_samples1000_chains4.nc` | **full N=9586** | **0.40** | 1.76 |
+| `mcmc_results_incremental_mixture_simple_speaker_hier_warmup5000_samples2000_chains4.nc` | dc subset (simple, long) | 0.73 | mixed (α₁ at 1.04, α₂ at 2.80) |
+
+**Clearest posterior — per-dim mixture on full data** (N=9586):
+
+| Param | Speaker 1 | Speaker 2 | Interpretation |
+|---|---|---|---|
+| α_D | 14.82 | 8.57 | both deliberate about size |
+| α_C | **20.85** | **1.24** | speaker 1 super-rational on colour; 2 barely weighs it |
+| α_F | 6.79 | 1.29 | similar asymmetry on form |
+| γ | **−2.29** | **+1.76** | 1 penalises length; 2 rewards it |
+| π | **0.40** | 0.60 | ~40% "careful reasoner", ~60% "mention-more" |
+| ε | 0.15 | | lapse reduced vs ext-v1's 0.22, but not vanishing |
+
+**Qualitatively**: exactly the strategy-heterogeneity hypothesis. Two sub-populations emerge cleanly. Speaker 1 matches what a high-α utility-reasoner should look like; speaker 2 matches a low-α mention-more default.
+
+**Quantitatively problematic**: every run has r̂ in the 1.4–2.8 range despite 0 divergences. NUTS finds the two-mode posterior but chains don't mix between the modes even with the gap constraint. Short subset run (not fulldata): components don't separate at all (gap_D = 0.1).
+
+### Relation to v5
+
+Two independent accounts of where ε = 0.22 was coming from:
+- **v5**: context-dependent structural mechanisms (λ_C, μ_noncanon, δγ, η). Gives ε = 0.10 with single-strategy model. R² = 0.94.
+- **Mixture**: two-strategy model without the context-dependent mechanisms. Gives ε = 0.15, π = 0.40/0.60 on full data.
+
+These are not directly comparable (different datasets: dc subset vs full; different convergence; different levels of mechanism detail). A **combined model** — v5 mechanisms inside each of two mixture components — has not been run. This is the natural integration test: if v5 mechanisms fully explain what mixture components were capturing, the two-component fit under combined model should collapse to π ≈ 0 or 1 (one component dominant). If mixture and v5 mechanisms are complementary, both should remain active.
+
+**Status**: mixture exploration paused due to r̂ convergence issues. Memory notes (2026-03-25) flagged longer warmup + more samples as the next step; long per-dim fulldata run was queued but may not have been executed.
+
 ## 8. Open questions flagged but not resolved
 
 - **Strategy heterogeneity.** ε = 0.10 is smaller than ext-v1's 0.22 but non-zero. The first/sharp D vs DF split is consistent with two participant sub-populations (minimum-description vs redundant-form). A mixture model (memo §6 / §7, open question #2) remains the next natural step if we want to push further.
