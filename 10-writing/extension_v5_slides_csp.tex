@@ -405,6 +405,11 @@ ext-v1          & $-6387$ & $+770$    & $0$       & $.60$ & $3.17$ & $.23$  \\
 \main{v5 (C1: + $\mu_\mathrm{nc}$)}          & $-5323$ & $+1834$ & $+1063$  & $.91$ & $1.34$  & $.10$ \\
 \emp{v5 (F2: + $\eta$)}                      & $-5294$ & $+1863$ & $+1093$  & $.94$ & $1.22$  & $.10$ \\
 \muted{v5\_no\_lm (F3: F2 with $\beta=0$)}     & $-5314$ & $+1843$ & $+1073$  & $.92$ & $1.30$  & $.10$ \\
+\midrule
+\multicolumn{7}{l}{\textit{Full data generalization check (N = 9586, all 9 conditions):}} \\
+\muted{baseline \ (full data)}              & $-22703$ & $0$      & ---      & $.10$ & $6.46$  & ---   \\
+\muted{ext-v1 \ \ \ (full data)}            & $-20831$ & $+1872$  & $0$      & $.23$ & $5.46$  & $.05$ \\
+\main{v5 (F2, full data)}                   & $-15969$ & $+6734$  & $+4862$  & $.78$ & $2.68$  & $.12$ \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -417,6 +422,8 @@ ext-v1          & $-6387$ & $+770$    & $0$       & $.60$ & $3.17$ & $.23$  \\
   \item v5a and v5b: isolated mechanism probes (no full R²/L1 reported in memo).
   \item Every add-on moves metrics monotonically in the right direction except v5b (sat $\gamma$ alone, null) and v4 (which made things worse than ext-v1).
   \item \main{F3 (LM prior removed)}: $-20$ ELPD vs F2 --- LM prior still contributes beyond $\mu_\mathrm{nc} + \gamma$. \emp{Keep it.}
+  \item \main{Full-data generalization}: v5 F2 fit on all $N=9586$ gives $+4862$ ELPD over ext-v1 (vs $+1093$ on dc subset) --- $\sim\!4.5\times$ larger gap. $R^2 = .78$ on 90 marginalised cells.
+  \item $\mu_\mathrm{noncanon}$ posterior: $-5.08$ (dc) $\to$ $-8.30$ (full data) --- stronger canonical-ordering penalty needed on the full 9-condition data.
 \end{itemize}
 \end{frame}
 
@@ -528,23 +535,33 @@ $\tau$               & HalfN(0.2)  & $0.62$ (0.51, 0.73)      & 1.00\\
 \end{frame}
 
 % ====================================================================
-\begin{frame}{PPC barplot --- baseline vs ext-v1 vs v5 (F2)}
+\begin{frame}{PPC --- v5 (F2) fit on \emph{full data}, displayed on dc cells}
 \vspace{-0.5em}
 \begin{center}
-\includegraphics[width=0.98\linewidth]{production_ppc_barplot_v5_dc_F2.pdf}
+\includegraphics[width=0.98\linewidth]{production_ppc_barplot_v5_fullfit_dc_F2.pdf}
 \end{center}
 \vspace{-0.3em}
-\footnotesize Rows: \texttt{relevant\_property} (\acct{first} / \accg{both} / \accy{second}). Cols: sharpness.
+\footnotesize Fit on $N = 9586$ (all 9 conditions); display on dc only ($N = 3196$) to remain comparable with the slider-data figure. Rows: \texttt{relevant\_property} (\acct{first} / \accg{both} / \accy{second}). Cols: sharpness. $R^2$ on display = $.84$.
 \end{frame}
 
 % ====================================================================
-\begin{frame}{Predicted vs empirical ($n = 90$ cells)}
-\vspace{-0.3em}
+\begin{frame}{Same fit, displayed on all 9 conditions}
+\vspace{-0.5em}
 \begin{center}
-\includegraphics[width=0.98\linewidth]{production_correlation_v5_dc_F2.pdf}
+\includegraphics[width=0.92\linewidth]{production_ppc_barplot_v5_fullfit_all9_F2.pdf}
 \end{center}
 \vspace{-0.3em}
-\footnotesize $R^2$: baseline $.35 \to$ ext-v1 $.60 \to$ \main{v5 (F2) $.94$}.
+\footnotesize 9 conditions $\times$ 2 sharpness $= 18$ panels. v5 F2 (gold) tracks empirical across dc, df, and cf families. $R^2$ on display $= .73$ (270 cells); baseline on same view $= .10$.
+\end{frame}
+
+% ====================================================================
+\begin{frame}{Predicted vs empirical --- full-data fit ($n = 90$ cells marginalised)}
+\vspace{-0.3em}
+\begin{center}
+\includegraphics[width=0.98\linewidth]{production_correlation_v5_fulldata_F2.pdf}
+\end{center}
+\vspace{-0.3em}
+\footnotesize All 90 condition-family $\times$ utterance cells. $R^2$: baseline $.10 \to$ ext-v1 $.23 \to$ \main{v5 (F2) $.78$} on full-data fit.
 \end{frame}
 
 % ====================================================================
