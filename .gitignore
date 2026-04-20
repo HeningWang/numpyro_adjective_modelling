@@ -48,10 +48,9 @@ CLAUDE.md
 10-writing/literatures/
 10-writing/literature-notes/
 
-# AI-generated memos (internal working notes, not for version control)
+# AI-generated memos and working notes (internal, not for version control)
+10-writing/memos/
 10-writing/*_memo.md
-
-# Other AI working files
 10-writing/session_start.md
 10-writing/analysis_plan.md
 10-writing/sword_model_analysis.md
