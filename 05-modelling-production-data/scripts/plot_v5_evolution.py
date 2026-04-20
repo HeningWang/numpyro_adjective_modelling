@@ -113,7 +113,12 @@ mechs = {
     "η_2":         [None, None, None, None, None, None, -0.34],
     "μ_noncanon":  [None, None, None, None, None, -5.07, -5.08],
 }
+# log β is a pre-existing parameter (not a v5 mechanism) but its posterior shifts
+# sharply once μ_noncanon is introduced. Plotted with a dashed line to signal
+# that it is sampled across all stages, not newly added.
+log_beta = [None, 2.05, None, None, 2.05, -0.18, -0.17]
 colors = [GLAUCOUS_DARK, GLAUCOUS, SHIMMER, ACCENT_1, ACCENT_2, ACCENT_3, INDEPENDENCE, "#8e44ad"]
+LOG_BETA_COLOR = "#7F4A2F"
 
 fig, ax = plt.subplots(figsize=(11, 4.5))
 for (name, vals), c in zip(mechs.items(), colors):
@@ -125,6 +130,14 @@ for (name, vals), c in zip(mechs.items(), colors):
     # label the final value
     ax.annotate(name, xy=(xs[-1] + 0.05, ys[-1]), fontsize=9, color=c,
                 va="center", ha="left")
+
+# log β: pre-existing parameter, dashed to distinguish from v5 mechanisms
+lb_xs = [i for i, v in enumerate(log_beta) if v is not None]
+lb_ys = [v for v in log_beta if v is not None]
+ax.plot(lb_xs, lb_ys, "s--", color=LOG_BETA_COLOR, lw=2, markersize=7,
+        label="log β")
+ax.annotate("log β", xy=(lb_xs[-1] + 0.05, lb_ys[-1]), fontsize=9,
+            color=LOG_BETA_COLOR, va="center", ha="left")
 
 ax.axhline(0, color=INDEPENDENCE, lw=0.5, linestyle=":")
 ax.set_xticks(x)
