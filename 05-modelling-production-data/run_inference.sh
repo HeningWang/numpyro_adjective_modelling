@@ -52,6 +52,11 @@ run_model incremental_rsa_only  true  "${NUM_WARMUP_HIER}"  "${NUM_SAMPLES_HIER}
 # Lookahead speaker (Priority 5)
 run_model incremental_lookahead true  "${NUM_WARMUP_HIER}"  "${NUM_SAMPLES_HIER}"
 
+# Extension v5 (Task 7 of feat/extension-v5)
+run_model v5b true  "${NUM_WARMUP_HIER}"  "${NUM_SAMPLES_HIER}"
+run_model v5a true  "${NUM_WARMUP_HIER}"  "${NUM_SAMPLES_HIER}"
+run_model v5  true  "${NUM_WARMUP_HIER}"  "${NUM_SAMPLES_HIER}"
+
 END=$(date +%s)
 echo ""
 echo "All seven hierarchical models done in $(( END - START ))s."
