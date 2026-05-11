@@ -5,9 +5,11 @@ Usage:
         --num_warmup 500 --num_samples 500 --num_chains 4
 """
 import os
-os.environ["JAX_PLATFORMS"] = "cpu"
+# Default to CPU with 4 host devices, but honour env overrides so callers
+# can switch to GPU mode via `JAX_PLATFORMS='' XLA_FLAGS='' python ...`.
+os.environ.setdefault("JAX_PLATFORMS", "cpu")
+os.environ.setdefault("XLA_FLAGS", "--xla_force_host_platform_device_count=4")
 os.environ["JAX_TRACEBACK_FILTERING"] = "off"
-os.environ["XLA_FLAGS"] = "--xla_force_host_platform_device_count=4"
 
 import argparse
 import numpy as np
@@ -38,6 +40,15 @@ from modelSpecification import (
     likelihood_function_incremental_speaker_mixture_simple_hier,
     likelihood_function_reported_hier,
     likelihood_function_reported_lowcol_hier,
+    likelihood_function_v5_hier,
+    likelihood_function_v5_no_lm_hier,
+    likelihood_function_v5a_hier,
+    likelihood_function_v5b_hier,
+    likelihood_function_v5_inc_static_hier,
+    likelihood_function_v5_global_hier,
+    likelihood_function_v5_global_static_hier,
+    likelihood_function_v5_global_full_hier,
+    likelihood_function_v5_global_static_full_hier,
 )
 
 
@@ -63,6 +74,15 @@ HIER_MODELS = {
     "reported": (likelihood_function_reported_hier, 0.85, 5),
     "reported_lowcol": (likelihood_function_reported_lowcol_hier, 0.85, 5),
     "incremental_lowcol": (likelihood_function_incremental_speaker_lowcol_hier, 0.85, 5),
+    "v5":        (likelihood_function_v5_hier,       0.85, 5),
+    "v5_no_lm":  (likelihood_function_v5_no_lm_hier, 0.85, 5),
+    "v5a":       (likelihood_function_v5a_hier,      0.85, 5),
+    "v5b":       (likelihood_function_v5b_hier,      0.85, 5),
+    "v5_inc_static":    (likelihood_function_v5_inc_static_hier,   0.85, 5),
+    "v5_global":        (likelihood_function_v5_global_hier,        0.85, 5),
+    "v5_global_static": (likelihood_function_v5_global_static_hier, 0.85, 5),
+    "v5_global_full":        (likelihood_function_v5_global_full_hier,        0.85, 5),
+    "v5_global_static_full": (likelihood_function_v5_global_static_full_hier, 0.85, 5),
 }
 
 
@@ -132,13 +152,28 @@ def run_inference_hier(
     num_samples: int = 1000,
     num_chains: int = 4,
     min_proportion: float = 0.0,
+    condition_subset: str = "",
 ):
-    """Run MCMC for the hierarchical (random participant alpha) speaker model."""
+    """Run MCMC for the hierarchical (random participant alpha) speaker model.
+
+    condition_subset : str
+        Comma-separated condition codes (e.g., "erdc,zrdc,brdc") to filter trials.
+        Empty = use all 9 conditions. Adds suffix "_<tag>" to output filename.
+    """
     canonical_speaker_type = canonicalize_speaker_type(speaker_type)
+
+    subset_tag = ""
+    if condition_subset:
+        subset_codes = tuple(s.strip() for s in condition_subset.split(",") if s.strip())
+        # Compact tag: hash-free, derive from condition stems (third+fourth chars).
+        stems = sorted({c[2:4] for c in subset_codes})
+        subset_tag = f"_{''.join(stems)}"
+    else:
+        subset_codes = None
 
     tag = f"_top" if min_proportion > 0 else ""
     output_file_name = (
-        f"./inference_data/mcmc_results_{canonical_speaker_type}_speaker_hier{tag}"
+        f"./inference_data/mcmc_results_{canonical_speaker_type}_speaker_hier{tag}{subset_tag}"
         f"_warmup{num_warmup}_samples{num_samples}_chains{num_chains}.nc"
     )
     if os.path.exists(output_file_name):
@@ -146,10 +181,47 @@ def run_inference_hier(
         print(f"Deleted existing file: {output_file_name}")
 
     data = import_dataset_hier(min_proportion=min_proportion)
+
+    if subset_codes is not None:
+        df = data["df"]
+        keep_mask_np = df["conditions"].isin(subset_codes).to_numpy()
+        n_before = len(df)
+        n_after = int(keep_mask_np.sum())
+        if n_after == 0:
+            raise ValueError(f"condition_subset {subset_codes} matched zero trials.")
+        keep_idx = np.where(keep_mask_np)[0]
+        keep_idx_jnp = jax.numpy.asarray(keep_idx)
+
+        # Filter every per-trial array; participant_idx must stay 0-indexed dense.
+        for k in ("states_train", "empirical_seq_flat", "empirical_flat",
+                  "empirical_seq", "seq_mask", "sharpness_idx",
+                  "is_colour_sufficient"):
+            if k in data and data[k] is not None:
+                data[k] = data[k][keep_idx_jnp]
+        data["df"] = df.iloc[keep_idx].reset_index(drop=True)
+
+        # Re-index participants to 0..n-1 over the filtered trials.
+        old_pid = np.asarray(data["participant_idx"])[keep_idx]
+        unique_p = sorted(set(old_pid.tolist()))
+        remap = {p: i for i, p in enumerate(unique_p)}
+        new_pid = np.array([remap[p] for p in old_pid], dtype=np.int32)
+        data["participant_idx"] = jax.numpy.asarray(new_pid, dtype=jax.numpy.int32)
+        data["n_participants"] = len(unique_p)
+
+        print(f"  [subset] Kept {n_after}/{n_before} trials in conditions {subset_codes} "
+              f"({len(unique_p)} participants)")
+
     states_train       = data["states_train"]
     empirical_seq_flat = data["empirical_seq_flat"]
     participant_idx    = data["participant_idx"]
     n_participants     = data["n_participants"]
+    is_colour_sufficient = data.get("is_colour_sufficient")  # only present for v5 family
+    is_sharp             = data.get("sharpness_idx")         # 1 if sharp, 0 if blurred
+
+    V5_FAMILY = {"v5", "v5_no_lm", "v5a", "v5b",
+                 "v5_inc_static", "v5_global", "v5_global_static",
+                 "v5_global_full", "v5_global_static_full"}
+    is_v5 = canonical_speaker_type in V5_FAMILY
 
     print(f"Hierarchical model: {n_participants} participants, {len(states_train)} observations")
     print(f"Output file: {output_file_name}")
@@ -172,20 +244,29 @@ def run_inference_hier(
         num_chains=num_chains,
         chain_method="vectorized",
     )
-    mcmc.run(
-        rng_key_,
-        states_train, empirical_seq_flat,
-        participant_idx, n_participants,
+
+    base_kwargs = dict(
+        states=states_train,
+        empirical=empirical_seq_flat,
+        participant_idx=participant_idx,
+        n_participants=n_participants,
     )
+    if is_v5:
+        if is_colour_sufficient is None:
+            raise RuntimeError("v5 family requires is_colour_sufficient in data dict; rebuild dataset")
+        if is_sharp is None:
+            raise RuntimeError("v5 family requires sharpness_idx in data dict; rebuild dataset")
+        base_kwargs["is_colour_sufficient"] = is_colour_sufficient
+        base_kwargs["is_sharp"]             = is_sharp
+
+    mcmc.run(rng_key_, **base_kwargs)
     mcmc.print_summary(exclude_deterministic=False)
 
     posterior_samples = mcmc.get_samples()
-    posterior_predictive = Predictive(model, posterior_samples)(
-        PRNGKey(1), states_train, None, participant_idx, n_participants
-    )
-    prior = Predictive(model, num_samples=500)(
-        PRNGKey(2), states_train, None, participant_idx, n_participants
-    )
+    pp_kwargs = dict(base_kwargs)
+    pp_kwargs["empirical"] = None  # generate, not condition
+    posterior_predictive = Predictive(model, posterior_samples)(PRNGKey(1), **pp_kwargs)
+    prior = Predictive(model, num_samples=500)(PRNGKey(2), **pp_kwargs)
 
     N = states_train.shape[0]
     coords = {"item": np.arange(N)}
@@ -214,7 +295,10 @@ if __name__ == "__main__":
                                  "incremental_rsa_only", "incremental_lookahead",
                                  "incremental_extended", "incremental_mixture",
                                  "incremental_mixture_simple",
-                                 "reported", "reported_lowcol", "incremental_lowcol"],
+                                 "reported", "reported_lowcol", "incremental_lowcol",
+                                 "v5", "v5_no_lm", "v5a", "v5b",
+                                 "v5_inc_static", "v5_global", "v5_global_static",
+                                 "v5_global_full", "v5_global_static_full"],
                         default="incremental",
                         help="Choose the speaker model type.")
     parser.add_argument("--num_samples", type=int, default=500, help="Number of posterior samples.")
@@ -229,6 +313,10 @@ if __name__ == "__main__":
         "--min-proportion", type=float, default=0.0,
         help="Filter training data to utterance types with max proportion >= this in any condition.",
     )
+    parser.add_argument(
+        "--condition-subset", type=str, default="",
+        help="Comma-separated condition codes (e.g. 'erdc,zrdc,brdc') to filter trials. Empty = all 9.",
+    )
 
     args = parser.parse_args()
 
@@ -242,6 +330,7 @@ if __name__ == "__main__":
             num_warmup=args.num_warmup,
             num_chains=args.num_chains,
             min_proportion=args.min_proportion,
+            condition_subset=args.condition_subset,
         )
     else:
         run_inference(

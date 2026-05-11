@@ -4,16 +4,19 @@ jax/
 
 # LaTeX build artifacts
 10-writing/build/
-10-writing/*.aux
-10-writing/*.fdb_latexmk
-10-writing/*.fls
-10-writing/*.log
-10-writing/*.out
-10-writing/*.synctex.gz
-10-writing/*.bbl
-10-writing/*.blg
-10-writing/*.fff
-10-writing/*.ttt
+10-writing/**/*.aux
+10-writing/**/*.fdb_latexmk
+10-writing/**/*.fls
+10-writing/**/*.log
+10-writing/**/*.out
+10-writing/**/*.synctex.gz
+10-writing/**/*.bbl
+10-writing/**/*.blg
+10-writing/**/*.fff
+10-writing/**/*.ttt
+10-writing/**/*.nav
+10-writing/**/*.snm
+10-writing/**/*.toc
 /*.aux
 /*.fdb_latexmk
 /*.fls
