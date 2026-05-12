@@ -31,6 +31,7 @@ from modelSpecification import (
     likelihood_function_incremental_speaker_hier,
     likelihood_function_incremental_speaker_lowcol_hier,
     likelihood_function_contextual_hier,
+    likelihood_function_contextual_lambdaunc_hier,
     likelihood_function_global_speaker_static_hier,
     likelihood_function_incremental_speaker_frozen_hier,
     likelihood_function_incremental_lm_only_hier,
@@ -76,6 +77,7 @@ HIER_MODELS = {
     "reported_lowcol": (likelihood_function_reported_lowcol_hier, 0.85, 5),
     "incremental_lowcol": (likelihood_function_incremental_speaker_lowcol_hier, 0.85, 5),
     "contextual": (likelihood_function_contextual_hier, 0.85, 5),
+    "contextual_lambdaunc": (likelihood_function_contextual_lambdaunc_hier, 0.85, 5),
     "v5":        (likelihood_function_v5_hier,       0.85, 5),
     "v5_no_lm":  (likelihood_function_v5_no_lm_hier, 0.85, 5),
     "v5a":       (likelihood_function_v5a_hier,      0.85, 5),
@@ -226,7 +228,7 @@ def run_inference_hier(
     V5_FAMILY = {"v5", "v5_no_lm", "v5a", "v5b",
                  "v5_inc_static", "v5_global", "v5_global_static",
                  "v5_global_full", "v5_global_static_full"}
-    CONTEXTUAL_FAMILY = {"contextual"}
+    CONTEXTUAL_FAMILY = {"contextual", "contextual_lambdaunc"}
     is_v5 = canonical_speaker_type in V5_FAMILY
     is_contextual = canonical_speaker_type in CONTEXTUAL_FAMILY
 
@@ -314,7 +316,7 @@ if __name__ == "__main__":
                                  "incremental_extended", "incremental_mixture",
                                  "incremental_mixture_simple",
                                  "reported", "reported_lowcol", "incremental_lowcol",
-                                 "contextual",
+                                 "contextual", "contextual_lambdaunc",
                                  "v5", "v5_no_lm", "v5a", "v5b",
                                  "v5_inc_static", "v5_global", "v5_global_static",
                                  "v5_global_full", "v5_global_static_full"],
