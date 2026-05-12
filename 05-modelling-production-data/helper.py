@@ -207,6 +207,16 @@ def import_dataset_hier(
 
     base["participant_idx"] = jnp.array(participant_idx_np, dtype=jnp.int32)
     base["n_participants"] = n_participants
+
+    # Condition labels per trial, encoded as 0-indexed integers over the
+    # conditions present in df_raw (subset filtering in run_inference.py
+    # will re-index over the surviving subset).
+    unique_conditions = sorted(df_raw["conditions"].unique())
+    condition_to_idx = {c: i for i, c in enumerate(unique_conditions)}
+    condition_idx_np = df_raw["conditions"].map(condition_to_idx).to_numpy(dtype=np.int32)
+    base["condition_idx"] = jnp.array(condition_idx_np, dtype=jnp.int32)
+    base["n_conditions"] = len(unique_conditions)
+    base["condition_labels"] = unique_conditions
     return base
 
 

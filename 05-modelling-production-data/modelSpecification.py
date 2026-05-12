@@ -3062,6 +3062,85 @@ likelihood_function_contextual_anchored_gamma_fixedwf_hier = (
 )
 
 
+def _make_contextual_anchored_gamma_fixedwf_pcalpha_model(
+    color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+):
+    """Iter 14: Iter 12 + hierarchical alpha by ``(participant × condition)``.
+
+    Replaces the per-participant ``delta`` random effect with a per-
+    (participant × condition) one, non-centered for stability with the
+    larger latent space (113 × n_conditions cells; in the dc subset
+    n_conditions = 3 → 339 latents).
+
+        tau ~ HalfNormal(0.2)
+        delta_raw[p, c] ~ Normal(0, 1)
+        delta[p, c] = tau * delta_raw[p, c]
+        per_trial_offset = delta[participant_idx, condition_idx]
+        alpha_X_per_trial = max(alpha_X + per_trial_offset, 0)   for X in {D, C, F}
+
+    Theory: the residual erdc D over-prediction (P(F | first=D) = 28% model
+    vs 42% human) localized in the per-step diagnostic was not closed by
+    free form_semval (Iter 13) — the model's alpha pattern is the
+    bottleneck. Allowing alpha to drift differently per (participant,
+    condition) lets the posterior find that subjects in erdc trials need
+    different overall alpha than in zrdc / brdc, without committing to a
+    hand-specified per-suff_dim coefficient.
+
+    Named-coefficient count: 9 (same as Iter 12). The (P × C) cells add
+    +226 latents beyond Iter 12 — within numpyro's plate machinery, not
+    new named-scalar parameters.
+    """
+    def model(states=None, empirical=None,
+              participant_idx=None, n_participants=None,
+              sufficient_dim=None, has_one_word_solution=None, is_sharp=None,
+              condition_idx=None, n_conditions=None):
+        log_beta_lm   = numpyro.sample("log_beta_lm",   dist.Normal(0.0, 0.5))
+        beta_lm       = jnp.exp(log_beta_lm)
+
+        alpha_D       = numpyro.sample("alpha_D",       dist.HalfNormal(5.0))
+        alpha_C       = numpyro.sample("alpha_C",       dist.HalfNormal(5.0))
+        alpha_F       = numpyro.sample("alpha_F",       dist.HalfNormal(5.0))
+        lambda_suff   = numpyro.sample("lambda_suff",   dist.Normal(0.0, 1.0))
+        gamma_base    = numpyro.sample("gamma_base",    dist.Normal(0.0, 2.0))
+        gamma_oneword = numpyro.sample("gamma_oneword", dist.Normal(0.0, 2.0))
+        epsilon       = numpyro.sample("epsilon",       dist.Beta(1.0, 50.0))
+        tau           = numpyro.sample("tau",           dist.HalfNormal(0.2))
+
+        # Non-centered per-(participant × condition) random effect. plate
+        # dim=-1 is the innermost (rightmost) axis = conditions; dim=-2 is
+        # the next = participants. delta_raw has shape (P, C).
+        with numpyro.plate("conditions_p", n_conditions, dim=-1):
+            with numpyro.plate("participants", n_participants, dim=-2):
+                delta_raw = numpyro.sample("delta_raw", dist.Normal(0.0, 1.0))
+        delta = numpyro.deterministic("delta", delta_raw * tau)
+
+        per_trial_offset = delta[participant_idx, condition_idx]
+        alpha_D_per_trial = jnp.maximum(alpha_D + per_trial_offset, 0.0)
+        alpha_C_per_trial = jnp.maximum(alpha_C + per_trial_offset, 0.0)
+        alpha_F_per_trial = jnp.maximum(alpha_F + per_trial_offset, 0.0)
+
+        with numpyro.plate("data", len(states)):
+            probs = jitted_speaker_contextual_anchored_gamma_hier(
+                states, sufficient_dim, has_one_word_solution, is_sharp,
+                alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+                lambda_suff, color_semval, form_semval, k, wf, beta_lm,
+                gamma_base, gamma_oneword, epsilon,
+            )
+            if empirical is None:
+                numpyro.sample("obs", dist.Categorical(probs=probs))
+            else:
+                numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+    return model
+
+
+likelihood_function_contextual_anchored_gamma_fixedwf_pcalpha_hier = (
+    _make_contextual_anchored_gamma_fixedwf_pcalpha_model(
+        color_semval=0.971, form_semval=0.50, k=0.5,
+        wf=WF_FIXED_ITER11_MEDIAN,
+    )
+)
+
+
 # =============================================================================
 # V5 LIKELIHOOD FACTORIES  (v5: full, v5a: lambda_C only, v5b: gamma only)
 # =============================================================================
