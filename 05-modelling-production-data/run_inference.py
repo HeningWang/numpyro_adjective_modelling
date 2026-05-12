@@ -37,6 +37,7 @@ from modelSpecification import (
     likelihood_function_contextual_freewf_anchored_hier,
     likelihood_function_contextual_anchored_gamma_hier,
     likelihood_function_contextual_anchored_gamma_fixedwf_hier,
+    likelihood_function_contextual_anchored_gamma_fixedwf_pcalpha_hier,
     likelihood_function_global_speaker_static_hier,
     likelihood_function_incremental_speaker_frozen_hier,
     likelihood_function_incremental_lm_only_hier,
@@ -88,6 +89,7 @@ HIER_MODELS = {
     "contextual_freewf_anchored": (likelihood_function_contextual_freewf_anchored_hier, 0.85, 5),
     "contextual_anchored_gamma": (likelihood_function_contextual_anchored_gamma_hier, 0.85, 5),
     "contextual_anchored_gamma_fixedwf": (likelihood_function_contextual_anchored_gamma_fixedwf_hier, 0.85, 5),
+    "contextual_anchored_gamma_fixedwf_pcalpha": (likelihood_function_contextual_anchored_gamma_fixedwf_pcalpha_hier, 0.85, 5),
     "v5":        (likelihood_function_v5_hier,       0.85, 5),
     "v5_no_lm":  (likelihood_function_v5_no_lm_hier, 0.85, 5),
     "v5a":       (likelihood_function_v5a_hier,      0.85, 5),
@@ -223,6 +225,19 @@ def run_inference_hier(
         data["participant_idx"] = jax.numpy.asarray(new_pid, dtype=jax.numpy.int32)
         data["n_participants"] = len(unique_p)
 
+        # Re-index conditions to 0..n-1 over the surviving subset conditions.
+        if "condition_idx" in data and data["condition_idx"] is not None:
+            old_cid = np.asarray(data["condition_idx"])[keep_idx]
+            unique_c = sorted(set(old_cid.tolist()))
+            cremap = {c: i for i, c in enumerate(unique_c)}
+            new_cid = np.array([cremap[c] for c in old_cid], dtype=np.int32)
+            data["condition_idx"] = jax.numpy.asarray(new_cid, dtype=jax.numpy.int32)
+            data["n_conditions"] = len(unique_c)
+            # Preserve labels in the same 0..n-1 order
+            old_labels = data.get("condition_labels", [])
+            if old_labels:
+                data["condition_labels"] = [old_labels[c] for c in unique_c]
+
         print(f"  [subset] Kept {n_after}/{n_before} trials in conditions {subset_codes} "
               f"({len(unique_p)} participants)")
 
@@ -230,6 +245,8 @@ def run_inference_hier(
     empirical_seq_flat = data["empirical_seq_flat"]
     participant_idx    = data["participant_idx"]
     n_participants     = data["n_participants"]
+    condition_idx      = data.get("condition_idx")
+    n_conditions       = data.get("n_conditions")
     is_colour_sufficient = data.get("is_colour_sufficient")  # only present for v5 family
     is_sharp             = data.get("sharpness_idx")         # 1 if sharp, 0 if blurred
     sufficient_dim        = data.get("sufficient_dim")
@@ -246,7 +263,11 @@ def run_inference_hier(
         "contextual_freewf_anchored",
         "contextual_anchored_gamma",
         "contextual_anchored_gamma_fixedwf",
+        "contextual_anchored_gamma_fixedwf_pcalpha",
     }
+    # Models that take an additional (participant × condition) random effect
+    # on alpha — need condition_idx and n_conditions passed through.
+    PCALPHA_FAMILY = {"contextual_anchored_gamma_fixedwf_pcalpha"}
     is_v5 = canonical_speaker_type in V5_FAMILY
     is_contextual = canonical_speaker_type in CONTEXTUAL_FAMILY
 
@@ -296,6 +317,13 @@ def run_inference_hier(
         base_kwargs["sufficient_dim"] = sufficient_dim
         base_kwargs["has_one_word_solution"] = has_one_word_solution
         base_kwargs["is_sharp"] = is_sharp
+    if canonical_speaker_type in PCALPHA_FAMILY:
+        if condition_idx is None or n_conditions is None:
+            raise RuntimeError(
+                "pcalpha variant requires condition_idx and n_conditions in data dict"
+            )
+        base_kwargs["condition_idx"] = condition_idx
+        base_kwargs["n_conditions"] = n_conditions
 
     mcmc.run(rng_key_, **base_kwargs)
     mcmc.print_summary(exclude_deterministic=False)
@@ -310,8 +338,28 @@ def run_inference_hier(
     coords = {"item": np.arange(N)}
     dims   = {"obs": ["item"]}
     if "delta" in posterior_samples:
-        coords["participants"] = np.arange(n_participants)
-        dims["delta"] = ["participants"]
+        delta_shape = posterior_samples["delta"].shape  # (chains*samples, ...)
+        if len(delta_shape) == 2:
+            coords["participants"] = np.arange(n_participants)
+            dims["delta"] = ["participants"]
+        elif len(delta_shape) == 3:
+            coords["participants"] = np.arange(n_participants)
+            coords["conditions"] = (data.get("condition_labels")
+                                    or np.arange(n_conditions or delta_shape[2]).tolist())
+            dims["delta"] = ["participants", "conditions"]
+    # Non-centered "delta_raw" gets the same shape coords if present.
+    if "delta_raw" in posterior_samples:
+        draw_shape = posterior_samples["delta_raw"].shape
+        if len(draw_shape) == 2:
+            coords["participants"] = coords.get("participants", np.arange(n_participants))
+            dims["delta_raw"] = ["participants"]
+        elif len(draw_shape) == 3:
+            coords["participants"] = coords.get("participants", np.arange(n_participants))
+            coords["conditions"] = coords.get(
+                "conditions",
+                data.get("condition_labels") or np.arange(n_conditions or draw_shape[2]).tolist(),
+            )
+            dims["delta_raw"] = ["participants", "conditions"]
 
     numpyro_data = az.from_numpyro(
         mcmc,
@@ -339,6 +387,7 @@ if __name__ == "__main__":
                                  "contextual_freewf_anchored",
                                  "contextual_anchored_gamma",
                                  "contextual_anchored_gamma_fixedwf",
+                                 "contextual_anchored_gamma_fixedwf_pcalpha",
                                  "v5", "v5_no_lm", "v5a", "v5b",
                                  "v5_inc_static", "v5_global", "v5_global_static",
                                  "v5_global_full", "v5_global_static_full"],
