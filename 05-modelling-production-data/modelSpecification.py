@@ -566,20 +566,6 @@ LOG_LM_RESID_15 = jnp.asarray(_lm_resid_np)
 # LM coefficient absorb both within-length naturalness AND length pressure.
 LOG_LM_RAW_15 = jnp.asarray(_log_lm_np)
 
-# Lever 3: alternate LM prior from the much larger malteos/gpt2-xl-wechsel-german
-# (1.5B params vs 124M for dbmdz/german-gpt2 that produced LM_PRIOR_15). Only the
-# contextual model variant reads this; everything else continues to use
-# LM_PRIOR_15 / LOG_LM_RAW_15 so previously published runs remain reproducible.
-# Source: generate_LM_prior/LM_adjective_sequences_with_surprisal_xl.csv, then
-# the same per-order_key aggregation as generate_LM_prior.ipynb.
-LM_PRIOR_15_XL = jnp.array([
-    0.0026858752, 0.0079908721, 0.1080883877, 0.1052141599, 0.0775826009,
-    0.0231899708, 0.0138320757, 0.1220307758, 0.1695089982, 0.0802079592,
-    0.0774714163, 0.0454253851, 0.0579677767, 0.0683951005, 0.0404086459,
-])
-_log_lm_xl_np = np.log(np.clip(np.asarray(LM_PRIOR_15_XL), 1e-12, None)).astype(np.float32)
-LOG_LM_RAW_15_XL = jnp.asarray(_log_lm_xl_np)
-
 # ── First word of each utterance (for first-word intercepts) ─────────────────
 # D=0, C=1, F=2 → one-hot masks for first-word bias
 FIRST_WORD = jnp.array(utterance_list)[:, 0]  # (n_utt,) first token of each utterance
@@ -1537,14 +1523,13 @@ def incremental_speaker_contextual(
 ) -> jnp.ndarray:
     """Incremental speaker with a context-sensitive production layer.
 
-    Lever 3 (on top of Lever 1's raw LM): swap the small German GPT-2 surprisal
-    signal (LOG_LM_RAW_15, from 124M dbmdz/german-gpt2) for the XL version
-    (LOG_LM_RAW_15_XL, from 1.5B malteos/gpt2-xl-wechsel-german). The larger LM
-    assigns markedly higher probability mass to longer, fully-specified noun
-    phrases ("CF Aufkleber" / "CDF Aufkleber"), which better matches the empirical
-    production distribution; the hope is that a more accurate naturalness signal
-    reduces residual model mismatch absorbed by epsilon. lambda_suff and the rest
-    of the param set are unchanged from Lever 1.
+    Lever 1: the LM term uses raw GPT-2 log-probability (LOG_LM_RAW_15) so the
+    cumulative per-token negative log-prob naturally penalizes longer
+    utterances, absorbing what was previously six separate gamma_* coefficients
+    (gamma_1/2 length, gamma_oneword_1/2 one-word availability, gamma_sharp_1/2
+    perceptual sharpness). Only first-word sufficiency boost (lambda_suff)
+    remains as an explicit context term — it is theoretically the
+    "lead-with-the-disambiguator" prior and is not in the LM signal.
     """
 
     eps            = 1e-8
@@ -1562,7 +1547,7 @@ def incremental_speaker_contextual(
     size_sort_idx = jnp.argsort(sizes)
     sizes_sorted = sizes[size_sort_idx]
 
-    log_lm_raw = beta_lm * LOG_LM_RAW_15_XL
+    log_lm_raw = beta_lm * LOG_LM_RAW_15
 
     colors = states[:, 1]
     forms  = states[:, 2]
