@@ -2128,10 +2128,11 @@ likelihood_function_incremental_speaker_lowcol_hier = _make_extended_v1_model(
 # ── Contextual compromise model: generic condition-sensitive production layer ─
 
 def _make_contextual_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
-    """C2-contextual (Lever 1 + positive-only alpha boost): raw LM + lambda_suff
-    + HalfNormal(0.5) per-dim boost gated on sufficient_dim. The boost is
-    constrained non-negative to remove the sign-flip multimodality that broke
-    the previous Lever 4 attempt (Normal(0,1)).
+    """C2-contextual (Lever 4 cleanest form): raw LM + HalfNormal(2.0) per-dim
+    alpha boost gated on sufficient_dim. lambda_suff is REMOVED — the alpha
+    boost is given a wider prior so it can fully absorb the sufficient-dim
+    effect on its own. Tests whether the per-dim boost mechanism alone
+    captures what the combined lambda_suff + narrow boost did in Iter 5.
     """
     def model(states=None, empirical=None,
               participant_idx=None, n_participants=None,
@@ -2142,10 +2143,12 @@ def _make_contextual_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
         alpha_D         = numpyro.sample("alpha_D",         dist.HalfNormal(5.0))
         alpha_C         = numpyro.sample("alpha_C",         dist.HalfNormal(5.0))
         alpha_F         = numpyro.sample("alpha_F",         dist.HalfNormal(5.0))
-        alpha_boost_D   = numpyro.sample("alpha_boost_D",   dist.HalfNormal(0.5))
-        alpha_boost_C   = numpyro.sample("alpha_boost_C",   dist.HalfNormal(0.5))
-        alpha_boost_F   = numpyro.sample("alpha_boost_F",   dist.HalfNormal(0.5))
-        lambda_suff     = numpyro.sample("lambda_suff",     dist.Normal(0.0, 1.0))
+        alpha_boost_D   = numpyro.sample("alpha_boost_D",   dist.HalfNormal(2.0))
+        alpha_boost_C   = numpyro.sample("alpha_boost_C",   dist.HalfNormal(2.0))
+        alpha_boost_F   = numpyro.sample("alpha_boost_F",   dist.HalfNormal(2.0))
+        # Set lambda_suff to zero — boost absorbs it. Sampled only so the
+        # speaker function (which still expects the arg) gets a valid value.
+        lambda_suff     = 0.0
         epsilon         = numpyro.sample("epsilon",         dist.Beta(1.0, 50.0))
         tau             = numpyro.sample("tau",             dist.HalfNormal(0.2))
 
