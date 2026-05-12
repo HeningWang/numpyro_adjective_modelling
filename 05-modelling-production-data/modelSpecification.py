@@ -2128,11 +2128,7 @@ likelihood_function_incremental_speaker_lowcol_hier = _make_extended_v1_model(
 # ── Contextual compromise model: generic condition-sensitive production layer ─
 
 def _make_contextual_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
-    """C2-contextual (Lever 1 + positive-only alpha boost): raw LM + lambda_suff
-    + HalfNormal(0.5) per-dim boost gated on sufficient_dim. The boost is
-    constrained non-negative to remove the sign-flip multimodality that broke
-    the previous Lever 4 attempt (Normal(0,1)).
-    """
+    """C2-contextual (Lever 1): per-dim alpha + RAW LM + lambda_suff. No gammas."""
     def model(states=None, empirical=None,
               participant_idx=None, n_participants=None,
               sufficient_dim=None, has_one_word_solution=None, is_sharp=None):
@@ -2142,9 +2138,6 @@ def _make_contextual_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
         alpha_D         = numpyro.sample("alpha_D",         dist.HalfNormal(5.0))
         alpha_C         = numpyro.sample("alpha_C",         dist.HalfNormal(5.0))
         alpha_F         = numpyro.sample("alpha_F",         dist.HalfNormal(5.0))
-        alpha_boost_D   = numpyro.sample("alpha_boost_D",   dist.HalfNormal(0.5))
-        alpha_boost_C   = numpyro.sample("alpha_boost_C",   dist.HalfNormal(0.5))
-        alpha_boost_F   = numpyro.sample("alpha_boost_F",   dist.HalfNormal(0.5))
         lambda_suff     = numpyro.sample("lambda_suff",     dist.Normal(0.0, 1.0))
         epsilon         = numpyro.sample("epsilon",         dist.Beta(1.0, 50.0))
         tau             = numpyro.sample("tau",             dist.HalfNormal(0.2))
@@ -2156,16 +2149,9 @@ def _make_contextual_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
         with numpyro.plate("participants", n_participants):
             delta = numpyro.sample("delta", dist.Normal(0.0, tau))
 
-        suff_is_D = (sufficient_dim == 0).astype(jnp.float32)
-        suff_is_C = (sufficient_dim == 1).astype(jnp.float32)
-        suff_is_F = (sufficient_dim == 2).astype(jnp.float32)
-
-        alpha_D_per_trial = alpha_D + delta[participant_idx] + alpha_boost_D * suff_is_D
-        alpha_C_per_trial = alpha_C + delta[participant_idx] + alpha_boost_C * suff_is_C
-        alpha_F_per_trial = alpha_F + delta[participant_idx] + alpha_boost_F * suff_is_F
-        alpha_D_per_trial = jnp.maximum(alpha_D_per_trial, 0.0)
-        alpha_C_per_trial = jnp.maximum(alpha_C_per_trial, 0.0)
-        alpha_F_per_trial = jnp.maximum(alpha_F_per_trial, 0.0)
+        alpha_D_per_trial = jnp.maximum(alpha_D + delta[participant_idx], 0.0)
+        alpha_C_per_trial = jnp.maximum(alpha_C + delta[participant_idx], 0.0)
+        alpha_F_per_trial = jnp.maximum(alpha_F + delta[participant_idx], 0.0)
 
         with numpyro.plate("data", len(states)):
             probs = jitted_speaker_contextual_hier(
