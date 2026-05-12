@@ -2158,12 +2158,12 @@ def _make_contextual_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
         epsilon         = numpyro.sample("epsilon",         dist.Beta(1.0, 50.0))
         tau             = numpyro.sample("tau",             dist.HalfNormal(0.2))
 
-        # Non-centered parameterization: delta = tau * delta_raw avoids the
-        # Neal funnel between tau and the per-subject offsets, which improves
-        # mixing for tau and low-information subjects (small trial counts).
+        # Centered parameterization for delta. Non-centered was tried (see
+        # commit f9e5afe) but caused chain-stuck multimodality on delta[30]
+        # (r-hat=1.30); the funnel here is weak because each subject has
+        # enough trials to identify their offset.
         with numpyro.plate("participants", n_participants):
-            delta_raw = numpyro.sample("delta_raw", dist.Normal(0.0, 1.0))
-        delta = numpyro.deterministic("delta", tau * delta_raw)
+            delta = numpyro.sample("delta", dist.Normal(0.0, tau))
 
         alpha_D_per_trial = jnp.maximum(alpha_D + delta[participant_idx], 0.0)
         alpha_C_per_trial = jnp.maximum(alpha_C + delta[participant_idx], 0.0)
