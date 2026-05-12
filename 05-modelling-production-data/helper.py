@@ -23,6 +23,7 @@ CONDITIONS_OF_INTEREST = (
 )
 COLOUR_SUFFICIENT_CONDITIONS = ("ercf", "zrdc")  # colour alone identifies target: first-relevant in cf-pair, second-relevant in dc-pair
 SYMBOL_TO_INDEX: Dict[str, int] = {"D": 0, "C": 1, "F": 2}
+CONDITION_DIM_TO_INDEX: Dict[str, int] = {"d": 0, "c": 1, "f": 2}
 MAX_UTTERANCE_LEN = 3
 FLAT_TO_CATEGORIES: Dict[str, str] = {
     "0": "D",
@@ -65,6 +66,20 @@ def import_dataset(
 
     sharpness_idx_np = (df["sharpness"].astype(str) == "sharp").to_numpy(dtype=np.int32)
     sharpness_idx = jnp.array(sharpness_idx_np, dtype=jnp.float32)
+
+    condition_pairs = df["conditions"].astype(str).str[-2:]
+    relevant_property = df["relevant_property"].astype(str)
+    sufficient_dim_np = np.full(len(df), -1, dtype=np.int32)
+    first_mask = relevant_property == "first"
+    second_mask = relevant_property == "second"
+    sufficient_dim_np[first_mask.to_numpy()] = (
+        condition_pairs[first_mask].str[0].map(CONDITION_DIM_TO_INDEX).to_numpy(dtype=np.int32)
+    )
+    sufficient_dim_np[second_mask.to_numpy()] = (
+        condition_pairs[second_mask].str[1].map(CONDITION_DIM_TO_INDEX).to_numpy(dtype=np.int32)
+    )
+    sufficient_dim = jnp.array(sufficient_dim_np, dtype=jnp.int32)
+    has_one_word_solution = jnp.array((sufficient_dim_np >= 0).astype(np.float32), dtype=jnp.float32)
 
     # Encode states via vectorised slicing.
     sizes = df.iloc[:, 6:12].to_numpy(dtype=float)  # (N, 6)
@@ -122,6 +137,8 @@ def import_dataset(
         "empirical_dist_by_condition": empirical_dist_by_condition,
         "sharpness_idx": sharpness_idx,
         "is_colour_sufficient": is_colour_sufficient,
+        "sufficient_dim": sufficient_dim,
+        "has_one_word_solution": has_one_word_solution,
     }
 
 def import_dataset_hier(
@@ -171,6 +188,9 @@ def import_dataset_hier(
         base["empirical_seq"] = base["empirical_seq"][keep_mask]
         base["seq_mask"] = base["seq_mask"][keep_mask]
         base["sharpness_idx"] = base["sharpness_idx"][keep_mask]
+        base["is_colour_sufficient"] = base["is_colour_sufficient"][keep_mask]
+        base["sufficient_dim"] = base["sufficient_dim"][keep_mask]
+        base["has_one_word_solution"] = base["has_one_word_solution"][keep_mask]
         base["df"] = df[keep_mask].reset_index(drop=True)
 
         # Update df_raw to match

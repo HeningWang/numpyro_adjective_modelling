@@ -552,6 +552,17 @@ ACTUAL_TOK_ONEHOT = jnp.asarray(actual_onehot_np)   # (T, n_utt, 3)
 # ── Number of words per utterance (for length bias) ──────────────────────────
 N_WORDS = jnp.sum(jnp.array(utterance_list) >= 0, axis=1).astype(jnp.float32)  # (n_utt,)
 
+# LM residual after removing mean log probability within each length class.
+# This lets the LM prior encode within-length naturalness/order while separate
+# length parameters encode over-/under-specification pressure.
+_log_lm_np = np.log(np.clip(np.asarray(LM_PRIOR_15), 1e-12, None))
+_n_words_np = np.asarray(N_WORDS)
+_lm_resid_np = np.zeros_like(_log_lm_np, dtype=np.float32)
+for _length in np.unique(_n_words_np):
+    _mask = _n_words_np == _length
+    _lm_resid_np[_mask] = _log_lm_np[_mask] - np.mean(_log_lm_np[_mask])
+LOG_LM_RESID_15 = jnp.asarray(_lm_resid_np)
+
 # ── First word of each utterance (for first-word intercepts) ─────────────────
 # D=0, C=1, F=2 → one-hot masks for first-word bias
 FIRST_WORD = jnp.array(utterance_list)[:, 0]  # (n_utt,) first token of each utterance
@@ -1491,6 +1502,151 @@ def global_speaker_static_v5(
     return M_speaker[0, :]
 
 
+def incremental_speaker_contextual(
+    states:                jnp.ndarray,
+    sufficient_dim:        int,
+    has_one_word_solution: float,
+    is_sharp:              float,
+    alpha_D:               float = 3.0,
+    alpha_C:               float = 3.0,
+    alpha_F:               float = 3.0,
+    lambda_suff:           float = 0.0,
+    color_semval:          float = 0.95,
+    form_semval:           float = 0.80,
+    k:                     float = 0.50,
+    wf:                    float = 1.00,
+    beta_lm:               float = 1.00,
+    gamma_1:               float = 0.0,
+    gamma_2:               float = 0.0,
+    gamma_oneword_1:       float = 0.0,
+    gamma_oneword_2:       float = 0.0,
+    gamma_sharp_1:         float = 0.0,
+    gamma_sharp_2:         float = 0.0,
+    epsilon:               float = 0.01,
+) -> jnp.ndarray:
+    """Incremental speaker with a context-sensitive production layer.
+
+    The context effects are defined through task variables rather than named
+    condition cells: first-word sufficiency, existence of a one-word solution,
+    and perceptual sharpness. The LM term is length-residualized so length
+    pressure is estimated separately from within-length linguistic naturalness.
+    """
+
+    eps            = 1e-8
+    referent_index = 0
+    n_obj          = states.shape[0]
+    alpha_vec      = jnp.array([alpha_D, alpha_C, alpha_F])
+
+    sizes = states[:, 0]
+    size_sort_idx = jnp.argsort(sizes)
+    sizes_sorted = sizes[size_sort_idx]
+
+    log_lm_resid = beta_lm * LOG_LM_RESID_15
+
+    colors = states[:, 1]
+    forms  = states[:, 2]
+    log_color_sem = jnp.log(
+        jnp.where(colors == 1, color_semval, 1.0 - color_semval) + eps
+    )
+    log_form_sem  = jnp.log(
+        jnp.where(forms  == 1, form_semval,  1.0 - form_semval)  + eps
+    )
+
+    uniform     = jnp.ones(n_obj) / n_obj
+    init_scores = jnp.zeros(n_utt)
+    init_posts  = jnp.broadcast_to(uniform, (n_utt, n_obj))
+
+    def step(carry, t):
+        log_scores, per_utt_posts = carry
+
+        cand_mask_t = CANDIDATE_MASK[t]
+        active_t    = ACTIVE_POS[t]
+
+        def size_log_sem_for_utt(post):
+            sv = compute_size_semantics_fast_presorted(
+                sizes,
+                size_sort_idx,
+                sizes_sorted,
+                post,
+                k,
+                wf,
+            )
+            return jnp.log(jnp.clip(sv, eps))
+
+        size_log_sems = jax.vmap(size_log_sem_for_utt)(per_utt_posts)
+
+        log_sem_static = jnp.stack([log_color_sem, log_form_sem], axis=0)
+        log_sem_table = jnp.concatenate([
+            size_log_sems[:, None, :],
+            jnp.broadcast_to(log_sem_static[None, :, :], (n_utt, 2, n_obj)),
+        ], axis=1)
+
+        token_pres_t = TOKEN_PRESENT[t]
+        log_prod_sem = jnp.einsum(
+            "uav, uvo -> uao",
+            token_pres_t,
+            log_sem_table,
+        )
+
+        log_per_utt_posts = jnp.log(jnp.clip(per_utt_posts, eps))
+        log_updated = log_per_utt_posts[:, None, :] + log_prod_sem
+        log_Z = jax.scipy.special.logsumexp(log_updated, axis=-1)
+        log_norm = log_updated - log_Z[:, :, None]
+        log_L_ref = log_norm[:, :, referent_index]
+
+        first_step_gate = (t == 0).astype(jnp.float32)
+        suff_boost_vec = lambda_suff * first_step_gate * jnp.array([
+            sufficient_dim == 0,
+            sufficient_dim == 1,
+            sufficient_dim == 2,
+        ], dtype=jnp.float32)
+        logits = jnp.where(
+            cand_mask_t,
+            alpha_vec[None, :] * log_L_ref + suff_boost_vec[None, :],
+            -1e9,
+        )
+        local_probs = jax.nn.softmax(logits, axis=-1)
+
+        chosen = jnp.sum(local_probs * ACTUAL_TOK_ONEHOT[t], axis=-1)
+        chosen = jnp.where(active_t, chosen, 1.0)
+        log_chosen = jnp.where(active_t, jnp.log(jnp.clip(chosen, eps)), 0.0)
+
+        selected_log_sem = jnp.einsum(
+            "uv, uvo -> uo",
+            ACTUAL_TOK_ONEHOT[t],
+            log_sem_table,
+        )
+        log_updated_post = log_per_utt_posts + jnp.where(
+            active_t[:, None],
+            selected_log_sem,
+            0.0,
+        )
+        log_Z_post = jax.scipy.special.logsumexp(
+            log_updated_post, axis=-1, keepdims=True
+        )
+        new_per_utt_posts = jnp.exp(log_updated_post - log_Z_post)
+
+        return (log_scores + log_chosen, new_per_utt_posts), None
+
+    (log_final_scores, _), _ = lax.scan(
+        step,
+        (init_scores, init_posts),
+        jnp.arange(T),
+    )
+
+    k_extra = jnp.maximum(N_WORDS - 1, 0)
+    gamma_1_eff = gamma_1 + gamma_oneword_1 * has_one_word_solution + gamma_sharp_1 * is_sharp
+    gamma_2_eff = gamma_2 + gamma_oneword_2 * has_one_word_solution + gamma_sharp_2 * is_sharp
+    length_bonus = (
+        gamma_1_eff * (k_extra >= 1).astype(jnp.float32)
+        + gamma_2_eff * (k_extra >= 2).astype(jnp.float32)
+    )
+
+    log_unnorm = log_lm_resid + log_final_scores + length_bonus
+    model_probs = jax.nn.softmax(log_unnorm)
+    return (1.0 - epsilon) * model_probs + epsilon / n_utt
+
+
 # ── Vectorise over trials ──────────────────────────────────────────────────────
 vectorized_incremental_speaker = jax.vmap(
     incremental_speaker,
@@ -1637,6 +1793,50 @@ def jitted_speaker_v5_hier(
         alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
         lambda_C, color_semval, form_semval, k, wf, beta,
         gamma_1, gamma_2, delta_gamma_1, delta_gamma_2, eta_1, eta_2, mu_noncanon, epsilon,
+    )
+
+
+# Contextual compromise model: incremental recursive, per-trial alpha + generic
+# context predictors.
+vectorized_incremental_speaker_contextual_hier = jax.vmap(
+    incremental_speaker_contextual,
+    in_axes=(0,    # states
+             0,    # sufficient_dim
+             0,    # has_one_word_solution
+             0,    # is_sharp
+             0,    # alpha_D
+             0,    # alpha_C
+             0,    # alpha_F
+             None, # lambda_suff
+             None, # color_semval
+             None, # form_semval
+             None, # k
+             None, # wf
+             None, # beta_lm
+             None, # gamma_1
+             None, # gamma_2
+             None, # gamma_oneword_1
+             None, # gamma_oneword_2
+             None, # gamma_sharp_1
+             None, # gamma_sharp_2
+             None, # epsilon
+             ),
+)
+
+@jax.jit
+def jitted_speaker_contextual_hier(
+    states, sufficient_dim, has_one_word_solution, is_sharp,
+    alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+    lambda_suff, color_semval, form_semval, k, wf, beta_lm,
+    gamma_1, gamma_2, gamma_oneword_1, gamma_oneword_2,
+    gamma_sharp_1, gamma_sharp_2, epsilon,
+):
+    return vectorized_incremental_speaker_contextual_hier(
+        states, sufficient_dim, has_one_word_solution, is_sharp,
+        alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+        lambda_suff, color_semval, form_semval, k, wf, beta_lm,
+        gamma_1, gamma_2, gamma_oneword_1, gamma_oneword_2,
+        gamma_sharp_1, gamma_sharp_2, epsilon,
     )
 
 
@@ -1932,6 +2132,60 @@ likelihood_function_incremental_speaker_hier = _make_extended_v1_model(
 
 likelihood_function_incremental_speaker_lowcol_hier = _make_extended_v1_model(
     color_semval=0.85, form_semval=0.50, k=0.5, wf=1.0,
+)
+
+
+# ── Contextual compromise model: generic condition-sensitive production layer ─
+
+def _make_contextual_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
+    """C2-contextual: per-dim alpha + length-residualized LM + generic context predictors."""
+    def model(states=None, empirical=None,
+              participant_idx=None, n_participants=None,
+              sufficient_dim=None, has_one_word_solution=None, is_sharp=None):
+        log_beta_lm = numpyro.sample("log_beta_lm", dist.Normal(0.0, 0.5))
+        beta_lm     = jnp.exp(log_beta_lm)
+
+        alpha_D         = numpyro.sample("alpha_D",         dist.HalfNormal(5.0))
+        alpha_C         = numpyro.sample("alpha_C",         dist.HalfNormal(5.0))
+        alpha_F         = numpyro.sample("alpha_F",         dist.HalfNormal(5.0))
+        lambda_suff     = numpyro.sample("lambda_suff",     dist.Normal(0.0, 1.0))
+        gamma_1         = numpyro.sample("gamma_1",         dist.Normal(0.0, 1.0))
+        gamma_2         = numpyro.sample("gamma_2",         dist.Normal(0.0, 1.0))
+        gamma_oneword_1 = numpyro.sample("gamma_oneword_1", dist.Normal(0.0, 1.0))
+        gamma_oneword_2 = numpyro.sample("gamma_oneword_2", dist.Normal(0.0, 1.0))
+        gamma_sharp_1   = numpyro.sample("gamma_sharp_1",   dist.Normal(0.0, 1.0))
+        gamma_sharp_2   = numpyro.sample("gamma_sharp_2",   dist.Normal(0.0, 1.0))
+        epsilon         = numpyro.sample("epsilon",         dist.Beta(1.0, 50.0))
+        tau             = numpyro.sample("tau",             dist.HalfNormal(0.2))
+
+        # Non-centered parameterization: delta = tau * delta_raw avoids the
+        # Neal funnel between tau and the per-subject offsets, which improves
+        # mixing for tau and low-information subjects (small trial counts).
+        with numpyro.plate("participants", n_participants):
+            delta_raw = numpyro.sample("delta_raw", dist.Normal(0.0, 1.0))
+        delta = numpyro.deterministic("delta", tau * delta_raw)
+
+        alpha_D_per_trial = jnp.maximum(alpha_D + delta[participant_idx], 0.0)
+        alpha_C_per_trial = jnp.maximum(alpha_C + delta[participant_idx], 0.0)
+        alpha_F_per_trial = jnp.maximum(alpha_F + delta[participant_idx], 0.0)
+
+        with numpyro.plate("data", len(states)):
+            probs = jitted_speaker_contextual_hier(
+                states, sufficient_dim, has_one_word_solution, is_sharp,
+                alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+                lambda_suff, color_semval, form_semval, k, wf, beta_lm,
+                gamma_1, gamma_2, gamma_oneword_1, gamma_oneword_2,
+                gamma_sharp_1, gamma_sharp_2, epsilon,
+            )
+            if empirical is None:
+                numpyro.sample("obs", dist.Categorical(probs=probs))
+            else:
+                numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+    return model
+
+
+likelihood_function_contextual_hier = _make_contextual_model(
+    color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0,
 )
 
 
