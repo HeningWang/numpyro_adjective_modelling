@@ -2471,6 +2471,12 @@ likelihood_function_contextual_freewf_hier = _make_contextual_freewf_model(
 # anchors the comparison and breaks the function's scale-invariance.
 SIZE_ANCHOR_R = 5.0
 
+# Iter 12: parsimonious fixed wf, set to the posterior median of Iter 11
+# (R²-winning variant on dc subset). Lets the anchored+2-gamma model carry
+# the same wf-tuned representation without paying a free parameter for it.
+# Source: arviz median of log_wf in iter11 NC was -0.3775 → wf = 0.6856.
+WF_FIXED_ITER11_MEDIAN = 0.6856
+
 
 def incremental_speaker_contextual_anchored(
     states:                jnp.ndarray,
@@ -3000,6 +3006,59 @@ def _make_contextual_anchored_gamma_model(color_semval=0.971, form_semval=0.50, 
 
 likelihood_function_contextual_anchored_gamma_hier = _make_contextual_anchored_gamma_model(
     color_semval=0.971, form_semval=0.50, k=0.5,
+)
+
+
+def _make_contextual_anchored_gamma_fixedwf_model(
+    color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+):
+    """Iter 12: same as Iter 11 but with ``wf`` hardcoded at the Iter 11
+    posterior median (0.6856) instead of sampled. Drops 1 free parameter
+    (no more ``log_wf`` sampling), bringing the model to 9 named coefficients
+    while keeping the anchored size semantics and the compact 2-gamma
+    length-bonus structure that recovered the baseline R².
+    """
+    def model(states=None, empirical=None,
+              participant_idx=None, n_participants=None,
+              sufficient_dim=None, has_one_word_solution=None, is_sharp=None):
+        log_beta_lm   = numpyro.sample("log_beta_lm",   dist.Normal(0.0, 0.5))
+        beta_lm       = jnp.exp(log_beta_lm)
+
+        alpha_D       = numpyro.sample("alpha_D",       dist.HalfNormal(5.0))
+        alpha_C       = numpyro.sample("alpha_C",       dist.HalfNormal(5.0))
+        alpha_F       = numpyro.sample("alpha_F",       dist.HalfNormal(5.0))
+        lambda_suff   = numpyro.sample("lambda_suff",   dist.Normal(0.0, 1.0))
+        gamma_base    = numpyro.sample("gamma_base",    dist.Normal(0.0, 2.0))
+        gamma_oneword = numpyro.sample("gamma_oneword", dist.Normal(0.0, 2.0))
+        epsilon       = numpyro.sample("epsilon",       dist.Beta(1.0, 50.0))
+        tau           = numpyro.sample("tau",           dist.HalfNormal(0.2))
+
+        with numpyro.plate("participants", n_participants):
+            delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+        alpha_D_per_trial = jnp.maximum(alpha_D + delta[participant_idx], 0.0)
+        alpha_C_per_trial = jnp.maximum(alpha_C + delta[participant_idx], 0.0)
+        alpha_F_per_trial = jnp.maximum(alpha_F + delta[participant_idx], 0.0)
+
+        with numpyro.plate("data", len(states)):
+            probs = jitted_speaker_contextual_anchored_gamma_hier(
+                states, sufficient_dim, has_one_word_solution, is_sharp,
+                alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+                lambda_suff, color_semval, form_semval, k, wf, beta_lm,
+                gamma_base, gamma_oneword, epsilon,
+            )
+            if empirical is None:
+                numpyro.sample("obs", dist.Categorical(probs=probs))
+            else:
+                numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+    return model
+
+
+likelihood_function_contextual_anchored_gamma_fixedwf_hier = (
+    _make_contextual_anchored_gamma_fixedwf_model(
+        color_semval=0.971, form_semval=0.50, k=0.5,
+        wf=WF_FIXED_ITER11_MEDIAN,
+    )
 )
 
 
