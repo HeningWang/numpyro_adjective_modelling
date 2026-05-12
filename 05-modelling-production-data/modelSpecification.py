@@ -1513,7 +1513,6 @@ def incremental_speaker_contextual(
     alpha_D:               float = 3.0,
     alpha_C:               float = 3.0,
     alpha_F:               float = 3.0,
-    lambda_suff:           float = 0.0,
     color_semval:          float = 0.95,
     form_semval:           float = 0.80,
     k:                     float = 0.50,
@@ -1523,13 +1522,17 @@ def incremental_speaker_contextual(
 ) -> jnp.ndarray:
     """Incremental speaker with a context-sensitive production layer.
 
-    Lever 1: the LM term uses raw GPT-2 log-probability (LOG_LM_RAW_15) so the
-    cumulative per-token negative log-prob naturally penalizes longer
-    utterances, absorbing what was previously six separate gamma_* coefficients
-    (gamma_1/2 length, gamma_oneword_1/2 one-word availability, gamma_sharp_1/2
-    perceptual sharpness). Only first-word sufficiency boost (lambda_suff)
-    remains as an explicit context term — it is theoretically the
-    "lead-with-the-disambiguator" prior and is not in the LM signal.
+    Lever 4 (on top of Lever 1's raw LM): replaces the scalar first-word
+    lambda_suff boost with per-dimension alpha modulation. The numpyro model
+    folds alpha_boost_X * (sufficient_dim == X) directly into the per-trial
+    alpha that this function receives, so the speaker body itself contains no
+    sufficient_dim-specific term. Theory: rationality on dimension X scales up
+    when X is the dimension that disambiguates the referent — a generalized
+    'lead with the disambiguator' that also makes the speaker more decisive
+    later in the utterance, not only at step 0.
+
+    has_one_word_solution / is_sharp remain in the vmap signature for stable
+    in_axes but are absorbed by the raw LM prior (LOG_LM_RAW_15).
     """
 
     eps            = 1e-8
@@ -1537,11 +1540,9 @@ def incremental_speaker_contextual(
     n_obj          = states.shape[0]
     alpha_vec      = jnp.array([alpha_D, alpha_C, alpha_F])
 
-    # has_one_word_solution and is_sharp are kept in the signature for stable
-    # vmap-in-axes but are no longer consumed: the raw LM prior absorbs both
-    # one-word and sharpness-conditioned length pressure.
     del has_one_word_solution
     del is_sharp
+    del sufficient_dim  # boost is pre-applied to alpha_D/C/F in the numpyro model
 
     sizes = states[:, 0]
     size_sort_idx = jnp.argsort(sizes)
@@ -1600,15 +1601,9 @@ def incremental_speaker_contextual(
         log_norm = log_updated - log_Z[:, :, None]
         log_L_ref = log_norm[:, :, referent_index]
 
-        first_step_gate = (t == 0).astype(jnp.float32)
-        suff_boost_vec = lambda_suff * first_step_gate * jnp.array([
-            sufficient_dim == 0,
-            sufficient_dim == 1,
-            sufficient_dim == 2,
-        ], dtype=jnp.float32)
         logits = jnp.where(
             cand_mask_t,
-            alpha_vec[None, :] * log_L_ref + suff_boost_vec[None, :],
+            alpha_vec[None, :] * log_L_ref,
             -1e9,
         )
         local_probs = jax.nn.softmax(logits, axis=-1)
@@ -1799,13 +1794,12 @@ def jitted_speaker_v5_hier(
 vectorized_incremental_speaker_contextual_hier = jax.vmap(
     incremental_speaker_contextual,
     in_axes=(0,    # states
-             0,    # sufficient_dim
-             0,    # has_one_word_solution
-             0,    # is_sharp
-             0,    # alpha_D
+             0,    # sufficient_dim (unused inside; boost is pre-applied to alpha)
+             0,    # has_one_word_solution (unused; absorbed by raw LM)
+             0,    # is_sharp (unused; absorbed by raw LM)
+             0,    # alpha_D (per-trial, already includes alpha_boost_D)
              0,    # alpha_C
              0,    # alpha_F
-             None, # lambda_suff
              None, # color_semval
              None, # form_semval
              None, # k
@@ -1819,13 +1813,13 @@ vectorized_incremental_speaker_contextual_hier = jax.vmap(
 def jitted_speaker_contextual_hier(
     states, sufficient_dim, has_one_word_solution, is_sharp,
     alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
-    lambda_suff, color_semval, form_semval, k, wf, beta_lm,
+    color_semval, form_semval, k, wf, beta_lm,
     epsilon,
 ):
     return vectorized_incremental_speaker_contextual_hier(
         states, sufficient_dim, has_one_word_solution, is_sharp,
         alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
-        lambda_suff, color_semval, form_semval, k, wf, beta_lm,
+        color_semval, form_semval, k, wf, beta_lm,
         epsilon,
     )
 
@@ -2128,7 +2122,13 @@ likelihood_function_incremental_speaker_lowcol_hier = _make_extended_v1_model(
 # ── Contextual compromise model: generic condition-sensitive production layer ─
 
 def _make_contextual_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
-    """C2-contextual (Lever 1): per-dim alpha + RAW LM + lambda_suff. No gammas."""
+    """C2-contextual (Lever 4): raw LM + per-dim alpha boost gated on sufficient_dim.
+
+    Replaces the scalar first-word lambda_suff term with three context boosts
+    alpha_boost_D/C/F. Each boost is added to its alpha only on trials where
+    the corresponding dimension is the disambiguating one (sufficient_dim).
+    Net +2 free params vs Lever 1 (drop lambda_suff, add 3 alpha boosts).
+    """
     def model(states=None, empirical=None,
               participant_idx=None, n_participants=None,
               sufficient_dim=None, has_one_word_solution=None, is_sharp=None):
@@ -2138,7 +2138,9 @@ def _make_contextual_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
         alpha_D         = numpyro.sample("alpha_D",         dist.HalfNormal(5.0))
         alpha_C         = numpyro.sample("alpha_C",         dist.HalfNormal(5.0))
         alpha_F         = numpyro.sample("alpha_F",         dist.HalfNormal(5.0))
-        lambda_suff     = numpyro.sample("lambda_suff",     dist.Normal(0.0, 1.0))
+        alpha_boost_D   = numpyro.sample("alpha_boost_D",   dist.Normal(0.0, 1.0))
+        alpha_boost_C   = numpyro.sample("alpha_boost_C",   dist.Normal(0.0, 1.0))
+        alpha_boost_F   = numpyro.sample("alpha_boost_F",   dist.Normal(0.0, 1.0))
         epsilon         = numpyro.sample("epsilon",         dist.Beta(1.0, 50.0))
         tau             = numpyro.sample("tau",             dist.HalfNormal(0.2))
 
@@ -2149,15 +2151,25 @@ def _make_contextual_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
         with numpyro.plate("participants", n_participants):
             delta = numpyro.sample("delta", dist.Normal(0.0, tau))
 
-        alpha_D_per_trial = jnp.maximum(alpha_D + delta[participant_idx], 0.0)
-        alpha_C_per_trial = jnp.maximum(alpha_C + delta[participant_idx], 0.0)
-        alpha_F_per_trial = jnp.maximum(alpha_F + delta[participant_idx], 0.0)
+        suff_is_D = (sufficient_dim == 0).astype(jnp.float32)
+        suff_is_C = (sufficient_dim == 1).astype(jnp.float32)
+        suff_is_F = (sufficient_dim == 2).astype(jnp.float32)
+
+        alpha_D_per_trial = jnp.maximum(
+            alpha_D + delta[participant_idx] + alpha_boost_D * suff_is_D, 0.0
+        )
+        alpha_C_per_trial = jnp.maximum(
+            alpha_C + delta[participant_idx] + alpha_boost_C * suff_is_C, 0.0
+        )
+        alpha_F_per_trial = jnp.maximum(
+            alpha_F + delta[participant_idx] + alpha_boost_F * suff_is_F, 0.0
+        )
 
         with numpyro.plate("data", len(states)):
             probs = jitted_speaker_contextual_hier(
                 states, sufficient_dim, has_one_word_solution, is_sharp,
                 alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
-                lambda_suff, color_semval, form_semval, k, wf, beta_lm,
+                color_semval, form_semval, k, wf, beta_lm,
                 epsilon,
             )
             if empirical is None:
