@@ -16,6 +16,7 @@ Self-contained: only depends on arviz, numpy, pandas, matplotlib, scipy.
 """
 from __future__ import annotations
 
+import argparse
 import warnings
 from pathlib import Path
 from typing import Tuple
@@ -240,11 +241,12 @@ def plot_correlation(merged: pd.DataFrame, out_stem: Path) -> dict:
     return stats
 
 
-def main() -> None:
-    if not NC_PATH.exists():
-        raise SystemExit(f".nc file not found: {NC_PATH}")
-    print(f"Loading: {NC_PATH.relative_to(PROJECT_ROOT)}")
-    idata = az.from_netcdf(str(NC_PATH))
+def main(nc_path: Path | None = None, out_prefix: str = "iter1") -> None:
+    nc_path = Path(nc_path) if nc_path is not None else NC_PATH
+    if not nc_path.exists():
+        raise SystemExit(f".nc file not found: {nc_path}")
+    print(f"Loading: {nc_path}")
+    idata = az.from_netcdf(str(nc_path))
 
     n_items_obs = int(idata.observed_data["obs"].sizes["item"])
     pp = idata.posterior_predictive["obs"]
@@ -307,9 +309,9 @@ def main() -> None:
 
     print("Plotting...")
     plot_ppc_barplot_by_condition(
-        emp, mod, utt_order, FIG_DIR / "iter1_ppc_barplot_by_condition",
+        emp, mod, utt_order, FIG_DIR / f"{out_prefix}_ppc_barplot_by_condition",
     )
-    corr_stats = plot_correlation(obs_cells, FIG_DIR / "iter1_correlation")
+    corr_stats = plot_correlation(obs_cells, FIG_DIR / f"{out_prefix}_correlation")
 
     # Token-set equivalence-class aggregation — the central decision artifact
     print("Aggregating residuals by token-set class...")
@@ -328,18 +330,18 @@ def main() -> None:
     ).fillna(0.0)
 
     print("Saving CSVs...")
-    merged.to_csv(RES_DIR / "iter1_residuals_by_condition.csv", index=False)
-    tokenset_agg.to_csv(RES_DIR / "iter1_residuals_by_tokenset.csv", index=False)
+    merged.to_csv(RES_DIR / f"{out_prefix}_residuals_by_condition.csv", index=False)
+    tokenset_agg.to_csv(RES_DIR / f"{out_prefix}_residuals_by_tokenset.csv", index=False)
     top_resid = (
         obs_cells.sort_values("abs_residual", ascending=False)
         .head(10)[GROUP_COLS + ["utt", "tokenset_class",
                                 "human_mean", "model_mean", "residual"]]
     )
-    top_resid.to_csv(RES_DIR / "iter1_top_residual_cells.csv", index=False)
+    top_resid.to_csv(RES_DIR / f"{out_prefix}_top_residual_cells.csv", index=False)
     for p in [
-        RES_DIR / "iter1_residuals_by_condition.csv",
-        RES_DIR / "iter1_residuals_by_tokenset.csv",
-        RES_DIR / "iter1_top_residual_cells.csv",
+        RES_DIR / f"{out_prefix}_residuals_by_condition.csv",
+        RES_DIR / f"{out_prefix}_residuals_by_tokenset.csv",
+        RES_DIR / f"{out_prefix}_top_residual_cells.csv",
     ]:
         print(f"  [csv] {p.relative_to(PROJECT_ROOT)}")
 
@@ -357,8 +359,8 @@ def main() -> None:
     ).fillna(0.0)
 
     lines = [
-        "Lever-1 PPC review (iter1, raw LM, no gammas)",
-        f"  .nc file:           {NC_PATH.name}",
+        f"PPC review — {out_prefix}",
+        f"  .nc file:           {nc_path.name}",
         f"  dc trials:          {len(df_dc)} (113 participants)",
         f"  utterance types:    {len(utt_order)}",
         f"  cells (obs):        {len(obs_cells)} of {len(merged)}",
@@ -380,7 +382,7 @@ def main() -> None:
         top_resid.to_string(index=False, float_format=lambda x: f"{x:.3f}"),
     ]
     summary_text = "\n".join(lines)
-    (RES_DIR / "iter1_summary.txt").write_text(summary_text + "\n")
+    (RES_DIR / f"{out_prefix}_summary.txt").write_text(summary_text + "\n")
     print()
     print(summary_text)
     print()
@@ -391,4 +393,14 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="PPC review for the contextual_dc speaker.")
+    parser.add_argument(
+        "--nc-path", type=str, default=None,
+        help="Path to .nc file (default: iter1 Lever-1 NC).",
+    )
+    parser.add_argument(
+        "--out-prefix", type=str, default="iter1",
+        help="Filename prefix for all output CSVs/figures/summary (default: 'iter1').",
+    )
+    args = parser.parse_args()
+    main(nc_path=args.nc_path, out_prefix=args.out_prefix)

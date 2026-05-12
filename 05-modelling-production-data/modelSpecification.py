@@ -1645,6 +1645,154 @@ def incremental_speaker_contextual(
     return (1.0 - epsilon) * model_probs + epsilon / n_utt
 
 
+def incremental_speaker_contextual_lambdaunc(
+    states:                jnp.ndarray,
+    sufficient_dim:        int,
+    has_one_word_solution: float,
+    is_sharp:              float,
+    alpha_D:               float = 3.0,
+    alpha_C:               float = 3.0,
+    alpha_F:               float = 3.0,
+    lambda_suff:           float = 0.0,
+    color_semval:          float = 0.95,
+    form_semval:           float = 0.80,
+    k:                     float = 0.50,
+    wf:                    float = 1.00,
+    beta_lm:               float = 1.00,
+    lambda_uncertainty:    float = 0.0,
+    epsilon:               float = 0.01,
+) -> jnp.ndarray:
+    """Contextual speaker with a principled listener-uncertainty cost term.
+
+    Identical to ``incremental_speaker_contextual`` (Lever 1) except the
+    speaker bears an implicit cost proportional to the residual listener
+    uncertainty their utterance leaves over the candidate referents:
+
+        log_unnorm = beta_lm * LOG_LM_RAW_15
+                   + log_final_scores
+                   - lambda_uncertainty * (1 - P_listener_final(target | u))
+
+    where ``P_listener_final[u]`` is the listener's posterior on the referent
+    after consuming utterance ``u`` (the second carry slot of ``lax.scan`` that
+    Lever 1 discards).  As ``lambda_uncertainty -> 0`` this reduces exactly to
+    Lever 1.  As it grows, longer utterances that drive the listener posterior
+    toward 1 are preferred — capturing the over-specification preference that
+    the pre-loop baseline's six ``gamma_*`` step-coefficients were curve-
+    fitting, with one theoretically grounded coefficient instead of six.
+    """
+
+    eps            = 1e-8
+    referent_index = 0
+    n_obj          = states.shape[0]
+    alpha_vec      = jnp.array([alpha_D, alpha_C, alpha_F])
+
+    del has_one_word_solution
+    del is_sharp
+
+    sizes = states[:, 0]
+    size_sort_idx = jnp.argsort(sizes)
+    sizes_sorted = sizes[size_sort_idx]
+
+    log_lm_raw = beta_lm * LOG_LM_RAW_15
+
+    colors = states[:, 1]
+    forms  = states[:, 2]
+    log_color_sem = jnp.log(
+        jnp.where(colors == 1, color_semval, 1.0 - color_semval) + eps
+    )
+    log_form_sem  = jnp.log(
+        jnp.where(forms  == 1, form_semval,  1.0 - form_semval)  + eps
+    )
+
+    uniform     = jnp.ones(n_obj) / n_obj
+    init_scores = jnp.zeros(n_utt)
+    init_posts  = jnp.broadcast_to(uniform, (n_utt, n_obj))
+
+    def step(carry, t):
+        log_scores, per_utt_posts = carry
+
+        cand_mask_t = CANDIDATE_MASK[t]
+        active_t    = ACTIVE_POS[t]
+
+        def size_log_sem_for_utt(post):
+            sv = compute_size_semantics_fast_presorted(
+                sizes,
+                size_sort_idx,
+                sizes_sorted,
+                post,
+                k,
+                wf,
+            )
+            return jnp.log(jnp.clip(sv, eps))
+
+        size_log_sems = jax.vmap(size_log_sem_for_utt)(per_utt_posts)
+
+        log_sem_static = jnp.stack([log_color_sem, log_form_sem], axis=0)
+        log_sem_table = jnp.concatenate([
+            size_log_sems[:, None, :],
+            jnp.broadcast_to(log_sem_static[None, :, :], (n_utt, 2, n_obj)),
+        ], axis=1)
+
+        token_pres_t = TOKEN_PRESENT[t]
+        log_prod_sem = jnp.einsum(
+            "uav, uvo -> uao",
+            token_pres_t,
+            log_sem_table,
+        )
+
+        log_per_utt_posts = jnp.log(jnp.clip(per_utt_posts, eps))
+        log_updated = log_per_utt_posts[:, None, :] + log_prod_sem
+        log_Z = jax.scipy.special.logsumexp(log_updated, axis=-1)
+        log_norm = log_updated - log_Z[:, :, None]
+        log_L_ref = log_norm[:, :, referent_index]
+
+        first_step_gate = (t == 0).astype(jnp.float32)
+        suff_boost_vec = lambda_suff * first_step_gate * jnp.array([
+            sufficient_dim == 0,
+            sufficient_dim == 1,
+            sufficient_dim == 2,
+        ], dtype=jnp.float32)
+        logits = jnp.where(
+            cand_mask_t,
+            alpha_vec[None, :] * log_L_ref + suff_boost_vec[None, :],
+            -1e9,
+        )
+        local_probs = jax.nn.softmax(logits, axis=-1)
+
+        chosen = jnp.sum(local_probs * ACTUAL_TOK_ONEHOT[t], axis=-1)
+        chosen = jnp.where(active_t, chosen, 1.0)
+        log_chosen = jnp.where(active_t, jnp.log(jnp.clip(chosen, eps)), 0.0)
+
+        selected_log_sem = jnp.einsum(
+            "uv, uvo -> uo",
+            ACTUAL_TOK_ONEHOT[t],
+            log_sem_table,
+        )
+        log_updated_post = log_per_utt_posts + jnp.where(
+            active_t[:, None],
+            selected_log_sem,
+            0.0,
+        )
+        log_Z_post = jax.scipy.special.logsumexp(
+            log_updated_post, axis=-1, keepdims=True
+        )
+        new_per_utt_posts = jnp.exp(log_updated_post - log_Z_post)
+
+        return (log_scores + log_chosen, new_per_utt_posts), None
+
+    (log_final_scores, per_utt_posts_final), _ = lax.scan(
+        step,
+        (init_scores, init_posts),
+        jnp.arange(T),
+    )
+
+    p_listener_final = per_utt_posts_final[:, referent_index]   # (n_utt,)
+    uncertainty_cost = lambda_uncertainty * (1.0 - p_listener_final)
+    log_unnorm = log_lm_raw + log_final_scores - uncertainty_cost
+    model_probs = jax.nn.softmax(log_unnorm)
+    return (1.0 - epsilon) * model_probs + epsilon / n_utt
+
+
 # ── Vectorise over trials ──────────────────────────────────────────────────────
 vectorized_incremental_speaker = jax.vmap(
     incremental_speaker,
@@ -1827,6 +1975,43 @@ def jitted_speaker_contextual_hier(
         alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
         lambda_suff, color_semval, form_semval, k, wf, beta_lm,
         epsilon,
+    )
+
+
+# Contextual + listener-uncertainty cost: same as the Lever-1 vmap but with
+# one extra broadcast slot for the scalar lambda_uncertainty parameter.
+vectorized_incremental_speaker_contextual_lambdaunc_hier = jax.vmap(
+    incremental_speaker_contextual_lambdaunc,
+    in_axes=(0,    # states
+             0,    # sufficient_dim
+             0,    # has_one_word_solution
+             0,    # is_sharp
+             0,    # alpha_D
+             0,    # alpha_C
+             0,    # alpha_F
+             None, # lambda_suff
+             None, # color_semval
+             None, # form_semval
+             None, # k
+             None, # wf
+             None, # beta_lm
+             None, # lambda_uncertainty
+             None, # epsilon
+             ),
+)
+
+@jax.jit
+def jitted_speaker_contextual_lambdaunc_hier(
+    states, sufficient_dim, has_one_word_solution, is_sharp,
+    alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+    lambda_suff, color_semval, form_semval, k, wf, beta_lm,
+    lambda_uncertainty, epsilon,
+):
+    return vectorized_incremental_speaker_contextual_lambdaunc_hier(
+        states, sufficient_dim, has_one_word_solution, is_sharp,
+        alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+        lambda_suff, color_semval, form_semval, k, wf, beta_lm,
+        lambda_uncertainty, epsilon,
     )
 
 
@@ -2169,6 +2354,711 @@ def _make_contextual_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
 
 likelihood_function_contextual_hier = _make_contextual_model(
     color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0,
+)
+
+
+def _make_contextual_lambdaunc_model(
+    color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0,
+):
+    """Contextual + listener-uncertainty cost (one principled parameter on top
+    of Lever 1).
+
+    Adds ``lambda_uncertainty ~ HalfNormal(2.0)``: the speaker bears a cost
+    proportional to the residual listener uncertainty after producing each
+    utterance, replacing the ad-hoc 6-gamma length-bonus structure with one
+    theoretically grounded coefficient (audience-design RSA).
+    """
+    def model(states=None, empirical=None,
+              participant_idx=None, n_participants=None,
+              sufficient_dim=None, has_one_word_solution=None, is_sharp=None):
+        log_beta_lm = numpyro.sample("log_beta_lm", dist.Normal(0.0, 0.5))
+        beta_lm     = jnp.exp(log_beta_lm)
+
+        alpha_D            = numpyro.sample("alpha_D",            dist.HalfNormal(5.0))
+        alpha_C            = numpyro.sample("alpha_C",            dist.HalfNormal(5.0))
+        alpha_F            = numpyro.sample("alpha_F",            dist.HalfNormal(5.0))
+        lambda_suff        = numpyro.sample("lambda_suff",        dist.Normal(0.0, 1.0))
+        lambda_uncertainty = numpyro.sample("lambda_uncertainty", dist.HalfNormal(2.0))
+        epsilon            = numpyro.sample("epsilon",            dist.Beta(1.0, 50.0))
+        tau                = numpyro.sample("tau",                dist.HalfNormal(0.2))
+
+        # Same centered delta parameterization as Lever 1 — funnel is weak
+        # because each subject has enough trials to identify their offset.
+        with numpyro.plate("participants", n_participants):
+            delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+        alpha_D_per_trial = jnp.maximum(alpha_D + delta[participant_idx], 0.0)
+        alpha_C_per_trial = jnp.maximum(alpha_C + delta[participant_idx], 0.0)
+        alpha_F_per_trial = jnp.maximum(alpha_F + delta[participant_idx], 0.0)
+
+        with numpyro.plate("data", len(states)):
+            probs = jitted_speaker_contextual_lambdaunc_hier(
+                states, sufficient_dim, has_one_word_solution, is_sharp,
+                alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+                lambda_suff, color_semval, form_semval, k, wf, beta_lm,
+                lambda_uncertainty, epsilon,
+            )
+            if empirical is None:
+                numpyro.sample("obs", dist.Categorical(probs=probs))
+            else:
+                numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+    return model
+
+
+likelihood_function_contextual_lambdaunc_hier = _make_contextual_lambdaunc_model(
+    color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0,
+)
+
+
+def _make_contextual_freewf_model(color_semval=0.971, form_semval=0.50, k=0.5):
+    """Lever-1 speaker but with ``wf`` (size-semantics noise scale) learned.
+
+    Iter 8 in the R²-first loop. The pre-loop default ``wf = 1.0`` saturates
+    the size semantics into its flat regime — sharp and blurred trials get
+    nearly identical listener confidences (RSA target ≈ 0.23 vs 0.21 for
+    erdc) despite the empirical target-distractor gap being 6.66 vs 4.15.
+
+    Putting ``log_wf ~ Normal(-1.0, 0.5)`` (prior bulk wf ≈ 0.22 – 0.61)
+    lets the data find a wf in the erf's discriminative range, which
+    propagates the existing sharp/blurred encoding in the size values
+    through to a meaningful listener-confidence asymmetry. No new output
+    coefficient; the entire mechanism lives in one re-tuned representation
+    parameter. +1 free param vs Lever 1.
+    """
+    def model(states=None, empirical=None,
+              participant_idx=None, n_participants=None,
+              sufficient_dim=None, has_one_word_solution=None, is_sharp=None):
+        log_beta_lm = numpyro.sample("log_beta_lm", dist.Normal(0.0, 0.5))
+        beta_lm     = jnp.exp(log_beta_lm)
+
+        log_wf      = numpyro.sample("log_wf",      dist.Normal(-1.0, 0.5))
+        wf          = jnp.exp(log_wf)
+
+        alpha_D     = numpyro.sample("alpha_D",     dist.HalfNormal(5.0))
+        alpha_C     = numpyro.sample("alpha_C",     dist.HalfNormal(5.0))
+        alpha_F     = numpyro.sample("alpha_F",     dist.HalfNormal(5.0))
+        lambda_suff = numpyro.sample("lambda_suff", dist.Normal(0.0, 1.0))
+        epsilon     = numpyro.sample("epsilon",     dist.Beta(1.0, 50.0))
+        tau         = numpyro.sample("tau",         dist.HalfNormal(0.2))
+
+        with numpyro.plate("participants", n_participants):
+            delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+        alpha_D_per_trial = jnp.maximum(alpha_D + delta[participant_idx], 0.0)
+        alpha_C_per_trial = jnp.maximum(alpha_C + delta[participant_idx], 0.0)
+        alpha_F_per_trial = jnp.maximum(alpha_F + delta[participant_idx], 0.0)
+
+        with numpyro.plate("data", len(states)):
+            probs = jitted_speaker_contextual_hier(
+                states, sufficient_dim, has_one_word_solution, is_sharp,
+                alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+                lambda_suff, color_semval, form_semval, k, wf, beta_lm,
+                epsilon,
+            )
+            if empirical is None:
+                numpyro.sample("obs", dist.Categorical(probs=probs))
+            else:
+                numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+    return model
+
+
+likelihood_function_contextual_freewf_hier = _make_contextual_freewf_model(
+    color_semval=0.971, form_semval=0.50, k=0.5,
+)
+
+
+# Iter 9 + Iter 10: size semantics with a fixed reference scale R that
+# anchors the comparison and breaks the function's scale-invariance.
+SIZE_ANCHOR_R = 5.0
+
+# Iter 12: parsimonious fixed wf, set to the posterior median of Iter 11
+# (R²-winning variant on dc subset). Lets the anchored+2-gamma model carry
+# the same wf-tuned representation without paying a free parameter for it.
+# Source: arviz median of log_wf in iter11 NC was -0.3775 → wf = 0.6856.
+WF_FIXED_ITER11_MEDIAN = 0.6856
+
+
+def incremental_speaker_contextual_anchored(
+    states:                jnp.ndarray,
+    sufficient_dim:        int,
+    has_one_word_solution: float,
+    is_sharp:              float,
+    alpha_D:               float = 3.0,
+    alpha_C:               float = 3.0,
+    alpha_F:               float = 3.0,
+    lambda_suff:           float = 0.0,
+    color_semval:          float = 0.95,
+    form_semval:           float = 0.80,
+    k:                     float = 0.50,
+    wf:                    float = 1.00,
+    beta_lm:               float = 1.00,
+    epsilon:               float = 0.01,
+) -> jnp.ndarray:
+    """Lever-1 speaker with size semantics anchored to an absolute scale R.
+
+    The only structural change vs ``incremental_speaker_contextual`` is the
+    size-semantics denominator:
+
+        denom = wf * sqrt(sizes² + theta_k² + R²)        (anchored)
+        denom = wf * sqrt(sizes² + theta_k²)             (Lever 1)
+
+    With ``R = SIZE_ANCHOR_R = 5.0``, the denominator can never collapse
+    below ``wf * R``, so the listener cannot saturate the size discriminant
+    when the local cluster is tight (which is exactly what was happening in
+    Lever 1 with theta_k pinned to the distractor cluster). Sharp trials
+    with their larger target-distractor gaps now produce reliably higher
+    z than blurred trials. No new free parameters — R is a fixed grounded
+    scale (the typical "small" size in the dataset).
+    """
+
+    eps            = 1e-8
+    referent_index = 0
+    n_obj          = states.shape[0]
+    alpha_vec      = jnp.array([alpha_D, alpha_C, alpha_F])
+
+    del has_one_word_solution
+    del is_sharp
+
+    sizes = states[:, 0]
+    size_sort_idx = jnp.argsort(sizes)
+    sizes_sorted = sizes[size_sort_idx]
+
+    log_lm_raw = beta_lm * LOG_LM_RAW_15
+
+    colors = states[:, 1]
+    forms  = states[:, 2]
+    log_color_sem = jnp.log(
+        jnp.where(colors == 1, color_semval, 1.0 - color_semval) + eps
+    )
+    log_form_sem  = jnp.log(
+        jnp.where(forms  == 1, form_semval,  1.0 - form_semval)  + eps
+    )
+
+    uniform     = jnp.ones(n_obj) / n_obj
+    init_scores = jnp.zeros(n_utt)
+    init_posts  = jnp.broadcast_to(uniform, (n_utt, n_obj))
+
+    def _anchored_size_sem(sizes_arr, post):
+        post_sorted = post[size_sort_idx]
+        post_sorted = post_sorted / (jnp.sum(post_sorted) + eps)
+        cdf = jnp.cumsum(post_sorted)
+        idx_low  = jnp.minimum(jnp.searchsorted(cdf, 0.2, side="left"),
+                                sizes_sorted.shape[0] - 1)
+        idx_high = jnp.minimum(jnp.searchsorted(cdf, 0.8, side="left"),
+                                sizes_sorted.shape[0] - 1)
+        x_min_mid = sizes_sorted[idx_low]
+        x_max_mid = sizes_sorted[idx_high]
+        theta_k   = x_max_mid - k * (x_max_mid - x_min_mid)
+        denom     = wf * jnp.sqrt(
+            sizes_arr ** 2 + theta_k ** 2 + SIZE_ANCHOR_R ** 2 + eps
+        )
+        z         = (sizes_arr - theta_k) / denom
+        return 0.5 * (1.0 + lax.erf(z / jnp.sqrt(2.0)))
+
+    def step(carry, t):
+        log_scores, per_utt_posts = carry
+
+        cand_mask_t = CANDIDATE_MASK[t]
+        active_t    = ACTIVE_POS[t]
+
+        def size_log_sem_for_utt(post):
+            sv = _anchored_size_sem(sizes, post)
+            return jnp.log(jnp.clip(sv, eps))
+
+        size_log_sems = jax.vmap(size_log_sem_for_utt)(per_utt_posts)
+
+        log_sem_static = jnp.stack([log_color_sem, log_form_sem], axis=0)
+        log_sem_table = jnp.concatenate([
+            size_log_sems[:, None, :],
+            jnp.broadcast_to(log_sem_static[None, :, :], (n_utt, 2, n_obj)),
+        ], axis=1)
+
+        token_pres_t = TOKEN_PRESENT[t]
+        log_prod_sem = jnp.einsum(
+            "uav, uvo -> uao",
+            token_pres_t,
+            log_sem_table,
+        )
+
+        log_per_utt_posts = jnp.log(jnp.clip(per_utt_posts, eps))
+        log_updated = log_per_utt_posts[:, None, :] + log_prod_sem
+        log_Z = jax.scipy.special.logsumexp(log_updated, axis=-1)
+        log_norm = log_updated - log_Z[:, :, None]
+        log_L_ref = log_norm[:, :, referent_index]
+
+        first_step_gate = (t == 0).astype(jnp.float32)
+        suff_boost_vec = lambda_suff * first_step_gate * jnp.array([
+            sufficient_dim == 0,
+            sufficient_dim == 1,
+            sufficient_dim == 2,
+        ], dtype=jnp.float32)
+        logits = jnp.where(
+            cand_mask_t,
+            alpha_vec[None, :] * log_L_ref + suff_boost_vec[None, :],
+            -1e9,
+        )
+        local_probs = jax.nn.softmax(logits, axis=-1)
+
+        chosen = jnp.sum(local_probs * ACTUAL_TOK_ONEHOT[t], axis=-1)
+        chosen = jnp.where(active_t, chosen, 1.0)
+        log_chosen = jnp.where(active_t, jnp.log(jnp.clip(chosen, eps)), 0.0)
+
+        selected_log_sem = jnp.einsum(
+            "uv, uvo -> uo",
+            ACTUAL_TOK_ONEHOT[t],
+            log_sem_table,
+        )
+        log_updated_post = log_per_utt_posts + jnp.where(
+            active_t[:, None],
+            selected_log_sem,
+            0.0,
+        )
+        log_Z_post = jax.scipy.special.logsumexp(
+            log_updated_post, axis=-1, keepdims=True
+        )
+        new_per_utt_posts = jnp.exp(log_updated_post - log_Z_post)
+
+        return (log_scores + log_chosen, new_per_utt_posts), None
+
+    (log_final_scores, _), _ = lax.scan(
+        step,
+        (init_scores, init_posts),
+        jnp.arange(T),
+    )
+
+    log_unnorm = log_lm_raw + log_final_scores
+    model_probs = jax.nn.softmax(log_unnorm)
+    return (1.0 - epsilon) * model_probs + epsilon / n_utt
+
+
+vectorized_incremental_speaker_contextual_anchored_hier = jax.vmap(
+    incremental_speaker_contextual_anchored,
+    in_axes=(0,    # states
+             0,    # sufficient_dim
+             0,    # has_one_word_solution
+             0,    # is_sharp
+             0,    # alpha_D
+             0,    # alpha_C
+             0,    # alpha_F
+             None, # lambda_suff
+             None, # color_semval
+             None, # form_semval
+             None, # k
+             None, # wf
+             None, # beta_lm
+             None, # epsilon
+             ),
+)
+
+
+@jax.jit
+def jitted_speaker_contextual_anchored_hier(
+    states, sufficient_dim, has_one_word_solution, is_sharp,
+    alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+    lambda_suff, color_semval, form_semval, k, wf, beta_lm,
+    epsilon,
+):
+    return vectorized_incremental_speaker_contextual_anchored_hier(
+        states, sufficient_dim, has_one_word_solution, is_sharp,
+        alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+        lambda_suff, color_semval, form_semval, k, wf, beta_lm,
+        epsilon,
+    )
+
+
+def incremental_speaker_contextual_anchored_gamma(
+    states:                jnp.ndarray,
+    sufficient_dim:        int,
+    has_one_word_solution: float,
+    is_sharp:              float,
+    alpha_D:               float = 3.0,
+    alpha_C:               float = 3.0,
+    alpha_F:               float = 3.0,
+    lambda_suff:           float = 0.0,
+    color_semval:          float = 0.95,
+    form_semval:           float = 0.80,
+    k:                     float = 0.50,
+    wf:                    float = 1.00,
+    beta_lm:               float = 1.00,
+    gamma_base:            float = 0.0,
+    gamma_oneword:         float = 0.0,
+    epsilon:               float = 0.01,
+) -> jnp.ndarray:
+    """Anchored size semantics + compact 2-gamma length bonus.
+
+    Reuses the anchored size kernel from
+    ``incremental_speaker_contextual_anchored`` (denominator includes the
+    fixed reference R via ``SIZE_ANCHOR_R``) and adds a *single linear*
+    length-bonus term gated on ``has_one_word_solution``:
+
+        gamma_eff   = gamma_base + gamma_oneword * has_one_word_solution
+        length_bonus[u] = gamma_eff * max(N_WORDS[u] - 1, 0)
+        log_unnorm = beta_lm * LOG_LM_RAW_15 + log_final_scores + length_bonus
+
+    With ``has_one_word_solution = 1`` (erdc / zrdc), the effective bonus
+    collapses to ``gamma_base + gamma_oneword`` (baseline data has those
+    cancel to ≈ 0). With ``has_one_word_solution = 0`` (brdc), the bonus
+    is just ``gamma_base`` (baseline data has this strongly positive,
+    pushing the model toward DCF-type long phrases). The compact 2-gamma
+    form captures the same shape the 6-gamma baseline used, dropping the
+    redundant length-3 tier and the is_sharp modulation.
+    """
+
+    eps            = 1e-8
+    referent_index = 0
+    n_obj          = states.shape[0]
+    alpha_vec      = jnp.array([alpha_D, alpha_C, alpha_F])
+
+    del is_sharp
+
+    sizes = states[:, 0]
+    size_sort_idx = jnp.argsort(sizes)
+    sizes_sorted = sizes[size_sort_idx]
+
+    log_lm_raw = beta_lm * LOG_LM_RAW_15
+
+    colors = states[:, 1]
+    forms  = states[:, 2]
+    log_color_sem = jnp.log(
+        jnp.where(colors == 1, color_semval, 1.0 - color_semval) + eps
+    )
+    log_form_sem  = jnp.log(
+        jnp.where(forms  == 1, form_semval,  1.0 - form_semval)  + eps
+    )
+
+    uniform     = jnp.ones(n_obj) / n_obj
+    init_scores = jnp.zeros(n_utt)
+    init_posts  = jnp.broadcast_to(uniform, (n_utt, n_obj))
+
+    def _anchored_size_sem(sizes_arr, post):
+        post_sorted = post[size_sort_idx]
+        post_sorted = post_sorted / (jnp.sum(post_sorted) + eps)
+        cdf = jnp.cumsum(post_sorted)
+        idx_low  = jnp.minimum(jnp.searchsorted(cdf, 0.2, side="left"),
+                                sizes_sorted.shape[0] - 1)
+        idx_high = jnp.minimum(jnp.searchsorted(cdf, 0.8, side="left"),
+                                sizes_sorted.shape[0] - 1)
+        x_min_mid = sizes_sorted[idx_low]
+        x_max_mid = sizes_sorted[idx_high]
+        theta_k   = x_max_mid - k * (x_max_mid - x_min_mid)
+        denom     = wf * jnp.sqrt(
+            sizes_arr ** 2 + theta_k ** 2 + SIZE_ANCHOR_R ** 2 + eps
+        )
+        z         = (sizes_arr - theta_k) / denom
+        return 0.5 * (1.0 + lax.erf(z / jnp.sqrt(2.0)))
+
+    def step(carry, t):
+        log_scores, per_utt_posts = carry
+
+        cand_mask_t = CANDIDATE_MASK[t]
+        active_t    = ACTIVE_POS[t]
+
+        def size_log_sem_for_utt(post):
+            sv = _anchored_size_sem(sizes, post)
+            return jnp.log(jnp.clip(sv, eps))
+
+        size_log_sems = jax.vmap(size_log_sem_for_utt)(per_utt_posts)
+
+        log_sem_static = jnp.stack([log_color_sem, log_form_sem], axis=0)
+        log_sem_table = jnp.concatenate([
+            size_log_sems[:, None, :],
+            jnp.broadcast_to(log_sem_static[None, :, :], (n_utt, 2, n_obj)),
+        ], axis=1)
+
+        token_pres_t = TOKEN_PRESENT[t]
+        log_prod_sem = jnp.einsum(
+            "uav, uvo -> uao",
+            token_pres_t,
+            log_sem_table,
+        )
+
+        log_per_utt_posts = jnp.log(jnp.clip(per_utt_posts, eps))
+        log_updated = log_per_utt_posts[:, None, :] + log_prod_sem
+        log_Z = jax.scipy.special.logsumexp(log_updated, axis=-1)
+        log_norm = log_updated - log_Z[:, :, None]
+        log_L_ref = log_norm[:, :, referent_index]
+
+        first_step_gate = (t == 0).astype(jnp.float32)
+        suff_boost_vec = lambda_suff * first_step_gate * jnp.array([
+            sufficient_dim == 0,
+            sufficient_dim == 1,
+            sufficient_dim == 2,
+        ], dtype=jnp.float32)
+        logits = jnp.where(
+            cand_mask_t,
+            alpha_vec[None, :] * log_L_ref + suff_boost_vec[None, :],
+            -1e9,
+        )
+        local_probs = jax.nn.softmax(logits, axis=-1)
+
+        chosen = jnp.sum(local_probs * ACTUAL_TOK_ONEHOT[t], axis=-1)
+        chosen = jnp.where(active_t, chosen, 1.0)
+        log_chosen = jnp.where(active_t, jnp.log(jnp.clip(chosen, eps)), 0.0)
+
+        selected_log_sem = jnp.einsum(
+            "uv, uvo -> uo",
+            ACTUAL_TOK_ONEHOT[t],
+            log_sem_table,
+        )
+        log_updated_post = log_per_utt_posts + jnp.where(
+            active_t[:, None],
+            selected_log_sem,
+            0.0,
+        )
+        log_Z_post = jax.scipy.special.logsumexp(
+            log_updated_post, axis=-1, keepdims=True
+        )
+        new_per_utt_posts = jnp.exp(log_updated_post - log_Z_post)
+
+        return (log_scores + log_chosen, new_per_utt_posts), None
+
+    (log_final_scores, _), _ = lax.scan(
+        step,
+        (init_scores, init_posts),
+        jnp.arange(T),
+    )
+
+    # Compact 2-gamma length bonus, gated on has_one_word_solution.
+    gamma_eff   = gamma_base + gamma_oneword * has_one_word_solution
+    length_bonus = gamma_eff * jnp.maximum(N_WORDS - 1.0, 0.0)
+
+    log_unnorm = log_lm_raw + log_final_scores + length_bonus
+    model_probs = jax.nn.softmax(log_unnorm)
+    return (1.0 - epsilon) * model_probs + epsilon / n_utt
+
+
+vectorized_incremental_speaker_contextual_anchored_gamma_hier = jax.vmap(
+    incremental_speaker_contextual_anchored_gamma,
+    in_axes=(0,    # states
+             0,    # sufficient_dim
+             0,    # has_one_word_solution
+             0,    # is_sharp
+             0,    # alpha_D
+             0,    # alpha_C
+             0,    # alpha_F
+             None, # lambda_suff
+             None, # color_semval
+             None, # form_semval
+             None, # k
+             None, # wf
+             None, # beta_lm
+             None, # gamma_base
+             None, # gamma_oneword
+             None, # epsilon
+             ),
+)
+
+
+@jax.jit
+def jitted_speaker_contextual_anchored_gamma_hier(
+    states, sufficient_dim, has_one_word_solution, is_sharp,
+    alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+    lambda_suff, color_semval, form_semval, k, wf, beta_lm,
+    gamma_base, gamma_oneword, epsilon,
+):
+    return vectorized_incremental_speaker_contextual_anchored_gamma_hier(
+        states, sufficient_dim, has_one_word_solution, is_sharp,
+        alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+        lambda_suff, color_semval, form_semval, k, wf, beta_lm,
+        gamma_base, gamma_oneword, epsilon,
+    )
+
+
+def _make_contextual_anchored_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
+    """Iter 9: Lever-1 priors, anchored size semantics (R = 5.0). 0 new params."""
+    def model(states=None, empirical=None,
+              participant_idx=None, n_participants=None,
+              sufficient_dim=None, has_one_word_solution=None, is_sharp=None):
+        log_beta_lm = numpyro.sample("log_beta_lm", dist.Normal(0.0, 0.5))
+        beta_lm     = jnp.exp(log_beta_lm)
+
+        alpha_D     = numpyro.sample("alpha_D",     dist.HalfNormal(5.0))
+        alpha_C     = numpyro.sample("alpha_C",     dist.HalfNormal(5.0))
+        alpha_F     = numpyro.sample("alpha_F",     dist.HalfNormal(5.0))
+        lambda_suff = numpyro.sample("lambda_suff", dist.Normal(0.0, 1.0))
+        epsilon     = numpyro.sample("epsilon",     dist.Beta(1.0, 50.0))
+        tau         = numpyro.sample("tau",         dist.HalfNormal(0.2))
+
+        with numpyro.plate("participants", n_participants):
+            delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+        alpha_D_per_trial = jnp.maximum(alpha_D + delta[participant_idx], 0.0)
+        alpha_C_per_trial = jnp.maximum(alpha_C + delta[participant_idx], 0.0)
+        alpha_F_per_trial = jnp.maximum(alpha_F + delta[participant_idx], 0.0)
+
+        with numpyro.plate("data", len(states)):
+            probs = jitted_speaker_contextual_anchored_hier(
+                states, sufficient_dim, has_one_word_solution, is_sharp,
+                alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+                lambda_suff, color_semval, form_semval, k, wf, beta_lm,
+                epsilon,
+            )
+            if empirical is None:
+                numpyro.sample("obs", dist.Categorical(probs=probs))
+            else:
+                numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+    return model
+
+
+likelihood_function_contextual_anchored_hier = _make_contextual_anchored_model(
+    color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0,
+)
+
+
+def _make_contextual_freewf_anchored_model(color_semval=0.971, form_semval=0.50, k=0.5):
+    """Iter 10: anchored size semantics + learned ``wf``. +1 free param."""
+    def model(states=None, empirical=None,
+              participant_idx=None, n_participants=None,
+              sufficient_dim=None, has_one_word_solution=None, is_sharp=None):
+        log_beta_lm = numpyro.sample("log_beta_lm", dist.Normal(0.0, 0.5))
+        beta_lm     = jnp.exp(log_beta_lm)
+
+        log_wf      = numpyro.sample("log_wf",      dist.Normal(-1.0, 0.5))
+        wf          = jnp.exp(log_wf)
+
+        alpha_D     = numpyro.sample("alpha_D",     dist.HalfNormal(5.0))
+        alpha_C     = numpyro.sample("alpha_C",     dist.HalfNormal(5.0))
+        alpha_F     = numpyro.sample("alpha_F",     dist.HalfNormal(5.0))
+        lambda_suff = numpyro.sample("lambda_suff", dist.Normal(0.0, 1.0))
+        epsilon     = numpyro.sample("epsilon",     dist.Beta(1.0, 50.0))
+        tau         = numpyro.sample("tau",         dist.HalfNormal(0.2))
+
+        with numpyro.plate("participants", n_participants):
+            delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+        alpha_D_per_trial = jnp.maximum(alpha_D + delta[participant_idx], 0.0)
+        alpha_C_per_trial = jnp.maximum(alpha_C + delta[participant_idx], 0.0)
+        alpha_F_per_trial = jnp.maximum(alpha_F + delta[participant_idx], 0.0)
+
+        with numpyro.plate("data", len(states)):
+            probs = jitted_speaker_contextual_anchored_hier(
+                states, sufficient_dim, has_one_word_solution, is_sharp,
+                alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+                lambda_suff, color_semval, form_semval, k, wf, beta_lm,
+                epsilon,
+            )
+            if empirical is None:
+                numpyro.sample("obs", dist.Categorical(probs=probs))
+            else:
+                numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+    return model
+
+
+likelihood_function_contextual_freewf_anchored_hier = _make_contextual_freewf_anchored_model(
+    color_semval=0.971, form_semval=0.50, k=0.5,
+)
+
+
+def _make_contextual_anchored_gamma_model(color_semval=0.971, form_semval=0.50, k=0.5):
+    """Iter 11: anchored size semantics + free wf + compact 2-gamma length bonus.
+
+    Three new free coefficients vs Lever 1: ``log_wf`` (size-semantics
+    sensitivity), ``gamma_base`` (per-extra-token length bonus baseline),
+    and ``gamma_oneword`` (modulation when the trial has a one-word
+    solution). Total 10 named parameters, vs Lever 1's 7 and the 6-gamma
+    baseline's 13.
+
+    Same speaker as ``incremental_speaker_contextual_anchored`` plus the
+    linear length-bonus aggregation. The combination targets both the
+    structural fit (R²) — via the gamma length-bonus that pushes brdc
+    trials toward DCF without affecting erdc/zrdc — and the lapse rate
+    (ε) — via the anchored representation that breaks size-semantics
+    scale-invariance.
+    """
+    def model(states=None, empirical=None,
+              participant_idx=None, n_participants=None,
+              sufficient_dim=None, has_one_word_solution=None, is_sharp=None):
+        log_beta_lm   = numpyro.sample("log_beta_lm",   dist.Normal(0.0, 0.5))
+        beta_lm       = jnp.exp(log_beta_lm)
+
+        log_wf        = numpyro.sample("log_wf",        dist.Normal(-1.0, 0.5))
+        wf            = jnp.exp(log_wf)
+
+        alpha_D       = numpyro.sample("alpha_D",       dist.HalfNormal(5.0))
+        alpha_C       = numpyro.sample("alpha_C",       dist.HalfNormal(5.0))
+        alpha_F       = numpyro.sample("alpha_F",       dist.HalfNormal(5.0))
+        lambda_suff   = numpyro.sample("lambda_suff",   dist.Normal(0.0, 1.0))
+        gamma_base    = numpyro.sample("gamma_base",    dist.Normal(0.0, 2.0))
+        gamma_oneword = numpyro.sample("gamma_oneword", dist.Normal(0.0, 2.0))
+        epsilon       = numpyro.sample("epsilon",       dist.Beta(1.0, 50.0))
+        tau           = numpyro.sample("tau",           dist.HalfNormal(0.2))
+
+        with numpyro.plate("participants", n_participants):
+            delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+        alpha_D_per_trial = jnp.maximum(alpha_D + delta[participant_idx], 0.0)
+        alpha_C_per_trial = jnp.maximum(alpha_C + delta[participant_idx], 0.0)
+        alpha_F_per_trial = jnp.maximum(alpha_F + delta[participant_idx], 0.0)
+
+        with numpyro.plate("data", len(states)):
+            probs = jitted_speaker_contextual_anchored_gamma_hier(
+                states, sufficient_dim, has_one_word_solution, is_sharp,
+                alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+                lambda_suff, color_semval, form_semval, k, wf, beta_lm,
+                gamma_base, gamma_oneword, epsilon,
+            )
+            if empirical is None:
+                numpyro.sample("obs", dist.Categorical(probs=probs))
+            else:
+                numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+    return model
+
+
+likelihood_function_contextual_anchored_gamma_hier = _make_contextual_anchored_gamma_model(
+    color_semval=0.971, form_semval=0.50, k=0.5,
+)
+
+
+def _make_contextual_anchored_gamma_fixedwf_model(
+    color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+):
+    """Iter 12: same as Iter 11 but with ``wf`` hardcoded at the Iter 11
+    posterior median (0.6856) instead of sampled. Drops 1 free parameter
+    (no more ``log_wf`` sampling), bringing the model to 9 named coefficients
+    while keeping the anchored size semantics and the compact 2-gamma
+    length-bonus structure that recovered the baseline R².
+    """
+    def model(states=None, empirical=None,
+              participant_idx=None, n_participants=None,
+              sufficient_dim=None, has_one_word_solution=None, is_sharp=None):
+        log_beta_lm   = numpyro.sample("log_beta_lm",   dist.Normal(0.0, 0.5))
+        beta_lm       = jnp.exp(log_beta_lm)
+
+        alpha_D       = numpyro.sample("alpha_D",       dist.HalfNormal(5.0))
+        alpha_C       = numpyro.sample("alpha_C",       dist.HalfNormal(5.0))
+        alpha_F       = numpyro.sample("alpha_F",       dist.HalfNormal(5.0))
+        lambda_suff   = numpyro.sample("lambda_suff",   dist.Normal(0.0, 1.0))
+        gamma_base    = numpyro.sample("gamma_base",    dist.Normal(0.0, 2.0))
+        gamma_oneword = numpyro.sample("gamma_oneword", dist.Normal(0.0, 2.0))
+        epsilon       = numpyro.sample("epsilon",       dist.Beta(1.0, 50.0))
+        tau           = numpyro.sample("tau",           dist.HalfNormal(0.2))
+
+        with numpyro.plate("participants", n_participants):
+            delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+        alpha_D_per_trial = jnp.maximum(alpha_D + delta[participant_idx], 0.0)
+        alpha_C_per_trial = jnp.maximum(alpha_C + delta[participant_idx], 0.0)
+        alpha_F_per_trial = jnp.maximum(alpha_F + delta[participant_idx], 0.0)
+
+        with numpyro.plate("data", len(states)):
+            probs = jitted_speaker_contextual_anchored_gamma_hier(
+                states, sufficient_dim, has_one_word_solution, is_sharp,
+                alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+                lambda_suff, color_semval, form_semval, k, wf, beta_lm,
+                gamma_base, gamma_oneword, epsilon,
+            )
+            if empirical is None:
+                numpyro.sample("obs", dist.Categorical(probs=probs))
+            else:
+                numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+    return model
+
+
+likelihood_function_contextual_anchored_gamma_fixedwf_hier = (
+    _make_contextual_anchored_gamma_fixedwf_model(
+        color_semval=0.971, form_semval=0.50, k=0.5,
+        wf=WF_FIXED_ITER11_MEDIAN,
+    )
 )
 
 
