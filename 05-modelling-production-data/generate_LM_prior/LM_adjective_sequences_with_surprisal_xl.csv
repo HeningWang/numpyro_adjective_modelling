@@ -1,0 +1,541 @@
+D_adj,F_adj,C_adj,order_key,ordered_string,surprisal_bits_per_token
+großer,dreieckiger,schwarzer,D,großer Aufkleber,12.4045527588068
+großer,dreieckiger,schwarzer,F,dreieckiger Aufkleber,8.72068919283966
+großer,dreieckiger,schwarzer,C,schwarzer Aufkleber,7.177800499211044
+großer,dreieckiger,schwarzer,DF,großer dreieckiger Aufkleber,8.331720846897472
+großer,dreieckiger,schwarzer,DC,großer schwarzer Aufkleber,13.125803968966798
+großer,dreieckiger,schwarzer,FD,dreieckiger großer Aufkleber,9.028578725789693
+großer,dreieckiger,schwarzer,FC,dreieckiger schwarzer Aufkleber,8.180342405538632
+großer,dreieckiger,schwarzer,CD,schwarzer großer Aufkleber,9.453083502914364
+großer,dreieckiger,schwarzer,CF,schwarzer dreieckiger Aufkleber,5.494582217645614
+großer,dreieckiger,schwarzer,DFC,großer dreieckiger schwarzer Aufkleber,8.293683100040843
+großer,dreieckiger,schwarzer,DCF,großer schwarzer dreieckiger Aufkleber,7.875356627665767
+großer,dreieckiger,schwarzer,FDC,dreieckiger großer schwarzer Aufkleber,8.596345048335248
+großer,dreieckiger,schwarzer,FCD,dreieckiger schwarzer großer Aufkleber,9.962293863172588
+großer,dreieckiger,schwarzer,CDF,schwarzer großer dreieckiger Aufkleber,6.862817025878223
+großer,dreieckiger,schwarzer,CFD,schwarzer dreieckiger großer Aufkleber,7.072450118667918
+großer,dreieckiger,grüner,D,großer Aufkleber,12.4045527588068
+großer,dreieckiger,grüner,F,dreieckiger Aufkleber,8.72068919283966
+großer,dreieckiger,grüner,C,grüner Aufkleber,7.179986742668811
+großer,dreieckiger,grüner,DF,großer dreieckiger Aufkleber,8.331720846897472
+großer,dreieckiger,grüner,DC,großer grüner Aufkleber,12.01491712017926
+großer,dreieckiger,grüner,FD,dreieckiger großer Aufkleber,9.028578725789693
+großer,dreieckiger,grüner,FC,dreieckiger grüner Aufkleber,8.539450435707417
+großer,dreieckiger,grüner,CD,grüner großer Aufkleber,8.988906455819263
+großer,dreieckiger,grüner,CF,grüner dreieckiger Aufkleber,5.49996733840943
+großer,dreieckiger,grüner,DFC,großer dreieckiger grüner Aufkleber,8.623512803726744
+großer,dreieckiger,grüner,DCF,großer grüner dreieckiger Aufkleber,7.145021293887195
+großer,dreieckiger,grüner,FDC,dreieckiger großer grüner Aufkleber,8.705937896909857
+großer,dreieckiger,grüner,FCD,dreieckiger grüner großer Aufkleber,9.260569563191552
+großer,dreieckiger,grüner,CDF,grüner großer dreieckiger Aufkleber,6.247542901041094
+großer,dreieckiger,grüner,CFD,grüner dreieckiger großer Aufkleber,6.865684320633408
+großer,dreieckiger,orangener,D,großer Aufkleber,12.4045527588068
+großer,dreieckiger,orangener,F,dreieckiger Aufkleber,8.72068919283966
+großer,dreieckiger,orangener,C,orangener Aufkleber,14.59599834779812
+großer,dreieckiger,orangener,DF,großer dreieckiger Aufkleber,8.331720846897472
+großer,dreieckiger,orangener,DC,großer orangener Aufkleber,8.750840503258326
+großer,dreieckiger,orangener,FD,dreieckiger großer Aufkleber,9.028578725789693
+großer,dreieckiger,orangener,FC,dreieckiger orangener Aufkleber,7.666320658639869
+großer,dreieckiger,orangener,CD,orangener großer Aufkleber,13.479654833464009
+großer,dreieckiger,orangener,CF,orangener dreieckiger Aufkleber,8.511942842597815
+großer,dreieckiger,orangener,DFC,großer dreieckiger orangener Aufkleber,7.703559718065891
+großer,dreieckiger,orangener,DCF,großer orangener dreieckiger Aufkleber,6.375884610282164
+großer,dreieckiger,orangener,FDC,dreieckiger großer orangener Aufkleber,7.846817826581593
+großer,dreieckiger,orangener,FCD,dreieckiger orangener großer Aufkleber,8.46972798111703
+großer,dreieckiger,orangener,CDF,orangener großer dreieckiger Aufkleber,8.44508286724839
+großer,dreieckiger,orangener,CFD,orangener dreieckiger großer Aufkleber,9.374604379672647
+großer,dreieckiger,grauer,D,großer Aufkleber,12.4045527588068
+großer,dreieckiger,grauer,F,dreieckiger Aufkleber,8.72068919283966
+großer,dreieckiger,grauer,C,grauer Aufkleber,10.716230720094364
+großer,dreieckiger,grauer,DF,großer dreieckiger Aufkleber,8.331720846897472
+großer,dreieckiger,grauer,DC,großer grauer Aufkleber,9.824892107884066
+großer,dreieckiger,grauer,FD,dreieckiger großer Aufkleber,9.028578725789693
+großer,dreieckiger,grauer,FC,dreieckiger grauer Aufkleber,8.020087595603458
+großer,dreieckiger,grauer,CD,grauer großer Aufkleber,10.270433114931672
+großer,dreieckiger,grauer,CF,grauer dreieckiger Aufkleber,6.533543858050514
+großer,dreieckiger,grauer,DFC,großer dreieckiger grauer Aufkleber,8.231907619781525
+großer,dreieckiger,grauer,DCF,großer grauer dreieckiger Aufkleber,6.726682438761258
+großer,dreieckiger,grauer,FDC,dreieckiger großer grauer Aufkleber,8.127801017769439
+großer,dreieckiger,grauer,FCD,dreieckiger grauer großer Aufkleber,8.493235945698165
+großer,dreieckiger,grauer,CDF,grauer großer dreieckiger Aufkleber,6.96214594984934
+großer,dreieckiger,grauer,CFD,grauer dreieckiger großer Aufkleber,7.581358477391227
+großer,dreieckiger,blauer,D,großer Aufkleber,12.4045527588068
+großer,dreieckiger,blauer,F,dreieckiger Aufkleber,8.72068919283966
+großer,dreieckiger,blauer,C,blauer Aufkleber,6.907315816962466
+großer,dreieckiger,blauer,DF,großer dreieckiger Aufkleber,8.331720846897472
+großer,dreieckiger,blauer,DC,großer blauer Aufkleber,11.943686033775506
+großer,dreieckiger,blauer,FD,dreieckiger großer Aufkleber,9.028578725789693
+großer,dreieckiger,blauer,FC,dreieckiger blauer Aufkleber,8.387457672319695
+großer,dreieckiger,blauer,CD,blauer großer Aufkleber,8.272580140849373
+großer,dreieckiger,blauer,CF,blauer dreieckiger Aufkleber,5.191125365538921
+großer,dreieckiger,blauer,DFC,großer dreieckiger blauer Aufkleber,8.5924087094223
+großer,dreieckiger,blauer,DCF,großer blauer dreieckiger Aufkleber,6.949981960919115
+großer,dreieckiger,blauer,FDC,dreieckiger großer blauer Aufkleber,8.70711425824176
+großer,dreieckiger,blauer,FCD,dreieckiger blauer großer Aufkleber,8.953409924611783
+großer,dreieckiger,blauer,CDF,blauer großer dreieckiger Aufkleber,5.7720287576011176
+großer,dreieckiger,blauer,CFD,blauer dreieckiger großer Aufkleber,6.588888563028769
+großer,dreieckiger,brauner,D,großer Aufkleber,12.4045527588068
+großer,dreieckiger,brauner,F,dreieckiger Aufkleber,8.72068919283966
+großer,dreieckiger,brauner,C,brauner Aufkleber,9.18976361790073
+großer,dreieckiger,brauner,DF,großer dreieckiger Aufkleber,8.331720846897472
+großer,dreieckiger,brauner,DC,großer brauner Aufkleber,9.329412842470727
+großer,dreieckiger,brauner,FD,dreieckiger großer Aufkleber,9.028578725789693
+großer,dreieckiger,brauner,FC,dreieckiger brauner Aufkleber,8.062856929150625
+großer,dreieckiger,brauner,CD,brauner großer Aufkleber,9.775337714795059
+großer,dreieckiger,brauner,CF,brauner dreieckiger Aufkleber,6.16579335571057
+großer,dreieckiger,brauner,DFC,großer dreieckiger brauner Aufkleber,7.862460680573471
+großer,dreieckiger,brauner,DCF,großer brauner dreieckiger Aufkleber,7.064715026962712
+großer,dreieckiger,brauner,FDC,dreieckiger großer brauner Aufkleber,7.967110747762283
+großer,dreieckiger,brauner,FCD,dreieckiger brauner großer Aufkleber,8.515020644117657
+großer,dreieckiger,brauner,CDF,brauner großer dreieckiger Aufkleber,6.767989919776091
+großer,dreieckiger,brauner,CFD,brauner dreieckiger großer Aufkleber,7.341089771038039
+großer,kreisförmiger,schwarzer,D,großer Aufkleber,12.4045527588068
+großer,kreisförmiger,schwarzer,F,kreisförmiger Aufkleber,8.692817684440834
+großer,kreisförmiger,schwarzer,C,schwarzer Aufkleber,7.177800499211044
+großer,kreisförmiger,schwarzer,DF,großer kreisförmiger Aufkleber,7.625068900003915
+großer,kreisförmiger,schwarzer,DC,großer schwarzer Aufkleber,13.125803968966798
+großer,kreisförmiger,schwarzer,FD,kreisförmiger großer Aufkleber,9.361296362148883
+großer,kreisförmiger,schwarzer,FC,kreisförmiger schwarzer Aufkleber,8.46911985046358
+großer,kreisförmiger,schwarzer,CD,schwarzer großer Aufkleber,9.453083502914364
+großer,kreisförmiger,schwarzer,CF,schwarzer kreisförmiger Aufkleber,5.610875510297839
+großer,kreisförmiger,schwarzer,DFC,großer kreisförmiger schwarzer Aufkleber,7.8272207474810775
+großer,kreisförmiger,schwarzer,DCF,großer schwarzer kreisförmiger Aufkleber,7.042256156551839
+großer,kreisförmiger,schwarzer,FDC,kreisförmiger großer schwarzer Aufkleber,8.773670856195062
+großer,kreisförmiger,schwarzer,FCD,kreisförmiger schwarzer großer Aufkleber,9.384433532134757
+großer,kreisförmiger,schwarzer,CDF,schwarzer großer kreisförmiger Aufkleber,6.287488279461093
+großer,kreisförmiger,schwarzer,CFD,schwarzer kreisförmiger großer Aufkleber,6.933336792038009
+großer,kreisförmiger,grüner,D,großer Aufkleber,12.4045527588068
+großer,kreisförmiger,grüner,F,kreisförmiger Aufkleber,8.692817684440834
+großer,kreisförmiger,grüner,C,grüner Aufkleber,7.179986742668811
+großer,kreisförmiger,grüner,DF,großer kreisförmiger Aufkleber,7.625068900003915
+großer,kreisförmiger,grüner,DC,großer grüner Aufkleber,12.01491712017926
+großer,kreisförmiger,grüner,FD,kreisförmiger großer Aufkleber,9.361296362148883
+großer,kreisförmiger,grüner,FC,kreisförmiger grüner Aufkleber,9.145272394053126
+großer,kreisförmiger,grüner,CD,grüner großer Aufkleber,8.988906455819263
+großer,kreisförmiger,grüner,CF,grüner kreisförmiger Aufkleber,6.617049002281045
+großer,kreisförmiger,grüner,DFC,großer kreisförmiger grüner Aufkleber,8.132668126788857
+großer,kreisförmiger,grüner,DCF,großer grüner kreisförmiger Aufkleber,6.84284984011305
+großer,kreisförmiger,grüner,FDC,kreisförmiger großer grüner Aufkleber,9.245003757427261
+großer,kreisförmiger,grüner,FCD,kreisförmiger grüner großer Aufkleber,9.964342520509666
+großer,kreisförmiger,grüner,CDF,grüner großer kreisförmiger Aufkleber,6.177649839661052
+großer,kreisförmiger,grüner,CFD,grüner kreisförmiger großer Aufkleber,7.687385781648149
+großer,kreisförmiger,orangener,D,großer Aufkleber,12.4045527588068
+großer,kreisförmiger,orangener,F,kreisförmiger Aufkleber,8.692817684440834
+großer,kreisförmiger,orangener,C,orangener Aufkleber,14.59599834779812
+großer,kreisförmiger,orangener,DF,großer kreisförmiger Aufkleber,7.625068900003915
+großer,kreisförmiger,orangener,DC,großer orangener Aufkleber,8.750840503258326
+großer,kreisförmiger,orangener,FD,kreisförmiger großer Aufkleber,9.361296362148883
+großer,kreisförmiger,orangener,FC,kreisförmiger orangener Aufkleber,8.26986075117393
+großer,kreisförmiger,orangener,CD,orangener großer Aufkleber,13.479654833464009
+großer,kreisförmiger,orangener,CF,orangener kreisförmiger Aufkleber,8.547234370485468
+großer,kreisförmiger,orangener,DFC,großer kreisförmiger orangener Aufkleber,7.757269899930345
+großer,kreisförmiger,orangener,DCF,großer orangener kreisförmiger Aufkleber,6.457474555712687
+großer,kreisförmiger,orangener,FDC,kreisförmiger großer orangener Aufkleber,8.497816187655944
+großer,kreisförmiger,orangener,FCD,kreisförmiger orangener großer Aufkleber,9.293399675380057
+großer,kreisförmiger,orangener,CDF,orangener großer kreisförmiger Aufkleber,8.491202422834364
+großer,kreisförmiger,orangener,CFD,orangener kreisförmiger großer Aufkleber,9.423174344068114
+großer,kreisförmiger,grauer,D,großer Aufkleber,12.4045527588068
+großer,kreisförmiger,grauer,F,kreisförmiger Aufkleber,8.692817684440834
+großer,kreisförmiger,grauer,C,grauer Aufkleber,10.716230720094364
+großer,kreisförmiger,grauer,DF,großer kreisförmiger Aufkleber,7.625068900003915
+großer,kreisförmiger,grauer,DC,großer grauer Aufkleber,9.824892107884066
+großer,kreisförmiger,grauer,FD,kreisförmiger großer Aufkleber,9.361296362148883
+großer,kreisförmiger,grauer,FC,kreisförmiger grauer Aufkleber,8.013466951475845
+großer,kreisförmiger,grauer,CD,grauer großer Aufkleber,10.270433114931672
+großer,kreisförmiger,grauer,CF,grauer kreisförmiger Aufkleber,7.238473226713028
+großer,kreisförmiger,grauer,DFC,großer kreisförmiger grauer Aufkleber,7.6215879711504515
+großer,kreisförmiger,grauer,DCF,großer grauer kreisförmiger Aufkleber,7.092190975264554
+großer,kreisförmiger,grauer,FDC,kreisförmiger großer grauer Aufkleber,8.371286487624365
+großer,kreisförmiger,grauer,FCD,kreisförmiger grauer großer Aufkleber,8.702082045877512
+großer,kreisförmiger,grauer,CDF,grauer großer kreisförmiger Aufkleber,7.104525570984435
+großer,kreisförmiger,grauer,CFD,grauer kreisförmiger großer Aufkleber,8.26005774007475
+großer,kreisförmiger,blauer,D,großer Aufkleber,12.4045527588068
+großer,kreisförmiger,blauer,F,kreisförmiger Aufkleber,8.692817684440834
+großer,kreisförmiger,blauer,C,blauer Aufkleber,6.907315816962466
+großer,kreisförmiger,blauer,DF,großer kreisförmiger Aufkleber,7.625068900003915
+großer,kreisförmiger,blauer,DC,großer blauer Aufkleber,11.943686033775506
+großer,kreisförmiger,blauer,FD,kreisförmiger großer Aufkleber,9.361296362148883
+großer,kreisförmiger,blauer,FC,kreisförmiger blauer Aufkleber,9.039281550118186
+großer,kreisförmiger,blauer,CD,blauer großer Aufkleber,8.272580140849373
+großer,kreisförmiger,blauer,CF,blauer kreisförmiger Aufkleber,5.222449941601772
+großer,kreisförmiger,blauer,DFC,großer kreisförmiger blauer Aufkleber,8.317104385365942
+großer,kreisförmiger,blauer,DCF,großer blauer kreisförmiger Aufkleber,7.017236808434921
+großer,kreisförmiger,blauer,FDC,kreisförmiger großer blauer Aufkleber,9.190068371158059
+großer,kreisförmiger,blauer,FCD,kreisförmiger blauer großer Aufkleber,9.857265434151877
+großer,kreisförmiger,blauer,CDF,blauer großer kreisförmiger Aufkleber,5.861930280582539
+großer,kreisförmiger,blauer,CFD,blauer kreisförmiger großer Aufkleber,6.572616252534734
+großer,kreisförmiger,brauner,D,großer Aufkleber,12.4045527588068
+großer,kreisförmiger,brauner,F,kreisförmiger Aufkleber,8.692817684440834
+großer,kreisförmiger,brauner,C,brauner Aufkleber,9.18976361790073
+großer,kreisförmiger,brauner,DF,großer kreisförmiger Aufkleber,7.625068900003915
+großer,kreisförmiger,brauner,DC,großer brauner Aufkleber,9.329412842470727
+großer,kreisförmiger,brauner,FD,kreisförmiger großer Aufkleber,9.361296362148883
+großer,kreisförmiger,brauner,FC,kreisförmiger brauner Aufkleber,8.244903316811323
+großer,kreisförmiger,brauner,CD,brauner großer Aufkleber,9.775337714795059
+großer,kreisförmiger,brauner,CF,brauner kreisförmiger Aufkleber,6.596062303361559
+großer,kreisförmiger,brauner,DFC,großer kreisförmiger brauner Aufkleber,7.849804821261778
+großer,kreisförmiger,brauner,DCF,großer brauner kreisförmiger Aufkleber,7.076647871210177
+großer,kreisförmiger,brauner,FDC,kreisförmiger großer brauner Aufkleber,8.483023615889932
+großer,kreisförmiger,brauner,FCD,kreisförmiger brauner großer Aufkleber,8.882995411834326
+großer,kreisförmiger,brauner,CDF,brauner großer kreisförmiger Aufkleber,6.96092005751399
+großer,kreisförmiger,brauner,CFD,brauner kreisförmiger großer Aufkleber,7.6937931672886934
+großer,quadratischer,schwarzer,D,großer Aufkleber,12.4045527588068
+großer,quadratischer,schwarzer,F,quadratischer Aufkleber,6.96202624992434
+großer,quadratischer,schwarzer,C,schwarzer Aufkleber,7.177800499211044
+großer,quadratischer,schwarzer,DF,großer quadratischer Aufkleber,7.401893205354679
+großer,quadratischer,schwarzer,DC,großer schwarzer Aufkleber,13.125803968966798
+großer,quadratischer,schwarzer,FD,quadratischer großer Aufkleber,7.745288900540639
+großer,quadratischer,schwarzer,FC,quadratischer schwarzer Aufkleber,7.069417032637301
+großer,quadratischer,schwarzer,CD,schwarzer großer Aufkleber,9.453083502914364
+großer,quadratischer,schwarzer,CF,schwarzer quadratischer Aufkleber,5.932932286095344
+großer,quadratischer,schwarzer,DFC,großer quadratischer schwarzer Aufkleber,7.4363158768901725
+großer,quadratischer,schwarzer,DCF,großer schwarzer quadratischer Aufkleber,8.156808987525167
+großer,quadratischer,schwarzer,FDC,quadratischer großer schwarzer Aufkleber,7.3181926888327675
+großer,quadratischer,schwarzer,FCD,quadratischer schwarzer großer Aufkleber,8.080714919685617
+großer,quadratischer,schwarzer,CDF,schwarzer großer quadratischer Aufkleber,6.912037084693952
+großer,quadratischer,schwarzer,CFD,schwarzer quadratischer großer Aufkleber,7.841595745370794
+großer,quadratischer,grüner,D,großer Aufkleber,12.4045527588068
+großer,quadratischer,grüner,F,quadratischer Aufkleber,6.96202624992434
+großer,quadratischer,grüner,C,grüner Aufkleber,7.179986742668811
+großer,quadratischer,grüner,DF,großer quadratischer Aufkleber,7.401893205354679
+großer,quadratischer,grüner,DC,großer grüner Aufkleber,12.01491712017926
+großer,quadratischer,grüner,FD,quadratischer großer Aufkleber,7.745288900540639
+großer,quadratischer,grüner,FC,quadratischer grüner Aufkleber,7.733411778672053
+großer,quadratischer,grüner,CD,grüner großer Aufkleber,8.988906455819263
+großer,quadratischer,grüner,CF,grüner quadratischer Aufkleber,6.6016593067512375
+großer,quadratischer,grüner,DFC,großer quadratischer grüner Aufkleber,8.315403820914211
+großer,quadratischer,grüner,DCF,großer grüner quadratischer Aufkleber,8.030870219881953
+großer,quadratischer,grüner,FDC,quadratischer großer grüner Aufkleber,8.014919860910332
+großer,quadratischer,grüner,FCD,quadratischer grüner großer Aufkleber,8.274418291421794
+großer,quadratischer,grüner,CDF,grüner großer quadratischer Aufkleber,6.723416832186675
+großer,quadratischer,grüner,CFD,grüner quadratischer großer Aufkleber,7.950613483960919
+großer,quadratischer,orangener,D,großer Aufkleber,12.4045527588068
+großer,quadratischer,orangener,F,quadratischer Aufkleber,6.96202624992434
+großer,quadratischer,orangener,C,orangener Aufkleber,14.59599834779812
+großer,quadratischer,orangener,DF,großer quadratischer Aufkleber,7.401893205354679
+großer,quadratischer,orangener,DC,großer orangener Aufkleber,8.750840503258326
+großer,quadratischer,orangener,FD,quadratischer großer Aufkleber,7.745288900540639
+großer,quadratischer,orangener,FC,quadratischer orangener Aufkleber,7.323676871603481
+großer,quadratischer,orangener,CD,orangener großer Aufkleber,13.479654833464009
+großer,quadratischer,orangener,CF,orangener quadratischer Aufkleber,9.922421405396554
+großer,quadratischer,orangener,DFC,großer quadratischer orangener Aufkleber,7.481387714167091
+großer,quadratischer,orangener,DCF,großer orangener quadratischer Aufkleber,6.93878864207036
+großer,quadratischer,orangener,FDC,quadratischer großer orangener Aufkleber,7.403681824923653
+großer,quadratischer,orangener,FCD,quadratischer orangener großer Aufkleber,8.012549939981444
+großer,quadratischer,orangener,CDF,orangener großer quadratischer Aufkleber,9.617487910249553
+großer,quadratischer,orangener,CFD,orangener quadratischer großer Aufkleber,10.587904833257175
+großer,quadratischer,grauer,D,großer Aufkleber,12.4045527588068
+großer,quadratischer,grauer,F,quadratischer Aufkleber,6.96202624992434
+großer,quadratischer,grauer,C,grauer Aufkleber,10.716230720094364
+großer,quadratischer,grauer,DF,großer quadratischer Aufkleber,7.401893205354679
+großer,quadratischer,grauer,DC,großer grauer Aufkleber,9.824892107884066
+großer,quadratischer,grauer,FD,quadratischer großer Aufkleber,7.745288900540639
+großer,quadratischer,grauer,FC,quadratischer grauer Aufkleber,6.991045914500326
+großer,quadratischer,grauer,CD,grauer großer Aufkleber,10.270433114931672
+großer,quadratischer,grauer,CF,grauer quadratischer Aufkleber,7.608926608393932
+großer,quadratischer,grauer,DFC,großer quadratischer grauer Aufkleber,7.822364645351315
+großer,quadratischer,grauer,DCF,großer grauer quadratischer Aufkleber,7.387732153882635
+großer,quadratischer,grauer,FDC,quadratischer großer grauer Aufkleber,7.354962579587236
+großer,quadratischer,grauer,FCD,quadratischer grauer großer Aufkleber,7.470122850535576
+großer,quadratischer,grauer,CDF,grauer großer quadratischer Aufkleber,7.675514851154994
+großer,quadratischer,grauer,CFD,grauer quadratischer großer Aufkleber,8.657540603095855
+großer,quadratischer,blauer,D,großer Aufkleber,12.4045527588068
+großer,quadratischer,blauer,F,quadratischer Aufkleber,6.96202624992434
+großer,quadratischer,blauer,C,blauer Aufkleber,6.907315816962466
+großer,quadratischer,blauer,DF,großer quadratischer Aufkleber,7.401893205354679
+großer,quadratischer,blauer,DC,großer blauer Aufkleber,11.943686033775506
+großer,quadratischer,blauer,FD,quadratischer großer Aufkleber,7.745288900540639
+großer,quadratischer,blauer,FC,quadratischer blauer Aufkleber,7.844191995468219
+großer,quadratischer,blauer,CD,blauer großer Aufkleber,8.272580140849373
+großer,quadratischer,blauer,CF,blauer quadratischer Aufkleber,6.007716534065924
+großer,quadratischer,blauer,DFC,großer quadratischer blauer Aufkleber,8.389252483264098
+großer,quadratischer,blauer,DCF,großer blauer quadratischer Aufkleber,7.556246258642843
+großer,quadratischer,blauer,FDC,quadratischer großer blauer Aufkleber,8.19527600307835
+großer,quadratischer,blauer,FCD,quadratischer blauer großer Aufkleber,8.201783826586999
+großer,quadratischer,blauer,CDF,blauer großer quadratischer Aufkleber,6.293302668921463
+großer,quadratischer,blauer,CFD,blauer quadratischer großer Aufkleber,7.221238501304764
+großer,quadratischer,brauner,D,großer Aufkleber,12.4045527588068
+großer,quadratischer,brauner,F,quadratischer Aufkleber,6.96202624992434
+großer,quadratischer,brauner,C,brauner Aufkleber,9.18976361790073
+großer,quadratischer,brauner,DF,großer quadratischer Aufkleber,7.401893205354679
+großer,quadratischer,brauner,DC,großer brauner Aufkleber,9.329412842470727
+großer,quadratischer,brauner,FD,quadratischer großer Aufkleber,7.745288900540639
+großer,quadratischer,brauner,FC,quadratischer brauner Aufkleber,7.170668722645064
+großer,quadratischer,brauner,CD,brauner großer Aufkleber,9.775337714795059
+großer,quadratischer,brauner,CF,brauner quadratischer Aufkleber,7.124710142820297
+großer,quadratischer,brauner,DFC,großer quadratischer brauner Aufkleber,7.581648784105884
+großer,quadratischer,brauner,DCF,großer brauner quadratischer Aufkleber,7.627642448391426
+großer,quadratischer,brauner,FDC,quadratischer großer brauner Aufkleber,7.132315903572055
+großer,quadratischer,brauner,FCD,quadratischer brauner großer Aufkleber,7.404087703979688
+großer,quadratischer,brauner,CDF,brauner großer quadratischer Aufkleber,7.496397672003793
+großer,quadratischer,brauner,CFD,brauner quadratischer großer Aufkleber,8.215349818087057
+großer,sternförmiger,schwarzer,D,großer Aufkleber,12.4045527588068
+großer,sternförmiger,schwarzer,F,sternförmiger Aufkleber,8.053528590167828
+großer,sternförmiger,schwarzer,C,schwarzer Aufkleber,7.177800499211044
+großer,sternförmiger,schwarzer,DF,großer sternförmiger Aufkleber,7.81671054372155
+großer,sternförmiger,schwarzer,DC,großer schwarzer Aufkleber,13.125803968966798
+großer,sternförmiger,schwarzer,FD,sternförmiger großer Aufkleber,8.976605568698952
+großer,sternförmiger,schwarzer,FC,sternförmiger schwarzer Aufkleber,8.129318592680653
+großer,sternförmiger,schwarzer,CD,schwarzer großer Aufkleber,9.453083502914364
+großer,sternförmiger,schwarzer,CF,schwarzer sternförmiger Aufkleber,6.447991432344112
+großer,sternförmiger,schwarzer,DFC,großer sternförmiger schwarzer Aufkleber,8.213870767289636
+großer,sternförmiger,schwarzer,DCF,großer schwarzer sternförmiger Aufkleber,8.39509095029559
+großer,sternförmiger,schwarzer,FDC,sternförmiger großer schwarzer Aufkleber,8.515715454027141
+großer,sternförmiger,schwarzer,FCD,sternförmiger schwarzer großer Aufkleber,9.139707035471206
+großer,sternförmiger,schwarzer,CDF,schwarzer großer sternförmiger Aufkleber,7.262250860090717
+großer,sternförmiger,schwarzer,CFD,schwarzer sternförmiger großer Aufkleber,7.557028435738967
+großer,sternförmiger,grüner,D,großer Aufkleber,12.4045527588068
+großer,sternförmiger,grüner,F,sternförmiger Aufkleber,8.053528590167828
+großer,sternförmiger,grüner,C,grüner Aufkleber,7.179986742668811
+großer,sternförmiger,grüner,DF,großer sternförmiger Aufkleber,7.81671054372155
+großer,sternförmiger,grüner,DC,großer grüner Aufkleber,12.01491712017926
+großer,sternförmiger,grüner,FD,sternförmiger großer Aufkleber,8.976605568698952
+großer,sternförmiger,grüner,FC,sternförmiger grüner Aufkleber,8.814597911586187
+großer,sternförmiger,grüner,CD,grüner großer Aufkleber,8.988906455819263
+großer,sternförmiger,grüner,CF,grüner sternförmiger Aufkleber,7.251777804583775
+großer,sternförmiger,grüner,DFC,großer sternförmiger grüner Aufkleber,8.439059346884571
+großer,sternförmiger,grüner,DCF,großer grüner sternförmiger Aufkleber,8.435065221800933
+großer,sternförmiger,grüner,FDC,sternförmiger großer grüner Aufkleber,8.972768291792901
+großer,sternförmiger,grüner,FCD,sternförmiger grüner großer Aufkleber,9.71310338482324
+großer,sternförmiger,grüner,CDF,grüner großer sternförmiger Aufkleber,6.907370163480139
+großer,sternförmiger,grüner,CFD,grüner sternförmiger großer Aufkleber,8.24622207977814
+großer,sternförmiger,orangener,D,großer Aufkleber,12.4045527588068
+großer,sternförmiger,orangener,F,sternförmiger Aufkleber,8.053528590167828
+großer,sternförmiger,orangener,C,orangener Aufkleber,14.59599834779812
+großer,sternförmiger,orangener,DF,großer sternförmiger Aufkleber,7.81671054372155
+großer,sternförmiger,orangener,DC,großer orangener Aufkleber,8.750840503258326
+großer,sternförmiger,orangener,FD,sternförmiger großer Aufkleber,8.976605568698952
+großer,sternförmiger,orangener,FC,sternförmiger orangener Aufkleber,8.023452952115543
+großer,sternförmiger,orangener,CD,orangener großer Aufkleber,13.479654833464009
+großer,sternförmiger,orangener,CF,orangener sternförmiger Aufkleber,8.893772532667992
+großer,sternförmiger,orangener,DFC,großer sternförmiger orangener Aufkleber,7.893422373243
+großer,sternförmiger,orangener,DCF,großer orangener sternförmiger Aufkleber,7.0299710918354075
+großer,sternförmiger,orangener,FDC,sternförmiger großer orangener Aufkleber,8.246695376033312
+großer,sternförmiger,orangener,FCD,sternförmiger orangener großer Aufkleber,9.050780310154874
+großer,sternförmiger,orangener,CDF,orangener großer sternförmiger Aufkleber,8.875862259407139
+großer,sternförmiger,orangener,CFD,orangener sternförmiger großer Aufkleber,9.56124476790319
+großer,sternförmiger,grauer,D,großer Aufkleber,12.4045527588068
+großer,sternförmiger,grauer,F,sternförmiger Aufkleber,8.053528590167828
+großer,sternförmiger,grauer,C,grauer Aufkleber,10.716230720094364
+großer,sternförmiger,grauer,DF,großer sternförmiger Aufkleber,7.81671054372155
+großer,sternförmiger,grauer,DC,großer grauer Aufkleber,9.824892107884066
+großer,sternförmiger,grauer,FD,sternförmiger großer Aufkleber,8.976605568698952
+großer,sternförmiger,grauer,FC,sternförmiger grauer Aufkleber,7.8814269273106214
+großer,sternförmiger,grauer,CD,grauer großer Aufkleber,10.270433114931672
+großer,sternförmiger,grauer,CF,grauer sternförmiger Aufkleber,7.6277325673004786
+großer,sternförmiger,grauer,DFC,großer sternförmiger grauer Aufkleber,8.126734037403487
+großer,sternförmiger,grauer,DCF,großer grauer sternförmiger Aufkleber,8.117614829324136
+großer,sternförmiger,grauer,FDC,sternförmiger großer grauer Aufkleber,8.23512575914447
+großer,sternförmiger,grauer,FCD,sternförmiger grauer großer Aufkleber,8.48926177060203
+großer,sternförmiger,grauer,CDF,grauer großer sternförmiger Aufkleber,7.951286968021697
+großer,sternförmiger,grauer,CFD,grauer sternförmiger großer Aufkleber,8.53033397935048
+großer,sternförmiger,blauer,D,großer Aufkleber,12.4045527588068
+großer,sternförmiger,blauer,F,sternförmiger Aufkleber,8.053528590167828
+großer,sternförmiger,blauer,C,blauer Aufkleber,6.907315816962466
+großer,sternförmiger,blauer,DF,großer sternförmiger Aufkleber,7.81671054372155
+großer,sternförmiger,blauer,DC,großer blauer Aufkleber,11.943686033775506
+großer,sternförmiger,blauer,FD,sternförmiger großer Aufkleber,8.976605568698952
+großer,sternförmiger,blauer,FC,sternförmiger blauer Aufkleber,8.74434919008416
+großer,sternförmiger,blauer,CD,blauer großer Aufkleber,8.272580140849373
+großer,sternförmiger,blauer,CF,blauer sternförmiger Aufkleber,6.360164020132095
+großer,sternförmiger,blauer,DFC,großer sternförmiger blauer Aufkleber,8.574414508627825
+großer,sternförmiger,blauer,DCF,großer blauer sternförmiger Aufkleber,8.054183500102312
+großer,sternförmiger,blauer,FDC,sternförmiger großer blauer Aufkleber,8.942929301868205
+großer,sternförmiger,blauer,FCD,sternförmiger blauer großer Aufkleber,9.530847866259094
+großer,sternförmiger,blauer,CDF,blauer großer sternförmiger Aufkleber,6.366691105697641
+großer,sternförmiger,blauer,CFD,blauer sternförmiger großer Aufkleber,7.488141816831774
+großer,sternförmiger,brauner,D,großer Aufkleber,12.4045527588068
+großer,sternförmiger,brauner,F,sternförmiger Aufkleber,8.053528590167828
+großer,sternförmiger,brauner,C,brauner Aufkleber,9.18976361790073
+großer,sternförmiger,brauner,DF,großer sternförmiger Aufkleber,7.81671054372155
+großer,sternförmiger,brauner,DC,großer brauner Aufkleber,9.329412842470727
+großer,sternförmiger,brauner,FD,sternförmiger großer Aufkleber,8.976605568698952
+großer,sternförmiger,brauner,FC,sternförmiger brauner Aufkleber,7.91786592344483
+großer,sternförmiger,brauner,CD,brauner großer Aufkleber,9.775337714795059
+großer,sternförmiger,brauner,CF,brauner sternförmiger Aufkleber,6.940392896237609
+großer,sternförmiger,brauner,DFC,großer sternförmiger brauner Aufkleber,7.818506730527161
+großer,sternförmiger,brauner,DCF,großer brauner sternförmiger Aufkleber,7.428924062556089
+großer,sternförmiger,brauner,FDC,sternförmiger großer brauner Aufkleber,8.081658072542949
+großer,sternförmiger,brauner,FCD,sternförmiger brauner großer Aufkleber,8.636834579862576
+großer,sternförmiger,brauner,CDF,brauner großer sternförmiger Aufkleber,7.41833199505475
+großer,sternförmiger,brauner,CFD,brauner sternförmiger großer Aufkleber,7.931766249218165
+großer,herzförmiger,schwarzer,D,großer Aufkleber,12.4045527588068
+großer,herzförmiger,schwarzer,F,herzförmiger Aufkleber,7.296037195818017
+großer,herzförmiger,schwarzer,C,schwarzer Aufkleber,7.177800499211044
+großer,herzförmiger,schwarzer,DF,großer herzförmiger Aufkleber,6.469853866921792
+großer,herzförmiger,schwarzer,DC,großer schwarzer Aufkleber,13.125803968966798
+großer,herzförmiger,schwarzer,FD,herzförmiger großer Aufkleber,8.375132707628262
+großer,herzförmiger,schwarzer,FC,herzförmiger schwarzer Aufkleber,7.6441858035432215
+großer,herzförmiger,schwarzer,CD,schwarzer großer Aufkleber,9.453083502914364
+großer,herzförmiger,schwarzer,CF,schwarzer herzförmiger Aufkleber,4.830848885240173
+großer,herzförmiger,schwarzer,DFC,großer herzförmiger schwarzer Aufkleber,7.332529162608691
+großer,herzförmiger,schwarzer,DCF,großer schwarzer herzförmiger Aufkleber,6.626192975862119
+großer,herzförmiger,schwarzer,FDC,herzförmiger großer schwarzer Aufkleber,8.088402544179184
+großer,herzförmiger,schwarzer,FCD,herzförmiger schwarzer großer Aufkleber,8.654335534414376
+großer,herzförmiger,schwarzer,CDF,schwarzer großer herzförmiger Aufkleber,5.962176903978659
+großer,herzförmiger,schwarzer,CFD,schwarzer herzförmiger großer Aufkleber,6.308391738777563
+großer,herzförmiger,grüner,D,großer Aufkleber,12.4045527588068
+großer,herzförmiger,grüner,F,herzförmiger Aufkleber,7.296037195818017
+großer,herzförmiger,grüner,C,grüner Aufkleber,7.179986742668811
+großer,herzförmiger,grüner,DF,großer herzförmiger Aufkleber,6.469853866921792
+großer,herzförmiger,grüner,DC,großer grüner Aufkleber,12.01491712017926
+großer,herzförmiger,grüner,FD,herzförmiger großer Aufkleber,8.375132707628262
+großer,herzförmiger,grüner,FC,herzförmiger grüner Aufkleber,8.233202993107824
+großer,herzförmiger,grüner,CD,grüner großer Aufkleber,8.988906455819263
+großer,herzförmiger,grüner,CF,grüner herzförmiger Aufkleber,4.840373284444956
+großer,herzförmiger,grüner,DFC,großer herzförmiger grüner Aufkleber,7.68552424143521
+großer,herzförmiger,grüner,DCF,großer grüner herzförmiger Aufkleber,6.370435511972226
+großer,herzförmiger,grüner,FDC,herzförmiger großer grüner Aufkleber,8.529012464661252
+großer,herzförmiger,grüner,FCD,herzförmiger grüner großer Aufkleber,9.149346319086764
+großer,herzförmiger,grüner,CDF,grüner großer herzförmiger Aufkleber,5.915707191715529
+großer,herzförmiger,grüner,CFD,grüner herzförmiger großer Aufkleber,6.243033515935471
+großer,herzförmiger,orangener,D,großer Aufkleber,12.4045527588068
+großer,herzförmiger,orangener,F,herzförmiger Aufkleber,7.296037195818017
+großer,herzförmiger,orangener,C,orangener Aufkleber,14.59599834779812
+großer,herzförmiger,orangener,DF,großer herzförmiger Aufkleber,6.469853866921792
+großer,herzförmiger,orangener,DC,großer orangener Aufkleber,8.750840503258326
+großer,herzförmiger,orangener,FD,herzförmiger großer Aufkleber,8.375132707628262
+großer,herzförmiger,orangener,FC,herzförmiger orangener Aufkleber,7.614425237707318
+großer,herzförmiger,orangener,CD,orangener großer Aufkleber,13.479654833464009
+großer,herzförmiger,orangener,CF,orangener herzförmiger Aufkleber,7.798737668775782
+großer,herzförmiger,orangener,DFC,großer herzförmiger orangener Aufkleber,6.939373383083294
+großer,herzförmiger,orangener,DCF,großer orangener herzförmiger Aufkleber,6.22737002402549
+großer,herzförmiger,orangener,FDC,herzförmiger großer orangener Aufkleber,7.864906961799343
+großer,herzförmiger,orangener,FCD,herzförmiger orangener großer Aufkleber,8.581940469429583
+großer,herzförmiger,orangener,CDF,orangener großer herzförmiger Aufkleber,8.181922582134758
+großer,herzförmiger,orangener,CFD,orangener herzförmiger großer Aufkleber,8.689462646887803
+großer,herzförmiger,grauer,D,großer Aufkleber,12.4045527588068
+großer,herzförmiger,grauer,F,herzförmiger Aufkleber,7.296037195818017
+großer,herzförmiger,grauer,C,grauer Aufkleber,10.716230720094364
+großer,herzförmiger,grauer,DF,großer herzförmiger Aufkleber,6.469853866921792
+großer,herzförmiger,grauer,DC,großer grauer Aufkleber,9.824892107884066
+großer,herzförmiger,grauer,FD,herzförmiger großer Aufkleber,8.375132707628262
+großer,herzförmiger,grauer,FC,herzförmiger grauer Aufkleber,7.470357434871353
+großer,herzförmiger,grauer,CD,grauer großer Aufkleber,10.270433114931672
+großer,herzförmiger,grauer,CF,grauer herzförmiger Aufkleber,6.5147434025887945
+großer,herzförmiger,grauer,DFC,großer herzförmiger grauer Aufkleber,7.184328960637796
+großer,herzförmiger,grauer,DCF,großer grauer herzförmiger Aufkleber,6.61495700531595
+großer,herzförmiger,grauer,FDC,herzförmiger großer grauer Aufkleber,7.879970578223115
+großer,herzförmiger,grauer,FCD,herzförmiger grauer großer Aufkleber,8.127014025159092
+großer,herzförmiger,grauer,CDF,grauer großer herzförmiger Aufkleber,6.909736644756011
+großer,herzförmiger,grauer,CFD,grauer herzförmiger großer Aufkleber,7.489535564234367
+großer,herzförmiger,blauer,D,großer Aufkleber,12.4045527588068
+großer,herzförmiger,blauer,F,herzförmiger Aufkleber,7.296037195818017
+großer,herzförmiger,blauer,C,blauer Aufkleber,6.907315816962466
+großer,herzförmiger,blauer,DF,großer herzförmiger Aufkleber,6.469853866921792
+großer,herzförmiger,blauer,DC,großer blauer Aufkleber,11.943686033775506
+großer,herzförmiger,blauer,FD,herzförmiger großer Aufkleber,8.375132707628262
+großer,herzförmiger,blauer,FC,herzförmiger blauer Aufkleber,8.225829752900033
+großer,herzförmiger,blauer,CD,blauer großer Aufkleber,8.272580140849373
+großer,herzförmiger,blauer,CF,blauer herzförmiger Aufkleber,4.815137926118554
+großer,herzförmiger,blauer,DFC,großer herzförmiger blauer Aufkleber,7.736304526859566
+großer,herzförmiger,blauer,DCF,großer blauer herzförmiger Aufkleber,6.339625851966059
+großer,herzförmiger,blauer,FDC,herzförmiger großer blauer Aufkleber,8.523878438567694
+großer,herzförmiger,blauer,FCD,herzförmiger blauer großer Aufkleber,8.999576947409395
+großer,herzförmiger,blauer,CDF,blauer großer herzförmiger Aufkleber,5.541796614786981
+großer,herzförmiger,blauer,CFD,blauer herzförmiger großer Aufkleber,6.118342654406917
+großer,herzförmiger,brauner,D,großer Aufkleber,12.4045527588068
+großer,herzförmiger,brauner,F,herzförmiger Aufkleber,7.296037195818017
+großer,herzförmiger,brauner,C,brauner Aufkleber,9.18976361790073
+großer,herzförmiger,brauner,DF,großer herzförmiger Aufkleber,6.469853866921792
+großer,herzförmiger,brauner,DC,großer brauner Aufkleber,9.329412842470727
+großer,herzförmiger,brauner,FD,herzförmiger großer Aufkleber,8.375132707628262
+großer,herzförmiger,brauner,FC,herzförmiger brauner Aufkleber,7.551771957997996
+großer,herzförmiger,brauner,CD,brauner großer Aufkleber,9.775337714795059
+großer,herzförmiger,brauner,CF,brauner herzförmiger Aufkleber,5.69916452394477
+großer,herzförmiger,brauner,DFC,großer herzförmiger brauner Aufkleber,7.192815960492573
+großer,herzförmiger,brauner,DCF,großer brauner herzförmiger Aufkleber,6.200974126771066
+großer,herzförmiger,brauner,FDC,herzförmiger großer brauner Aufkleber,7.705404060013743
+großer,herzförmiger,brauner,FCD,herzförmiger brauner großer Aufkleber,8.196131100818441
+großer,herzförmiger,brauner,CDF,brauner großer herzförmiger Aufkleber,6.3418396126479655
+großer,herzförmiger,brauner,CFD,brauner herzförmiger großer Aufkleber,6.883753505863658
+großer,diamantförmiger,schwarzer,D,großer Aufkleber,12.4045527588068
+großer,diamantförmiger,schwarzer,F,diamantförmiger Aufkleber,5.601018152680986
+großer,diamantförmiger,schwarzer,C,schwarzer Aufkleber,7.177800499211044
+großer,diamantförmiger,schwarzer,DF,großer diamantförmiger Aufkleber,5.031312551016467
+großer,diamantförmiger,schwarzer,DC,großer schwarzer Aufkleber,13.125803968966798
+großer,diamantförmiger,schwarzer,FD,diamantförmiger großer Aufkleber,6.460207016069595
+großer,diamantförmiger,schwarzer,FC,diamantförmiger schwarzer Aufkleber,6.057507575282518
+großer,diamantförmiger,schwarzer,CD,schwarzer großer Aufkleber,9.453083502914364
+großer,diamantförmiger,schwarzer,CF,schwarzer diamantförmiger Aufkleber,5.034114148399022
+großer,diamantförmiger,schwarzer,DFC,großer diamantförmiger schwarzer Aufkleber,5.606326913147819
+großer,diamantförmiger,schwarzer,DCF,großer schwarzer diamantförmiger Aufkleber,6.648940777126441
+großer,diamantförmiger,schwarzer,FDC,diamantförmiger großer schwarzer Aufkleber,6.467719906189886
+großer,diamantförmiger,schwarzer,FCD,diamantförmiger schwarzer großer Aufkleber,6.970591673867911
+großer,diamantförmiger,schwarzer,CDF,schwarzer großer diamantförmiger Aufkleber,6.1728412047429275
+großer,diamantförmiger,schwarzer,CFD,schwarzer diamantförmiger großer Aufkleber,5.772465593534309
+großer,diamantförmiger,grüner,D,großer Aufkleber,12.4045527588068
+großer,diamantförmiger,grüner,F,diamantförmiger Aufkleber,5.601018152680986
+großer,diamantförmiger,grüner,C,grüner Aufkleber,7.179986742668811
+großer,diamantförmiger,grüner,DF,großer diamantförmiger Aufkleber,5.031312551016467
+großer,diamantförmiger,grüner,DC,großer grüner Aufkleber,12.01491712017926
+großer,diamantförmiger,grüner,FD,diamantförmiger großer Aufkleber,6.460207016069595
+großer,diamantförmiger,grüner,FC,diamantförmiger grüner Aufkleber,6.433827629149654
+großer,diamantförmiger,grüner,CD,grüner großer Aufkleber,8.988906455819263
+großer,diamantförmiger,grüner,CF,grüner diamantförmiger Aufkleber,4.826749162808905
+großer,diamantförmiger,grüner,DFC,großer diamantförmiger grüner Aufkleber,5.710586579719172
+großer,diamantförmiger,grüner,DCF,großer grüner diamantförmiger Aufkleber,6.6002366662633
+großer,diamantförmiger,grüner,FDC,diamantförmiger großer grüner Aufkleber,6.69442330897362
+großer,diamantförmiger,grüner,FCD,diamantförmiger grüner großer Aufkleber,7.2756806413312916
+großer,diamantförmiger,grüner,CDF,grüner großer diamantförmiger Aufkleber,5.47320133449035
+großer,diamantförmiger,grüner,CFD,grüner diamantförmiger großer Aufkleber,5.683067635754615
+großer,diamantförmiger,orangener,D,großer Aufkleber,12.4045527588068
+großer,diamantförmiger,orangener,F,diamantförmiger Aufkleber,5.601018152680986
+großer,diamantförmiger,orangener,C,orangener Aufkleber,14.59599834779812
+großer,diamantförmiger,orangener,DF,großer diamantförmiger Aufkleber,5.031312551016467
+großer,diamantförmiger,orangener,DC,großer orangener Aufkleber,8.750840503258326
+großer,diamantförmiger,orangener,FD,diamantförmiger großer Aufkleber,6.460207016069595
+großer,diamantförmiger,orangener,FC,diamantförmiger orangener Aufkleber,6.361962270729517
+großer,diamantförmiger,orangener,CD,orangener großer Aufkleber,13.479654833464009
+großer,diamantförmiger,orangener,CF,orangener diamantförmiger Aufkleber,7.255990691599311
+großer,diamantförmiger,orangener,DFC,großer diamantförmiger orangener Aufkleber,5.8857141053356585
+großer,diamantförmiger,orangener,DCF,großer orangener diamantförmiger Aufkleber,6.178987176754161
+großer,diamantförmiger,orangener,FDC,diamantförmiger großer orangener Aufkleber,6.585018265453752
+großer,diamantförmiger,orangener,FCD,diamantförmiger orangener großer Aufkleber,7.15179741033119
+großer,diamantförmiger,orangener,CDF,orangener großer diamantförmiger Aufkleber,7.681682836945538
+großer,diamantförmiger,orangener,CFD,orangener diamantförmiger großer Aufkleber,7.751985904965236
+großer,diamantförmiger,grauer,D,großer Aufkleber,12.4045527588068
+großer,diamantförmiger,grauer,F,diamantförmiger Aufkleber,5.601018152680986
+großer,diamantförmiger,grauer,C,grauer Aufkleber,10.716230720094364
+großer,diamantförmiger,grauer,DF,großer diamantförmiger Aufkleber,5.031312551016467
+großer,diamantförmiger,grauer,DC,großer grauer Aufkleber,9.824892107884066
+großer,diamantförmiger,grauer,FD,diamantförmiger großer Aufkleber,6.460207016069595
+großer,diamantförmiger,grauer,FC,diamantförmiger grauer Aufkleber,6.298250265821484
+großer,diamantförmiger,grauer,CD,grauer großer Aufkleber,10.270433114931672
+großer,diamantförmiger,grauer,CF,grauer diamantförmiger Aufkleber,5.762066490567239
+großer,diamantförmiger,grauer,DFC,großer diamantförmiger grauer Aufkleber,6.003253240310733
+großer,diamantförmiger,grauer,DCF,großer grauer diamantförmiger Aufkleber,6.5099285762952395
+großer,diamantförmiger,grauer,FDC,diamantförmiger großer grauer Aufkleber,6.601119281227528
+großer,diamantförmiger,grauer,FCD,diamantförmiger grauer großer Aufkleber,6.898654770665015
+großer,diamantförmiger,grauer,CDF,grauer großer diamantförmiger Aufkleber,6.594213145899482
+großer,diamantförmiger,grauer,CFD,grauer diamantförmiger großer Aufkleber,6.486781775280916
+großer,diamantförmiger,blauer,D,großer Aufkleber,12.4045527588068
+großer,diamantförmiger,blauer,F,diamantförmiger Aufkleber,5.601018152680986
+großer,diamantförmiger,blauer,C,blauer Aufkleber,6.907315816962466
+großer,diamantförmiger,blauer,DF,großer diamantförmiger Aufkleber,5.031312551016467
+großer,diamantförmiger,blauer,DC,großer blauer Aufkleber,11.943686033775506
+großer,diamantförmiger,blauer,FD,diamantförmiger großer Aufkleber,6.460207016069595
+großer,diamantförmiger,blauer,FC,diamantförmiger blauer Aufkleber,6.537277945366047
+großer,diamantförmiger,blauer,CD,blauer großer Aufkleber,8.272580140849373
+großer,diamantförmiger,blauer,CF,blauer diamantförmiger Aufkleber,4.64451359423226
+großer,diamantförmiger,blauer,DFC,großer diamantförmiger blauer Aufkleber,5.954937810238542
+großer,diamantförmiger,blauer,DCF,großer blauer diamantförmiger Aufkleber,6.766947704911862
+großer,diamantförmiger,blauer,FDC,diamantförmiger großer blauer Aufkleber,6.805292268817631
+großer,diamantförmiger,blauer,FCD,diamantförmiger blauer großer Aufkleber,7.162451391586839
+großer,diamantförmiger,blauer,CDF,blauer großer diamantförmiger Aufkleber,5.796263176899498
+großer,diamantförmiger,blauer,CFD,blauer diamantförmiger großer Aufkleber,5.501022623955125
+großer,diamantförmiger,brauner,D,großer Aufkleber,12.4045527588068
+großer,diamantförmiger,brauner,F,diamantförmiger Aufkleber,5.601018152680986
+großer,diamantförmiger,brauner,C,brauner Aufkleber,9.18976361790073
+großer,diamantförmiger,brauner,DF,großer diamantförmiger Aufkleber,5.031312551016467
+großer,diamantförmiger,brauner,DC,großer brauner Aufkleber,9.329412842470727
+großer,diamantförmiger,brauner,FD,diamantförmiger großer Aufkleber,6.460207016069595
+großer,diamantförmiger,brauner,FC,diamantförmiger brauner Aufkleber,6.318020015503466
+großer,diamantförmiger,brauner,CD,brauner großer Aufkleber,9.775337714795059
+großer,diamantförmiger,brauner,CF,brauner diamantförmiger Aufkleber,5.318435522840115
+großer,diamantförmiger,brauner,DFC,großer diamantförmiger brauner Aufkleber,5.744952840945182
+großer,diamantförmiger,brauner,DCF,großer brauner diamantförmiger Aufkleber,6.749750815686788
+großer,diamantförmiger,brauner,FDC,diamantförmiger großer brauner Aufkleber,6.348183708672992
+großer,diamantförmiger,brauner,FCD,diamantförmiger brauner großer Aufkleber,6.85019693895791
+großer,diamantförmiger,brauner,CDF,brauner großer diamantförmiger Aufkleber,6.345722292973844
+großer,diamantförmiger,brauner,CFD,brauner diamantförmiger großer Aufkleber,6.042512751919092
