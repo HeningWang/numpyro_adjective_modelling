@@ -30,6 +30,7 @@ from modelSpecification import (
     likelihood_function_global_speaker_hier,
     likelihood_function_incremental_speaker_hier,
     likelihood_function_incremental_speaker_lowcol_hier,
+    likelihood_function_contextual_hier,
     likelihood_function_global_speaker_static_hier,
     likelihood_function_incremental_speaker_frozen_hier,
     likelihood_function_incremental_lm_only_hier,
@@ -74,6 +75,7 @@ HIER_MODELS = {
     "reported": (likelihood_function_reported_hier, 0.85, 5),
     "reported_lowcol": (likelihood_function_reported_lowcol_hier, 0.85, 5),
     "incremental_lowcol": (likelihood_function_incremental_speaker_lowcol_hier, 0.85, 5),
+    "contextual": (likelihood_function_contextual_hier, 0.85, 5),
     "v5":        (likelihood_function_v5_hier,       0.85, 5),
     "v5_no_lm":  (likelihood_function_v5_no_lm_hier, 0.85, 5),
     "v5a":       (likelihood_function_v5a_hier,      0.85, 5),
@@ -142,7 +144,7 @@ def run_inference(
         coords={"item": np.arange(N)},
         dims={"obs": ["item"]},
     )
-    az.to_netcdf(numpyro_data, output_file_name)
+    numpyro_data.to_netcdf(output_file_name)
     print(f"Saved: {output_file_name}")
 
 
@@ -195,7 +197,8 @@ def run_inference_hier(
         # Filter every per-trial array; participant_idx must stay 0-indexed dense.
         for k in ("states_train", "empirical_seq_flat", "empirical_flat",
                   "empirical_seq", "seq_mask", "sharpness_idx",
-                  "is_colour_sufficient"):
+                  "is_colour_sufficient", "sufficient_dim",
+                  "has_one_word_solution"):
             if k in data and data[k] is not None:
                 data[k] = data[k][keep_idx_jnp]
         data["df"] = df.iloc[keep_idx].reset_index(drop=True)
@@ -217,11 +220,15 @@ def run_inference_hier(
     n_participants     = data["n_participants"]
     is_colour_sufficient = data.get("is_colour_sufficient")  # only present for v5 family
     is_sharp             = data.get("sharpness_idx")         # 1 if sharp, 0 if blurred
+    sufficient_dim        = data.get("sufficient_dim")
+    has_one_word_solution = data.get("has_one_word_solution")
 
     V5_FAMILY = {"v5", "v5_no_lm", "v5a", "v5b",
                  "v5_inc_static", "v5_global", "v5_global_static",
                  "v5_global_full", "v5_global_static_full"}
+    CONTEXTUAL_FAMILY = {"contextual"}
     is_v5 = canonical_speaker_type in V5_FAMILY
+    is_contextual = canonical_speaker_type in CONTEXTUAL_FAMILY
 
     print(f"Hierarchical model: {n_participants} participants, {len(states_train)} observations")
     print(f"Output file: {output_file_name}")
@@ -236,7 +243,12 @@ def run_inference_hier(
         )
     model, target_accept_prob, max_tree_depth = HIER_MODELS[canonical_speaker_type]
 
-    kernel = NUTS(model, target_accept_prob=target_accept_prob, max_tree_depth=max_tree_depth)
+    # dense_mass for the (alpha_D, alpha_C, alpha_F, log_beta_lm) ridge was
+    # tried (commits f9e5afe, 75d2b12) but produced WORSE diagnostics than
+    # diagonal mass: chains adapted to different basins during warmup and
+    # could not mix between them. Diagonal mass is the stable default here.
+    kernel = NUTS(model, target_accept_prob=target_accept_prob,
+                  max_tree_depth=max_tree_depth)
     mcmc = MCMC(
         kernel,
         num_warmup=num_warmup,
@@ -258,6 +270,12 @@ def run_inference_hier(
             raise RuntimeError("v5 family requires sharpness_idx in data dict; rebuild dataset")
         base_kwargs["is_colour_sufficient"] = is_colour_sufficient
         base_kwargs["is_sharp"]             = is_sharp
+    if is_contextual:
+        if sufficient_dim is None or has_one_word_solution is None or is_sharp is None:
+            raise RuntimeError("contextual model requires sufficient_dim, has_one_word_solution, and sharpness_idx")
+        base_kwargs["sufficient_dim"] = sufficient_dim
+        base_kwargs["has_one_word_solution"] = has_one_word_solution
+        base_kwargs["is_sharp"] = is_sharp
 
     mcmc.run(rng_key_, **base_kwargs)
     mcmc.print_summary(exclude_deterministic=False)
@@ -282,7 +300,7 @@ def run_inference_hier(
         coords=coords,
         dims=dims,
     )
-    az.to_netcdf(numpyro_data, output_file_name)
+    numpyro_data.to_netcdf(output_file_name)
     assert os.path.exists(output_file_name), f"Save failed: {output_file_name} not found"
     print(f"Saved: {output_file_name}")
 
@@ -296,6 +314,7 @@ if __name__ == "__main__":
                                  "incremental_extended", "incremental_mixture",
                                  "incremental_mixture_simple",
                                  "reported", "reported_lowcol", "incremental_lowcol",
+                                 "contextual",
                                  "v5", "v5_no_lm", "v5a", "v5b",
                                  "v5_inc_static", "v5_global", "v5_global_static",
                                  "v5_global_full", "v5_global_static_full"],
