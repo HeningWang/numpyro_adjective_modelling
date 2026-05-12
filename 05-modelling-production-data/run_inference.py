@@ -144,7 +144,7 @@ def run_inference(
         coords={"item": np.arange(N)},
         dims={"obs": ["item"]},
     )
-    az.to_netcdf(numpyro_data, output_file_name)
+    numpyro_data.to_netcdf(output_file_name)
     print(f"Saved: {output_file_name}")
 
 
@@ -300,7 +300,7 @@ def run_inference_hier(
         coords=coords,
         dims=dims,
     )
-    az.to_netcdf(numpyro_data, output_file_name)
+    numpyro_data.to_netcdf(output_file_name)
     assert os.path.exists(output_file_name), f"Save failed: {output_file_name} not found"
     print(f"Saved: {output_file_name}")
 
