@@ -75,7 +75,7 @@ HIER_MODELS = {
     "reported": (likelihood_function_reported_hier, 0.85, 5),
     "reported_lowcol": (likelihood_function_reported_lowcol_hier, 0.85, 5),
     "incremental_lowcol": (likelihood_function_incremental_speaker_lowcol_hier, 0.85, 5),
-    "contextual": (likelihood_function_contextual_hier, 0.9, 5),
+    "contextual": (likelihood_function_contextual_hier, 0.85, 5),
     "v5":        (likelihood_function_v5_hier,       0.85, 5),
     "v5_no_lm":  (likelihood_function_v5_no_lm_hier, 0.85, 5),
     "v5a":       (likelihood_function_v5a_hier,      0.85, 5),
@@ -243,22 +243,12 @@ def run_inference_hier(
         )
     model, target_accept_prob, max_tree_depth = HIER_MODELS[canonical_speaker_type]
 
-    nuts_kwargs = dict(
-        target_accept_prob=target_accept_prob,
-        max_tree_depth=max_tree_depth,
-    )
-    if is_contextual:
-        # The contextual model has a strong posterior ridge between
-        # (alpha_D, alpha_C, alpha_F, log_beta_lm) -- on dc-only data,
-        # alpha_C and alpha_F co-vary (form is rarely the disambiguator),
-        # and alpha_D trades off with the LM weight. A diagonal mass matrix
-        # cannot align step sizes to this ridge, so NUTS mixes poorly.
-        # A per-block dense mass on these 4 globals fixes the geometry
-        # without changing the model. Everything else stays diagonal.
-        nuts_kwargs["dense_mass"] = [
-            ("alpha_D", "alpha_C", "alpha_F", "log_beta_lm")
-        ]
-    kernel = NUTS(model, **nuts_kwargs)
+    # dense_mass for the (alpha_D, alpha_C, alpha_F, log_beta_lm) ridge was
+    # tried (commits f9e5afe, 75d2b12) but produced WORSE diagnostics than
+    # diagonal mass: chains adapted to different basins during warmup and
+    # could not mix between them. Diagonal mass is the stable default here.
+    kernel = NUTS(model, target_accept_prob=target_accept_prob,
+                  max_tree_depth=max_tree_depth)
     mcmc = MCMC(
         kernel,
         num_warmup=num_warmup,
