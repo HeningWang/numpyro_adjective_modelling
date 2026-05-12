@@ -123,6 +123,7 @@ def discover_ncs() -> list[tuple[str, Path]]:
         ("iter8-freewf", "mcmc_results_contextual_freewf_speaker_hier_dc_warmup4000_samples2000_chains4_vast_iter8.nc"),
         ("iter9-anchored", "mcmc_results_contextual_anchored_speaker_hier_dc_warmup4000_samples2000_chains4_vast_iter9.nc"),
         ("iter10-freewf+anchored", "mcmc_results_contextual_freewf_anchored_speaker_hier_dc_warmup4000_samples2000_chains4_vast_iter10.nc"),
+        ("iter11-anchored+freewf+2gamma", "mcmc_results_contextual_anchored_gamma_speaker_hier_dc_warmup4000_samples2000_chains4_vast_iter11.nc"),
     ]
     for label, name in canonical:
         out.append((label, inf / name))
