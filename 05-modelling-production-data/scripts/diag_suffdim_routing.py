@@ -23,6 +23,7 @@ Produces:
 """
 from __future__ import annotations
 
+import argparse
 import sys
 import warnings
 from pathlib import Path
@@ -53,11 +54,12 @@ DC_CONDITIONS = ("erdc", "zrdc", "brdc")
 SUFFDIM_LABEL = {-1: "both/none", 0: "D", 1: "C", 2: "F"}
 
 
-def main() -> None:
-    if not NC_PATH.exists():
-        raise SystemExit(f".nc file not found: {NC_PATH}")
-    print(f"Loading: {NC_PATH.relative_to(PROJECT_ROOT)}")
-    idata = az.from_netcdf(str(NC_PATH))
+def main(nc_path: Path | None = None, out_prefix: str = "iter1") -> None:
+    nc_path = Path(nc_path) if nc_path is not None else NC_PATH
+    if not nc_path.exists():
+        raise SystemExit(f".nc file not found: {nc_path}")
+    print(f"Loading: {nc_path}")
+    idata = az.from_netcdf(str(nc_path))
     pp = idata.posterior_predictive["obs"]
     n_items_obs = int(idata.observed_data["obs"].sizes["item"])
     print(f"  pp items: {pp.sizes['item']},  observed items: {n_items_obs}")
@@ -161,7 +163,7 @@ def main() -> None:
     # Drop cells with zero trials (impossible suff_dim × condition × relevant_property combos)
     merged = merged[merged["n_cell"] > 0].reset_index(drop=True)
 
-    out_csv = RES_DIR / "iter1_suffdim_crosstab.csv"
+    out_csv = RES_DIR / f"{out_prefix}_suffdim_crosstab.csv"
     merged.to_csv(out_csv, index=False)
     print(f"  [csv] {out_csv.relative_to(PROJECT_ROOT)}")
 
@@ -213,7 +215,7 @@ def main() -> None:
 
     lines = [
         "Iter-1 routing diagnostic (Lever 1: raw LM, no gammas)",
-        f"  .nc file:  {NC_PATH.name}",
+        f"  .nc file:  {nc_path.name}",
         f"  dc trials: {len(df_dc)} (113 participants)",
         "",
         "Trial counts per (suff_dim, condition):",
@@ -231,7 +233,7 @@ def main() -> None:
         top_signed.to_string(index=False, float_format=lambda x: f"{x:.3f}"),
     ]
     summary_text = "\n".join(lines)
-    out_txt = RES_DIR / "iter1_suffdim_summary.txt"
+    out_txt = RES_DIR / f"{out_prefix}_suffdim_summary.txt"
     out_txt.write_text(summary_text + "\n")
     print()
     print(summary_text)
@@ -240,4 +242,8 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="suff_dim routing diagnostic.")
+    parser.add_argument("--nc-path", type=str, default=None)
+    parser.add_argument("--out-prefix", type=str, default="iter1")
+    args = parser.parse_args()
+    main(nc_path=args.nc_path, out_prefix=args.out_prefix)
