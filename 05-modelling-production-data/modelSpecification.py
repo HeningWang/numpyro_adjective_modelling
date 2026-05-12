@@ -555,13 +555,16 @@ N_WORDS = jnp.sum(jnp.array(utterance_list) >= 0, axis=1).astype(jnp.float32)  #
 # LM residual after removing mean log probability within each length class.
 # This lets the LM prior encode within-length naturalness/order while separate
 # length parameters encode over-/under-specification pressure.
-_log_lm_np = np.log(np.clip(np.asarray(LM_PRIOR_15), 1e-12, None))
+_log_lm_np = np.log(np.clip(np.asarray(LM_PRIOR_15), 1e-12, None)).astype(np.float32)
 _n_words_np = np.asarray(N_WORDS)
 _lm_resid_np = np.zeros_like(_log_lm_np, dtype=np.float32)
 for _length in np.unique(_n_words_np):
     _mask = _n_words_np == _length
     _lm_resid_np[_mask] = _log_lm_np[_mask] - np.mean(_log_lm_np[_mask])
 LOG_LM_RESID_15 = jnp.asarray(_lm_resid_np)
+# Raw LM log-prob (length-cumulative) for contextual model variant: lets a single
+# LM coefficient absorb both within-length naturalness AND length pressure.
+LOG_LM_RAW_15 = jnp.asarray(_log_lm_np)
 
 # ── First word of each utterance (for first-word intercepts) ─────────────────
 # D=0, C=1, F=2 → one-hot masks for first-word bias
@@ -1516,20 +1519,17 @@ def incremental_speaker_contextual(
     k:                     float = 0.50,
     wf:                    float = 1.00,
     beta_lm:               float = 1.00,
-    gamma_1:               float = 0.0,
-    gamma_2:               float = 0.0,
-    gamma_oneword_1:       float = 0.0,
-    gamma_oneword_2:       float = 0.0,
-    gamma_sharp_1:         float = 0.0,
-    gamma_sharp_2:         float = 0.0,
     epsilon:               float = 0.01,
 ) -> jnp.ndarray:
     """Incremental speaker with a context-sensitive production layer.
 
-    The context effects are defined through task variables rather than named
-    condition cells: first-word sufficiency, existence of a one-word solution,
-    and perceptual sharpness. The LM term is length-residualized so length
-    pressure is estimated separately from within-length linguistic naturalness.
+    Lever 1: the LM term uses raw GPT-2 log-probability (LOG_LM_RAW_15) so the
+    cumulative per-token negative log-prob naturally penalizes longer
+    utterances, absorbing what was previously six separate gamma_* coefficients
+    (gamma_1/2 length, gamma_oneword_1/2 one-word availability, gamma_sharp_1/2
+    perceptual sharpness). Only first-word sufficiency boost (lambda_suff)
+    remains as an explicit context term — it is theoretically the
+    "lead-with-the-disambiguator" prior and is not in the LM signal.
     """
 
     eps            = 1e-8
@@ -1537,11 +1537,17 @@ def incremental_speaker_contextual(
     n_obj          = states.shape[0]
     alpha_vec      = jnp.array([alpha_D, alpha_C, alpha_F])
 
+    # has_one_word_solution and is_sharp are kept in the signature for stable
+    # vmap-in-axes but are no longer consumed: the raw LM prior absorbs both
+    # one-word and sharpness-conditioned length pressure.
+    del has_one_word_solution
+    del is_sharp
+
     sizes = states[:, 0]
     size_sort_idx = jnp.argsort(sizes)
     sizes_sorted = sizes[size_sort_idx]
 
-    log_lm_resid = beta_lm * LOG_LM_RESID_15
+    log_lm_raw = beta_lm * LOG_LM_RAW_15
 
     colors = states[:, 1]
     forms  = states[:, 2]
@@ -1634,15 +1640,7 @@ def incremental_speaker_contextual(
         jnp.arange(T),
     )
 
-    k_extra = jnp.maximum(N_WORDS - 1, 0)
-    gamma_1_eff = gamma_1 + gamma_oneword_1 * has_one_word_solution + gamma_sharp_1 * is_sharp
-    gamma_2_eff = gamma_2 + gamma_oneword_2 * has_one_word_solution + gamma_sharp_2 * is_sharp
-    length_bonus = (
-        gamma_1_eff * (k_extra >= 1).astype(jnp.float32)
-        + gamma_2_eff * (k_extra >= 2).astype(jnp.float32)
-    )
-
-    log_unnorm = log_lm_resid + log_final_scores + length_bonus
+    log_unnorm = log_lm_raw + log_final_scores
     model_probs = jax.nn.softmax(log_unnorm)
     return (1.0 - epsilon) * model_probs + epsilon / n_utt
 
@@ -1813,12 +1811,6 @@ vectorized_incremental_speaker_contextual_hier = jax.vmap(
              None, # k
              None, # wf
              None, # beta_lm
-             None, # gamma_1
-             None, # gamma_2
-             None, # gamma_oneword_1
-             None, # gamma_oneword_2
-             None, # gamma_sharp_1
-             None, # gamma_sharp_2
              None, # epsilon
              ),
 )
@@ -1828,15 +1820,13 @@ def jitted_speaker_contextual_hier(
     states, sufficient_dim, has_one_word_solution, is_sharp,
     alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
     lambda_suff, color_semval, form_semval, k, wf, beta_lm,
-    gamma_1, gamma_2, gamma_oneword_1, gamma_oneword_2,
-    gamma_sharp_1, gamma_sharp_2, epsilon,
+    epsilon,
 ):
     return vectorized_incremental_speaker_contextual_hier(
         states, sufficient_dim, has_one_word_solution, is_sharp,
         alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
         lambda_suff, color_semval, form_semval, k, wf, beta_lm,
-        gamma_1, gamma_2, gamma_oneword_1, gamma_oneword_2,
-        gamma_sharp_1, gamma_sharp_2, epsilon,
+        epsilon,
     )
 
 
@@ -2138,7 +2128,7 @@ likelihood_function_incremental_speaker_lowcol_hier = _make_extended_v1_model(
 # ── Contextual compromise model: generic condition-sensitive production layer ─
 
 def _make_contextual_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
-    """C2-contextual: per-dim alpha + length-residualized LM + generic context predictors."""
+    """C2-contextual (Lever 1): per-dim alpha + RAW LM + lambda_suff. No gammas."""
     def model(states=None, empirical=None,
               participant_idx=None, n_participants=None,
               sufficient_dim=None, has_one_word_solution=None, is_sharp=None):
@@ -2149,12 +2139,6 @@ def _make_contextual_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
         alpha_C         = numpyro.sample("alpha_C",         dist.HalfNormal(5.0))
         alpha_F         = numpyro.sample("alpha_F",         dist.HalfNormal(5.0))
         lambda_suff     = numpyro.sample("lambda_suff",     dist.Normal(0.0, 1.0))
-        gamma_1         = numpyro.sample("gamma_1",         dist.Normal(0.0, 1.0))
-        gamma_2         = numpyro.sample("gamma_2",         dist.Normal(0.0, 1.0))
-        gamma_oneword_1 = numpyro.sample("gamma_oneword_1", dist.Normal(0.0, 1.0))
-        gamma_oneword_2 = numpyro.sample("gamma_oneword_2", dist.Normal(0.0, 1.0))
-        gamma_sharp_1   = numpyro.sample("gamma_sharp_1",   dist.Normal(0.0, 1.0))
-        gamma_sharp_2   = numpyro.sample("gamma_sharp_2",   dist.Normal(0.0, 1.0))
         epsilon         = numpyro.sample("epsilon",         dist.Beta(1.0, 50.0))
         tau             = numpyro.sample("tau",             dist.HalfNormal(0.2))
 
@@ -2174,8 +2158,7 @@ def _make_contextual_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
                 states, sufficient_dim, has_one_word_solution, is_sharp,
                 alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
                 lambda_suff, color_semval, form_semval, k, wf, beta_lm,
-                gamma_1, gamma_2, gamma_oneword_1, gamma_oneword_2,
-                gamma_sharp_1, gamma_sharp_2, epsilon,
+                epsilon,
             )
             if empirical is None:
                 numpyro.sample("obs", dist.Categorical(probs=probs))
