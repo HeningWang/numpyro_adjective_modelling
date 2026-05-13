@@ -3141,6 +3141,285 @@ likelihood_function_contextual_anchored_gamma_fixedwf_pcalpha_hier = (
 )
 
 
+def incremental_speaker_contextual_anchored_gamma_sharpbonus(
+    states:                jnp.ndarray,
+    sufficient_dim:        int,
+    has_one_word_solution: float,
+    is_sharp:              float,
+    alpha_D:               float = 3.0,
+    alpha_C:               float = 3.0,
+    alpha_F:               float = 3.0,
+    lambda_suff:           float = 0.0,
+    color_semval:          float = 0.95,
+    form_semval:           float = 0.80,
+    k:                     float = 0.50,
+    wf:                    float = 1.00,
+    beta_lm:               float = 1.00,
+    gamma_base:            float = 0.0,
+    gamma_oneword:         float = 0.0,
+    gamma_sharp:           float = 0.0,
+    epsilon:               float = 0.01,
+) -> jnp.ndarray:
+    """Iter 16: anchored speaker + sharpness-gated length-bonus boost.
+
+    Identical to ``incremental_speaker_contextual_anchored_gamma`` (Iter 11+),
+    except the length-bonus aggregation adds one extra positive coefficient
+    that fires on blurred trials:
+
+        gamma_eff = gamma_base
+                  + gamma_oneword * has_one_word_solution
+                  + gamma_sharp   * (1 - is_sharp)
+        length_bonus[u] = gamma_eff * max(N_WORDS[u] - 1, 0)
+
+    Sharp trials: gamma_eff = gamma_base + gamma_oneword * has_one_word_solution
+                  (unchanged from Iter 12+).
+    Blurred trials: gamma_eff gets an extra positive term gamma_sharp, pushing
+                    the speaker toward longer utterances on blurred trials
+                    across all conditions.
+
+    Targets the dominant residual on the merged main (Iter 14, PR #3):
+    erdc-blurred over-stopping (P(STOP | first=D) = 34% model vs 7% human).
+    Speaker-side mechanism — captures over-specification under perceptual
+    ambiguity by adding length-bonus rather than perturbing listener-side
+    semantics (which Iter 15's blur_R_inflation failed to identify).
+
+    Risk: applies to ALL blurred trials. zrdc-blurred already shows the model
+    slightly under-predicting bare C (residual -0.111); a positive
+    gamma_sharp would push the model toward longer utterances there too. The
+    data-vs-prior balance resolves the trade-off.
+    """
+
+    eps            = 1e-8
+    referent_index = 0
+    n_obj          = states.shape[0]
+    alpha_vec      = jnp.array([alpha_D, alpha_C, alpha_F])
+
+    sizes = states[:, 0]
+    size_sort_idx = jnp.argsort(sizes)
+    sizes_sorted = sizes[size_sort_idx]
+
+    log_lm_raw = beta_lm * LOG_LM_RAW_15
+
+    colors = states[:, 1]
+    forms  = states[:, 2]
+    log_color_sem = jnp.log(
+        jnp.where(colors == 1, color_semval, 1.0 - color_semval) + eps
+    )
+    log_form_sem  = jnp.log(
+        jnp.where(forms  == 1, form_semval,  1.0 - form_semval)  + eps
+    )
+
+    uniform     = jnp.ones(n_obj) / n_obj
+    init_scores = jnp.zeros(n_utt)
+    init_posts  = jnp.broadcast_to(uniform, (n_utt, n_obj))
+
+    def _anchored_size_sem(sizes_arr, post):
+        post_sorted = post[size_sort_idx]
+        post_sorted = post_sorted / (jnp.sum(post_sorted) + eps)
+        cdf = jnp.cumsum(post_sorted)
+        idx_low  = jnp.minimum(jnp.searchsorted(cdf, 0.2, side="left"),
+                                sizes_sorted.shape[0] - 1)
+        idx_high = jnp.minimum(jnp.searchsorted(cdf, 0.8, side="left"),
+                                sizes_sorted.shape[0] - 1)
+        x_min_mid = sizes_sorted[idx_low]
+        x_max_mid = sizes_sorted[idx_high]
+        theta_k   = x_max_mid - k * (x_max_mid - x_min_mid)
+        denom     = wf * jnp.sqrt(
+            sizes_arr ** 2 + theta_k ** 2 + SIZE_ANCHOR_R ** 2 + eps
+        )
+        z         = (sizes_arr - theta_k) / denom
+        return 0.5 * (1.0 + lax.erf(z / jnp.sqrt(2.0)))
+
+    def step(carry, t):
+        log_scores, per_utt_posts = carry
+
+        cand_mask_t = CANDIDATE_MASK[t]
+        active_t    = ACTIVE_POS[t]
+
+        def size_log_sem_for_utt(post):
+            sv = _anchored_size_sem(sizes, post)
+            return jnp.log(jnp.clip(sv, eps))
+
+        size_log_sems = jax.vmap(size_log_sem_for_utt)(per_utt_posts)
+
+        log_sem_static = jnp.stack([log_color_sem, log_form_sem], axis=0)
+        log_sem_table = jnp.concatenate([
+            size_log_sems[:, None, :],
+            jnp.broadcast_to(log_sem_static[None, :, :], (n_utt, 2, n_obj)),
+        ], axis=1)
+
+        token_pres_t = TOKEN_PRESENT[t]
+        log_prod_sem = jnp.einsum(
+            "uav, uvo -> uao",
+            token_pres_t,
+            log_sem_table,
+        )
+
+        log_per_utt_posts = jnp.log(jnp.clip(per_utt_posts, eps))
+        log_updated = log_per_utt_posts[:, None, :] + log_prod_sem
+        log_Z = jax.scipy.special.logsumexp(log_updated, axis=-1)
+        log_norm = log_updated - log_Z[:, :, None]
+        log_L_ref = log_norm[:, :, referent_index]
+
+        first_step_gate = (t == 0).astype(jnp.float32)
+        suff_boost_vec = lambda_suff * first_step_gate * jnp.array([
+            sufficient_dim == 0,
+            sufficient_dim == 1,
+            sufficient_dim == 2,
+        ], dtype=jnp.float32)
+        logits = jnp.where(
+            cand_mask_t,
+            alpha_vec[None, :] * log_L_ref + suff_boost_vec[None, :],
+            -1e9,
+        )
+        local_probs = jax.nn.softmax(logits, axis=-1)
+
+        chosen = jnp.sum(local_probs * ACTUAL_TOK_ONEHOT[t], axis=-1)
+        chosen = jnp.where(active_t, chosen, 1.0)
+        log_chosen = jnp.where(active_t, jnp.log(jnp.clip(chosen, eps)), 0.0)
+
+        selected_log_sem = jnp.einsum(
+            "uv, uvo -> uo",
+            ACTUAL_TOK_ONEHOT[t],
+            log_sem_table,
+        )
+        log_updated_post = log_per_utt_posts + jnp.where(
+            active_t[:, None],
+            selected_log_sem,
+            0.0,
+        )
+        log_Z_post = jax.scipy.special.logsumexp(
+            log_updated_post, axis=-1, keepdims=True
+        )
+        new_per_utt_posts = jnp.exp(log_updated_post - log_Z_post)
+
+        return (log_scores + log_chosen, new_per_utt_posts), None
+
+    (log_final_scores, _), _ = lax.scan(
+        step,
+        (init_scores, init_posts),
+        jnp.arange(T),
+    )
+
+    # 3-gamma length bonus: base, has_one_word_solution modulation, AND
+    # sharpness modulation (positive when blurred).
+    blur_gate = 1.0 - is_sharp
+    gamma_eff = (
+        gamma_base
+        + gamma_oneword * has_one_word_solution
+        + gamma_sharp * blur_gate
+    )
+    length_bonus = gamma_eff * jnp.maximum(N_WORDS - 1.0, 0.0)
+
+    log_unnorm = log_lm_raw + log_final_scores + length_bonus
+    model_probs = jax.nn.softmax(log_unnorm)
+    return (1.0 - epsilon) * model_probs + epsilon / n_utt
+
+
+vectorized_incremental_speaker_contextual_anchored_gamma_sharpbonus_hier = jax.vmap(
+    incremental_speaker_contextual_anchored_gamma_sharpbonus,
+    in_axes=(0,    # states
+             0,    # sufficient_dim
+             0,    # has_one_word_solution
+             0,    # is_sharp
+             0,    # alpha_D
+             0,    # alpha_C
+             0,    # alpha_F
+             None, # lambda_suff
+             None, # color_semval
+             None, # form_semval
+             None, # k
+             None, # wf
+             None, # beta_lm
+             None, # gamma_base
+             None, # gamma_oneword
+             None, # gamma_sharp
+             None, # epsilon
+             ),
+)
+
+
+@jax.jit
+def jitted_speaker_contextual_anchored_gamma_sharpbonus_hier(
+    states, sufficient_dim, has_one_word_solution, is_sharp,
+    alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+    lambda_suff, color_semval, form_semval, k, wf, beta_lm,
+    gamma_base, gamma_oneword, gamma_sharp, epsilon,
+):
+    return vectorized_incremental_speaker_contextual_anchored_gamma_sharpbonus_hier(
+        states, sufficient_dim, has_one_word_solution, is_sharp,
+        alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+        lambda_suff, color_semval, form_semval, k, wf, beta_lm,
+        gamma_base, gamma_oneword, gamma_sharp, epsilon,
+    )
+
+
+def _make_contextual_pcalpha_gammasharp_model(
+    color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+):
+    """Iter 16: Iter 14 (pcalpha) + sharpness-gated length-bonus boost.
+
+    Identical to ``_make_contextual_anchored_gamma_fixedwf_pcalpha_model`` except
+    it samples ``gamma_sharp ~ HalfNormal(2.0)`` and uses
+    ``jitted_speaker_contextual_anchored_gamma_sharpbonus_hier`` which adds
+    ``gamma_sharp * (1 - is_sharp)`` to the length-bonus aggregation.
+
+    Targets the per-step diagnostic finding on Iter 14 main: speakers in
+    erdc-blurred trials almost never stop after D (7% vs model's 34%), and
+    speakers in erdc-sharp trials stop ~35% (which the model already gets
+    right). The single new positive coefficient captures the sharpness-
+    conditional over-specification at the speaker side rather than the
+    listener side (which Iter 15's blur_R_inflation failed to identify).
+
+    +1 named coefficient over Iter 14 → 10 named + 339 latents.
+    """
+    def model(states=None, empirical=None,
+              participant_idx=None, n_participants=None,
+              sufficient_dim=None, has_one_word_solution=None, is_sharp=None,
+              condition_idx=None, n_conditions=None):
+        log_beta_lm   = numpyro.sample("log_beta_lm",   dist.Normal(0.0, 0.5))
+        beta_lm       = jnp.exp(log_beta_lm)
+
+        alpha_D       = numpyro.sample("alpha_D",       dist.HalfNormal(5.0))
+        alpha_C       = numpyro.sample("alpha_C",       dist.HalfNormal(5.0))
+        alpha_F       = numpyro.sample("alpha_F",       dist.HalfNormal(5.0))
+        lambda_suff   = numpyro.sample("lambda_suff",   dist.Normal(0.0, 1.0))
+        gamma_base    = numpyro.sample("gamma_base",    dist.Normal(0.0, 2.0))
+        gamma_oneword = numpyro.sample("gamma_oneword", dist.Normal(0.0, 2.0))
+        gamma_sharp   = numpyro.sample("gamma_sharp",   dist.HalfNormal(2.0))
+        epsilon       = numpyro.sample("epsilon",       dist.Beta(1.0, 50.0))
+        tau           = numpyro.sample("tau",           dist.HalfNormal(0.2))
+
+        # Non-centered (P × C) random effect on the shared per-trial alpha offset.
+        with numpyro.plate("conditions_p", n_conditions, dim=-1):
+            with numpyro.plate("participants", n_participants, dim=-2):
+                delta_raw = numpyro.sample("delta_raw", dist.Normal(0.0, 1.0))
+        delta = numpyro.deterministic("delta", delta_raw * tau)
+
+        per_trial_offset = delta[participant_idx, condition_idx]
+        alpha_D_per_trial = jnp.maximum(alpha_D + per_trial_offset, 0.0)
+        alpha_C_per_trial = jnp.maximum(alpha_C + per_trial_offset, 0.0)
+        alpha_F_per_trial = jnp.maximum(alpha_F + per_trial_offset, 0.0)
+
+        with numpyro.plate("data", len(states)):
+            probs = jitted_speaker_contextual_anchored_gamma_sharpbonus_hier(
+                states, sufficient_dim, has_one_word_solution, is_sharp,
+                alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+                lambda_suff, color_semval, form_semval, k, wf, beta_lm,
+                gamma_base, gamma_oneword, gamma_sharp, epsilon,
+            )
+            if empirical is None:
+                numpyro.sample("obs", dist.Categorical(probs=probs))
+            else:
+                numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+    return model
+
+
+likelihood_function_contextual_pcalpha_gammasharp_hier = _make_contextual_pcalpha_gammasharp_model(
+    color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+)
+
+
 # =============================================================================
 # V5 LIKELIHOOD FACTORIES  (v5: full, v5a: lambda_C only, v5b: gamma only)
 # =============================================================================
