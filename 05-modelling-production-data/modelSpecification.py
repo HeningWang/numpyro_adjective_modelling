@@ -3700,6 +3700,7 @@ def incremental_speaker_contextual_anchored_gamma_sharpbonus_formmod_canon(
     gamma_oneword:         float = 0.0,
     gamma_sharp:           float = 0.0,
     epsilon:               float = 0.01,
+    recursive:             bool  = True,
 ) -> jnp.ndarray:
     """Iter 18: Iter 17 (formmod) + two penalties from the iter-18 diagnostic.
 
@@ -3842,7 +3843,13 @@ def incremental_speaker_contextual_anchored_gamma_sharpbonus_formmod_canon(
         )
         new_per_utt_posts = jnp.exp(log_updated_post - log_Z_post)
 
-        return (log_scores + log_chosen, new_per_utt_posts), None
+        # 2x2 SEMANTICS factor: recursive carries the Bayesian-updated
+        # posterior across tokens (default = best model); static (recursive
+        # =False) freezes it at the uniform prior every step (contextual
+        # analogue of incremental_speaker_frozen). Python bool closed over
+        # -> compile-time branch, no traced control flow.
+        carried_posts = new_per_utt_posts if recursive else per_utt_posts
+        return (log_scores + log_chosen, carried_posts), None
 
     (log_final_scores, _), _ = lax.scan(
         step,
@@ -3900,24 +3907,25 @@ vectorized_incremental_speaker_contextual_anchored_gamma_sharpbonus_formmod_cano
              None, # gamma_oneword
              None, # gamma_sharp
              None, # epsilon
+             None, # recursive (2x2 semantics factor; static Python bool)
              ),
 )
 
 
-@jax.jit
+@partial(jax.jit, static_argnames=("recursive",))
 def jitted_speaker_contextual_anchored_gamma_sharpbonus_formmod_canon_hier(
     states, sufficient_dim, has_one_word_solution, is_sharp,
     alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
     lambda_suff, lambda_form_mod, gamma_len3_erdc, lambda_noncanon,
     color_semval, form_semval, k, wf, beta_lm,
-    gamma_base, gamma_oneword, gamma_sharp, epsilon,
+    gamma_base, gamma_oneword, gamma_sharp, epsilon, recursive=True,
 ):
     return vectorized_incremental_speaker_contextual_anchored_gamma_sharpbonus_formmod_canon_hier(
         states, sufficient_dim, has_one_word_solution, is_sharp,
         alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
         lambda_suff, lambda_form_mod, gamma_len3_erdc, lambda_noncanon,
         color_semval, form_semval, k, wf, beta_lm,
-        gamma_base, gamma_oneword, gamma_sharp, epsilon,
+        gamma_base, gamma_oneword, gamma_sharp, epsilon, recursive,
     )
 
 
