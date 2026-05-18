@@ -4057,6 +4057,84 @@ likelihood_function_contextual_pcalpha_canon_betafixed_hier = (
 )
 
 
+def _make_contextual_pcalpha_canon_parsimony_model(
+    color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+):
+    """Parsimony model: iter-18 (``contextual_pcalpha_canon``) minus its two
+    free parameter drops, both PROVEN zero-cost in the May-2026 session:
+
+    1. ``log_beta_lm`` FIXED at the iter-17 posterior median
+       (exp(LOG_BETA_LM_FIXED_ITER17) ≈ 6.738) — the β_lm-fixed ablation
+       (``contextual_pcalpha_canon_betafixed``) gave R² identical to iter-18
+       and ``lambda_noncanon`` unchanged, so the LM temperature is free to pin.
+    2. ``gamma_len3_erdc`` DROPPED entirely — its iter-18 joint posterior
+       collapsed to ≈0.04 [0.00,0.10] (data-dead); the speaker fn still takes
+       the argument so we simply pass a constant 0.0 (term ≡ 0).
+
+    Net: iter-18's 13 named → **11 named coefficients + 339 latents**
+    (``delta_raw``, 113 participants × 3 conditions). Fixed constants
+    unchanged: ``color_semval=0.971``, ``form_semval=0.50``, ``k=0.5``,
+    ``wf=WF_FIXED_ITER11_MEDIAN``, plus ``beta_lm`` now constant.
+
+    Expected fit: ≈ iter-18 (R²(all) ≈ R²(emp≥.02) ≈ 0.919) at the smallest
+    coefficient set with no remaining data-dead/redundant term — the starting
+    point of the parsimony-vs-fit frontier (memo §7.8).
+    """
+    beta_lm_fixed = float(np.exp(LOG_BETA_LM_FIXED_ITER17))
+
+    def model(states=None, empirical=None,
+              participant_idx=None, n_participants=None,
+              sufficient_dim=None, has_one_word_solution=None, is_sharp=None,
+              condition_idx=None, n_conditions=None):
+        beta_lm       = jnp.asarray(beta_lm_fixed)  # FIXED (not sampled)
+
+        alpha_D       = numpyro.sample("alpha_D",       dist.HalfNormal(5.0))
+        alpha_C       = numpyro.sample("alpha_C",       dist.HalfNormal(5.0))
+        alpha_F       = numpyro.sample("alpha_F",       dist.HalfNormal(5.0))
+        lambda_suff   = numpyro.sample("lambda_suff",   dist.Normal(0.0, 1.0))
+        lambda_form_mod = numpyro.sample("lambda_form_mod", dist.Normal(0.0, 2.0))
+        lambda_noncanon = numpyro.sample("lambda_noncanon", dist.HalfNormal(2.0))
+        gamma_base    = numpyro.sample("gamma_base",    dist.Normal(0.0, 2.0))
+        gamma_oneword = numpyro.sample("gamma_oneword", dist.Normal(0.0, 2.0))
+        gamma_sharp   = numpyro.sample("gamma_sharp",   dist.HalfNormal(2.0))
+        epsilon       = numpyro.sample("epsilon",       dist.Beta(1.0, 50.0))
+        tau           = numpyro.sample("tau",           dist.HalfNormal(0.2))
+
+        # gamma_len3_erdc DROPPED (data-dead in iter-18); term ≡ 0.
+        gamma_len3_erdc = 0.0
+
+        with numpyro.plate("conditions_p", n_conditions, dim=-1):
+            with numpyro.plate("participants", n_participants, dim=-2):
+                delta_raw = numpyro.sample("delta_raw", dist.Normal(0.0, 1.0))
+        delta = numpyro.deterministic("delta", delta_raw * tau)
+
+        per_trial_offset = delta[participant_idx, condition_idx]
+        alpha_D_per_trial = jnp.maximum(alpha_D + per_trial_offset, 0.0)
+        alpha_C_per_trial = jnp.maximum(alpha_C + per_trial_offset, 0.0)
+        alpha_F_per_trial = jnp.maximum(alpha_F + per_trial_offset, 0.0)
+
+        with numpyro.plate("data", len(states)):
+            probs = jitted_speaker_contextual_anchored_gamma_sharpbonus_formmod_canon_hier(
+                states, sufficient_dim, has_one_word_solution, is_sharp,
+                alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+                lambda_suff, lambda_form_mod, gamma_len3_erdc, lambda_noncanon,
+                color_semval, form_semval, k, wf,
+                beta_lm, gamma_base, gamma_oneword, gamma_sharp, epsilon,
+            )
+            if empirical is None:
+                numpyro.sample("obs", dist.Categorical(probs=probs))
+            else:
+                numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+    return model
+
+
+likelihood_function_contextual_pcalpha_canon_parsimony_hier = (
+    _make_contextual_pcalpha_canon_parsimony_model(
+        color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+    )
+)
+
+
 def _make_contextual_pcalpha_gammasharp_model(
     color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
 ):
