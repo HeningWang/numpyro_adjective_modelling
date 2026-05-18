@@ -42,6 +42,7 @@ from modelSpecification import (
     likelihood_function_contextual_pcalpha_formmod_hier,
     likelihood_function_contextual_pcalpha_canon_hier,
     likelihood_function_contextual_pcalpha_canon_betafixed_hier,
+    likelihood_function_contextual_pcalpha_canon_parsimony_hier,
     likelihood_function_global_speaker_static_hier,
     likelihood_function_incremental_speaker_frozen_hier,
     likelihood_function_incremental_lm_only_hier,
@@ -98,6 +99,7 @@ HIER_MODELS = {
     "contextual_pcalpha_formmod": (likelihood_function_contextual_pcalpha_formmod_hier, 0.85, 5),
     "contextual_pcalpha_canon": (likelihood_function_contextual_pcalpha_canon_hier, 0.85, 5),
     "contextual_pcalpha_canon_betafixed": (likelihood_function_contextual_pcalpha_canon_betafixed_hier, 0.85, 5),
+    "contextual_pcalpha_canon_parsimony": (likelihood_function_contextual_pcalpha_canon_parsimony_hier, 0.85, 5),
     "v5":        (likelihood_function_v5_hier,       0.85, 5),
     "v5_no_lm":  (likelihood_function_v5_no_lm_hier, 0.85, 5),
     "v5a":       (likelihood_function_v5a_hier,      0.85, 5),
@@ -276,6 +278,7 @@ def run_inference_hier(
         "contextual_pcalpha_formmod",
         "contextual_pcalpha_canon",
         "contextual_pcalpha_canon_betafixed",
+        "contextual_pcalpha_canon_parsimony",
     }
     # Models that take an additional (participant × condition) random effect
     # on alpha — need condition_idx and n_conditions passed through.
@@ -285,6 +288,7 @@ def run_inference_hier(
         "contextual_pcalpha_formmod",
         "contextual_pcalpha_canon",
         "contextual_pcalpha_canon_betafixed",
+        "contextual_pcalpha_canon_parsimony",
     }
     is_v5 = canonical_speaker_type in V5_FAMILY
     is_contextual = canonical_speaker_type in CONTEXTUAL_FAMILY
@@ -410,6 +414,7 @@ if __name__ == "__main__":
                                  "contextual_pcalpha_formmod",
                                  "contextual_pcalpha_canon",
                                  "contextual_pcalpha_canon_betafixed",
+                                 "contextual_pcalpha_canon_parsimony",
                                  "v5", "v5_no_lm", "v5a", "v5b",
                                  "v5_inc_static", "v5_global", "v5_global_static",
                                  "v5_global_full", "v5_global_static_full"],
