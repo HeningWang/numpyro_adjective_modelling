@@ -2506,6 +2506,13 @@ SIZE_ANCHOR_R = 5.0
 # Source: arviz median of log_wf in iter11 NC was -0.3775 → wf = 0.6856.
 WF_FIXED_ITER11_MEDIAN = 0.6856
 
+# Iter-17 (contextual_pcalpha_formmod) posterior median of log_beta_lm, used
+# only by the iter-18 β_lm-fixed ABLATION (contextual_pcalpha_canon_betafixed)
+# to test how much of lambda_noncanon is genuinely additional vs. signal the
+# free β_lm would otherwise reallocate. Source: arviz median of log_beta_lm
+# in the iter-17 NC = 1.907718 → beta_lm = 6.737698.
+LOG_BETA_LM_FIXED_ITER17 = 1.907718
+
 
 def incremental_speaker_contextual_anchored(
     states:                jnp.ndarray,
@@ -3976,6 +3983,271 @@ def _make_contextual_pcalpha_canon_model(
 
 likelihood_function_contextual_pcalpha_canon_hier = _make_contextual_pcalpha_canon_model(
     color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+)
+
+
+def _make_contextual_pcalpha_canon_betafixed_model(
+    color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+):
+    """Iter-18 ABLATION: identical to ``_make_contextual_pcalpha_canon_model``
+    but ``beta_lm`` is FIXED at the iter-17 posterior median
+    (exp(LOG_BETA_LM_FIXED_ITER17) ≈ 6.738) instead of being sampled.
+
+    Purpose: the canonical-order penalty conceptually overlaps the LM prior
+    (GPT-2 already prefers DCF > DFC by ~1.75 nat at the fitted β_lm). In the
+    free-β_lm iter-18 fit, corr(log_beta_lm, lambda_noncanon) = +0.43 and β_lm
+    dropped 6.75→6.42 when the penalty entered — so lambda_noncanon may be
+    partly reallocated LM signal. Pinning β_lm removes that freedom: if
+    lambda_noncanon still lands ≈2.5–2.6 and R² holds ≈0.919, the
+    canonical-order signal is genuinely ADDITIONAL, not relabelled LM mass.
+
+    Not a ladder iteration — a robustness check. Same 339 latents; 12 named
+    (drops log_beta_lm vs iter-18's 13).
+    """
+    beta_lm_fixed = float(np.exp(LOG_BETA_LM_FIXED_ITER17))
+
+    def model(states=None, empirical=None,
+              participant_idx=None, n_participants=None,
+              sufficient_dim=None, has_one_word_solution=None, is_sharp=None,
+              condition_idx=None, n_conditions=None):
+        beta_lm       = jnp.asarray(beta_lm_fixed)  # FIXED (not sampled)
+
+        alpha_D       = numpyro.sample("alpha_D",       dist.HalfNormal(5.0))
+        alpha_C       = numpyro.sample("alpha_C",       dist.HalfNormal(5.0))
+        alpha_F       = numpyro.sample("alpha_F",       dist.HalfNormal(5.0))
+        lambda_suff   = numpyro.sample("lambda_suff",   dist.Normal(0.0, 1.0))
+        lambda_form_mod = numpyro.sample("lambda_form_mod", dist.Normal(0.0, 2.0))
+        gamma_len3_erdc = numpyro.sample("gamma_len3_erdc", dist.HalfNormal(2.0))
+        lambda_noncanon = numpyro.sample("lambda_noncanon", dist.HalfNormal(2.0))
+        gamma_base    = numpyro.sample("gamma_base",    dist.Normal(0.0, 2.0))
+        gamma_oneword = numpyro.sample("gamma_oneword", dist.Normal(0.0, 2.0))
+        gamma_sharp   = numpyro.sample("gamma_sharp",   dist.HalfNormal(2.0))
+        epsilon       = numpyro.sample("epsilon",       dist.Beta(1.0, 50.0))
+        tau           = numpyro.sample("tau",           dist.HalfNormal(0.2))
+
+        with numpyro.plate("conditions_p", n_conditions, dim=-1):
+            with numpyro.plate("participants", n_participants, dim=-2):
+                delta_raw = numpyro.sample("delta_raw", dist.Normal(0.0, 1.0))
+        delta = numpyro.deterministic("delta", delta_raw * tau)
+
+        per_trial_offset = delta[participant_idx, condition_idx]
+        alpha_D_per_trial = jnp.maximum(alpha_D + per_trial_offset, 0.0)
+        alpha_C_per_trial = jnp.maximum(alpha_C + per_trial_offset, 0.0)
+        alpha_F_per_trial = jnp.maximum(alpha_F + per_trial_offset, 0.0)
+
+        with numpyro.plate("data", len(states)):
+            probs = jitted_speaker_contextual_anchored_gamma_sharpbonus_formmod_canon_hier(
+                states, sufficient_dim, has_one_word_solution, is_sharp,
+                alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+                lambda_suff, lambda_form_mod, gamma_len3_erdc, lambda_noncanon,
+                color_semval, form_semval, k, wf,
+                beta_lm, gamma_base, gamma_oneword, gamma_sharp, epsilon,
+            )
+            if empirical is None:
+                numpyro.sample("obs", dist.Categorical(probs=probs))
+            else:
+                numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+    return model
+
+
+likelihood_function_contextual_pcalpha_canon_betafixed_hier = (
+    _make_contextual_pcalpha_canon_betafixed_model(
+        color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+    )
+)
+
+
+def _make_contextual_pcalpha_canon_parsimony_model(
+    color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+    drop: tuple = (), free: tuple = (),
+):
+    """Parsimony model: iter-18 (``contextual_pcalpha_canon``) minus its two
+    free parameter drops, both PROVEN zero-cost in the May-2026 session:
+
+    1. ``log_beta_lm`` FIXED at the iter-17 posterior median
+       (exp(LOG_BETA_LM_FIXED_ITER17) ≈ 6.738) — the β_lm-fixed ablation
+       (``contextual_pcalpha_canon_betafixed``) gave R² identical to iter-18
+       and ``lambda_noncanon`` unchanged, so the LM temperature is free to pin.
+    2. ``gamma_len3_erdc`` DROPPED entirely — its iter-18 joint posterior
+       collapsed to ≈0.04 [0.00,0.10] (data-dead); the speaker fn still takes
+       the argument so we simply pass a constant 0.0 (term ≡ 0).
+
+    Net: iter-18's 13 named → **11 named coefficients + 339 latents**
+    (``delta_raw``, 113 participants × 3 conditions). Fixed constants
+    unchanged: ``color_semval=0.971``, ``form_semval=0.50``, ``k=0.5``,
+    ``wf=WF_FIXED_ITER11_MEDIAN``, plus ``beta_lm`` now constant.
+
+    Expected fit: ≈ iter-18 (R²(all) ≈ R²(emp≥.02) ≈ 0.919) at the smallest
+    coefficient set with no remaining data-dead/redundant term — the starting
+    point of the parsimony-vs-fit frontier (memo §7.8).
+
+    ``drop``: a tuple of named coefficients to PIN at 0.0 (not sampled) for the
+    leave-one-out parsimony frontier (memo §7.8 step 3). Supported:
+    ``alpha_C``, ``alpha_F``, ``lambda_suff``, ``gamma_sharp``. Default ``()``
+    is the 11-named base parsimony model (behaviour identical to before this
+    arg was added — the running base NC is unaffected). Each drop removes one
+    sampled coefficient (11→10) by zeroing its contribution.
+
+    ``free``: a tuple of currently-FIXED constants to instead SAMPLE (memo
+    §7.10 fixed-constant diagnostic). Supported: ``color_semval`` (csv),
+    ``form_semval`` (fsv), ``k``, ``wf``. Default ``()`` keeps all four fixed
+    (behaviour identical to before this arg was added). Priors: csv, fsv ~
+    Uniform(0.5, 0.999) (a semantic value below 0.5 would invert the
+    predicate, so the lower bound is the vacuous point); k ~ Uniform(0, 1)
+    (anchor fraction); wf via ``log_wf ~ Normal(-1.0, 0.5)`` (the established
+    iter-8 freewf convention, prior bulk wf≈0.22–0.61). Each freed constant
+    adds one sampled named parameter.
+    """
+    beta_lm_fixed = float(np.exp(LOG_BETA_LM_FIXED_ITER17))
+    drop = frozenset(drop)
+    _valid_drops = {"alpha_C", "alpha_F", "lambda_suff", "gamma_sharp"}
+    _bad = drop - _valid_drops
+    if _bad:
+        raise ValueError(f"Unsupported parsimony drop(s): {sorted(_bad)}; "
+                          f"supported: {sorted(_valid_drops)}")
+    free = frozenset(free)
+    _valid_free = {"color_semval", "form_semval", "k", "wf"}
+    _bad_free = free - _valid_free
+    if _bad_free:
+        raise ValueError(f"Unsupported free constant(s): {sorted(_bad_free)}; "
+                          f"supported: {sorted(_valid_free)}")
+
+    def model(states=None, empirical=None,
+              participant_idx=None, n_participants=None,
+              sufficient_dim=None, has_one_word_solution=None, is_sharp=None,
+              condition_idx=None, n_conditions=None):
+        beta_lm       = jnp.asarray(beta_lm_fixed)  # FIXED (not sampled)
+
+        alpha_D       = numpyro.sample("alpha_D",       dist.HalfNormal(5.0))
+        alpha_C = (0.0 if "alpha_C" in drop
+                   else numpyro.sample("alpha_C", dist.HalfNormal(5.0)))
+        alpha_F = (0.0 if "alpha_F" in drop
+                   else numpyro.sample("alpha_F", dist.HalfNormal(5.0)))
+        lambda_suff = (0.0 if "lambda_suff" in drop
+                       else numpyro.sample("lambda_suff", dist.Normal(0.0, 1.0)))
+        lambda_form_mod = numpyro.sample("lambda_form_mod", dist.Normal(0.0, 2.0))
+        lambda_noncanon = numpyro.sample("lambda_noncanon", dist.HalfNormal(2.0))
+        gamma_base    = numpyro.sample("gamma_base",    dist.Normal(0.0, 2.0))
+        gamma_oneword = numpyro.sample("gamma_oneword", dist.Normal(0.0, 2.0))
+        gamma_sharp = (0.0 if "gamma_sharp" in drop
+                       else numpyro.sample("gamma_sharp", dist.HalfNormal(2.0)))
+        epsilon       = numpyro.sample("epsilon",       dist.Beta(1.0, 50.0))
+        tau           = numpyro.sample("tau",           dist.HalfNormal(0.2))
+
+        # Fixed semantic/size constants — SAMPLE the ones named in `free`,
+        # otherwise use the closure constant (default: all four fixed).
+        csv_r = (numpyro.sample("color_semval", dist.Uniform(0.5, 0.999))
+                 if "color_semval" in free else color_semval)
+        fsv_r = (numpyro.sample("form_semval", dist.Uniform(0.5, 0.999))
+                 if "form_semval" in free else form_semval)
+        k_r = (numpyro.sample("k", dist.Uniform(0.0, 1.0))
+               if "k" in free else k)
+        if "wf" in free:
+            log_wf = numpyro.sample("log_wf", dist.Normal(-1.0, 0.5))
+            wf_r = jnp.exp(log_wf)
+        else:
+            wf_r = wf
+
+        # gamma_len3_erdc DROPPED (data-dead in iter-18); term ≡ 0.
+        gamma_len3_erdc = 0.0
+
+        with numpyro.plate("conditions_p", n_conditions, dim=-1):
+            with numpyro.plate("participants", n_participants, dim=-2):
+                delta_raw = numpyro.sample("delta_raw", dist.Normal(0.0, 1.0))
+        delta = numpyro.deterministic("delta", delta_raw * tau)
+
+        per_trial_offset = delta[participant_idx, condition_idx]
+        alpha_D_per_trial = jnp.maximum(alpha_D + per_trial_offset, 0.0)
+        alpha_C_per_trial = jnp.maximum(alpha_C + per_trial_offset, 0.0)
+        alpha_F_per_trial = jnp.maximum(alpha_F + per_trial_offset, 0.0)
+
+        with numpyro.plate("data", len(states)):
+            probs = jitted_speaker_contextual_anchored_gamma_sharpbonus_formmod_canon_hier(
+                states, sufficient_dim, has_one_word_solution, is_sharp,
+                alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+                lambda_suff, lambda_form_mod, gamma_len3_erdc, lambda_noncanon,
+                csv_r, fsv_r, k_r, wf_r,
+                beta_lm, gamma_base, gamma_oneword, gamma_sharp, epsilon,
+            )
+            if empirical is None:
+                numpyro.sample("obs", dist.Categorical(probs=probs))
+            else:
+                numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+    return model
+
+
+likelihood_function_contextual_pcalpha_canon_parsimony_hier = (
+    _make_contextual_pcalpha_canon_parsimony_model(
+        color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+    )
+)
+
+# --- Leave-one-out parsimony frontier (memo §7.8 step 3): each drops ONE
+# coefficient from the 11-named base parsimony model (11→10 named). ---
+likelihood_function_contextual_pcalpha_canon_parsimony_no_gammasharp_hier = (
+    _make_contextual_pcalpha_canon_parsimony_model(
+        color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+        drop=("gamma_sharp",),
+    )
+)
+likelihood_function_contextual_pcalpha_canon_parsimony_no_lambdasuff_hier = (
+    _make_contextual_pcalpha_canon_parsimony_model(
+        color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+        drop=("lambda_suff",),
+    )
+)
+likelihood_function_contextual_pcalpha_canon_parsimony_no_alphaF_hier = (
+    _make_contextual_pcalpha_canon_parsimony_model(
+        color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+        drop=("alpha_F",),
+    )
+)
+
+# --- Fixed-constant diagnostic (memo §7.10): on top of the RECOMMENDED model
+# (drop=alpha_F), free each currently-fixed constant — separately and jointly
+# — to test free-vs-fix and locate the data-optimal value. Each freed
+# constant adds one sampled named parameter (10 → 11; freeall4 → 14). ---
+likelihood_function_contextual_pcalpha_canon_parsimony_no_alphaF_freecsv_hier = (
+    _make_contextual_pcalpha_canon_parsimony_model(
+        color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+        drop=("alpha_F",), free=("color_semval",),
+    )
+)
+likelihood_function_contextual_pcalpha_canon_parsimony_no_alphaF_freefsv_hier = (
+    _make_contextual_pcalpha_canon_parsimony_model(
+        color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+        drop=("alpha_F",), free=("form_semval",),
+    )
+)
+likelihood_function_contextual_pcalpha_canon_parsimony_no_alphaF_freek_hier = (
+    _make_contextual_pcalpha_canon_parsimony_model(
+        color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+        drop=("alpha_F",), free=("k",),
+    )
+)
+likelihood_function_contextual_pcalpha_canon_parsimony_no_alphaF_freewf_hier = (
+    _make_contextual_pcalpha_canon_parsimony_model(
+        color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+        drop=("alpha_F",), free=("wf",),
+    )
+)
+likelihood_function_contextual_pcalpha_canon_parsimony_no_alphaF_freeall4_hier = (
+    _make_contextual_pcalpha_canon_parsimony_model(
+        color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+        drop=("alpha_F",),
+        free=("color_semval", "form_semval", "k", "wf"),
+    )
+)
+
+# Re-fixed colour-semval at the free-csv posterior mean (≈0.59). The free-csv
+# refit gained +0.022 R² but mixed poorly (ESS≈191); re-fixing recovers the
+# gain at 10 named params with clean sampling — the manuscript-model
+# candidate if it confirms (memo §7.10). Still all-fixed: 10 named.
+likelihood_function_contextual_pcalpha_canon_parsimony_no_alphaF_csv059_hier = (
+    _make_contextual_pcalpha_canon_parsimony_model(
+        color_semval=0.59, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+        drop=("alpha_F",),
+    )
 )
 
 
