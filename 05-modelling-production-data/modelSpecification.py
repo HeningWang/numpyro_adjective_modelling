@@ -4239,6 +4239,17 @@ likelihood_function_contextual_pcalpha_canon_parsimony_no_alphaF_freeall4_hier =
     )
 )
 
+# Re-fixed colour-semval at the free-csv posterior mean (≈0.59). The free-csv
+# refit gained +0.022 R² but mixed poorly (ESS≈191); re-fixing recovers the
+# gain at 10 named params with clean sampling — the manuscript-model
+# candidate if it confirms (memo §7.10). Still all-fixed: 10 named.
+likelihood_function_contextual_pcalpha_canon_parsimony_no_alphaF_csv059_hier = (
+    _make_contextual_pcalpha_canon_parsimony_model(
+        color_semval=0.59, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+        drop=("alpha_F",),
+    )
+)
+
 
 def _make_contextual_pcalpha_gammasharp_model(
     color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
