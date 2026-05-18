@@ -576,6 +576,29 @@ F_PRESENT_15 = jnp.asarray(
     (np.asarray(utterance_list) == 2).any(axis=1).astype(np.float32)
 )  # (n_utt,)
 
+# ── Iter 18 levers ───────────────────────────────────────────────────────────
+# (2) Non-canonical-order mask: 1 if BOTH colour (1) and form (2) appear AND
+#     form precedes colour (F-before-C). These are exactly {DFC, FDC, FC, FCD}
+#     — the violations of the canonical colour-before-form adjective order
+#     (Cinque 1994; Scott 2002; Sproat & Shih 1991). All ≈0 in human data.
+def _f_before_c(row: np.ndarray) -> float:
+    pos = {}
+    for p, tok in enumerate(row):
+        if tok >= 0 and tok not in pos:
+            pos[tok] = p
+    return 1.0 if (1 in pos and 2 in pos and pos[2] < pos[1]) else 0.0
+
+
+F_BEFORE_C_15 = jnp.asarray(
+    np.array([_f_before_c(r) for r in np.asarray(utterance_list)], dtype=np.float32)
+)  # (n_utt,)
+
+# (1) 3-word mask for the erdc-gated over-specification penalty. The per-word
+#     length bonus γ·(N−1) cannot fix the erdc DF deficit (attenuating it
+#     dumps mass into the 1-word D, not the 2-word DF — verified by sweep);
+#     a flat 3-word penalty redistributes to DF proportionally instead.
+IS_3WORD_15 = jnp.asarray((np.asarray(N_WORDS) >= 3.0).astype(np.float32))  # (n_utt,)
+
 # ── C-initial mask for global-speaker v5 lambda_C boost ──────────────────────
 # 1 if the utterance starts with C (mention index 1), else 0.
 C_INITIAL_MASK = (FIRST_WORD == 1).astype(jnp.float32)  # (n_utt,)
@@ -3645,6 +3668,313 @@ def _make_contextual_pcalpha_formmod_model(
 
 
 likelihood_function_contextual_pcalpha_formmod_hier = _make_contextual_pcalpha_formmod_model(
+    color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+)
+
+
+def incremental_speaker_contextual_anchored_gamma_sharpbonus_formmod_canon(
+    states:                jnp.ndarray,
+    sufficient_dim:        int,
+    has_one_word_solution: float,
+    is_sharp:              float,
+    alpha_D:               float = 3.0,
+    alpha_C:               float = 3.0,
+    alpha_F:               float = 3.0,
+    lambda_suff:           float = 0.0,
+    lambda_form_mod:       float = 0.0,
+    gamma_len3_erdc:       float = 0.0,
+    lambda_noncanon:       float = 0.0,
+    color_semval:          float = 0.95,
+    form_semval:           float = 0.80,
+    k:                     float = 0.50,
+    wf:                    float = 1.00,
+    beta_lm:               float = 1.00,
+    gamma_base:            float = 0.0,
+    gamma_oneword:         float = 0.0,
+    gamma_sharp:           float = 0.0,
+    epsilon:               float = 0.01,
+) -> jnp.ndarray:
+    """Iter 18: Iter 17 (formmod) + two penalties from the iter-18 diagnostic.
+
+    Adds, at the utterance level alongside the LM / length / form-present
+    terms:
+
+        - gamma_len3_erdc * 1[sufficient_dim == 0] * IS_3WORD[u]   (lever 1)
+        - lambda_noncanon *                          F_BEFORE_C[u] (lever 2)
+
+    Both coefficients ~ HalfNormal(2.0) and enter as **penalties** (subtracted).
+
+    Lever 1 — erdc-gated 3-word penalty. The iter-17 residual is a DF↔DCF/DFC
+    mass split: the per-word length bonus γ·(N−1) in erdc/blurred (≈+0.89/word)
+    over-rewards the 3rd token, so the model spends DF's mass on DCF/DFC. A
+    per-word γ attenuation was rejected by sweep (it dumps mass into the
+    1-word D, not the 2-word DF). A flat 3-word penalty redistributes to DF
+    proportionally: in the sweep it lifts erdc/blurred DF 0.14→0.22 at
+    coefficient ≈1, with DFC collapsing toward the human ~0.03.
+
+    Lever 2 — global non-canonical-order penalty. F_BEFORE_C = {DFC, FDC, FC,
+    FCD}: utterances violating canonical colour-before-form adjective order
+    (Cinque 1994; Scott 2002; Sproat & Shih 1991), all ≈0 in human data. The
+    iter-17 DFC over-production is an RSA cheap-F-continuation artefact (small
+    alpha_F), NOT an LM problem (the LM residual already prefers DCF > DFC).
+    The penalty is global: canonical order is a universal constraint and the
+    sweep confirmed zero side-effects on zrdc (untouched) and brdc (DFC nudged
+    0.043→0.016, harmless).
+
+    Both LM-based fixes for these residuals were tested and rejected
+    (scripts/diag_iter18_lm_downweight.py): uniform LM scaling collapses the
+    distribution, and LM length/ordering decomposition makes DF monotonically
+    worse — the anti-DF signal is inseparable from the LM's
+    mass-concentration role. The residuals are γ-length + RSA-ordering, not
+    LM-encoded.
+
+    +2 named coefficients over Iter 17 -> 13 named + 339 latents.
+    """
+
+    eps            = 1e-8
+    referent_index = 0
+    n_obj          = states.shape[0]
+    alpha_vec      = jnp.array([alpha_D, alpha_C, alpha_F])
+
+    sizes = states[:, 0]
+    size_sort_idx = jnp.argsort(sizes)
+    sizes_sorted = sizes[size_sort_idx]
+
+    log_lm_raw = beta_lm * LOG_LM_RAW_15
+
+    colors = states[:, 1]
+    forms  = states[:, 2]
+    log_color_sem = jnp.log(
+        jnp.where(colors == 1, color_semval, 1.0 - color_semval) + eps
+    )
+    log_form_sem  = jnp.log(
+        jnp.where(forms  == 1, form_semval,  1.0 - form_semval)  + eps
+    )
+
+    uniform     = jnp.ones(n_obj) / n_obj
+    init_scores = jnp.zeros(n_utt)
+    init_posts  = jnp.broadcast_to(uniform, (n_utt, n_obj))
+
+    def _anchored_size_sem(sizes_arr, post):
+        post_sorted = post[size_sort_idx]
+        post_sorted = post_sorted / (jnp.sum(post_sorted) + eps)
+        cdf = jnp.cumsum(post_sorted)
+        idx_low  = jnp.minimum(jnp.searchsorted(cdf, 0.2, side="left"),
+                                sizes_sorted.shape[0] - 1)
+        idx_high = jnp.minimum(jnp.searchsorted(cdf, 0.8, side="left"),
+                                sizes_sorted.shape[0] - 1)
+        x_min_mid = sizes_sorted[idx_low]
+        x_max_mid = sizes_sorted[idx_high]
+        theta_k   = x_max_mid - k * (x_max_mid - x_min_mid)
+        denom     = wf * jnp.sqrt(
+            sizes_arr ** 2 + theta_k ** 2 + SIZE_ANCHOR_R ** 2 + eps
+        )
+        z         = (sizes_arr - theta_k) / denom
+        return 0.5 * (1.0 + lax.erf(z / jnp.sqrt(2.0)))
+
+    def step(carry, t):
+        log_scores, per_utt_posts = carry
+
+        cand_mask_t = CANDIDATE_MASK[t]
+        active_t    = ACTIVE_POS[t]
+
+        def size_log_sem_for_utt(post):
+            sv = _anchored_size_sem(sizes, post)
+            return jnp.log(jnp.clip(sv, eps))
+
+        size_log_sems = jax.vmap(size_log_sem_for_utt)(per_utt_posts)
+
+        log_sem_static = jnp.stack([log_color_sem, log_form_sem], axis=0)
+        log_sem_table = jnp.concatenate([
+            size_log_sems[:, None, :],
+            jnp.broadcast_to(log_sem_static[None, :, :], (n_utt, 2, n_obj)),
+        ], axis=1)
+
+        token_pres_t = TOKEN_PRESENT[t]
+        log_prod_sem = jnp.einsum(
+            "uav, uvo -> uao",
+            token_pres_t,
+            log_sem_table,
+        )
+
+        log_per_utt_posts = jnp.log(jnp.clip(per_utt_posts, eps))
+        log_updated = log_per_utt_posts[:, None, :] + log_prod_sem
+        log_Z = jax.scipy.special.logsumexp(log_updated, axis=-1)
+        log_norm = log_updated - log_Z[:, :, None]
+        log_L_ref = log_norm[:, :, referent_index]
+
+        first_step_gate = (t == 0).astype(jnp.float32)
+        suff_boost_vec = lambda_suff * first_step_gate * jnp.array([
+            sufficient_dim == 0,
+            sufficient_dim == 1,
+            sufficient_dim == 2,
+        ], dtype=jnp.float32)
+        logits = jnp.where(
+            cand_mask_t,
+            alpha_vec[None, :] * log_L_ref + suff_boost_vec[None, :],
+            -1e9,
+        )
+        local_probs = jax.nn.softmax(logits, axis=-1)
+
+        chosen = jnp.sum(local_probs * ACTUAL_TOK_ONEHOT[t], axis=-1)
+        chosen = jnp.where(active_t, chosen, 1.0)
+        log_chosen = jnp.where(active_t, jnp.log(jnp.clip(chosen, eps)), 0.0)
+
+        selected_log_sem = jnp.einsum(
+            "uv, uvo -> uo",
+            ACTUAL_TOK_ONEHOT[t],
+            log_sem_table,
+        )
+        log_updated_post = log_per_utt_posts + jnp.where(
+            active_t[:, None],
+            selected_log_sem,
+            0.0,
+        )
+        log_Z_post = jax.scipy.special.logsumexp(
+            log_updated_post, axis=-1, keepdims=True
+        )
+        new_per_utt_posts = jnp.exp(log_updated_post - log_Z_post)
+
+        return (log_scores + log_chosen, new_per_utt_posts), None
+
+    (log_final_scores, _), _ = lax.scan(
+        step,
+        (init_scores, init_posts),
+        jnp.arange(T),
+    )
+
+    blur_gate = 1.0 - is_sharp
+    gamma_eff = (
+        gamma_base
+        + gamma_oneword * has_one_word_solution
+        + gamma_sharp * blur_gate
+    )
+    length_bonus = gamma_eff * jnp.maximum(N_WORDS - 1.0, 0.0)
+
+    # Erdc-gated (sufficient_dim == 0) utterance-level F-present boost (Iter 17).
+    erdc_gate = (sufficient_dim == 0).astype(jnp.float32)
+    form_present_bonus = lambda_form_mod * erdc_gate * F_PRESENT_15
+
+    # Iter 18 penalties (subtracted).
+    len3_penalty     = gamma_len3_erdc * erdc_gate * IS_3WORD_15
+    noncanon_penalty = lambda_noncanon * F_BEFORE_C_15
+
+    log_unnorm = (
+        log_lm_raw
+        + log_final_scores
+        + length_bonus
+        + form_present_bonus
+        - len3_penalty
+        - noncanon_penalty
+    )
+    model_probs = jax.nn.softmax(log_unnorm)
+    return (1.0 - epsilon) * model_probs + epsilon / n_utt
+
+
+vectorized_incremental_speaker_contextual_anchored_gamma_sharpbonus_formmod_canon_hier = jax.vmap(
+    incremental_speaker_contextual_anchored_gamma_sharpbonus_formmod_canon,
+    in_axes=(0,    # states
+             0,    # sufficient_dim
+             0,    # has_one_word_solution
+             0,    # is_sharp
+             0,    # alpha_D
+             0,    # alpha_C
+             0,    # alpha_F
+             None, # lambda_suff
+             None, # lambda_form_mod
+             None, # gamma_len3_erdc
+             None, # lambda_noncanon
+             None, # color_semval
+             None, # form_semval
+             None, # k
+             None, # wf
+             None, # beta_lm
+             None, # gamma_base
+             None, # gamma_oneword
+             None, # gamma_sharp
+             None, # epsilon
+             ),
+)
+
+
+@jax.jit
+def jitted_speaker_contextual_anchored_gamma_sharpbonus_formmod_canon_hier(
+    states, sufficient_dim, has_one_word_solution, is_sharp,
+    alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+    lambda_suff, lambda_form_mod, gamma_len3_erdc, lambda_noncanon,
+    color_semval, form_semval, k, wf, beta_lm,
+    gamma_base, gamma_oneword, gamma_sharp, epsilon,
+):
+    return vectorized_incremental_speaker_contextual_anchored_gamma_sharpbonus_formmod_canon_hier(
+        states, sufficient_dim, has_one_word_solution, is_sharp,
+        alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+        lambda_suff, lambda_form_mod, gamma_len3_erdc, lambda_noncanon,
+        color_semval, form_semval, k, wf, beta_lm,
+        gamma_base, gamma_oneword, gamma_sharp, epsilon,
+    )
+
+
+def _make_contextual_pcalpha_canon_model(
+    color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+):
+    """Iter 18: Iter 17 (formmod) + erdc 3-word penalty + canonical-order penalty.
+
+    Adds ``gamma_len3_erdc ~ HalfNormal(2.0)`` and
+    ``lambda_noncanon ~ HalfNormal(2.0)`` over Iter 17. HalfNormal (positive,
+    entering as subtracted penalties) because both directions are
+    theory/diagnostic-determined — over-specification penalty under sufficient
+    size, and the canonical colour-before-form constraint — exactly as
+    ``gamma_sharp`` uses HalfNormal for a sign-determined length term.
+
+    +2 named coefficients over Iter 17 -> 13 named + 339 latents.
+    """
+    def model(states=None, empirical=None,
+              participant_idx=None, n_participants=None,
+              sufficient_dim=None, has_one_word_solution=None, is_sharp=None,
+              condition_idx=None, n_conditions=None):
+        log_beta_lm   = numpyro.sample("log_beta_lm",   dist.Normal(0.0, 0.5))
+        beta_lm       = jnp.exp(log_beta_lm)
+
+        alpha_D       = numpyro.sample("alpha_D",       dist.HalfNormal(5.0))
+        alpha_C       = numpyro.sample("alpha_C",       dist.HalfNormal(5.0))
+        alpha_F       = numpyro.sample("alpha_F",       dist.HalfNormal(5.0))
+        lambda_suff   = numpyro.sample("lambda_suff",   dist.Normal(0.0, 1.0))
+        lambda_form_mod = numpyro.sample("lambda_form_mod", dist.Normal(0.0, 2.0))
+        gamma_len3_erdc = numpyro.sample("gamma_len3_erdc", dist.HalfNormal(2.0))
+        lambda_noncanon = numpyro.sample("lambda_noncanon", dist.HalfNormal(2.0))
+        gamma_base    = numpyro.sample("gamma_base",    dist.Normal(0.0, 2.0))
+        gamma_oneword = numpyro.sample("gamma_oneword", dist.Normal(0.0, 2.0))
+        gamma_sharp   = numpyro.sample("gamma_sharp",   dist.HalfNormal(2.0))
+        epsilon       = numpyro.sample("epsilon",       dist.Beta(1.0, 50.0))
+        tau           = numpyro.sample("tau",           dist.HalfNormal(0.2))
+
+        # Non-centered (P × C) random effect on the shared per-trial alpha offset.
+        with numpyro.plate("conditions_p", n_conditions, dim=-1):
+            with numpyro.plate("participants", n_participants, dim=-2):
+                delta_raw = numpyro.sample("delta_raw", dist.Normal(0.0, 1.0))
+        delta = numpyro.deterministic("delta", delta_raw * tau)
+
+        per_trial_offset = delta[participant_idx, condition_idx]
+        alpha_D_per_trial = jnp.maximum(alpha_D + per_trial_offset, 0.0)
+        alpha_C_per_trial = jnp.maximum(alpha_C + per_trial_offset, 0.0)
+        alpha_F_per_trial = jnp.maximum(alpha_F + per_trial_offset, 0.0)
+
+        with numpyro.plate("data", len(states)):
+            probs = jitted_speaker_contextual_anchored_gamma_sharpbonus_formmod_canon_hier(
+                states, sufficient_dim, has_one_word_solution, is_sharp,
+                alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+                lambda_suff, lambda_form_mod, gamma_len3_erdc, lambda_noncanon,
+                color_semval, form_semval, k, wf,
+                beta_lm, gamma_base, gamma_oneword, gamma_sharp, epsilon,
+            )
+            if empirical is None:
+                numpyro.sample("obs", dist.Categorical(probs=probs))
+            else:
+                numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+    return model
+
+
+likelihood_function_contextual_pcalpha_canon_hier = _make_contextual_pcalpha_canon_model(
     color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
 )
 
