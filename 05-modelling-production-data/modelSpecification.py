@@ -2506,6 +2506,13 @@ SIZE_ANCHOR_R = 5.0
 # Source: arviz median of log_wf in iter11 NC was -0.3775 → wf = 0.6856.
 WF_FIXED_ITER11_MEDIAN = 0.6856
 
+# Iter-17 (contextual_pcalpha_formmod) posterior median of log_beta_lm, used
+# only by the iter-18 β_lm-fixed ABLATION (contextual_pcalpha_canon_betafixed)
+# to test how much of lambda_noncanon is genuinely additional vs. signal the
+# free β_lm would otherwise reallocate. Source: arviz median of log_beta_lm
+# in the iter-17 NC = 1.907718 → beta_lm = 6.737698.
+LOG_BETA_LM_FIXED_ITER17 = 1.907718
+
 
 def incremental_speaker_contextual_anchored(
     states:                jnp.ndarray,
@@ -3976,6 +3983,77 @@ def _make_contextual_pcalpha_canon_model(
 
 likelihood_function_contextual_pcalpha_canon_hier = _make_contextual_pcalpha_canon_model(
     color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+)
+
+
+def _make_contextual_pcalpha_canon_betafixed_model(
+    color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+):
+    """Iter-18 ABLATION: identical to ``_make_contextual_pcalpha_canon_model``
+    but ``beta_lm`` is FIXED at the iter-17 posterior median
+    (exp(LOG_BETA_LM_FIXED_ITER17) ≈ 6.738) instead of being sampled.
+
+    Purpose: the canonical-order penalty conceptually overlaps the LM prior
+    (GPT-2 already prefers DCF > DFC by ~1.75 nat at the fitted β_lm). In the
+    free-β_lm iter-18 fit, corr(log_beta_lm, lambda_noncanon) = +0.43 and β_lm
+    dropped 6.75→6.42 when the penalty entered — so lambda_noncanon may be
+    partly reallocated LM signal. Pinning β_lm removes that freedom: if
+    lambda_noncanon still lands ≈2.5–2.6 and R² holds ≈0.919, the
+    canonical-order signal is genuinely ADDITIONAL, not relabelled LM mass.
+
+    Not a ladder iteration — a robustness check. Same 339 latents; 12 named
+    (drops log_beta_lm vs iter-18's 13).
+    """
+    beta_lm_fixed = float(np.exp(LOG_BETA_LM_FIXED_ITER17))
+
+    def model(states=None, empirical=None,
+              participant_idx=None, n_participants=None,
+              sufficient_dim=None, has_one_word_solution=None, is_sharp=None,
+              condition_idx=None, n_conditions=None):
+        beta_lm       = jnp.asarray(beta_lm_fixed)  # FIXED (not sampled)
+
+        alpha_D       = numpyro.sample("alpha_D",       dist.HalfNormal(5.0))
+        alpha_C       = numpyro.sample("alpha_C",       dist.HalfNormal(5.0))
+        alpha_F       = numpyro.sample("alpha_F",       dist.HalfNormal(5.0))
+        lambda_suff   = numpyro.sample("lambda_suff",   dist.Normal(0.0, 1.0))
+        lambda_form_mod = numpyro.sample("lambda_form_mod", dist.Normal(0.0, 2.0))
+        gamma_len3_erdc = numpyro.sample("gamma_len3_erdc", dist.HalfNormal(2.0))
+        lambda_noncanon = numpyro.sample("lambda_noncanon", dist.HalfNormal(2.0))
+        gamma_base    = numpyro.sample("gamma_base",    dist.Normal(0.0, 2.0))
+        gamma_oneword = numpyro.sample("gamma_oneword", dist.Normal(0.0, 2.0))
+        gamma_sharp   = numpyro.sample("gamma_sharp",   dist.HalfNormal(2.0))
+        epsilon       = numpyro.sample("epsilon",       dist.Beta(1.0, 50.0))
+        tau           = numpyro.sample("tau",           dist.HalfNormal(0.2))
+
+        with numpyro.plate("conditions_p", n_conditions, dim=-1):
+            with numpyro.plate("participants", n_participants, dim=-2):
+                delta_raw = numpyro.sample("delta_raw", dist.Normal(0.0, 1.0))
+        delta = numpyro.deterministic("delta", delta_raw * tau)
+
+        per_trial_offset = delta[participant_idx, condition_idx]
+        alpha_D_per_trial = jnp.maximum(alpha_D + per_trial_offset, 0.0)
+        alpha_C_per_trial = jnp.maximum(alpha_C + per_trial_offset, 0.0)
+        alpha_F_per_trial = jnp.maximum(alpha_F + per_trial_offset, 0.0)
+
+        with numpyro.plate("data", len(states)):
+            probs = jitted_speaker_contextual_anchored_gamma_sharpbonus_formmod_canon_hier(
+                states, sufficient_dim, has_one_word_solution, is_sharp,
+                alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+                lambda_suff, lambda_form_mod, gamma_len3_erdc, lambda_noncanon,
+                color_semval, form_semval, k, wf,
+                beta_lm, gamma_base, gamma_oneword, gamma_sharp, epsilon,
+            )
+            if empirical is None:
+                numpyro.sample("obs", dist.Categorical(probs=probs))
+            else:
+                numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+    return model
+
+
+likelihood_function_contextual_pcalpha_canon_betafixed_hier = (
+    _make_contextual_pcalpha_canon_betafixed_model(
+        color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+    )
 )
 
 
