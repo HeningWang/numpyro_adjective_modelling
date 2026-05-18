@@ -4059,7 +4059,7 @@ likelihood_function_contextual_pcalpha_canon_betafixed_hier = (
 
 def _make_contextual_pcalpha_canon_parsimony_model(
     color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
-    drop: tuple = (),
+    drop: tuple = (), free: tuple = (),
 ):
     """Parsimony model: iter-18 (``contextual_pcalpha_canon``) minus its two
     free parameter drops, both PROVEN zero-cost in the May-2026 session:
@@ -4087,6 +4087,16 @@ def _make_contextual_pcalpha_canon_parsimony_model(
     is the 11-named base parsimony model (behaviour identical to before this
     arg was added — the running base NC is unaffected). Each drop removes one
     sampled coefficient (11→10) by zeroing its contribution.
+
+    ``free``: a tuple of currently-FIXED constants to instead SAMPLE (memo
+    §7.10 fixed-constant diagnostic). Supported: ``color_semval`` (csv),
+    ``form_semval`` (fsv), ``k``, ``wf``. Default ``()`` keeps all four fixed
+    (behaviour identical to before this arg was added). Priors: csv, fsv ~
+    Uniform(0.5, 0.999) (a semantic value below 0.5 would invert the
+    predicate, so the lower bound is the vacuous point); k ~ Uniform(0, 1)
+    (anchor fraction); wf via ``log_wf ~ Normal(-1.0, 0.5)`` (the established
+    iter-8 freewf convention, prior bulk wf≈0.22–0.61). Each freed constant
+    adds one sampled named parameter.
     """
     beta_lm_fixed = float(np.exp(LOG_BETA_LM_FIXED_ITER17))
     drop = frozenset(drop)
@@ -4095,6 +4105,12 @@ def _make_contextual_pcalpha_canon_parsimony_model(
     if _bad:
         raise ValueError(f"Unsupported parsimony drop(s): {sorted(_bad)}; "
                           f"supported: {sorted(_valid_drops)}")
+    free = frozenset(free)
+    _valid_free = {"color_semval", "form_semval", "k", "wf"}
+    _bad_free = free - _valid_free
+    if _bad_free:
+        raise ValueError(f"Unsupported free constant(s): {sorted(_bad_free)}; "
+                          f"supported: {sorted(_valid_free)}")
 
     def model(states=None, empirical=None,
               participant_idx=None, n_participants=None,
@@ -4118,6 +4134,20 @@ def _make_contextual_pcalpha_canon_parsimony_model(
         epsilon       = numpyro.sample("epsilon",       dist.Beta(1.0, 50.0))
         tau           = numpyro.sample("tau",           dist.HalfNormal(0.2))
 
+        # Fixed semantic/size constants — SAMPLE the ones named in `free`,
+        # otherwise use the closure constant (default: all four fixed).
+        csv_r = (numpyro.sample("color_semval", dist.Uniform(0.5, 0.999))
+                 if "color_semval" in free else color_semval)
+        fsv_r = (numpyro.sample("form_semval", dist.Uniform(0.5, 0.999))
+                 if "form_semval" in free else form_semval)
+        k_r = (numpyro.sample("k", dist.Uniform(0.0, 1.0))
+               if "k" in free else k)
+        if "wf" in free:
+            log_wf = numpyro.sample("log_wf", dist.Normal(-1.0, 0.5))
+            wf_r = jnp.exp(log_wf)
+        else:
+            wf_r = wf
+
         # gamma_len3_erdc DROPPED (data-dead in iter-18); term ≡ 0.
         gamma_len3_erdc = 0.0
 
@@ -4136,7 +4166,7 @@ def _make_contextual_pcalpha_canon_parsimony_model(
                 states, sufficient_dim, has_one_word_solution, is_sharp,
                 alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
                 lambda_suff, lambda_form_mod, gamma_len3_erdc, lambda_noncanon,
-                color_semval, form_semval, k, wf,
+                csv_r, fsv_r, k_r, wf_r,
                 beta_lm, gamma_base, gamma_oneword, gamma_sharp, epsilon,
             )
             if empirical is None:
@@ -4170,6 +4200,42 @@ likelihood_function_contextual_pcalpha_canon_parsimony_no_alphaF_hier = (
     _make_contextual_pcalpha_canon_parsimony_model(
         color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
         drop=("alpha_F",),
+    )
+)
+
+# --- Fixed-constant diagnostic (memo §7.10): on top of the RECOMMENDED model
+# (drop=alpha_F), free each currently-fixed constant — separately and jointly
+# — to test free-vs-fix and locate the data-optimal value. Each freed
+# constant adds one sampled named parameter (10 → 11; freeall4 → 14). ---
+likelihood_function_contextual_pcalpha_canon_parsimony_no_alphaF_freecsv_hier = (
+    _make_contextual_pcalpha_canon_parsimony_model(
+        color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+        drop=("alpha_F",), free=("color_semval",),
+    )
+)
+likelihood_function_contextual_pcalpha_canon_parsimony_no_alphaF_freefsv_hier = (
+    _make_contextual_pcalpha_canon_parsimony_model(
+        color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+        drop=("alpha_F",), free=("form_semval",),
+    )
+)
+likelihood_function_contextual_pcalpha_canon_parsimony_no_alphaF_freek_hier = (
+    _make_contextual_pcalpha_canon_parsimony_model(
+        color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+        drop=("alpha_F",), free=("k",),
+    )
+)
+likelihood_function_contextual_pcalpha_canon_parsimony_no_alphaF_freewf_hier = (
+    _make_contextual_pcalpha_canon_parsimony_model(
+        color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+        drop=("alpha_F",), free=("wf",),
+    )
+)
+likelihood_function_contextual_pcalpha_canon_parsimony_no_alphaF_freeall4_hier = (
+    _make_contextual_pcalpha_canon_parsimony_model(
+        color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+        drop=("alpha_F",),
+        free=("color_semval", "form_semval", "k", "wf"),
     )
 )
 
