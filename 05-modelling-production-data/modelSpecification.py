@@ -4059,6 +4059,7 @@ likelihood_function_contextual_pcalpha_canon_betafixed_hier = (
 
 def _make_contextual_pcalpha_canon_parsimony_model(
     color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+    drop: tuple = (),
 ):
     """Parsimony model: iter-18 (``contextual_pcalpha_canon``) minus its two
     free parameter drops, both PROVEN zero-cost in the May-2026 session:
@@ -4079,8 +4080,21 @@ def _make_contextual_pcalpha_canon_parsimony_model(
     Expected fit: ≈ iter-18 (R²(all) ≈ R²(emp≥.02) ≈ 0.919) at the smallest
     coefficient set with no remaining data-dead/redundant term — the starting
     point of the parsimony-vs-fit frontier (memo §7.8).
+
+    ``drop``: a tuple of named coefficients to PIN at 0.0 (not sampled) for the
+    leave-one-out parsimony frontier (memo §7.8 step 3). Supported:
+    ``alpha_C``, ``alpha_F``, ``lambda_suff``, ``gamma_sharp``. Default ``()``
+    is the 11-named base parsimony model (behaviour identical to before this
+    arg was added — the running base NC is unaffected). Each drop removes one
+    sampled coefficient (11→10) by zeroing its contribution.
     """
     beta_lm_fixed = float(np.exp(LOG_BETA_LM_FIXED_ITER17))
+    drop = frozenset(drop)
+    _valid_drops = {"alpha_C", "alpha_F", "lambda_suff", "gamma_sharp"}
+    _bad = drop - _valid_drops
+    if _bad:
+        raise ValueError(f"Unsupported parsimony drop(s): {sorted(_bad)}; "
+                          f"supported: {sorted(_valid_drops)}")
 
     def model(states=None, empirical=None,
               participant_idx=None, n_participants=None,
@@ -4089,14 +4103,18 @@ def _make_contextual_pcalpha_canon_parsimony_model(
         beta_lm       = jnp.asarray(beta_lm_fixed)  # FIXED (not sampled)
 
         alpha_D       = numpyro.sample("alpha_D",       dist.HalfNormal(5.0))
-        alpha_C       = numpyro.sample("alpha_C",       dist.HalfNormal(5.0))
-        alpha_F       = numpyro.sample("alpha_F",       dist.HalfNormal(5.0))
-        lambda_suff   = numpyro.sample("lambda_suff",   dist.Normal(0.0, 1.0))
+        alpha_C = (0.0 if "alpha_C" in drop
+                   else numpyro.sample("alpha_C", dist.HalfNormal(5.0)))
+        alpha_F = (0.0 if "alpha_F" in drop
+                   else numpyro.sample("alpha_F", dist.HalfNormal(5.0)))
+        lambda_suff = (0.0 if "lambda_suff" in drop
+                       else numpyro.sample("lambda_suff", dist.Normal(0.0, 1.0)))
         lambda_form_mod = numpyro.sample("lambda_form_mod", dist.Normal(0.0, 2.0))
         lambda_noncanon = numpyro.sample("lambda_noncanon", dist.HalfNormal(2.0))
         gamma_base    = numpyro.sample("gamma_base",    dist.Normal(0.0, 2.0))
         gamma_oneword = numpyro.sample("gamma_oneword", dist.Normal(0.0, 2.0))
-        gamma_sharp   = numpyro.sample("gamma_sharp",   dist.HalfNormal(2.0))
+        gamma_sharp = (0.0 if "gamma_sharp" in drop
+                       else numpyro.sample("gamma_sharp", dist.HalfNormal(2.0)))
         epsilon       = numpyro.sample("epsilon",       dist.Beta(1.0, 50.0))
         tau           = numpyro.sample("tau",           dist.HalfNormal(0.2))
 
@@ -4131,6 +4149,27 @@ def _make_contextual_pcalpha_canon_parsimony_model(
 likelihood_function_contextual_pcalpha_canon_parsimony_hier = (
     _make_contextual_pcalpha_canon_parsimony_model(
         color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+    )
+)
+
+# --- Leave-one-out parsimony frontier (memo §7.8 step 3): each drops ONE
+# coefficient from the 11-named base parsimony model (11→10 named). ---
+likelihood_function_contextual_pcalpha_canon_parsimony_no_gammasharp_hier = (
+    _make_contextual_pcalpha_canon_parsimony_model(
+        color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+        drop=("gamma_sharp",),
+    )
+)
+likelihood_function_contextual_pcalpha_canon_parsimony_no_lambdasuff_hier = (
+    _make_contextual_pcalpha_canon_parsimony_model(
+        color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+        drop=("lambda_suff",),
+    )
+)
+likelihood_function_contextual_pcalpha_canon_parsimony_no_alphaF_hier = (
+    _make_contextual_pcalpha_canon_parsimony_model(
+        color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+        drop=("alpha_F",),
     )
 )
 
