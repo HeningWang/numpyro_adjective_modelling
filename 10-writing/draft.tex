@@ -93,6 +93,7 @@ The simulation shows that recursive semantics is necessary for the baseline size
 In the model comparison, incremental production emerges as the dominant mechanism across both datasets.
 In the production data, context-updating semantics provides a significant further improvement, but only when paired with an incremental speaker --- an interaction indicating that the two mechanisms are synergistic.
 \Cref{fig:overview} provides a schematic overview of the modelling framework, experiments, and key findings.
+We introduce the framework conceptually in \Cref{sec:framework}, before the experiments, and defer its formal specification to \Cref{sec:model}.
 
 \begin{figure}[htbp]
   \centering
@@ -157,38 +158,250 @@ These manipulations operationalize the context-sensitive component of the theory
 
 The Rational Speech Act (RSA) framework offers a natural way of formalizing these pressures.
 In RSA, a pragmatic speaker selects utterances by reasoning about a listener's posterior, and the listener in turn reasons about the speaker's choice \citep{goodman2016pragmatic}.
-Standard RSA treats complete utterances as the units of choice, but the same logic can be defined incrementally, with the speaker choosing one word at a time on the basis of how each token updates the listener's beliefs \citep{cohngordon2019incremental}.
-This extension is relevant to adjective ordering because it makes the utility of a modifier depend on its position in the string.
+Although standard RSA treats complete utterances as the units of choice, the same logic can be defined incrementally, with the speaker choosing one word at a time on the basis of how each token updates the listener's beliefs \citep{cohngordon2019incremental}.
+Existing incremental pragmatic models and related work on redundancy establish that word-by-word reasoning can capture asymmetries between adjective positions and between prenominal and postnominal systems \citep{degen2020redundancy,rubio2021wordorder}.
+What these accounts usually do not assume is that lexical meanings themselves change as the listener's posterior changes.
+In most such accounts the posterior updates online, but the interpretation of an adjective remains fixed relative to the scene.
+\citet{schlotterbeck2023incremental} introduced an alternative in which the threshold for a gradable adjective is recomputed from the listener's current posterior at each stage of composition, together with the slider-rating paradigm that forms the basis for one of the experiments reported here.
+That study showed that the model qualitatively captures both a subjectivity-driven baseline ordering and a discriminatory-strength modulation, but it did not isolate the respective contributions of incremental production and context-updating semantics, nor did it assess their quantitative fit.
 
-Existing incremental pragmatic models and related work on redundancy already establish that word-by-word reasoning can capture important asymmetries between adjective positions and between prenominal and postnominal systems \citep{degen2020redundancy,rubio2021wordorder}.
-What they usually do not assume, however, is that lexical meanings themselves change as the listener posterior changes.
-In most of these accounts, the posterior updates online but the interpretation of an adjective remains fixed relative to the scene.
-This amounts to what we will call \emph{context-fixed} semantics: the semantic value of each adjective is determined by the scene-level context and does not depend on which other words have already been processed.
+% =============================================================================
+\section{The Modelling Framework}
+\label{sec:framework}
+% =============================================================================
 
-A \emph{context-updating} alternative was introduced by \citet{schlotterbeck2023incremental} as part of an incremental RSA model for adjective ordering.
-Under context-updating semantics, the threshold for gradable adjectives such as size is recomputed from the listener's current posterior at each stage of composition.
-After hearing ``blue,'' for example, the listener's beliefs concentrate on blue objects, and the comparison class for evaluating ``big'' narrows accordingly.
-The result is order-sensitive composition: ``blue big'' and ``big blue'' can induce different comparison classes and therefore different communicative outcomes even when they contain the same words.
-This connects to \citeauthor{teodorescu2006}'s (\citeyear{teodorescu2006}) observation that ordering restrictions weaken when alternative orders are not truth-conditionally equivalent --- precisely the situation that context-updating semantics creates.
-By comparing models with context-updating and context-fixed semantics, we can ask not only whether incremental production adds value, but also whether context-updating threshold computation provides a further benefit --- and, crucially, whether that benefit is contingent on the speaker architecture.
+We extend \citet{schlotterbeck2023incremental} in four directions.
+We embed the model in a systematic $2 \times 2$ comparison of speaker architecture and semantic regime, including a context-fixed ablation; we add a constrained production experiment that provides a richer response space; we introduce a simulation study that identifies which ordering effects follow from context-updating composition alone; and we use Bayesian model comparison to quantify each mechanism's contribution and to reveal an interaction that the earlier qualitative analysis could not detect.
+Here we describe the framework at a conceptual level; the meaning functions, speaker definitions, and inference setup are given formally in \Cref{sec:model}.
+The remaining subsections develop these components in turn.
 
-That question is motivated by a narrower concern than the introduction of incrementality as such.
-We do not argue that production-level incrementality is required for adjective-ordering preferences in general.
-The subjectivity literature and, as shown below, our own simulations indicate that context-sensitive restrictive composition already accounts for much of the canonical ordering tendency.
-The question is instead how much explanatory work remains once that baseline is in place, and whether an incremental production model with context-updating semantics better captures the context-sensitive behavior revealed by the experiments.
+\subsection{Reference, Scenes, and the Speaker's Problem}
+\label{sec:framework:scene}
 
-The present paper builds directly on \citet{schlotterbeck2023incremental}, who introduced both the incremental RSA speaker with context-updating semantics and the slider-rating paradigm that forms the basis for one of the experiments reported here.
-That study demonstrated that the model qualitatively captures a subjectivity-driven baseline ordering as well as a discriminatory-strength modulation, but it did not isolate the respective contributions of incremental production and context-updating semantics, nor did it assess their quantitative fit.
-We extend that work in four directions: we embed the model in a systematic $2 \times 2$ comparison of speaker architecture and semantic regime, including a context-fixed ablation; we add a constrained production experiment that provides a richer response space; we introduce a simulation study that identifies which ordering effects follow from context-updating composition alone; and we use Bayesian model comparison to quantify each mechanism's contribution and to reveal an interaction between incremental production and context-updating semantics that was not visible in the earlier qualitative analysis.
+The model addresses a referential task.
+A scene contains several objects that vary in size, colour, and form, and one of them is the intended referent --- in our materials, the largest object that matches the target colour and form.
+A speaker must choose an adjective string that lets a listener identify this referent, and the listener interprets that string by progressively narrowing the set of objects it could pick out.
+Because objects differ along three properties, the same referent can be described in many ways, and the order in which adjectives are produced is itself part of what the speaker chooses.
+
+\subsection{Rational Speech Act Reasoning}
+\label{sec:framework:rsa}
+
+We model this choice within the Rational Speech Act framework, in which a pragmatic speaker selects utterances by reasoning about how a listener would interpret them, and the listener reasons recursively about the speaker.
+A literal listener interprets an adjective by retaining the objects it applies to, and a pragmatic speaker prefers descriptions that make the intended referent easy to recover.
+Determinate properties such as colour and form are treated as nearly categorical, whereas size is gradable: whether an object counts as ``big'' depends on the comparison class it is evaluated against, so the size term is informative only relative to the objects currently under consideration.
+
+\subsection{Two Mechanisms for Order Sensitivity}
+\label{sec:framework:mechanisms}
+
+The framework isolates two ways in which adjective order can come to matter.
+The first is the \emph{speaker architecture}.
+A global speaker evaluates complete adjective strings and chooses among them as wholes, whereas an incremental speaker chooses one adjective at a time, weighing at each step how the next word would reshape the listener's beliefs.
+Incremental choice makes the usefulness of a modifier depend on where it occurs in the string, not only on the description as a whole.
+The second is the \emph{semantic regime}.
+Under context-fixed semantics, the size threshold is computed once from the scene and held constant, so reordering the adjectives cannot change what ``big'' means.
+Under context-updating semantics, the threshold is recomputed from the listener's running beliefs, so that once ``blue'' has restricted attention to blue objects, ``big'' is judged against just those objects; ``big blue'' and ``blue big'' can then differ even though they contain the same words.
+This non-commutativity connects to \citeauthor{teodorescu2006}'s (\citeyear{teodorescu2006}) observation that ordering restrictions weaken precisely when the alternative orders are not truth-conditionally equivalent.
+
+Crossing these two binary choices yields a $2 \times 2$ space of models --- speaker architecture (global vs.\ incremental) by semantic regime (context-fixed vs.\ context-updating).
+We do not claim that production-level incrementality is required for adjective-ordering preferences in general; the subjectivity literature and our own simulations (\Cref{sec:simulation}) indicate that context-sensitive restrictive composition already accounts for much of the canonical tendency.
+The question is how much explanatory work remains once that baseline is in place, and in particular whether incremental production and context-updating semantics are independently useful or interact.
+
+\subsection{Qualitative Predictions}
+\label{sec:framework:predictions}
+
+This framework yields qualitative predictions that the two experiments are designed to test (\Cref{tab:predictions}).
+Because the model retains a stable, subjectivity-aligned ordering prior, it predicts a baseline size-first preference that survives even when colour alone identifies the referent (P1).
+Because the pragmatic component is sensitive to which property discriminates the referent in the current scene, it predicts that the size-first preference weakens as colour becomes the more useful property (P2).
+The sharpness of the size contrast should act only as a secondary modulator, shifting preferences in interaction with referential context rather than as a strong main effect (P3).
+Finally, because production allows the full inventory of one-, two-, and three-adjective strings, the framework predicts a graded over-informativity pattern in production that the binary slider comparison cannot reveal (P4).
+
+\begin{table}[htbp]
+  \caption{Qualitative predictions of the modelling framework and where each is tested.}
+  \label{tab:predictions}
+  \centering
+  \begin{tabularx}{\textwidth}{lXl}
+    \toprule
+     & \textbf{Prediction} & \textbf{Tested in} \\
+    \midrule
+    P1 & A baseline size-first preference persists even when colour alone identifies the referent. & Exp.\ 1 \& 2 \\
+    P2 & The size-first preference weakens as colour becomes the more discriminating property. & Exp.\ 1 \& 2 \\
+    P3 & Size discriminability modulates ordering only in interaction with referential context, not as a strong main effect. & Exp.\ 1 \& 2 \\
+    P4 & Production yields a graded over-informativity pattern not visible in binary slider judgments. & Exp.\ 2 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+% =============================================================================
+\section{Experiments}
+\label{sec:experiments}
+% =============================================================================
+
+We tested the qualitative predictions of the modelling framework (\Cref{tab:predictions}) with two complementary online referential tasks in German.
+Experiment~1 used graded slider judgments to measure how acceptable competing adjective orders are in a controlled scene.
+Experiment~2 used constrained production to measure which adjective sequences speakers actually choose in the same referential displays.
+Combining the two tasks allows us to separate stable ordering preferences from their online realization in production.
+
+\subsection{Shared Method}
+
+\subsubsection{Design}
+
+Both experiments used the same referential design.
+On every critical trial, participants saw six objects and had to refer to the framed target by its perceptual properties rather than by screen position.
+The target was always the largest object that matched the intended colour and form.
+The analyses reported here focus on the theoretically central size--colour subset.
+Within that subset, referential context had three levels: size-sufficient (size alone identifies the target), colour-sufficient (colour alone identifies the target), and both-necessary (neither property alone suffices).
+A second factor, size discriminability, varied whether the size contrast between the target and its competitors was high or low.
+Referential context varied within participants; size discriminability was manipulated between participants.
+
+\begin{table}[htbp]
+  \caption{Shared design of the reported size--colour analyses}
+  \label{tab:design}
+  \centering
+  \begin{tabularx}{0.88\textwidth}{lX}
+    \toprule
+    \textbf{Factor} & \textbf{Levels} \\
+    \midrule
+    Referential context & Size-sufficient, colour-sufficient, both-necessary \\
+    Size discriminability & High (strong size contrast), low (weak size contrast) \\
+    \midrule
+    \multicolumn{2}{p{0.84\textwidth}}{\textit{Fixed display property.} The referent is the largest, colour-matching, form-matching object in a six-object context.} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+The broader paradigm also included size--form and colour--form trials to widen the material base and reduce dependence on a single adjective pairing.
+These conditions remain part of the experimental design, but the present analysis concentrates on the size--colour subset because it provides the clearest contrast between a gradable adjective and a determinate feature adjective.
+
+\subsubsection{Materials}
+
+The experiments were built from 27 underlying scene types.
+Each display contained six objects varying in size and in discrete colour and form values.
+The target was marked with a coloured frame.
+Critical vocabularies were fixed across the study, with six colour terms and six form terms reused throughout the scene set, and the modified noun was always \textit{Aufkleber} (`sticker').
+Items were distributed across participants in a Latin-square design so that each participant saw every scene type exactly once in each condition, and condition--item pairings were counterbalanced across participants.
+In the computational model, each display can be represented as a $6 \times 3$ matrix $(s, c, f)$ with the referent at index 0, but the experimental task presented these scenes as ordinary visual arrays rather than as explicit feature lists.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.72\textwidth]{experiment_item_illustration.png}
+  \caption{Illustration of an experimental item. The referent (circled) is the largest, colour-matching, form-matching object in a six-object display. The two panels illustrate high- and low-discriminability size conditions.}
+  \label{fig:item}
+\end{figure}
+
+\subsubsection{Procedure}
+
+Participants completed the experiments online via Prolific and were instructed to identify the framed target using its perceptual properties, not spatial descriptions such as \emph{left} or \emph{right}.
+The cover story framed each trial as a telephone conversation about collectible stickers: participants saw a set of six stickers on screen, one highlighted by a coloured frame, and were asked to refer to the target for a partner who could see the same stickers but neither the frame nor the spatial layout.
+This made spatial terms uninformative and forced reliance on adjective descriptions.
+Both experiments began with a consent form and a brief practice block (three training trials with feedback) that familiarised participants with the interface and the referential task.
+The main trials were divided into four blocks of approximately equal length, with self-paced breaks between blocks.
+Trial order within each block was randomised independently for each participant.
+The two experiments differed in response format: Experiment~1 presented two competing adjective orders on a continuous slider (180 trials total, drawn from one of six counterbalanced lists), whereas Experiment~2 asked participants to type the adjective material they would place before the noun (135 trials, again from one of six lists, plus two additional dictionary-style practice items).
+Despite this difference, both tasks probed the same question: whether adjective ordering tracks baseline size-first preferences, referential context, and the discriminatory value of size in the current display.
+
+\subsection{Experiment 1: Slider-Rating Study}
+\label{sec:exp:slider}
+
+\subsubsection{Participants}
+
+Participants ($N = 134$ after exclusions; 70 low discriminability, 64 high discriminability) were recruited online via Prolific and reported German as their native or fluent language.
+Exclusion criteria were: more than three missing trial-list entries, completion times more than two standard deviations from the sample mean, more than three failures on control items, or more than three ``none fits'' responses on experimental items.
+The analysed dataset contained 10{,}606 critical observations.
+Mean completion time was 27.6 minutes.
+Participants were compensated via Prolific at a rate above the platform-recommended minimum.
+
+\subsubsection{Task and Scoring}
+
+Experiment~1 implemented the shared referential design as a comparative judgment task.
+Participants were asked to imagine a referential exchange about sticker collections and to evaluate which description would be better for identifying the framed target.
+On each critical trial, two competing adjective orders appeared on opposite sides of a continuous slider, together with a ``none of the descriptions fits'' option.
+Left--right presentation of the two orders was randomised across trials.
+Each participant saw one of six lists built from the 27 underlying scenes, yielding 81 critical trials and 99 filler and control trials (180 total).
+The filler and control items discouraged fixed response strategies and ensured attention to the referential task.
+Raw slider values were recorded on a 0--100 scale and rescaled to $[-0.5, 0.5]$, with positive values indicating a size-first preference.
+The descriptive analysis used a linear mixed-effects model with centred slider rating as the dependent variable and referential context, size discriminability, and their interaction as fixed effects, with random intercepts for participant and item.
+For the Bayesian model comparison, these ratings were modelled with a Zero-One-Inflated Beta (ZOIB) likelihood to accommodate boundary mass at 0 and 1.
+
+\subsubsection{Results}
+
+\Cref{fig:slider-empirical} shows that size-first orderings were preferred across all three referential contexts, but the strength of the preference depended on which property was informative.
+Referential context produced a large main effect, $F(2, 3349) = 213.7$, $p < .001$; $\chi^2(2) = 402.6$, $p < .001$.
+The size-first preference was strongest in size-sufficient displays, intermediate in both-necessary displays, and weakest in colour-sufficient displays.
+Notably, even colour-sufficient contexts did not produce a qualitative reversal: mean centred ratings remained above zero.
+
+Size discriminability did not produce a reliable main effect, $F(1, 132) = 0.03$, $p = .86$, but it interacted with referential context, $F(2, 3349) = 5.84$, $p = .003$; $\chi^2(2) = 11.7$, $p = .003$.
+The interaction was asymmetric: higher discriminability slightly increased the size-first preference in size-sufficient contexts (low: $0.30$, high: $0.34$) but slightly reduced it in both-necessary ($0.25$ vs.\ $0.20$) and colour-sufficient contexts ($0.06$ vs.\ $0.04$).
+Post-hoc pairwise comparisons (Bonferroni-corrected) confirmed that no individual simple effect of discriminability within any referential context reached significance (all $p > .12$), indicating that the interaction is driven by the directional pattern across contexts rather than by any single cell contrast (see Appendix for full pairwise results).
+This pattern is consistent with a discriminatory-strength interpretation: ordering preferences track the usefulness of size for identifying the target, but a baseline size-first tendency persists even when colour is locally more discriminating.
+Specifically, P1--P3 predict exactly this profile: a size-first baseline persists across all contexts (P1), it weakens as colour becomes more discriminating (P2), and size discriminability matters only in interaction with referential context (P3).
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.88\textwidth]{slider_empirical.pdf}
+  \caption{Empirical results from the slider-rating study. Mean centered slider ratings are shown by referential context and size discriminability, with 95\% confidence intervals. Positive values indicate a preference for size-first orderings.}
+  \label{fig:slider-empirical}
+\end{figure}
+
+\subsection{Experiment 2: Free-Production Study}
+\label{sec:exp:production}
+
+\subsubsection{Participants}
+
+Participants ($N = 113$ after exclusions; 60 low discriminability, 53 high discriminability) were recruited online via Prolific; anyone who had completed the slider study was excluded.
+Further exclusion criteria were: completion times more than two standard deviations from the mean, more than 80\% identical responses, or more than 10\% missing or unannotatable responses.
+The analysed dataset contained 9{,}639 critical observations.
+Mean completion time was 32.4 minutes.
+Compensation followed the same Prolific rate as Experiment~1.
+\subsubsection{Task and Coding}
+
+Experiment~2 used the shared referential design in a constrained production format.
+Participants saw the framed target together with a sentence prompt and typed the adjective material needed before the noun \textit{Aufkleber}.
+Restricting the response to the adjective slot rather than eliciting a full sentence reduced off-task variability and provided a controlled basis for coding.
+Instructions again prohibited spatial descriptions, and a practice block familiarised participants with the relevant colour and form vocabulary before the critical trials began.
+Each list contained 81 critical trials; the filler load was reduced relative to Experiment~1 (135 total trials vs.\ 180) to accommodate the greater time burden of typed production.
+
+Responses were coded into 15 utterance categories corresponding to all one-, two-, and three-adjective strings built from size, colour, and form terms (3 one-adjective, 6 two-adjective, 6 three-adjective).
+Misspellings and transparent lexical alternatives were normalised when their semantic class was unambiguous; spatial descriptions, comparative or ordinal size expressions, and other unclassifiable responses were excluded.
+The dependent variable for the Bayesian model comparison is the categorical utterance label $y_i \in \{1, \ldots, 15\}$ for each trial $i$.
+For descriptive statistics and targeted mixed-effects analyses, we also tracked two derived binary outcomes: whether an utterance was size-initial and whether it was over-informative (i.e., a three-adjective response in both-necessary contexts, or a multi-adjective response in size-sufficient or colour-sufficient contexts).
+
+\subsubsection{Results}
+
+The production data show stronger context sensitivity than the slider ratings.
+As \Cref{fig:production-empirical} illustrates, size-first utterances dominated in size-sufficient contexts, colour-first utterances dominated in colour-sufficient contexts, and both-necessary contexts fell between the two extremes.
+A mixed-effects logistic regression on size-initial responses yielded a strong main effect of referential context, $\chi^2(2) = 1859.7$, $p < .001$, no reliable main effect of size discriminability, $\chi^2(1) = 0.79$, $p = .37$, and a reliable interaction, $\chi^2(2) = 31.4$, $p < .001$.
+As in the slider data, the interaction was asymmetric: higher discriminability reduced the size-first advantage in size-sufficient contexts but increased it in both-necessary contexts.
+
+A complementary analysis of over-informativity reveals a related efficiency pressure.
+Over-informative utterances were most frequent in size-sufficient contexts and least frequent in colour-sufficient contexts, producing a strong main effect of referential context, $\chi^2(2) = 725.7$, $p < .001$.
+Unlike size-initiality, over-informativity also showed a main effect of size discriminability, $\chi^2(1) = 10.3$, $p = .001$, with more multi-adjective responses in low- than in high-discriminability displays.
+This effect interacted with referential context, $\chi^2(2) = 63.8$, $p < .001$, driven primarily by size-sufficient contexts.
+The pattern aligns with the broader communicative-efficiency literature on redundancy: speakers produce additional material when it helps resolve reference, even if it is not strictly necessary for uniqueness.
+These results carry P1--P3 into unconstrained production --- with the size-first baseline (P1) attenuated where colour alone identifies the referent, even as the context modulation (P2) and the interaction-limited role of size discriminability (P3) emerge more sharply than in the slider task --- and additionally confirm P4: the richer response space reveals a graded over-informativity pattern that the binary slider task cannot show.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.95\textwidth]{production_empirical.pdf}
+  \caption{Empirical results from the free-production study. Proportions of the major utterance types are shown by referential context and size discriminability, with bootstrapped 95\% confidence intervals. Only utterance types reaching at least 2\% in one condition are displayed.}
+  \label{fig:production-empirical}
+\end{figure}
+
+\subsection{Interim Summary}
+
+Across both experiments, three empirical regularities emerge.
+First, there is a robust baseline preference for size-first orderings that persists even when colour is the only discriminating property.
+Second, this preference is modulated by referential context: size-first choices increase when size is informative and decrease when colour is more useful, consistent with a discriminatory-efficiency account.
+Third, size discriminability interacts with referential context but does not produce reliable main effects, suggesting that the sharpness of the size contrast acts as a secondary modulator rather than a primary driver.
+The production data amplify these patterns relative to the slider data: free production elicits stronger context sensitivity and reveals a complementary over-informativity gradient driven by the same referential pressures.
+Together, these results motivate a formal model that can capture both the stable ordering bias and its context-dependent modulation, while accommodating the richer response space of unconstrained production.
 
 % =============================================================================
 \section{Computational Model}
 \label{sec:model}
 % =============================================================================
 
-This section develops the RSA model used in the present paper.
-The model builds on the standard RSA architecture \citep{goodman2016pragmatic}: a literal listener interprets utterances using a compositional semantics, and a pragmatic speaker chooses utterances by reasoning about the listener's posterior belief.
-Following \citet{schlotterbeck2023incremental}, the model incorporates two extensions of the standard architecture: an incremental speaker that chooses one word at a time, and a context-updating compositional semantics in which the meaning of gradable adjectives depends on the listener's running posterior.
+This section formalizes the modelling framework introduced in \Cref{sec:framework}.
+It specifies the literal-listener semantics, the global and incremental speakers, the context-fixed and context-updating regimes, and the inference setup for the $2 \times 2$ model comparison.
 The experiments were broader than the fitted model comparison: the full paradigm included size--form and colour--form trials, but the analyses reported here focus on size--colour scenes, where the theoretical contrast between a gradable adjective and a determinate feature adjective is clearest.
 Form therefore remains part of the general representational vocabulary and of the production response space, but it is not the primary mechanistic contrast in the current fit.
 
@@ -424,168 +637,6 @@ Slider responses showed substantial mass at the boundaries (0 and 1), which moti
 The free-production data were categorical and highly skewed, with many utterance types near zero frequency in some conditions.
 To keep inference stable and the comparison interpretable, the semantic parameters were fixed across all variants and only the pragmatic parameters were estimated from data.
 This ensures that any difference in fit between variants reflects the speaker architecture and semantic regime, not incidental variation in lexical semantics.
-
-% =============================================================================
-\section{Experiments}
-\label{sec:experiments}
-% =============================================================================
-
-We tested the model predictions with two complementary online referential tasks in German.
-Experiment~1 used graded slider judgments to measure how acceptable competing adjective orders are in a controlled scene.
-Experiment~2 used constrained production to measure which adjective sequences speakers actually choose in the same referential displays.
-Combining the two tasks allows us to separate stable ordering preferences from their online realization in production.
-
-\subsection{Shared Method}
-
-\subsubsection{Design}
-
-Both experiments used the same referential design.
-On every critical trial, participants saw six objects and had to refer to the framed target by its perceptual properties rather than by screen position.
-The target was always the largest object that matched the intended colour and form.
-The analyses reported here focus on the theoretically central size--colour subset.
-Within that subset, referential context had three levels: size-sufficient (size alone identifies the target), colour-sufficient (colour alone identifies the target), and both-necessary (neither property alone suffices).
-A second factor, size discriminability, varied whether the size contrast between the target and its competitors was high or low.
-Referential context varied within participants; size discriminability was manipulated between participants.
-
-\begin{table}[htbp]
-  \caption{Shared design of the reported size--colour analyses}
-  \label{tab:design}
-  \centering
-  \begin{tabularx}{0.88\textwidth}{lX}
-    \toprule
-    \textbf{Factor} & \textbf{Levels} \\
-    \midrule
-    Referential context & Size-sufficient, colour-sufficient, both-necessary \\
-    Size discriminability & High (strong size contrast), low (weak size contrast) \\
-    \midrule
-    \multicolumn{2}{p{0.84\textwidth}}{\textit{Fixed display property.} The referent is the largest, colour-matching, form-matching object in a six-object context.} \\
-    \bottomrule
-  \end{tabularx}
-\end{table}
-
-The broader paradigm also included size--form and colour--form trials to widen the material base and reduce dependence on a single adjective pairing.
-These conditions remain part of the experimental design, but the present analysis concentrates on the size--colour subset because it provides the clearest contrast between a gradable adjective and a determinate feature adjective.
-
-\subsubsection{Materials}
-
-The experiments were built from 27 underlying scene types.
-Each display contained six objects varying in size and in discrete colour and form values.
-The target was marked with a coloured frame.
-Critical vocabularies were fixed across the study, with six colour terms and six form terms reused throughout the scene set, and the modified noun was always \textit{Aufkleber} (`sticker').
-Items were distributed across participants in a Latin-square design so that each participant saw every scene type exactly once in each condition, and condition--item pairings were counterbalanced across participants.
-In the computational model, each display can be represented as a $6 \times 3$ matrix $(s, c, f)$ with the referent at index 0, but the experimental task presented these scenes as ordinary visual arrays rather than as explicit feature lists.
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=0.72\textwidth]{experiment_item_illustration.png}
-  \caption{Illustration of an experimental item. The referent (circled) is the largest, colour-matching, form-matching object in a six-object display. The two panels illustrate high- and low-discriminability size conditions.}
-  \label{fig:item}
-\end{figure}
-
-\subsubsection{Procedure}
-
-Participants completed the experiments online via Prolific and were instructed to identify the framed target using its perceptual properties, not spatial descriptions such as \emph{left} or \emph{right}.
-The cover story framed each trial as a telephone conversation about collectible stickers: participants saw a set of six stickers on screen, one highlighted by a coloured frame, and were asked to refer to the target for a partner who could see the same stickers but neither the frame nor the spatial layout.
-This made spatial terms uninformative and forced reliance on adjective descriptions.
-Both experiments began with a consent form and a brief practice block (three training trials with feedback) that familiarised participants with the interface and the referential task.
-The main trials were divided into four blocks of approximately equal length, with self-paced breaks between blocks.
-Trial order within each block was randomised independently for each participant.
-The two experiments differed in response format: Experiment~1 presented two competing adjective orders on a continuous slider (180 trials total, drawn from one of six counterbalanced lists), whereas Experiment~2 asked participants to type the adjective material they would place before the noun (135 trials, again from one of six lists, plus two additional dictionary-style practice items).
-Despite this difference, both tasks probed the same question: whether adjective ordering tracks baseline size-first preferences, referential context, and the discriminatory value of size in the current display.
-
-\subsection{Experiment 1: Slider-Rating Study}
-\label{sec:exp:slider}
-
-\subsubsection{Participants}
-
-Participants ($N = 134$ after exclusions; 70 low discriminability, 64 high discriminability) were recruited online via Prolific and reported German as their native or fluent language.
-Exclusion criteria were: more than three missing trial-list entries, completion times more than two standard deviations from the sample mean, more than three failures on control items, or more than three ``none fits'' responses on experimental items.
-The analysed dataset contained 10{,}606 critical observations.
-Mean completion time was 27.6 minutes.
-Participants were compensated via Prolific at a rate above the platform-recommended minimum.
-
-\subsubsection{Task and Scoring}
-
-Experiment~1 implemented the shared referential design as a comparative judgment task.
-Participants were asked to imagine a referential exchange about sticker collections and to evaluate which description would be better for identifying the framed target.
-On each critical trial, two competing adjective orders appeared on opposite sides of a continuous slider, together with a ``none of the descriptions fits'' option.
-Left--right presentation of the two orders was randomised across trials.
-Each participant saw one of six lists built from the 27 underlying scenes, yielding 81 critical trials and 99 filler and control trials (180 total).
-The filler and control items discouraged fixed response strategies and ensured attention to the referential task.
-Raw slider values were recorded on a 0--100 scale and rescaled to $[-0.5, 0.5]$, with positive values indicating a size-first preference.
-The descriptive analysis used a linear mixed-effects model with centred slider rating as the dependent variable and referential context, size discriminability, and their interaction as fixed effects, with random intercepts for participant and item.
-For the Bayesian model comparison, these ratings were modelled with a Zero-One-Inflated Beta (ZOIB) likelihood to accommodate boundary mass at 0 and 1.
-
-\subsubsection{Results}
-
-\Cref{fig:slider-empirical} shows that size-first orderings were preferred across all three referential contexts, but the strength of the preference depended on which property was informative.
-Referential context produced a large main effect, $F(2, 3349) = 213.7$, $p < .001$; $\chi^2(2) = 402.6$, $p < .001$.
-The size-first preference was strongest in size-sufficient displays, intermediate in both-necessary displays, and weakest in colour-sufficient displays.
-Notably, even colour-sufficient contexts did not produce a qualitative reversal: mean centred ratings remained above zero.
-
-Size discriminability did not produce a reliable main effect, $F(1, 132) = 0.03$, $p = .86$, but it interacted with referential context, $F(2, 3349) = 5.84$, $p = .003$; $\chi^2(2) = 11.7$, $p = .003$.
-The interaction was asymmetric: higher discriminability slightly increased the size-first preference in size-sufficient contexts (low: $0.30$, high: $0.34$) but slightly reduced it in both-necessary ($0.25$ vs.\ $0.20$) and colour-sufficient contexts ($0.06$ vs.\ $0.04$).
-Post-hoc pairwise comparisons (Bonferroni-corrected) confirmed that no individual simple effect of discriminability within any referential context reached significance (all $p > .12$), indicating that the interaction is driven by the directional pattern across contexts rather than by any single cell contrast (see Appendix for full pairwise results).
-This pattern is consistent with a discriminatory-strength interpretation: ordering preferences track the usefulness of size for identifying the target, but a baseline size-first tendency persists even when colour is locally more discriminating.
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=0.88\textwidth]{slider_empirical.pdf}
-  \caption{Empirical results from the slider-rating study. Mean centered slider ratings are shown by referential context and size discriminability, with 95\% confidence intervals. Positive values indicate a preference for size-first orderings.}
-  \label{fig:slider-empirical}
-\end{figure}
-
-\subsection{Experiment 2: Free-Production Study}
-\label{sec:exp:production}
-
-\subsubsection{Participants}
-
-Participants ($N = 113$ after exclusions; 60 low discriminability, 53 high discriminability) were recruited online via Prolific; anyone who had completed the slider study was excluded.
-Further exclusion criteria were: completion times more than two standard deviations from the mean, more than 80\% identical responses, or more than 10\% missing or unannotatable responses.
-The analysed dataset contained 9{,}639 critical observations.
-Mean completion time was 32.4 minutes.
-Compensation followed the same Prolific rate as Experiment~1.
-\subsubsection{Task and Coding}
-
-Experiment~2 used the shared referential design in a constrained production format.
-Participants saw the framed target together with a sentence prompt and typed the adjective material needed before the noun \textit{Aufkleber}.
-Restricting the response to the adjective slot rather than eliciting a full sentence reduced off-task variability and provided a controlled basis for coding.
-Instructions again prohibited spatial descriptions, and a practice block familiarised participants with the relevant colour and form vocabulary before the critical trials began.
-Each list contained 81 critical trials; the filler load was reduced relative to Experiment~1 (135 total trials vs.\ 180) to accommodate the greater time burden of typed production.
-
-Responses were coded into 15 utterance categories corresponding to all one-, two-, and three-adjective strings built from size, colour, and form terms (3 one-adjective, 6 two-adjective, 6 three-adjective).
-Misspellings and transparent lexical alternatives were normalised when their semantic class was unambiguous; spatial descriptions, comparative or ordinal size expressions, and other unclassifiable responses were excluded.
-The dependent variable for the Bayesian model comparison is the categorical utterance label $y_i \in \{1, \ldots, 15\}$ for each trial $i$.
-For descriptive statistics and targeted mixed-effects analyses, we also tracked two derived binary outcomes: whether an utterance was size-initial and whether it was over-informative (i.e., a three-adjective response in both-necessary contexts, or a multi-adjective response in size-sufficient or colour-sufficient contexts).
-
-\subsubsection{Results}
-
-The production data show stronger context sensitivity than the slider ratings.
-As \Cref{fig:production-empirical} illustrates, size-first utterances dominated in size-sufficient contexts, colour-first utterances dominated in colour-sufficient contexts, and both-necessary contexts fell between the two extremes.
-A mixed-effects logistic regression on size-initial responses yielded a strong main effect of referential context, $\chi^2(2) = 1859.7$, $p < .001$, no reliable main effect of size discriminability, $\chi^2(1) = 0.79$, $p = .37$, and a reliable interaction, $\chi^2(2) = 31.4$, $p < .001$.
-As in the slider data, the interaction was asymmetric: higher discriminability reduced the size-first advantage in size-sufficient contexts but increased it in both-necessary contexts.
-
-A complementary analysis of over-informativity reveals a related efficiency pressure.
-Over-informative utterances were most frequent in size-sufficient contexts and least frequent in colour-sufficient contexts, producing a strong main effect of referential context, $\chi^2(2) = 725.7$, $p < .001$.
-Unlike size-initiality, over-informativity also showed a main effect of size discriminability, $\chi^2(1) = 10.3$, $p = .001$, with more multi-adjective responses in low- than in high-discriminability displays.
-This effect interacted with referential context, $\chi^2(2) = 63.8$, $p < .001$, driven primarily by size-sufficient contexts.
-The pattern aligns with the broader communicative-efficiency literature on redundancy: speakers produce additional material when it helps resolve reference, even if it is not strictly necessary for uniqueness.
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=0.95\textwidth]{production_empirical.pdf}
-  \caption{Empirical results from the free-production study. Proportions of the major utterance types are shown by referential context and size discriminability, with bootstrapped 95\% confidence intervals. Only utterance types reaching at least 2\% in one condition are displayed.}
-  \label{fig:production-empirical}
-\end{figure}
-
-\subsection{Interim Summary}
-
-Across both experiments, three empirical regularities emerge.
-First, there is a robust baseline preference for size-first orderings that persists even when colour is the only discriminating property.
-Second, this preference is modulated by referential context: size-first choices increase when size is informative and decrease when colour is more useful, consistent with a discriminatory-efficiency account.
-Third, size discriminability interacts with referential context but does not produce reliable main effects, suggesting that the sharpness of the size contrast acts as a secondary modulator rather than a primary driver.
-The production data amplify these patterns relative to the slider data: free production elicits stronger context sensitivity and reveals a complementary over-informativity gradient driven by the same referential pressures.
-Together, these results motivate a formal model that can capture both the stable ordering bias and its context-dependent modulation, while accommodating the richer response space of unconstrained production.
 
 % =============================================================================
 \section{Bayesian Model Comparison}
