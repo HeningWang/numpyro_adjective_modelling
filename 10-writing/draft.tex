@@ -157,29 +157,13 @@ These manipulations operationalize the context-sensitive component of the theory
 
 The Rational Speech Act (RSA) framework offers a natural way of formalizing these pressures.
 In RSA, a pragmatic speaker selects utterances by reasoning about a listener's posterior, and the listener in turn reasons about the speaker's choice \citep{goodman2016pragmatic}.
-Standard RSA treats complete utterances as the units of choice, but the same logic can be defined incrementally, with the speaker choosing one word at a time on the basis of how each token updates the listener's beliefs \citep{cohngordon2019incremental}.
-This extension is relevant to adjective ordering because it makes the utility of a modifier depend on its position in the string.
-
-Existing incremental pragmatic models and related work on redundancy already establish that word-by-word reasoning can capture important asymmetries between adjective positions and between prenominal and postnominal systems \citep{degen2020redundancy,rubio2021wordorder}.
-What they usually do not assume, however, is that lexical meanings themselves change as the listener posterior changes.
-In most of these accounts, the posterior updates online but the interpretation of an adjective remains fixed relative to the scene.
-This amounts to what we will call \emph{context-fixed} semantics: the semantic value of each adjective is determined by the scene-level context and does not depend on which other words have already been processed.
-
-A \emph{context-updating} alternative was introduced by \citet{schlotterbeck2023incremental} as part of an incremental RSA model for adjective ordering.
-Under context-updating semantics, the threshold for gradable adjectives such as size is recomputed from the listener's current posterior at each stage of composition.
-After hearing ``blue,'' for example, the listener's beliefs concentrate on blue objects, and the comparison class for evaluating ``big'' narrows accordingly.
-The result is order-sensitive composition: ``blue big'' and ``big blue'' can induce different comparison classes and therefore different communicative outcomes even when they contain the same words.
-This connects to \citeauthor{teodorescu2006}'s (\citeyear{teodorescu2006}) observation that ordering restrictions weaken when alternative orders are not truth-conditionally equivalent --- precisely the situation that context-updating semantics creates.
-By comparing models with context-updating and context-fixed semantics, we can ask not only whether incremental production adds value, but also whether context-updating threshold computation provides a further benefit --- and, crucially, whether that benefit is contingent on the speaker architecture.
-
-That question is motivated by a narrower concern than the introduction of incrementality as such.
-We do not argue that production-level incrementality is required for adjective-ordering preferences in general.
-The subjectivity literature and, as shown below, our own simulations indicate that context-sensitive restrictive composition already accounts for much of the canonical ordering tendency.
-The question is instead how much explanatory work remains once that baseline is in place, and whether an incremental production model with context-updating semantics better captures the context-sensitive behavior revealed by the experiments.
-
-The present paper builds directly on \citet{schlotterbeck2023incremental}, who introduced both the incremental RSA speaker with context-updating semantics and the slider-rating paradigm that forms the basis for one of the experiments reported here.
-That study demonstrated that the model qualitatively captures a subjectivity-driven baseline ordering as well as a discriminatory-strength modulation, but it did not isolate the respective contributions of incremental production and context-updating semantics, nor did it assess their quantitative fit.
-We extend that work in four directions: we embed the model in a systematic $2 \times 2$ comparison of speaker architecture and semantic regime, including a context-fixed ablation; we add a constrained production experiment that provides a richer response space; we introduce a simulation study that identifies which ordering effects follow from context-updating composition alone; and we use Bayesian model comparison to quantify each mechanism's contribution and to reveal an interaction between incremental production and context-updating semantics that was not visible in the earlier qualitative analysis.
+Although standard RSA treats complete utterances as the units of choice, the same logic can be defined incrementally, with the speaker choosing one word at a time on the basis of how each token updates the listener's beliefs \citep{cohngordon2019incremental}.
+Existing incremental pragmatic models and related work on redundancy establish that word-by-word reasoning can capture asymmetries between adjective positions and between prenominal and postnominal systems \citep{degen2020redundancy,rubio2021wordorder}.
+What these accounts usually do not assume is that lexical meanings themselves change as the listener's posterior changes.
+In most such accounts the posterior updates online, but the interpretation of an adjective remains fixed relative to the scene.
+\citet{schlotterbeck2023incremental} introduced an alternative in which the threshold for a gradable adjective is recomputed from the listener's current posterior at each stage of composition, together with the slider-rating paradigm that forms the basis for one of the experiments reported here.
+That study showed that the model qualitatively captures both a subjectivity-driven baseline ordering and a discriminatory-strength modulation, but it did not isolate the respective contributions of incremental production and context-updating semantics, nor did it assess their quantitative fit.
+The present paper builds directly on that work.
 
 % =============================================================================
 \section{Experiments}
