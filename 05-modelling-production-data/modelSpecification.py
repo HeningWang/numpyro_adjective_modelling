@@ -4225,7 +4225,7 @@ likelihood_function_contextual_pcalpha_canon_betafixed_hier = (
 
 def _make_contextual_pcalpha_canon_parsimony_model(
     color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
-    drop: tuple = (), free: tuple = (),
+    drop: tuple = (), free: tuple = (), cell: str = "inc_rec",
 ):
     """Parsimony model: iter-18 (``contextual_pcalpha_canon``) minus its two
     free parameter drops, both PROVEN zero-cost in the May-2026 session:
@@ -4278,6 +4278,17 @@ def _make_contextual_pcalpha_canon_parsimony_model(
         raise ValueError(f"Unsupported free constant(s): {sorted(_bad_free)}; "
                           f"supported: {sorted(_valid_free)}")
 
+    # 2x2 (speaker × semantics) on the best model (memo §7.13). cell selects
+    # the speaker-utility-accrual path (incremental vs global) and the
+    # listener-recursion flag (recursive vs static). Default "inc_rec" ==
+    # the merged best model (behaviour unchanged; existing NCs unaffected).
+    _valid_cells = {"inc_rec", "inc_static", "glob_rec", "glob_static"}
+    if cell not in _valid_cells:
+        raise ValueError(f"Unsupported 2x2 cell {cell!r}; "
+                         f"expected {sorted(_valid_cells)}")
+    _use_global = cell in ("glob_rec", "glob_static")
+    _recursive  = cell in ("inc_rec", "glob_rec")
+
     def model(states=None, empirical=None,
               participant_idx=None, n_participants=None,
               sufficient_dim=None, has_one_word_solution=None, is_sharp=None,
@@ -4327,13 +4338,19 @@ def _make_contextual_pcalpha_canon_parsimony_model(
         alpha_C_per_trial = jnp.maximum(alpha_C + per_trial_offset, 0.0)
         alpha_F_per_trial = jnp.maximum(alpha_F + per_trial_offset, 0.0)
 
+        speaker_fn = (
+            jitted_global_speaker_contextual_anchored_gamma_sharpbonus_formmod_canon_hier
+            if _use_global
+            else jitted_speaker_contextual_anchored_gamma_sharpbonus_formmod_canon_hier
+        )
         with numpyro.plate("data", len(states)):
-            probs = jitted_speaker_contextual_anchored_gamma_sharpbonus_formmod_canon_hier(
+            probs = speaker_fn(
                 states, sufficient_dim, has_one_word_solution, is_sharp,
                 alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
                 lambda_suff, lambda_form_mod, gamma_len3_erdc, lambda_noncanon,
                 csv_r, fsv_r, k_r, wf_r,
                 beta_lm, gamma_base, gamma_oneword, gamma_sharp, epsilon,
+                recursive=_recursive,
             )
             if empirical is None:
                 numpyro.sample("obs", dist.Categorical(probs=probs))
@@ -4413,6 +4430,35 @@ likelihood_function_contextual_pcalpha_canon_parsimony_no_alphaF_csv059_hier = (
     _make_contextual_pcalpha_canon_parsimony_model(
         color_semval=0.59, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
         drop=("alpha_F",),
+    )
+)
+
+# --- 2x2 (speaker × semantics) on the best model (memo §7.13). All four
+# share the identical 10-named inventory + csv=0.59 + fixed beta_lm; they
+# differ ONLY in cell= (utility accrual × listener recursion). inc_rec ==
+# the merged best model (`…_no_alphaF_csv059`). ---
+likelihood_function_contextual_pcalpha_canon_parsimony_2x2_inc_rec_hier = (
+    _make_contextual_pcalpha_canon_parsimony_model(
+        color_semval=0.59, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+        drop=("alpha_F",), cell="inc_rec",
+    )
+)
+likelihood_function_contextual_pcalpha_canon_parsimony_2x2_inc_static_hier = (
+    _make_contextual_pcalpha_canon_parsimony_model(
+        color_semval=0.59, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+        drop=("alpha_F",), cell="inc_static",
+    )
+)
+likelihood_function_contextual_pcalpha_canon_parsimony_2x2_glob_rec_hier = (
+    _make_contextual_pcalpha_canon_parsimony_model(
+        color_semval=0.59, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+        drop=("alpha_F",), cell="glob_rec",
+    )
+)
+likelihood_function_contextual_pcalpha_canon_parsimony_2x2_glob_static_hier = (
+    _make_contextual_pcalpha_canon_parsimony_model(
+        color_semval=0.59, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
+        drop=("alpha_F",), cell="glob_static",
     )
 )
 

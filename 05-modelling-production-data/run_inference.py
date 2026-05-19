@@ -52,6 +52,10 @@ from modelSpecification import (
     likelihood_function_contextual_pcalpha_canon_parsimony_no_alphaF_freewf_hier,
     likelihood_function_contextual_pcalpha_canon_parsimony_no_alphaF_freeall4_hier,
     likelihood_function_contextual_pcalpha_canon_parsimony_no_alphaF_csv059_hier,
+    likelihood_function_contextual_pcalpha_canon_parsimony_2x2_inc_rec_hier,
+    likelihood_function_contextual_pcalpha_canon_parsimony_2x2_inc_static_hier,
+    likelihood_function_contextual_pcalpha_canon_parsimony_2x2_glob_rec_hier,
+    likelihood_function_contextual_pcalpha_canon_parsimony_2x2_glob_static_hier,
     likelihood_function_global_speaker_static_hier,
     likelihood_function_incremental_speaker_frozen_hier,
     likelihood_function_incremental_lm_only_hier,
@@ -118,6 +122,10 @@ HIER_MODELS = {
     "contextual_pcalpha_canon_parsimony_no_alphaF_freewf": (likelihood_function_contextual_pcalpha_canon_parsimony_no_alphaF_freewf_hier, 0.85, 5),
     "contextual_pcalpha_canon_parsimony_no_alphaF_freeall4": (likelihood_function_contextual_pcalpha_canon_parsimony_no_alphaF_freeall4_hier, 0.85, 5),
     "contextual_pcalpha_canon_parsimony_no_alphaF_csv059": (likelihood_function_contextual_pcalpha_canon_parsimony_no_alphaF_csv059_hier, 0.85, 5),
+    "contextual_pcalpha_canon_parsimony_2x2_inc_rec": (likelihood_function_contextual_pcalpha_canon_parsimony_2x2_inc_rec_hier, 0.85, 5),
+    "contextual_pcalpha_canon_parsimony_2x2_inc_static": (likelihood_function_contextual_pcalpha_canon_parsimony_2x2_inc_static_hier, 0.85, 5),
+    "contextual_pcalpha_canon_parsimony_2x2_glob_rec": (likelihood_function_contextual_pcalpha_canon_parsimony_2x2_glob_rec_hier, 0.85, 5),
+    "contextual_pcalpha_canon_parsimony_2x2_glob_static": (likelihood_function_contextual_pcalpha_canon_parsimony_2x2_glob_static_hier, 0.85, 5),
     "v5":        (likelihood_function_v5_hier,       0.85, 5),
     "v5_no_lm":  (likelihood_function_v5_no_lm_hier, 0.85, 5),
     "v5a":       (likelihood_function_v5a_hier,      0.85, 5),
@@ -306,6 +314,10 @@ def run_inference_hier(
         "contextual_pcalpha_canon_parsimony_no_alphaF_freewf",
         "contextual_pcalpha_canon_parsimony_no_alphaF_freeall4",
         "contextual_pcalpha_canon_parsimony_no_alphaF_csv059",
+        "contextual_pcalpha_canon_parsimony_2x2_inc_rec",
+        "contextual_pcalpha_canon_parsimony_2x2_inc_static",
+        "contextual_pcalpha_canon_parsimony_2x2_glob_rec",
+        "contextual_pcalpha_canon_parsimony_2x2_glob_static",
     }
     # Models that take an additional (participant × condition) random effect
     # on alpha — need condition_idx and n_conditions passed through.
@@ -325,6 +337,10 @@ def run_inference_hier(
         "contextual_pcalpha_canon_parsimony_no_alphaF_freewf",
         "contextual_pcalpha_canon_parsimony_no_alphaF_freeall4",
         "contextual_pcalpha_canon_parsimony_no_alphaF_csv059",
+        "contextual_pcalpha_canon_parsimony_2x2_inc_rec",
+        "contextual_pcalpha_canon_parsimony_2x2_inc_static",
+        "contextual_pcalpha_canon_parsimony_2x2_glob_rec",
+        "contextual_pcalpha_canon_parsimony_2x2_glob_static",
     }
     is_v5 = canonical_speaker_type in V5_FAMILY
     is_contextual = canonical_speaker_type in CONTEXTUAL_FAMILY
@@ -460,6 +476,10 @@ if __name__ == "__main__":
                                  "contextual_pcalpha_canon_parsimony_no_alphaF_freewf",
                                  "contextual_pcalpha_canon_parsimony_no_alphaF_freeall4",
                                  "contextual_pcalpha_canon_parsimony_no_alphaF_csv059",
+                                 "contextual_pcalpha_canon_parsimony_2x2_inc_rec",
+                                 "contextual_pcalpha_canon_parsimony_2x2_inc_static",
+                                 "contextual_pcalpha_canon_parsimony_2x2_glob_rec",
+                                 "contextual_pcalpha_canon_parsimony_2x2_glob_static",
                                  "v5", "v5_no_lm", "v5a", "v5b",
                                  "v5_inc_static", "v5_global", "v5_global_static",
                                  "v5_global_full", "v5_global_static_full"],
