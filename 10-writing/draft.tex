@@ -594,8 +594,9 @@ The two semantic regimes --- context-updating (\Cref{eq:context_updating}) and c
 All other aspects of the model, including the belief-update structure and the speaker's decision rule, remain identical across regimes.
 The context-fixed variant therefore serves as a targeted ablation of the context-updating mechanism.
 
-The semantic parameters $k = 0.5$, $w_f = 1.0$, $\nu_\text{colour} = 0.85$, and $\nu_\text{form} = 0.70$ (production only) are fixed across all variants.
+For the slider-rating models, the semantic parameters $k = 0.5$, $w_f = 1.0$, $\nu_\text{colour} = 0.85$, and $\nu_\text{form} = 0.70$ are fixed across all variants.
 Their influence on model predictions is explored in the simulation study below.
+The free-production comparison is run on an extended speaker model whose fixed constants are calibrated empirically; this extension and its calibration are developed in \Cref{sec:model:extended}.
 
 \begin{table}[htbp]
   \caption{Slider-rating model variants ($2 \times 2$: speaker $\times$ semantics, all hierarchical)}
@@ -614,17 +615,19 @@ Their influence on model predictions is explored in the simulation study below.
 \end{table}
 
 \begin{table}[htbp]
-  \caption{Free-production model variants ($2 \times 2$: speaker $\times$ semantics, all hierarchical)}
+  \caption{Free-production model variants ($2 \times 2$: speaker $\times$ semantics, all hierarchical).
+  The four cells are instantiated on the extended production model of \Cref{sec:model:extended} and are \emph{parameter-matched}: every cell carries the identical nominal inventory (the ten population parameters of \Cref{tab:param-inventory} plus the 339-element participant hierarchy and the five calibrated constants).
+  Context-fixed is the nested restriction of context-updating obtained by freezing the listener's threshold, and global vs.\ incremental is a structural switch with no extra parameters, so any fit difference is structural rather than a complexity artifact.}
   \label{tab:production-models}
   \centering
   \begin{tabularx}{\textwidth}{llXl}
     \toprule
-    \textbf{Model} & \textbf{Speaker} & \textbf{Size semantics} & \textbf{Inferred parameters} \\
+    \textbf{Model} & \textbf{Speaker} & \textbf{Size semantics} & \textbf{Nominal inventory} \\
     \midrule
-    Global, context-fixed & $S_\text{G}$ & Fixed threshold from scene prior & $\alpha,\; \beta,\; \tau,\; \delta_i$ \\
-    Global, context-updating & $S_\text{G}$ & Threshold updated from listener posterior & $\alpha,\; \beta,\; \tau,\; \delta_i$ \\
-    Incremental, context-fixed & $S_\text{I}$ & Fixed threshold from scene prior & $\alpha,\; \beta,\; \tau,\; \delta_i$ \\
-    Incremental, context-updating & $S_\text{I}$ & Threshold updated from listener posterior & $\alpha,\; \beta,\; \tau,\; \delta_i$ \\
+    Global, context-fixed & $S_\text{G}$ & Fixed threshold from scene prior & 10 population $+\;\delta_i$ \\
+    Global, context-updating & $S_\text{G}$ & Threshold updated from listener posterior & 10 population $+\;\delta_i$ \\
+    Incremental, context-fixed & $S_\text{I}$ & Fixed threshold from scene prior & 10 population $+\;\delta_i$ \\
+    Incremental, context-updating & $S_\text{I}$ & Threshold updated from listener posterior & 10 population $+\;\delta_i$ \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -635,8 +638,98 @@ Convergence was assessed via split-$\hat{R}$, effective sample size, divergence 
 The two datasets required different likelihood specifications.
 Slider responses showed substantial mass at the boundaries (0 and 1), which motivated a Zero-One-Inflated Beta (ZOIB) likelihood rather than a Gaussian approximation.
 The free-production data were categorical and highly skewed, with many utterance types near zero frequency in some conditions.
-To keep inference stable and the comparison interpretable, the semantic parameters were fixed across all variants and only the pragmatic parameters were estimated from data.
+To keep inference stable and the comparison interpretable, the semantic constants were fixed at common values across all variants and only the pragmatic parameters were estimated from data.
 This ensures that any difference in fit between variants reflects the speaker architecture and semantic regime, not incidental variation in lexical semantics.
+The next subsection develops the extended production speaker and the principled procedure by which its parameter set and fixed constants were selected.
+
+\subsection{An Extended Production Model}
+\label{sec:model:extended}
+
+The $2 \times 2$ contrast isolates two mechanisms, but the minimal speaker it uses --- a single rationality parameter $\alpha$, the language-model weight $\beta$, and a participant-level offset --- is deliberately austere.
+For the binary slider task this minimal model already reproduces the condition-level pattern almost perfectly (\Cref{sec:modelcomparison}).
+For free production over fifteen surface forms it does not: its best variant explains only about 40\% of the cell-level variance (\Cref{sec:appendix:simple2x2}).
+A model we are willing to advocate as a process account of production should fit the production data well, and should do so with a parameter set that is motivated and selected by an explicit criterion rather than hand-tuned to residuals.
+We therefore extend the incremental speaker with a small number of independently motivated components and then prune them with a parsimony frontier and a fixed-constant sensitivity analysis.
+
+\paragraph{Additional components.}
+Each component targets a documented property of production or of the adjective-ordering literature, not a particular residual cell.
+\emph{Per-dimension rationality} replaces the single $\alpha$ with separate informativity weights for size and colour ($\alpha_\text{S}$, $\alpha_\text{C}$), since the two adjective types differ in how reliably they discriminate.
+A \emph{canonical-order penalty} ($\lambda_\text{noncanon}$) discounts utterances that place form before colour, encoding the cross-linguistically robust colour-before-form tendency \citep{sproat1991cross, cinque1994, scott2002}.
+A \emph{sufficiency boost} ($\lambda_\text{suff}$) raises the probability of beginning with the single dimension that already singles out the referent.
+A \emph{context-gated form-mention boost} ($\lambda_\text{form-mod}$) captures the additional, often redundant mention of form when neither size nor colour alone resolves the scene.
+A \emph{graded length bias} ($\gamma_\text{base}$, $\gamma_\text{one}$, $\gamma_\text{sharp}$) modulates the tendency to produce longer or shorter descriptions, including extra modification when the size cue is perceptually blurred.
+A \emph{lapse rate} ($\epsilon$) mixes the speaker distribution with a uniform component, absorbing inattentive responses instead of distorting the pragmatic parameters.
+Finally, the determinate feature semantics are \emph{softened and anchored}: colour and form are given graded denotations (as in the slider model) with empirically calibrated reliabilities rather than treated as deterministic.
+
+\paragraph{A parsimony frontier.}
+We did not choose this component set by hand.
+We fitted the maximal model (thirteen population parameters plus the participant hierarchy) and then walked a leave-one-out frontier, removing one coefficient at a time and refitting (\Cref{tab:parsimony-frontier}).
+Three coefficients carry no fit information and were dropped at zero cost, each for an independent reason: the language-model temperature pins to a stable value and can be fixed without reallocating the canonical-order signal; an erdc-gated three-word penalty collapsed onto zero in the joint posterior; and the form informativity weight $\alpha_\text{F}$ had a posterior interval spanning zero, because form is already produced through the language-model prior, the anchored semantics, and the form-mention boost.
+Removing all three yields a ten-parameter model that is statistically indistinguishable from the maximal model, with every retained coefficient's $94\%$ HDI excluding zero.
+This is the frontier floor: dropping either $\lambda_\text{suff}$ or $\gamma_\text{sharp}$ beyond this point costs measurable fit, so the remaining ten coefficients are load-bearing.
+We report this ten-parameter model, with the maximal model and the frontier as the selection evidence.
+
+\begin{table}[htbp]
+\centering
+\caption{Parsimony frontier for the extended production speaker (size--colour subset, four chains, hierarchical).
+$R^2_{\text{all}}$ uses all condition $\times$ utterance cells; $R^2_{\ge.02}$ restricts to behaviourally relevant cells (empirical proportion $\ge 0.02$); $r$ is the Pearson correlation between predicted and observed proportions.
+The first three rows remove coefficients at zero fit cost; the last two show the frontier floor, where further removal costs fit.}
+\label{tab:parsimony-frontier}
+\small
+\begin{tabular}{lrrrr}
+\hline
+Model & \#named & $R^2_{\text{all}}$ & $R^2_{\ge.02}$ & $r$ \\
+\hline
+Maximal model & 13 & $0.919$ & $0.919$ & $0.959$ \\
+\quad $-$ LM temperature & 12 & $0.920$ & $0.919$ & $0.959$ \\
+\quad $-$ LM temp.\ $-$ 3-word penalty & 11 & $0.920$ & $0.920$ & $0.959$ \\
+\quad $-$ also $\alpha_\text{F}$ \textbf{(reported)} & \textbf{10} & $\mathbf{0.921}$ & $\mathbf{0.921}$ & $\mathbf{0.959}$ \\
+\quad\quad $-$ also $\lambda_\text{suff}$ & 10 & $0.909$ & $0.904$ & $0.954$ \\
+\quad\quad $-$ also $\gamma_\text{sharp}$ & 10 & $0.900$ & $0.889$ & $0.949$ \\
+\hline
+\end{tabular}
+\end{table}
+
+\paragraph{Calibrating the fixed semantic constants.}
+The ten-parameter model still depends on four constants held fixed during inference: the colour reliability $\nu_\text{colour}$, the form reliability $\nu_\text{form}$, the size-threshold anchor $k$, and the size-sigmoid sharpness $w_f$.
+We audited all four (\Cref{tab:semval-refit}).
+A cheap static sweep --- varying one constant while holding the ten fitted parameters at their values --- suggested that the originally assumed near-deterministic colour reliability ($\nu_\text{colour}=0.97$) was near-optimal.
+A joint refit that lets the colour weight readjust tells the opposite story: freeing $\nu_\text{colour}$ moves it to $0.59$ $[0.56, 0.62]$ and gains $+0.022$ $R^2$.
+This is a methodological lesson worth stating explicitly: a static parameter sweep can be actively misleading when parameters trade off, and only a joint refit licenses a conclusion about a fixed constant.
+Re-fixing $\nu_\text{colour}$ at the freed posterior mean ($0.59$) recovers the entire gain at ten parameters with clean sampling, strictly dominating both the original value and freeing the constant.
+The other three constants are kept fixed: freeing each alone gains essentially nothing, the form reliability is unidentified, the sharpness brackets its fixed value, and freeing all four jointly produces a non-identified ridge (effective sample sizes in the single digits) --- a concrete caution against over-parameterising the semantics.
+
+The soft colour predicate is itself theoretically informative.
+Moving $\nu_\text{colour}$ from $0.97$ to $0.59$ roughly tripled the colour informativity weight ($\alpha_\text{C}$: $1.3 \to 3.8$), raised the size weight ($\alpha_\text{S}$: $6.2 \to 8.0$), strengthened the canonical-order penalty, and roughly halved the lapse rate ($\epsilon$: $0.18 \to 0.11$).
+A near-deterministic colour denotation suppresses the pragmatic weight on colour and dumps the resulting misfit into uniform noise; softening it to a roughly $60\%$-reliable predicate lets the informativity weights be estimated properly and lets far less of the data be explained away as inattention.
+The data prefer a colour adjective that is graded, not categorical --- consistent with the relaxed-semantics motivation for $\nu$ in the first place, and a sharper version of that claim than the assumed value encoded.
+
+\begin{table}[htbp]
+\centering
+\caption{Fixed-constant sensitivity analysis for the ten-parameter production model (joint refits, size--colour subset).
+Each ``free'' row frees one constant and refits all parameters jointly; ``free all four'' frees them together.
+$\Delta R^2$ is relative to the reported model.
+Only $\nu_\text{colour}$ warrants a changed value; it is re-fixed at its freed posterior mean.}
+\label{tab:semval-refit}
+\small
+\begin{tabular}{lrrl}
+\hline
+Refit & \#named & $R^2_{\text{all}}$ & Freed posterior / verdict \\
+\hline
+Reported ($\nu_\text{colour}=0.97$, all fixed) & 10 & $0.921$ & --- \\
+Free $\nu_\text{colour}$ & 11 & $0.942$ & $0.59\;[0.56,0.62]$; large gain \\
+Free $\nu_\text{form}$ & 11 & $0.920$ & unidentified (HDI spans prior) \\
+Free $k$ & 11 & $0.921$ & negligible gain \\
+Free $w_f$ & 11 & $0.921$ & brackets fixed value \\
+Free all four & 14 & $0.953$ & non-identified ridge (ESS 6--28) \\
+\textbf{$\nu_\text{colour}$ re-fixed at $0.59$ (reported)} & \textbf{10} & $\mathbf{0.942}$ & clean sampling, $r = 0.97$ \\
+\hline
+\end{tabular}
+\end{table}
+
+The resulting model --- ten population parameters, the participant hierarchy, and five empirically calibrated constants ($\nu_\text{colour}=0.59$, $\nu_\text{form}=0.50$, $k=0.50$, $w_f=0.69$, and the fixed LM temperature) --- explains $R^2 \approx 0.94$ of the cell-level production variance ($r = 0.97$).
+This is the model we advocate for production, and the architecture on which the $2 \times 2$ comparison below is instantiated.
+Its full parameter inventory and priors are given in \Cref{tab:param-inventory}.
 
 % =============================================================================
 \section{Bayesian Model Comparison}
@@ -667,11 +760,11 @@ Dataset & Model & ELPD$_{\text{LOO}}$ & $\Delta$ELPD & dse & $p_{\text{LOO}}$ \\
  & Incremental, context-fixed & $-2{,}774.1$ & $-0.1$ & $0.2$ & 65.1 \\
  & Global, context-updating & $-4{,}249.2$ & $-1{,}475.1$ & $65.9$ & 1{,}425.0 \\
  & Global, context-fixed & $-7{,}562.2$ & $-4{,}788.1$ & $127.2$ & 4{,}372.0 \\[4pt]
-\multicolumn{6}{l}{\textit{Free-Production Study}} \\
- & Incremental, context-updating & $-6{,}985.3$ & $0.0$ & --- & 69.3 \\
- & Incremental, context-fixed & $-7{,}000.9$ & $-15.6$ & $1.5$ & 70.7 \\
- & Global, context-updating & $-7{,}728.1$ & $-742.8$ & $45.0$ & 22.9 \\
- & Global, context-fixed & $-7{,}738.5$ & $-753.2$ & $44.8$ & 21.1 \\
+\multicolumn{6}{l}{\textit{Free-Production Study (extended model, parameter-matched)}} \\
+ & Incremental, context-updating & $-5{,}275.0$ & $0.0$ & --- & 174.5 \\
+ & Incremental, context-fixed & $-5{,}338.0$ & $-63.0$ & $14.0$ & 146.3 \\
+ & Global, context-fixed & $-6{,}200.5$ & $-925.5$ & --- & 6.8 \\
+ & Global, context-updating & $-6{,}207.6$ & $-932.6$ & --- & 6.6 \\
 \hline
 \end{tabular}
 \end{table}
@@ -682,7 +775,7 @@ Dataset & Model & ELPD$_{\text{LOO}}$ & $\Delta$ELPD & dse & $p_{\text{LOO}}$ \\
 The dominant contrast is speaker architecture: both incremental models fit the data well and are essentially indistinguishable ($|\Delta\text{ELPD}|/\text{dse} = 0.32$), whereas both global models perform far worse ($\Delta\text{ELPD} > 1{,}400$).
 Within the incremental pair, context-updating semantics confers no detectable advantage over context-fixed semantics.
 For graded preference judgments between two competing orders, word-by-word pragmatic reasoning is therefore the dominant mechanism: it provides strong order sensitivity regardless of whether the size threshold is recomputed from the running posterior.
-Posterior-predictive correlations confirm that both incremental models capture the condition-level pattern equally well (see \Cref{fig:slider-correlation} in the Appendix).
+Posterior-predictive checks confirm that the incremental context-updating model captures the condition-level pattern well (\Cref{fig:slider-results}).
 For the best-fitting incremental context-updating model, the posterior rationality parameter was $\alpha = 0.69$ ($\mathit{SD} = 0.06$, 94\% HDI $[0.57, 0.79]$), the ZOIB dispersion was $\sigma = 0.72$ ($\mathit{SD} = 0.01$, 94\% HDI $[0.70, 0.74]$), and the hierarchical spread of participant-level rationality offsets was $\tau = 0.12$ ($\mathit{SD} = 0.01$, 94\% HDI $[0.10, 0.14]$).
 Crucially, the bias intercept was $b = 0.58$ ($\mathit{SD} = 0.06$, 94\% HDI $[0.47, 0.69]$), reliably above 0.50.
 This positive bias means that even after the RSA mechanism accounts for context-dependent informativeness, the model infers a residual size-first preference --- consistent with the view that a stable ordering default persists beyond what discriminatory utility alone explains.
@@ -696,23 +789,60 @@ Context-updating composition thus provides a minimal source of order sensitivity
   \label{fig:slider-model}
 \end{figure}
 
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[c]{0.52\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{slider_ppc_best.pdf}\\[2pt]
+    {\small (a) Mean rating by condition}
+  \end{minipage}\hfill
+  \begin{minipage}[c]{0.46\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{slider_correlation_inc_hier.pdf}\\[2pt]
+    {\small (b) Condition-level correlation}
+  \end{minipage}
+  \caption{Posterior-predictive fit of the best-fitting slider model (incremental, context-updating).
+  (a) Observed (blue) vs.\ model (red) mean slider rating for each referential context $\times$ size-discriminability cell; the dashed line marks no preference ($0.5$) and error bars are $95\%$ confidence and posterior-predictive intervals.
+  (b) Observed vs.\ predicted condition means; the dashed line is identity.}
+  \label{fig:slider-results}
+\end{figure}
+
 \subsection{Free-Production Study}
 
-The production comparison (\Cref{fig:production-model}) reveals a richer pattern.
-As in the slider study, both incremental models outperform both global models by a wide margin ($\Delta\text{ELPD} > 740$, $|\Delta\text{ELPD}|/\text{dse} > 16$).
-Unlike the slider study, however, the semantic-regime contrast now matters within the incremental pair: the incremental context-updating model is clearly the best-fitting variant ($\Delta\text{ELPD} = -15.6$, $|\Delta\text{ELPD}|/\text{dse} = 10.1$, $p < .001$, relative to incremental context-fixed).
-Within the global pair, the two semantic regimes are effectively tied ($\Delta\text{ELPD} \approx 10$).
+For production we instantiate the $2 \times 2$ on the extended model of \Cref{sec:model:extended}, with the four cells parameter-matched (\Cref{tab:production-models}): identical ten-parameter inventory, identical participant hierarchy, identical calibrated constants.
+The incremental, context-updating cell is the advocated model itself; it reproduces the production data closely ($R^2 \approx 0.94$, $r = 0.97$; \Cref{fig:production-results}, with the by-condition fit in panel~(a) and the condition-level correlation in panel~(b)).
+Because the cells differ only in structure, the comparison isolates the speaker architecture and the semantic regime rather than expressive flexibility.
 
-This interaction between speaker architecture and semantic regime is the most theoretically informative result of the model comparison.
-Context-updating threshold computation adds significant predictive value for production, but only when paired with an incremental decision architecture that can exploit non-commutative composition at each step.
-The production task is thus precisely the setting where word-by-word planning and context-updating semantics jointly matter, consistent with the view that adjective ordering in production reflects online discriminatory utility rather than utterance-level well-formedness alone.
-Posterior-predictive correlations for the best-fitting model are shown in the Appendix.
-For the best-fitting incremental context-updating model, the posterior rationality parameter was $\alpha = 2.09$ ($\mathit{SD} = 0.09$, 94\% HDI $[1.92, 2.25]$), the log utterance-prior weight was $\log\beta = -0.24$ ($\mathit{SD} = 0.03$, 94\% HDI $[-0.31, -0.18]$), and the hierarchical spread was $\tau = 0.72$ ($\mathit{SD} = 0.07$, 94\% HDI $[0.59, 0.84]$).
-The negative $\log\beta$ (i.e., $\beta \approx 0.79$) indicates a moderate down-weighting of the corpus-derived prior relative to the RSA component.
-Comparing across model variants, the global models yielded lower $\alpha$ posteriors ($\alpha \approx 1.27$) and less negative $\log\beta$ ($\approx -0.17$, i.e., $\beta \approx 0.85$), suggesting that the global architecture relies more on the LM prior and less on pragmatic reasoning to fit the data.
-The substantially larger $\tau$ in the incremental models ($0.71$--$0.72$ vs.\ $0.32$--$0.33$) further indicates greater participant-level variability in pragmatic engagement under the incremental architecture.
+The dominant effect is speaker architecture.
+Both incremental cells outperform both global cells by an enormous margin: the speaker main effect on out-of-sample fit is $+897$ ELPD, and the global cells collapse from $R^2 \approx 0.94$ to $R^2 \approx 0.78$.
+This effect is not a flexibility artifact.
+Under the identical nominal inventory, the effective number of parameters ($p_{\text{LOO}}$) diverges sharply: the incremental cells keep the participant hierarchy identifiable ($p_{\text{LOO}} \approx 150$--$175$ of the 113 participant offsets are data-informed), whereas the global cells collapse it ($p_{\text{LOO}} \approx 7$; the global speaker is too rigid for the data to inform per-participant rationality).
+The winning architecture therefore carries the \emph{higher} realized complexity penalty and still wins by $\sim\!900$ ELPD --- its advantage is despite, not because of, flexibility.
 
-Three additional production ablation models are reported in full in the Appendix.
+Within the incremental pair, the semantic regime now matters: the context-updating cell significantly outperforms the context-fixed cell ($\Delta\text{ELPD} = 63$, dse $= 14$, $|\Delta\text{ELPD}|/\text{dse} = 4.5$).
+Within the global pair, the two regimes are effectively tied, with context-updating if anything slightly worse ($\Delta\text{ELPD} = 7$, dse $= 2.6$).
+The speaker $\times$ semantics interaction ($+70$ ELPD) is the theoretically informative quantity: context-updating threshold computation adds predictive value, but only when paired with an incremental architecture that can exploit non-commutative composition at each step.
+This interaction is robust on the advocated architecture; in the deliberately austere $2 \times 2$ of \Cref{sec:appendix:simple2x2} it is masked, which we show there is a property of that model's impoverishment rather than of the phenomenon.
+The parameter-matched $2 \times 2$ comparison is shown in \Cref{fig:production-loo}, and the model's posterior-predictive fit in \Cref{fig:production-results}.
+Production is thus precisely the setting where word-by-word planning and context-updating semantics jointly matter, consistent with the view that adjective ordering in production reflects online discriminatory utility rather than utterance-level well-formedness alone.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.95\textwidth]{production_ppc_barplot_best.pdf}\\[4pt]
+  {\small (a) Posterior-predictive utterance-type proportions by condition}\\[10pt]
+  \includegraphics[width=0.62\textwidth]{production_correlation_best.pdf}\\[2pt]
+  {\small (b) Condition-level correlation}
+  \caption{Posterior-predictive fit of the advocated extended production model (incremental, context-updating; ten parameters, $\nu_\text{colour}=0.59$).
+  (a) Observed (blue) vs.\ model (red) utterance-type proportions for each referential context $\times$ size-discriminability cell; error bars are $95\%$ bootstrap and posterior-predictive intervals.
+  (b) Observed vs.\ predicted proportions across all condition $\times$ utterance cells ($R^2 \approx 0.94$, $r = 0.97$); the dashed line is identity.}
+  \label{fig:production-results}
+\end{figure}
+
+The posterior parameters of the advocated (incremental, context-updating) model are reported in full in \Cref{tab:param-inventory}; every $94\%$ HDI excludes zero.
+The size and colour informativity weights are well separated ($\alpha_\text{S} \approx 8.0$, $\alpha_\text{C} \approx 3.8$), the canonical colour-before-form penalty is large and tightly estimated ($\lambda_\text{noncanon} \approx 4.4$), and the lapse rate is modest ($\epsilon \approx 0.11$), so little of the fit is absorbed by uniform noise.
+The participant-level spread is substantial ($\tau \approx 1.4$), consistent with the high effective parameter count and with genuine individual variability in pragmatic engagement under incremental production.
+
+Three additional ablations of the core incremental speaker are reported in the Appendix.
 A lookahead variant, which evaluates both remaining adjective orders before committing to a word, performed worse than the standard greedy incremental model, indicating that local step-by-step planning suffices for this task.
 An LM-only ablation, which removes the RSA component and relies solely on the corpus-derived prior, likewise fell short, confirming that the utterance prior alone cannot account for context-sensitive ordering.
 An RSA-only ablation, which removes the LM prior, failed the PSIS-LOO diagnostic entirely (high Pareto-$k$ values), suggesting that purely pragmatic choice without a lexical prior produces degenerate predictive distributions for this response space.
@@ -720,8 +850,8 @@ An RSA-only ablation, which removes the LM prior, failed the PSIS-LOO diagnostic
 \subsection{Cross-Dataset Summary}
 
 Comparing the two datasets reveals a diagnostic interaction between speaker architecture and semantic regime.
-Within the incremental models, context-updating semantics significantly improves fit for production ($|\Delta\text{ELPD}|/\text{dse} = 10.1$) but not for slider ratings ($|\Delta\text{ELPD}|/\text{dse} = 0.32$).
-Within the global models, the complementary pattern holds: context-updating semantics provides a massive advantage in the slider data ($\Delta\text{ELPD} \approx 3{,}313$) but confers no detectable benefit in production ($\Delta\text{ELPD} \approx 10$).
+Within the incremental models, context-updating semantics significantly improves fit for production ($|\Delta\text{ELPD}|/\text{dse} = 4.5$) but not for slider ratings ($|\Delta\text{ELPD}|/\text{dse} = 0.32$).
+Within the global models, the complementary pattern holds: context-updating semantics provides a massive advantage in the slider data ($\Delta\text{ELPD} \approx 3{,}313$) but confers no benefit in production (a slight decrement, $|\Delta\text{ELPD}|/\text{dse} = 2.6$).
 This cross-pattern suggests that context-updating composition is most useful when the model otherwise lacks a source of order-relevant information: in the global slider case, recursive threshold updating is the only mechanism that can break the symmetry between orders; in production, the LM prior already provides ordering information, making the global recursive advantage redundant.
 Conversely, when the speaker architecture itself introduces order sensitivity through incremental decision-making, context-updating semantics adds value only when the response space is rich enough (15-way production) to reward finer-grained discriminatory computation.
 
@@ -730,9 +860,9 @@ Pooled variants, which estimate a single set of parameters across all participan
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.65\textwidth]{production_model_comparison.pdf}
-  \caption{Production model comparison ($2 \times 2$: speaker $\times$ semantics). $\Delta$ELPD relative to the best model, with $\pm 1$ difference standard error. Models whose intervals exclude zero show significantly worse predictive performance.}
-  \label{fig:production-model}
+  \includegraphics[width=0.7\textwidth]{production_model_comparison_best.pdf}
+  \caption{Free-production model comparison: PSIS-LOO $\Delta$ELPD relative to the best cell for the parameter-matched $2 \times 2$ (speaker $\times$ semantics), with $\pm 1$ difference standard error. The incremental cells dominate the global cells (speaker main effect $\approx 897$ ELPD); within the incremental pair, context-updating semantics wins ($|\Delta\text{ELPD}|/\text{dse} = 4.5$).}
+  \label{fig:production-loo}
 \end{figure}
 
 % =============================================================================
@@ -812,7 +942,7 @@ The present results support a unified view of adjective ordering in referential 
 Three findings stand out.
 First, context-sensitive recursive composition is necessary for the baseline ordering effect: the simulation shows that the global speaker produces a size-first advantage only under recursive semantics, where threshold adaptation makes the two orderings informationally non-equivalent; under static semantics the advantage vanishes entirely.
 Second, incremental production is the dominant additional mechanism: both incremental models massively outperform both global models across both datasets.
-Third, context-updating semantics and incremental production interact --- context-updating composition adds significant predictive value for production, but only when paired with an incremental speaker.
+Third, context-updating semantics and incremental production interact --- context-updating composition adds significant predictive value for production, but only when paired with an incremental speaker, and this interaction is robust on the model we advocate.
 The full model is not a stack of independent add-ons; its components are synergistic.
 These findings connect two strands of the ordering literature that have largely developed in parallel.
 The discriminatory-efficiency hypothesis \citep{fukumura2018ordering} predicts that speakers place the most discriminating adjective first, and the empirical modulation of the size-first bias by referential context in both experiments is consistent with this prediction: size-first preferences increase when size is uniquely informative and weaken when colour carries more discriminatory load.
@@ -821,8 +951,23 @@ What the present model adds is an explicit mechanism linking the two accounts: i
 
 The interaction between semantic regime and speaker architecture is the most theoretically informative finding, and also the most nuanced.
 Context-updating semantics helps in the production data (15-way choice) but not in the slider data (binary choice), suggesting that the benefit depends on the richness of the alternative space.
-Within the global models, the complementary pattern holds in the slider data (context-updating helps) but not in production, where the LM prior already provides ordering information.
+Within the global models, the complementary pattern holds in the slider data (context-updating helps) but not in production, where the language-model prior already provides ordering information.
 This cross-pattern suggests that context-updating composition is most useful when the model lacks another source of order-relevant information and when the decision architecture can exploit non-commutative semantics step by step.
+A methodological caveat sharpens this reading.
+In a deliberately austere production model (\Cref{sec:appendix:simple2x2}), the within-incremental advantage of context-updating semantics collapses to a tie.
+On the model we advocate --- which adds independently motivated structure and a calibrated colour semantics --- the same contrast is decisive ($|\Delta\text{ELPD}|/\text{dse}=4.5$) at the identical colour-reliability setting.
+The apparent fragility of the recursive benefit is therefore a property of the impoverished model, not of the phenomenon: recursive composition is a genuine synergistic enhancer of incremental production, and conclusions about ``when recursion matters'' must be drawn from a model rich enough to express it, not from the simplest comparison that happens to isolate the speaker contrast.
+
+A second methodological point concerns how the speaker $\times$ semantics comparison was made defensible, and we state it because it generalises beyond this study.
+The four production cells are parameter-matched: every cell carries the identical nominal inventory, context-fixed is the nested restriction of context-updating, and global versus incremental is a structural switch with no extra parameters, so out-of-sample differences are attributable to mechanism rather than to expressive flexibility.
+Crucially, the realized model complexity ($p_{\text{LOO}}$) is not a nuisance to be matched away but a finding: at an identical nominal inventory the incremental architecture keeps the participant hierarchy estimable while the global architecture collapses it, so the winning model carries the higher complexity penalty and still wins.
+This makes the speaker effect conservative rather than inflated.
+We therefore treat the speaker $\times$ semantics \emph{interaction}, not a raw fit ranking, as the inferential target, and we test its robustness across the semantic representation: an effect that survives a change in the colour-reliability assumption (incremental $\gg$ global) is a strong claim, whereas one whose visibility depends on model richness (recursive $>$ static) is reported as the conditional finding it is.
+
+The calibration of the colour semantics is itself substantive, not merely a tuning step.
+A near-deterministic colour denotation, assumed a priori, suppresses the pragmatic weight on colour and forces the resulting misfit into a uniform lapse component.
+Letting the data choose the colour reliability moves it to roughly $60\%$, which roughly triples the colour informativity weight and halves the lapse rate: the speaker treats colour as a graded, imperfectly reliable cue rather than a categorical one.
+This is a sharper form of the relaxed-semantics hypothesis that motivated graded feature denotations in the first place, and it carries a general lesson --- a one-dimensional sweep over a fixed constant, holding the fitted parameters at their old values, pointed in exactly the wrong direction; only a joint refit that lets the other parameters readjust revealed the preferred value.
 
 The production ablation models (reported in the Appendix) further illuminate the division of labour within the incremental speaker.
 The LM-only ablation, which strips out the RSA component, performs substantially worse than the full model, confirming that the corpus-derived prior alone cannot account for context-sensitive ordering.
@@ -833,7 +978,8 @@ The lookahead ablation, which evaluates both remaining adjective orders before c
 
 Two limitations deserve mention.
 First, the computational analyses focus on the size--colour subset, although the experiments also included form-based trials.
-A fuller account would require either a stronger justification for treating form as interchangeable with colour or an expanded model that gives form a more explicit role.
+Consistent with this scope, the parsimony frontier found the RSA informativity weight on form to be uninformative and dropped it: in the size--colour subset, form is produced adequately through the language-model prior, the anchored feature semantics, and the context-gated form-mention boost, without an estimated discriminatory weight of its own.
+A fuller account of form as a discriminating feature would require either a stronger justification for treating it as interchangeable with colour or an expanded model fitted to scenes where form carries the referential contrast.
 Second, the interaction between semantic regime and speaker architecture differs across tasks, which limits the generality of claims about when context-updating semantics is critical versus secondary.
 Tasks with richer alternative spaces may be needed to isolate its contribution more sharply.
 Third, the experiments tested only German-speaking participants and only size--colour adjective pairs.
@@ -858,7 +1004,7 @@ Future work should test whether this integration extends to adjective classes wh
 \section{Production Ablation Models}
 \label{sec:appendix:ablations}
 
-In addition to the four main model variants reported in the Model Comparison section, we fitted three ablation variants of the incremental speaker to the production data in order to isolate the contributions of specific architectural components.
+In addition to the parameter-matched $2 \times 2$ reported in the Model Comparison section, we fitted three ablation variants of the core incremental speaker (single $\alpha$ plus language-model prior, before the extensions of \Cref{sec:model:extended}) to the production data in order to isolate the contributions of specific architectural components.
 All ablation models use hierarchical participant pooling.
 
 \paragraph{Incremental lookahead.} Instead of choosing greedily at each word position, this variant evaluates each possible continuation by looking one step ahead and selecting the word that maximizes expected utility over the next two positions.
@@ -886,6 +1032,74 @@ The LM-only variant is the worst-fitting model overall, confirming that ordering
 \end{figure}
 
 % =============================================================================
+\section{Extended Production Model: Parameter Inventory}
+\label{sec:appendix:inventory}
+
+\Cref{tab:param-inventory} lists the ten population parameters of the advocated production model (\Cref{sec:model:extended}), their priors, and their posteriors at the reference ten-parameter fit.
+The participant hierarchy adds 339 latent offsets (113 participants $\times$ 3 conditions) drawn from a zero-mean normal with standard deviation $\tau$.
+The fixed constants are $\nu_\text{colour}=0.59$, $\nu_\text{form}=0.50$, $k=0.50$, $w_f=0.69$, and the language-model temperature fixed at its stable posterior median.
+The posteriors below are from the reference fit ($\nu_\text{colour}=0.97$), at which every coefficient is documented; under the calibrated $\nu_\text{colour}=0.59$ the four most colour-sensitive coefficients shift as reported in the main text ($\alpha_\text{S}\!\approx\!8.0$, $\alpha_\text{C}\!\approx\!3.8$, $\lambda_\text{noncanon}\!\approx\!4.4$, $\epsilon\!\approx\!0.11$), and every $94\%$ HDI continues to exclude zero.
+
+\begin{table}[htbp]
+\centering
+\caption{Population parameters of the advocated production model: prior and posterior mean with $94\%$ HDI at the reference ten-parameter fit.}
+\label{tab:param-inventory}
+\small
+\begin{tabular}{llll}
+\hline
+Parameter & Role & Prior & Posterior \\
+\hline
+$\alpha_\text{S}$ & RSA informativity weight, size & HalfNormal$(5)$ & $6.24\;[6.02,\,6.48]$ \\
+$\alpha_\text{C}$ & RSA informativity weight, colour & HalfNormal$(5)$ & $1.26\;[0.95,\,1.58]$ \\
+$\lambda_\text{suff}$ & first-word boost for the sufficient dimension & Normal$(0,1)$ & $1.58\;[1.19,\,1.97]$ \\
+$\lambda_\text{form-mod}$ & context-gated form-mention boost & Normal$(0,2)$ & $2.82\;[2.62,\,3.05]$ \\
+$\lambda_\text{noncanon}$ & form-before-colour penalty & HalfNormal$(2)$ & $2.82\;[2.21,\,3.46]$ \\
+$\gamma_\text{base}$ & base per-word length bias & Normal$(0,2)$ & $3.10\;[2.94,\,3.26]$ \\
+$\gamma_\text{one}$ & length modulation when one word suffices & Normal$(0,2)$ & $-2.37\;[-2.57,\,-2.19]$ \\
+$\gamma_\text{sharp}$ & extra length under perceptual blur & HalfNormal$(2)$ & $0.68\;[0.53,\,0.82]$ \\
+$\epsilon$ & lapse / uniform-noise rate & Beta$(1,50)$ & $0.18\;[0.17,\,0.20]$ \\
+$\tau$ & SD of participant rationality offsets & HalfNormal$(0.2)$ & $1.35\;[1.12,\,1.59]$ \\
+\hline
+\end{tabular}
+\end{table}
+
+% =============================================================================
+\section{The Austere $2 \times 2$ and Representation Sensitivity}
+\label{sec:appendix:simple2x2}
+
+The main-text production comparison is run on the extended model.
+For completeness and as a robustness check we also report the deliberately austere $2 \times 2$ --- a single rationality parameter $\alpha$, the language-model weight $\beta$, the hierarchical spread $\tau$, and per-participant offsets $\delta_i$ (116 nominal parameters per cell, identical across cells) --- and its sensitivity to the assumed colour reliability $\nu_\text{colour}$.
+This model explains only about $40\%$ of the cell-level production variance, but it isolates the speaker and semantics contrasts with the minimum machinery and so is a useful stress test of the qualitative conclusions.
+
+\Cref{tab:repr-sensitivity} reports the four austere cells at three colour-reliability settings.
+Two conclusions follow.
+First, the dominant speaker effect is representation-robust: incremental $\gg$ global at every setting, with a speaker main effect of $+740$ ELPD at $\nu_\text{colour}=0.85$ and still $+494$ at $\nu_\text{colour}=0.59$ (always $|\Delta\text{ELPD}|/\text{dse} \gg 10$).
+Second, the within-incremental advantage of context-updating semantics is \emph{not} representation-robust in this austere model: it is decisive at $\nu_\text{colour}=0.85$ ($\Delta\text{ELPD}=15.6$, $|\Delta\text{ELPD}|/\text{dse}=10.1$) but collapses to a tie at $\nu_\text{colour}=0.59$ ($|\Delta\text{ELPD}|/\text{dse}=1.1$).
+The main text shows that this fragility is an artifact of the austere model: on the advocated architecture the same contrast is decisive at $\nu_\text{colour}=0.59$.
+The colour-reliability value calibrated for the extended model therefore does not transfer to the austere one; the austere $2 \times 2$ is reported at $\nu_\text{colour}=0.85$, the value at which it best preserves both the speaker effect and the recursive contrast.
+
+The realized-complexity asymmetry also holds in the austere model: at an identical 116-parameter nominal inventory, the incremental cells retain an estimable participant hierarchy ($p_{\text{LOO}}\approx 70$--$99$) while the global cells collapse it ($p_{\text{LOO}}\approx 3$--$23$), so the speaker advantage is conservative there too.
+
+\begin{table}[htbp]
+\centering
+\caption{Austere $2 \times 2$ (single-$\alpha$) production cells at three colour-reliability settings.
+ELPD$_{\text{LOO}}$ is the absolute expected log pointwise predictive density; $p_{\text{LOO}}$ is the effective number of parameters at $\nu_\text{colour}=0.59$.
+The speaker effect is robust across settings; the within-incremental recursive advantage is present at $0.85$ and gone at $0.59$.}
+\label{tab:repr-sensitivity}
+\small
+\begin{tabular}{lrrrr}
+\hline
+Cell & ELPD$_{0.97}$ & ELPD$_{0.85}$ & ELPD$_{0.59}$ & $p_{\text{LOO},0.59}$ \\
+\hline
+Incremental, context-updating & $-7{,}180$ & $-6{,}985$ & $-7{,}532$ & 99.2 \\
+Incremental, context-fixed & $-7{,}199$ & $-7{,}001$ & $-7{,}533$ & 99.1 \\
+Global, context-updating & $-7{,}628$ & $-7{,}728$ & $-8{,}027$ & 3.7 \\
+Global, context-fixed & $-7{,}626$ & $-7{,}739$ & $-8{,}027$ & 3.1 \\
+\hline
+\end{tabular}
+\end{table}
+
+% =============================================================================
 \section{Simulation Parameter Sweeps}
 \label{sec:appendix:sim-params}
 
@@ -911,27 +1125,5 @@ The LM-only variant is the worst-fitting model overall, confirming that ordering
   \caption{Effect of the colour/form semantic value $\nu$ on communicative success in the simulation. Higher values of $\nu$ make feature adjectives more deterministic and reduce the relative size-first advantage.}
   \label{fig:sim-csv}
 \end{figure}
-
-% =============================================================================
-\section{Posterior-Predictive Fit of the Best Model}
-\label{sec:appendix:predictions}
-
-\Cref{fig:slider-correlation,fig:production-correlation} show the condition-level posterior-predictive fit of the incremental context-updating model for both datasets.
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=0.65\textwidth]{slider_correlation_inc_hier.pdf}
-  \caption{Slider-rating study: observed vs.\ predicted condition means for the incremental context-updating model. Error bars show 95\% posterior-predictive intervals.}
-  \label{fig:slider-correlation}
-\end{figure}
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=0.65\textwidth]{production_correlation_inc_hier.pdf}
-  \caption{Free-production study: observed vs.\ predicted utterance-type proportions for the incremental context-updating model. Error bars show 95\% posterior-predictive intervals.}
-  \label{fig:production-correlation}
-\end{figure}
-
-
 
 \end{document}
