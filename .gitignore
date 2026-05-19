@@ -47,6 +47,11 @@ CLAUDE.md
 # AI skills
 .github/skills/
 
+# AI agent working logs (specs, plans, brainstorm/design docs) — internal,
+# never version-controlled. The repo will be published; git history must not
+# reveal AI-assisted working logs. See CLAUDE.md "Publication Hygiene".
+docs/superpowers/
+
 # Literature (local PDFs and AI-generated notes)
 10-writing/literatures/
 10-writing/literature-notes/
