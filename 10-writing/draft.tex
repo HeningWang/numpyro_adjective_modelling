@@ -166,6 +166,72 @@ That study showed that the model qualitatively captures both a subjectivity-driv
 The present paper builds directly on that work.
 
 % =============================================================================
+\section{The Modelling Framework}
+\label{sec:framework}
+% =============================================================================
+
+We extend \citet{schlotterbeck2023incremental} in four directions.
+We embed the model in a systematic $2 \times 2$ comparison of speaker architecture and semantic regime, including a context-fixed ablation; we add a constrained production experiment that provides a richer response space; we introduce a simulation study that identifies which ordering effects follow from context-updating composition alone; and we use Bayesian model comparison to quantify each mechanism's contribution and to reveal an interaction that the earlier qualitative analysis could not detect.
+Before turning to the experiments, we describe the framework at a conceptual level; its formal specification, including all equations and inference details, is deferred to the Computational Model section (\Cref{sec:model}).
+The remaining subsections develop these components in turn.
+
+\subsection{Reference, Scenes, and the Speaker's Problem}
+\label{sec:framework:scene}
+
+The model addresses a referential task.
+A scene contains several objects that vary in size, colour, and form, and one of them is the intended referent --- in our materials, the largest object that matches the target colour and form.
+A speaker must choose an adjective string that lets a listener identify this referent, and the listener interprets that string by progressively narrowing the set of objects it could pick out.
+Because objects differ along three properties, the same referent can be described in many ways, and the order in which adjectives are produced is itself part of what the speaker chooses.
+
+\subsection{Rational Speech Act Reasoning}
+\label{sec:framework:rsa}
+
+We model this choice within the Rational Speech Act framework, in which a pragmatic speaker selects utterances by reasoning about how a listener would interpret them, and the listener reasons recursively about the speaker.
+A literal listener interprets an adjective by retaining the objects it applies to, and a pragmatic speaker prefers descriptions that make the intended referent easy to recover.
+Determinate properties such as colour and form are treated as nearly categorical, whereas size is gradable: whether an object counts as ``big'' depends on the comparison class it is evaluated against, so the size term is informative only relative to the objects currently under consideration.
+
+\subsection{Two Mechanisms for Order Sensitivity}
+\label{sec:framework:mechanisms}
+
+The framework isolates two ways in which adjective order can come to matter.
+The first is the \emph{speaker architecture}.
+A global speaker evaluates complete adjective strings and chooses among them as wholes, whereas an incremental speaker chooses one adjective at a time, weighing at each step how the next word would reshape the listener's beliefs.
+Incremental choice makes the usefulness of a modifier depend on where it occurs in the string, not only on the description as a whole.
+The second is the \emph{semantic regime}.
+Under context-fixed semantics, the size threshold is computed once from the scene and held constant, so reordering the adjectives cannot change what ``big'' means.
+Under context-updating semantics, the threshold is recomputed from the listener's running beliefs, so that once ``blue'' has restricted attention to blue objects, ``big'' is judged against just those objects; ``big blue'' and ``blue big'' can then differ even though they contain the same words.
+This non-commutativity connects to \citeauthor{teodorescu2006}'s (\citeyear{teodorescu2006}) observation that ordering restrictions weaken precisely when the alternative orders are not truth-conditionally equivalent.
+
+Crossing these two binary choices yields a $2 \times 2$ space of models --- speaker architecture (global vs.\ incremental) by semantic regime (context-fixed vs.\ context-updating).
+We do not claim that production-level incrementality is required for adjective-ordering preferences in general; the subjectivity literature and our own simulations indicate that context-sensitive restrictive composition already accounts for much of the canonical tendency.
+The question is how much explanatory work remains once that baseline is in place, and in particular whether incremental production and context-updating semantics are independently useful or interact.
+
+\subsection{Qualitative Predictions}
+\label{sec:framework:predictions}
+
+This framework yields qualitative predictions that the two experiments are designed to test (\Cref{tab:predictions}).
+Because the model retains a stable, subjectivity-aligned ordering prior, it predicts a baseline size-first preference that survives even when colour alone identifies the referent (P1).
+Because the pragmatic component is sensitive to which property discriminates the referent in the current scene, it predicts that the size-first preference weakens as colour becomes the more useful property (P2).
+The sharpness of the size contrast should act only as a secondary modulator, shifting preferences in interaction with referential context rather than as a strong main effect (P3).
+Finally, because production allows the full inventory of one-, two-, and three-adjective strings, the framework predicts a graded over-informativity pattern in production that the binary slider comparison cannot reveal (P4).
+
+\begin{table}[htbp]
+  \caption{Qualitative predictions of the modelling framework and where each is tested.}
+  \label{tab:predictions}
+  \centering
+  \begin{tabularx}{\textwidth}{lXl}
+    \toprule
+     & \textbf{Prediction} & \textbf{Tested in} \\
+    \midrule
+    P1 & A baseline size-first preference persists even when colour alone identifies the referent. & Exp.\ 1 \& 2 \\
+    P2 & The size-first preference weakens as colour becomes the more discriminating property. & Exp.\ 1 \& 2 \\
+    P3 & Size discriminability modulates ordering only in interaction with referential context, not as a strong main effect. & Exp.\ 1 \& 2 \\
+    P4 & Production yields a graded over-informativity pattern not visible in binary slider judgments. & Exp.\ 2 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+% =============================================================================
 \section{Experiments}
 \label{sec:experiments}
 % =============================================================================
