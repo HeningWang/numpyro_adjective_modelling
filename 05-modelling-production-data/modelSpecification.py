@@ -576,6 +576,15 @@ F_PRESENT_15 = jnp.asarray(
     (np.asarray(utterance_list) == 2).any(axis=1).astype(np.float32)
 )  # (n_utt,)
 
+# ── Joint per-utterance dimension presence (global 2x2 speaker) ──────────────
+# FULL_PRESENT_15[u, d] = 1 iff utterance u asserts dimension d anywhere
+# (d: 0=size/D, 1=colour/C, 2=form/F). The global (non-incremental) speaker's
+# literal listener conditions on ALL of an utterance's asserted dims jointly.
+FULL_PRESENT_15 = jnp.asarray(np.stack([
+    (np.asarray(utterance_list) == d).any(axis=1).astype(np.float32)
+    for d in range(VOCAB_SIZE)
+], axis=1))  # (n_utt, 3)
+
 # ── Iter 18 levers ───────────────────────────────────────────────────────────
 # (2) Non-canonical-order mask: 1 if BOTH colour (1) and form (2) appear AND
 #     form precedes colour (F-before-C). These are exactly {DFC, FDC, FC, FCD}
@@ -3921,6 +3930,155 @@ def jitted_speaker_contextual_anchored_gamma_sharpbonus_formmod_canon_hier(
     gamma_base, gamma_oneword, gamma_sharp, epsilon, recursive=True,
 ):
     return vectorized_incremental_speaker_contextual_anchored_gamma_sharpbonus_formmod_canon_hier(
+        states, sufficient_dim, has_one_word_solution, is_sharp,
+        alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+        lambda_suff, lambda_form_mod, gamma_len3_erdc, lambda_noncanon,
+        color_semval, form_semval, k, wf, beta_lm,
+        gamma_base, gamma_oneword, gamma_sharp, epsilon, recursive,
+    )
+
+
+def global_speaker_contextual_anchored_gamma_sharpbonus_formmod_canon(
+    states, sufficient_dim, has_one_word_solution, is_sharp,
+    alpha_D=3.0, alpha_C=3.0, alpha_F=3.0, lambda_suff=0.0,
+    lambda_form_mod=0.0, gamma_len3_erdc=0.0, lambda_noncanon=0.0,
+    color_semval=0.95, form_semval=0.80, k=0.50, wf=1.00, beta_lm=1.00,
+    gamma_base=0.0, gamma_oneword=0.0, gamma_sharp=0.0, epsilon=0.01,
+    recursive: bool = True,
+):
+    """GLOBAL counterpart of the contextual-canon speaker (2x2 speaker factor).
+
+    The incremental speaker accrues utility token-by-token while a literal
+    listener's posterior is Bayesian-updated across tokens. The GLOBAL speaker
+    instead computes ONE joint literal-listener posterior over the *full*
+    utterance (conditioning on all of an utterance's asserted dimensions at
+    once, FULL_PRESENT_15), then:
+
+      - recursive=True  : one RSA pragmatic layer over the 15 candidate
+                          utterances (S1 then L1) — the SEMANTICS factor's
+                          "recursive" for the global speaker.
+      - recursive=False : score the literal listener directly (literal-only).
+
+    Every utterance-level term (LM prior, first-word suff boost, length,
+    form-present, len3 / non-canonical penalties, epsilon mixing) is IDENTICAL
+    to the incremental speaker, so the ONLY structural difference is the
+    utility-accrual (joint vs sequential). Same fixed-constant / 10-named
+    parameter inventory ⇒ a parameter-matched 2x2 cell (memo §7.12/§7.13).
+    """
+    eps = 1e-8
+    referent_index = 0
+    n_obj = states.shape[0]
+    alpha_vec = jnp.array([alpha_D, alpha_C, alpha_F])
+    alpha_bar = jnp.mean(alpha_vec)  # one effective rationality (joint speaker)
+
+    sizes = states[:, 0]
+    size_sort_idx = jnp.argsort(sizes)
+    sizes_sorted = sizes[size_sort_idx]
+    colors = states[:, 1]
+    forms = states[:, 2]
+    log_color_sem = jnp.log(
+        jnp.where(colors == 1, color_semval, 1.0 - color_semval) + eps)
+    log_form_sem = jnp.log(
+        jnp.where(forms == 1, form_semval, 1.0 - form_semval) + eps)
+    log_lm_raw = beta_lm * LOG_LM_RAW_15
+
+    uniform = jnp.ones(n_obj) / n_obj
+
+    # Anchored size semantics under the uniform prior (no incremental carry).
+    post_sorted = uniform[size_sort_idx]
+    post_sorted = post_sorted / (jnp.sum(post_sorted) + eps)
+    cdf = jnp.cumsum(post_sorted)
+    idx_low = jnp.minimum(jnp.searchsorted(cdf, 0.2, side="left"),
+                          sizes_sorted.shape[0] - 1)
+    idx_high = jnp.minimum(jnp.searchsorted(cdf, 0.8, side="left"),
+                           sizes_sorted.shape[0] - 1)
+    x_min_mid = sizes_sorted[idx_low]
+    x_max_mid = sizes_sorted[idx_high]
+    theta_k = x_max_mid - k * (x_max_mid - x_min_mid)
+    denom = wf * jnp.sqrt(sizes ** 2 + theta_k ** 2 + SIZE_ANCHOR_R ** 2 + eps)
+    z = (sizes - theta_k) / denom
+    size_sem = 0.5 * (1.0 + lax.erf(z / jnp.sqrt(2.0)))
+    log_size_sem = jnp.log(jnp.clip(size_sem, eps))
+
+    # (3 dims, n_obj) log-semantics table; joint listener conditions on all
+    # asserted dims of each utterance at once.
+    log_sem_table = jnp.stack([log_size_sem, log_color_sem, log_form_sem],
+                              axis=0)                       # (3, n_obj)
+    log_joint = jnp.einsum("ud, do -> uo",
+                           FULL_PRESENT_15, log_sem_table)  # (n_utt, n_obj)
+    log_post = jnp.log(uniform)[None, :] + log_joint
+    log_post = log_post - jax.scipy.special.logsumexp(
+        log_post, axis=-1, keepdims=True)
+    log_L0_ref = log_post[:, referent_index]                # (n_utt,)
+
+    if recursive:
+        log_S1 = alpha_bar * log_post
+        log_S1 = log_S1 - jax.scipy.special.logsumexp(
+            log_S1, axis=0, keepdims=True)                  # normalise / utt
+        log_L1 = log_S1 + jnp.log(uniform)[None, :]
+        log_L1 = log_L1 - jax.scipy.special.logsumexp(
+            log_L1, axis=-1, keepdims=True)
+        log_score = alpha_bar * log_L1[:, referent_index]
+    else:
+        log_score = alpha_bar * log_L0_ref
+
+    # First-word boost: utterances whose first asserted dim == sufficient_dim
+    # (FIRST_WORD is the per-utterance first-token/dimension index).
+    suff_boost = lambda_suff * (FIRST_WORD == sufficient_dim).astype(jnp.float32)
+
+    blur_gate = 1.0 - is_sharp
+    gamma_eff = (gamma_base
+                 + gamma_oneword * has_one_word_solution
+                 + gamma_sharp * blur_gate)
+    length_bonus = gamma_eff * jnp.maximum(N_WORDS - 1.0, 0.0)
+    erdc_gate = (sufficient_dim == 0).astype(jnp.float32)
+    form_present_bonus = lambda_form_mod * erdc_gate * F_PRESENT_15
+    len3_penalty = gamma_len3_erdc * erdc_gate * IS_3WORD_15
+    noncanon_penalty = lambda_noncanon * F_BEFORE_C_15
+
+    log_unnorm = (log_lm_raw + log_score + suff_boost + length_bonus
+                  + form_present_bonus - len3_penalty - noncanon_penalty)
+    model_probs = jax.nn.softmax(log_unnorm)
+    n_utt_local = log_unnorm.shape[0]
+    return (1.0 - epsilon) * model_probs + epsilon / n_utt_local
+
+
+vectorized_global_speaker_contextual_anchored_gamma_sharpbonus_formmod_canon_hier = jax.vmap(
+    global_speaker_contextual_anchored_gamma_sharpbonus_formmod_canon,
+    in_axes=(0,    # states
+             0,    # sufficient_dim
+             0,    # has_one_word_solution
+             0,    # is_sharp
+             0,    # alpha_D
+             0,    # alpha_C
+             0,    # alpha_F
+             None, # lambda_suff
+             None, # lambda_form_mod
+             None, # gamma_len3_erdc
+             None, # lambda_noncanon
+             None, # color_semval
+             None, # form_semval
+             None, # k
+             None, # wf
+             None, # beta_lm
+             None, # gamma_base
+             None, # gamma_oneword
+             None, # gamma_sharp
+             None, # epsilon
+             None, # recursive (2x2 semantics factor; static Python bool)
+             ),
+)
+
+
+@partial(jax.jit, static_argnames=("recursive",))
+def jitted_global_speaker_contextual_anchored_gamma_sharpbonus_formmod_canon_hier(
+    states, sufficient_dim, has_one_word_solution, is_sharp,
+    alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
+    lambda_suff, lambda_form_mod, gamma_len3_erdc, lambda_noncanon,
+    color_semval, form_semval, k, wf, beta_lm,
+    gamma_base, gamma_oneword, gamma_sharp, epsilon, recursive=True,
+):
+    return vectorized_global_speaker_contextual_anchored_gamma_sharpbonus_formmod_canon_hier(
         states, sufficient_dim, has_one_word_solution, is_sharp,
         alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
         lambda_suff, lambda_form_mod, gamma_len3_erdc, lambda_noncanon,
