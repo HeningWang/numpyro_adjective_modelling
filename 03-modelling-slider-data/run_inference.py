@@ -23,6 +23,8 @@ from modelSpecification import (
     import_dataset_hier,
     precompute_listeners,
     precompute_listeners_frozen,
+    precompute_listeners_at_csv,
+    precompute_listeners_frozen_at_csv,
     canonicalize_speaker_type,
     likelihood_gb_speaker,
     likelihood_inc_speaker,
@@ -120,6 +122,7 @@ def run_inference_hier(
     num_warmup: int = 1000,
     num_chains: int = 4,
     free_color_semvalue: bool = False,
+    color_semvalue: float | None = None,
 ):
     """Run MCMC for the hierarchical (random participant intercept) speaker model.
 
@@ -128,6 +131,11 @@ def run_inference_hier(
     listeners are recomputed inside the model at each MCMC step. The output
     filename is suffixed with ``_free_csv`` to keep it distinct from the fixed-nu
     fits.
+
+    When ``color_semvalue`` is given, the literal listeners are precomputed at
+    that value instead of the module-level ``FIXED_COLOR_SEMVALUE``. The output
+    filename is suffixed with ``_csv{NNN}`` (e.g. ``_csv063`` for 0.63). This
+    is mutually exclusive with ``free_color_semvalue``.
     """
     canonical_speaker_type = canonicalize_speaker_type(speaker_type)
     states_train, empirical_train, df, participant_idx, n_participants = import_dataset_hier()
@@ -144,14 +152,29 @@ def run_inference_hier(
             "--free_color_semvalue is only implemented for the incremental cells "
             "(speaker_type=incremental or incremental_static)."
         )
+    if free_color_semvalue and color_semvalue is not None:
+        raise ValueError(
+            "--free_color_semvalue and --color_semvalue are mutually exclusive."
+        )
 
-    if canonical_speaker_type in ("global", "incremental"):
+    if color_semvalue is not None:
+        if canonical_speaker_type in ("global", "incremental"):
+            L1_all, L2_all = precompute_listeners_at_csv(states_train, color_semvalue)
+        else:
+            L1_all, L2_all = precompute_listeners_frozen_at_csv(states_train, color_semvalue)
+        print(f"Listeners precomputed at color_semvalue = {color_semvalue}.")
+    elif canonical_speaker_type in ("global", "incremental"):
         L1_all, L2_all = precompute_listeners(states_train)
     else:
         L1_all, L2_all = precompute_listeners_frozen(states_train)
-    print("Listeners precomputed.")
+        print("Listeners precomputed.")
 
-    suffix = "_free_csv" if free_color_semvalue else ""
+    if free_color_semvalue:
+        suffix = "_free_csv"
+    elif color_semvalue is not None:
+        suffix = f"_csv{int(round(color_semvalue * 100)):03d}"
+    else:
+        suffix = ""
     output_file_name = (
         f"./inference_data/mcmc_results_{canonical_speaker_type}_speaker_hier{suffix}"
         f"_warmup{num_warmup}_samples{num_samples}_chains{num_chains}.nc"
@@ -248,6 +271,14 @@ if __name__ == "__main__":
             "incremental cells; produces an *_hier_free_csv_*.nc artifact."
         ),
     )
+    parser.add_argument(
+        "--color_semvalue", type=float, default=None,
+        help=(
+            "Override the module-level FIXED_COLOR_SEMVALUE when precomputing "
+            "literal listeners. Output filename is suffixed with _csv{NNN}. "
+            "Mutually exclusive with --free_color_semvalue."
+        ),
+    )
 
     args = parser.parse_args()
 
@@ -264,10 +295,13 @@ if __name__ == "__main__":
             num_warmup=args.num_warmup,
             num_chains=args.num_chains,
             free_color_semvalue=args.free_color_semvalue,
+            color_semvalue=args.color_semvalue,
         )
     else:
         if args.free_color_semvalue:
             raise ValueError("--free_color_semvalue requires --hierarchical.")
+        if args.color_semvalue is not None:
+            raise ValueError("--color_semvalue requires --hierarchical.")
         run_inference(
             speaker_type=args.speaker_type,
             num_samples=args.num_samples,

@@ -1168,6 +1168,21 @@ def _vmap_L2_frozen_csv(states, color_semvalue):
     )(states)
 
 
+def precompute_listeners_at_csv(states, color_semvalue):
+    """Precompute listener arrays at a custom colour reliability value.
+
+    Used by the runner when ``--color_semvalue`` is set, so the four fixed-nu
+    cells can be re-fit at the freed-audit posterior mean (production §7.10
+    pattern) without sampling nu inside the MCMC loop.
+    """
+    return _vmap_L1_csv(states, color_semvalue), _vmap_L2_csv(states, color_semvalue)
+
+
+def precompute_listeners_frozen_at_csv(states, color_semvalue):
+    """Frozen-size analogue of :func:`precompute_listeners_at_csv`."""
+    return _vmap_L1_csv(states, color_semvalue), _vmap_L2_frozen_csv(states, color_semvalue)
+
+
 def likelihood_inc_speaker_hier_free_csv(
     states=None, data=None,
     pi0: float = 0.01, pi1: float = 0.01,
