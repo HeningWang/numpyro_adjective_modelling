@@ -778,7 +778,7 @@ Posterior-predictive checks confirm that the incremental context-updating model 
 For the best-fitting incremental context-updating model, the posterior rationality parameter was $\alpha = 0.69$ ($\mathit{SD} = 0.06$, 94\% HDI $[0.57, 0.79]$), the ZOIB dispersion was $\sigma = 0.72$ ($\mathit{SD} = 0.01$, 94\% HDI $[0.70, 0.74]$), and the hierarchical spread of participant-level rationality offsets was $\tau = 0.12$ ($\mathit{SD} = 0.01$, 94\% HDI $[0.10, 0.14]$).
 Crucially, the bias intercept was $b = 0.58$ ($\mathit{SD} = 0.06$, 94\% HDI $[0.47, 0.69]$), with posterior probability $0.91$ above $0.50$.
 This positive bias means that even after the RSA mechanism accounts for context-dependent informativeness, the model infers a residual size-first preference --- consistent with the view that a stable ordering default persists beyond what discriminatory utility alone explains.
-A joint refit that lets the colour reliability $\nu$ vary --- the same audit that, for the production model, moved $\nu_\text{colour}$ to $0.59$ and substantially shifted the size and colour weights (\Cref{sec:model:extended}) --- here produces a posterior for $\nu$ that is weakly identified and broad, with mean $0.63$ and 94\% HDI $[0.50, 0.82]$ that hits the prior wall at $0.5$ and only just excludes the fixed value $0.80$.
+A joint refit that lets the colour reliability $\nu$ vary --- the same audit that, for the production model, moved $\nu_\text{colour}$ to $0.59$ and substantially shifted the size and colour weights (\Cref{sec:model:extended}) --- here produces a posterior for $\nu$ that is weakly identified and broad, with mean $0.63$ and 94\% HDI $[0.50, 0.82]$ that hits the prior wall at $0.5$ and only just excludes the fixed value $0.80$ (full numbers in \Cref{sec:appendix:slider-nu}).
 The four cells are statistically indistinguishable in PSIS-LOO (all $|\Delta\text{ELPD}|/\text{dse} < 1$ once the free-$\nu$ variants are included), confirming that the binary slider response space does not strongly discriminate between sharper and softer colour predicates.
 Under the freed posterior the rationality $\alpha$ and the bias $b$ shift substantially (towards $1.5$ and below $0.5$, respectively), so the positive-bias finding above should be read as conditional on the fixed $\nu = 0.80$ specification rather than as a structurally robust quantity.
 Within the global pair, context-updating semantics substantially outperforms context-fixed semantics ($\Delta\text{ELPD} \approx 3{,}313$, $|\Delta\text{ELPD}|/\text{dse} > 24$).
@@ -1089,5 +1089,38 @@ $\tau$ & SD of participant rationality offsets & HalfNormal$(0.2)$ & $1.35\;[1.1
   \caption{Effect of the colour/form semantic value $\nu$ on communicative success in the simulation. Higher values of $\nu$ make feature adjectives more deterministic and reduce the relative size-first advantage.}
   \label{fig:sim-csv}
 \end{figure}
+
+% =============================================================================
+\section{Slider Colour-Reliability Audit}
+\label{sec:appendix:slider-nu}
+
+The slider-rating model fixes the colour and form reliability $\nu$ at $0.80$ (\Cref{sec:model:variants}).
+Production already imposes a calibration step that lets the data choose $\nu_\text{colour}$ (\Cref{sec:model:extended}); for parity we apply the same audit to the slider's incremental cells.
+The audit samples $\nu \sim \mathrm{Uniform}(0.5, 0.999)$ within the model and recomputes the literal listeners at each MCMC step, while keeping every other component of the incremental hierarchical speaker unchanged.
+\Cref{tab:slider-nu-audit} reports the resulting posteriors alongside the originally fixed-$\nu$ fits.
+
+\begin{table}[htbp]
+\centering
+\caption{Slider colour-reliability audit. Fixed-$\nu$ rows use $\nu = 0.80$; free-$\nu$ rows sample $\nu \sim \mathrm{Uniform}(0.5, 0.999)$ and recompute literal listeners each step. ``ELPD'' is PSIS-LOO; $\Delta$ELPD and dse are relative to the incremental, context-updating fixed-$\nu$ cell. All cells use $4$ chains $\times$ $500$ warmup $\times$ $500$ samples; maximum split-$\hat R \leq 1.01$ for the free-$\nu$ cells.}
+\label{tab:slider-nu-audit}
+\footnotesize
+\begin{tabular}{p{4.2cm}rrrrrl}
+\hline
+Cell & ELPD & $\Delta$ELPD & dse & $\alpha$ (sd) & $b$ (sd) & $\nu$ (94\% HDI) \\
+\hline
+\textbf{Incremental, updating, fixed $\nu = 0.80$} & $\mathbf{-2{,}774.1}$ & $\mathbf{0.0}$ & --- & $\mathbf{0.69\,(0.06)}$ & $\mathbf{0.58\,(0.06)}$ & --- \\
+Incremental, fixed, fixed $\nu = 0.80$ & $-2{,}774.1$ & $-0.06$ & $0.18$ & $0.69\,(0.06)$ & $0.58\,(0.06)$ & --- \\
+Incremental, updating, free $\nu$ & $-2{,}775.0$ & $-0.89$ & $1.08$ & $1.53\,(0.61)$ & $0.41\,(0.15)$ & $0.63\;[0.50, 0.82]$ \\
+Incremental, fixed, free $\nu$ & $-2{,}774.3$ & $-0.23$ & $1.00$ & $1.48\,(0.55)$ & $0.42\,(0.13)$ & $0.63\;[0.51, 0.79]$ \\
+\hline
+\end{tabular}
+\end{table}
+
+Three points stand out.
+First, $\nu$ is weakly identified in the slider data: the posterior bumps the prior lower wall at $0.5$ and only just excludes the fixed value at the upper end, in contrast to the tight production posterior $0.59\;[0.56, 0.62]$.
+Second, the four cells are statistically indistinguishable in PSIS-LOO ($|\Delta\text{ELPD}|/\text{dse} < 1$ throughout), so out-of-sample fit cannot decide between sharper and softer colour predicates in this response space.
+Third, under the freed posterior the rationality parameter $\alpha$ moves to roughly $1.5$ (from $0.69$) and the bias intercept $b$ moves below $0.5$ (from $0.58$), exactly because $\nu$ and the other parameters trade off: a softer colour predicate forces a stronger rationality term and reduces the residual size-first bias absorbed by $b$.
+We therefore retain the fixed $\nu = 0.80$ for the slider model in the main text and treat $\alpha$ and $b$ at that specification as the reported quantities, while flagging the conditional status of the $b > 0.5$ finding (\Cref{sec:modelcomparison}, Slider-Rating Study).
+The cross-dataset asymmetry --- production strongly identifies $\nu$ at a value with substantive parameter consequences, the slider does not --- is itself diagnostic of the response-space sensitivity argued for in the Cross-Dataset Summary.
 
 \end{document}
