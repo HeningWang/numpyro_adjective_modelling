@@ -1136,3 +1136,87 @@ def likelihood_inc_speaker_hier_fast(
             data = jnp.clip(data, 0.0, 1.0)
         numpyro.sample("obs", ZOIB(model_prob, sigma, pi0, pi1), obs=data)
 
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Joint-refit-csv variant: free colour reliability nu inside MCMC.
+# Mirrors the production model's free-`color_semval` audit (Uniform(0.5, 0.999)):
+# instead of precomputing literal listeners at FIXED_COLOR_SEMVALUE, sample
+# color_semvalue and recompute the listeners each step so that alpha, sigma,
+# tau and bias can readjust jointly. Used to check whether the slider's fixed
+# nu = 0.80 is data-supported when the other parameters are free to move.
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+def _vmap_L1_csv(states, color_semvalue):
+    return jax.vmap(
+        lambda s: literal_listener_one_word(s, color_semvalue, FIXED_WF, FIXED_K),
+        in_axes=(0,),
+    )(states)
+
+
+def _vmap_L2_csv(states, color_semvalue):
+    return jax.vmap(
+        lambda s: literal_listener_recursive(2, s, color_semvalue, FIXED_WF, FIXED_K),
+        in_axes=(0,),
+    )(states)
+
+
+def _vmap_L2_frozen_csv(states, color_semvalue):
+    return jax.vmap(
+        lambda s: literal_listener_recursive_frozen(2, s, color_semvalue, FIXED_WF, FIXED_K),
+        in_axes=(0,),
+    )(states)
+
+
+def likelihood_inc_speaker_hier_free_csv(
+    states=None, data=None,
+    pi0: float = 0.01, pi1: float = 0.01,
+    participant_idx=None, n_participants: int = 1,
+    L1_all=None, L2_all=None,  # ignored; listeners recomputed inside on sampled nu
+):
+    """Incremental, context-updating speaker with free colour reliability nu."""
+    alpha = numpyro.sample("alpha", dist.HalfNormal(5.0))
+    bias  = numpyro.sample("bias",  dist.HalfNormal(2.0))
+    sigma = numpyro.sample("sigma", dist.HalfNormal(0.3))
+    tau   = numpyro.sample("tau",   dist.HalfNormal(0.2))
+    color_semvalue = numpyro.sample("color_semvalue", dist.Uniform(0.5, 0.999))
+
+    L1_all = _vmap_L1_csv(states, color_semvalue)
+    L2_all = _vmap_L2_csv(states, color_semvalue)
+
+    with numpyro.plate("participants", n_participants):
+        delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+    with numpyro.plate("data", L1_all.shape[0]):
+        rsa_prob   = jitted_inc_speaker_fast(L1_all, L2_all, alpha, bias)
+        model_prob = jnp.clip(rsa_prob + delta[participant_idx], 1e-6, 1 - 1e-6)
+        if data is not None:
+            data = jnp.clip(data, 0.0, 1.0)
+        numpyro.sample("obs", ZOIB(model_prob, sigma, pi0, pi1), obs=data)
+
+
+def likelihood_inc_speaker_frozen_hier_free_csv(
+    states=None, data=None,
+    pi0: float = 0.01, pi1: float = 0.01,
+    participant_idx=None, n_participants: int = 1,
+    L1_all=None, L2_all=None,
+):
+    """Incremental, context-fixed speaker (frozen size semantics) with free colour reliability nu."""
+    alpha = numpyro.sample("alpha", dist.HalfNormal(5.0))
+    bias  = numpyro.sample("bias",  dist.HalfNormal(2.0))
+    sigma = numpyro.sample("sigma", dist.HalfNormal(0.3))
+    tau   = numpyro.sample("tau",   dist.HalfNormal(0.2))
+    color_semvalue = numpyro.sample("color_semvalue", dist.Uniform(0.5, 0.999))
+
+    L1_all = _vmap_L1_csv(states, color_semvalue)
+    L2_all = _vmap_L2_frozen_csv(states, color_semvalue)
+
+    with numpyro.plate("participants", n_participants):
+        delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+    with numpyro.plate("data", L1_all.shape[0]):
+        rsa_prob   = jitted_inc_speaker_fast(L1_all, L2_all, alpha, bias)
+        model_prob = jnp.clip(rsa_prob + delta[participant_idx], 1e-6, 1 - 1e-6)
+        if data is not None:
+            data = jnp.clip(data, 0.0, 1.0)
+        numpyro.sample("obs", ZOIB(model_prob, sigma, pi0, pi1), obs=data)

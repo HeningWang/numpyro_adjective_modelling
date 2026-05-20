@@ -32,6 +32,8 @@ from modelSpecification import (
     likelihood_inc_speaker_hier,
     likelihood_gb_speaker_static_hier,
     likelihood_inc_speaker_frozen_hier,
+    likelihood_inc_speaker_hier_free_csv,
+    likelihood_inc_speaker_frozen_hier_free_csv,
     ZOIB,
 )
 
@@ -117,8 +119,16 @@ def run_inference_hier(
     num_samples: int = 1000,
     num_warmup: int = 1000,
     num_chains: int = 4,
+    free_color_semvalue: bool = False,
 ):
-    """Run MCMC for the hierarchical (random participant intercept) speaker model."""
+    """Run MCMC for the hierarchical (random participant intercept) speaker model.
+
+    When ``free_color_semvalue`` is True (only valid for incremental cells), the
+    colour reliability nu is sampled with ``Uniform(0.5, 0.999)`` and the literal
+    listeners are recomputed inside the model at each MCMC step. The output
+    filename is suffixed with ``_free_csv`` to keep it distinct from the fixed-nu
+    fits.
+    """
     canonical_speaker_type = canonicalize_speaker_type(speaker_type)
     states_train, empirical_train, df, participant_idx, n_participants = import_dataset_hier()
     print(f"Hierarchical model: {n_participants} participants, {len(states_train)} observations")
@@ -129,14 +139,21 @@ def run_inference_hier(
     if (pi0 + pi1) >= 0.95:
         raise ValueError(f"Boundary masses too large for ZOIB: pi0+pi1={pi0+pi1:.3f}")
 
+    if free_color_semvalue and canonical_speaker_type not in ("incremental", "incremental_static"):
+        raise ValueError(
+            "--free_color_semvalue is only implemented for the incremental cells "
+            "(speaker_type=incremental or incremental_static)."
+        )
+
     if canonical_speaker_type in ("global", "incremental"):
         L1_all, L2_all = precompute_listeners(states_train)
     else:
         L1_all, L2_all = precompute_listeners_frozen(states_train)
     print("Listeners precomputed.")
 
+    suffix = "_free_csv" if free_color_semvalue else ""
     output_file_name = (
-        f"./inference_data/mcmc_results_{canonical_speaker_type}_speaker_hier"
+        f"./inference_data/mcmc_results_{canonical_speaker_type}_speaker_hier{suffix}"
         f"_warmup{num_warmup}_samples{num_samples}_chains{num_chains}.nc"
     )
     print(f"Output file: {output_file_name}")
@@ -147,7 +164,12 @@ def run_inference_hier(
     rng_key = random.PRNGKey(11)
     rng_key, rng_key_ = random.split(rng_key)
 
-    if canonical_speaker_type == "global":
+    if free_color_semvalue:
+        if canonical_speaker_type == "incremental":
+            model = likelihood_inc_speaker_hier_free_csv
+        else:
+            model = likelihood_inc_speaker_frozen_hier_free_csv
+    elif canonical_speaker_type == "global":
         model = likelihood_gb_speaker_hier
     elif canonical_speaker_type == "incremental":
         model = likelihood_inc_speaker_hier
@@ -218,6 +240,14 @@ if __name__ == "__main__":
         "--hierarchical", action="store_true",
         help="Run hierarchical model with random participant intercepts."
     )
+    parser.add_argument(
+        "--free_color_semvalue", action="store_true",
+        help=(
+            "Sample colour reliability nu ~ Uniform(0.5, 0.999) inside the model "
+            "and recompute literal listeners each step. Only valid for the "
+            "incremental cells; produces an *_hier_free_csv_*.nc artifact."
+        ),
+    )
 
     args = parser.parse_args()
 
@@ -233,8 +263,11 @@ if __name__ == "__main__":
             num_samples=args.num_samples,
             num_warmup=args.num_warmup,
             num_chains=args.num_chains,
+            free_color_semvalue=args.free_color_semvalue,
         )
     else:
+        if args.free_color_semvalue:
+            raise ValueError("--free_color_semvalue requires --hierarchical.")
         run_inference(
             speaker_type=args.speaker_type,
             num_samples=args.num_samples,
