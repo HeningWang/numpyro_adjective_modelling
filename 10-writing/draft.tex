@@ -595,7 +595,7 @@ The two semantic regimes --- context-updating (\Cref{eq:context_updating}) and c
 All other aspects of the model, including the belief-update structure and the speaker's decision rule, remain identical across regimes.
 The context-fixed variant therefore serves as a targeted ablation of the context-updating mechanism.
 
-For the slider-rating models, the semantic parameters $k = 0.5$, $w_f = 1.0$, and a single shared feature reliability $\nu = 0.85$ (colour and form) are fixed across all variants.
+For the slider-rating models, the semantic parameters $k = 0.5$, $w_f = 1.0$, and a single shared feature reliability $\nu = 0.80$ (colour and form) are fixed across all variants.
 Their influence on model predictions is explored in the simulation study below.
 The free-production comparison is run on an extended speaker model whose fixed constants are calibrated empirically; this extension and its calibration are developed in \Cref{sec:model:extended}.
 
@@ -771,12 +771,12 @@ Dataset & Model & ELPD$_{\text{LOO}}$ & $\Delta$ELPD & dse & $p_{\text{LOO}}$ \\
 \subsection{Slider-Rating Study}
 
 \Cref{fig:slider-model} shows the $2 \times 2$ comparison for the slider data.
-The dominant contrast is speaker architecture: both incremental models fit the data well and are statistically indistinguishable ($\Delta\text{ELPD} = -0.1$, dse $= 0.2$), whereas both global models perform far worse ($\Delta\text{ELPD} > 1{,}400$).
+The dominant contrast is speaker architecture: both incremental models fit the data well and are statistically indistinguishable ($\Delta\text{ELPD} = -0.06$, dse $= 0.18$, $|\Delta\text{ELPD}|/\text{dse} = 0.32$), whereas both global models perform far worse ($\Delta\text{ELPD} > 1{,}400$).
 Within the incremental pair, context-updating semantics confers no detectable advantage over context-fixed semantics.
 For graded preference judgments between two competing orders, word-by-word pragmatic reasoning is therefore the dominant mechanism: it provides strong order sensitivity regardless of whether the size threshold is recomputed from the running posterior.
 Posterior-predictive checks confirm that the incremental context-updating model captures the condition-level pattern well (\Cref{fig:slider-results}).
 For the best-fitting incremental context-updating model, the posterior rationality parameter was $\alpha = 0.69$ ($\mathit{SD} = 0.06$, 94\% HDI $[0.57, 0.79]$), the ZOIB dispersion was $\sigma = 0.72$ ($\mathit{SD} = 0.01$, 94\% HDI $[0.70, 0.74]$), and the hierarchical spread of participant-level rationality offsets was $\tau = 0.12$ ($\mathit{SD} = 0.01$, 94\% HDI $[0.10, 0.14]$).
-Crucially, the bias intercept was $b = 0.58$ ($\mathit{SD} = 0.06$, 94\% HDI $[0.47, 0.69]$), reliably above 0.50.
+Crucially, the bias intercept was $b = 0.58$ ($\mathit{SD} = 0.06$, 94\% HDI $[0.47, 0.69]$), with posterior probability $0.91$ above $0.50$.
 This positive bias means that even after the RSA mechanism accounts for context-dependent informativeness, the model infers a residual size-first preference --- consistent with the view that a stable ordering default persists beyond what discriminatory utility alone explains.
 Within the global pair, context-updating semantics substantially outperforms context-fixed semantics ($\Delta\text{ELPD} \approx 3{,}313$, $|\Delta\text{ELPD}|/\text{dse} > 24$).
 Context-updating composition thus provides a minimal source of order sensitivity that partially compensates for the lack of incrementality, but both global models remain far worse than either incremental variant.
@@ -848,7 +848,7 @@ An RSA-only ablation, which removes the LM prior, failed the PSIS-LOO diagnostic
 \subsection{Cross-Dataset Summary}
 
 Comparing the two datasets reveals a diagnostic interaction between speaker architecture and semantic regime.
-Within the incremental models, context-updating semantics significantly improves fit for production ($|\Delta\text{ELPD}|/\text{dse} = 4.5$) but not for slider ratings ($\Delta\text{ELPD} = -0.1$, dse $= 0.2$).
+Within the incremental models, context-updating semantics significantly improves fit for production ($|\Delta\text{ELPD}|/\text{dse} = 4.5$) but not for slider ratings ($|\Delta\text{ELPD}|/\text{dse} = 0.32$).
 Within the global models, the complementary pattern holds: context-updating semantics provides a massive advantage in the slider data ($\Delta\text{ELPD} \approx 3{,}313$) but confers no benefit in production (a slight decrement, $|\Delta\text{ELPD}|/\text{dse} = 2.6$).
 This cross-pattern suggests that context-updating composition is most useful when the model otherwise lacks a source of order-relevant information: in the global slider case, recursive threshold updating is the only mechanism that can break the symmetry between orders; in production, the LM prior already provides ordering information, making the global recursive advantage redundant.
 Conversely, when the speaker architecture itself introduces order sensitivity through incremental decision-making, context-updating semantics adds value only when the response space is rich enough (15-way production) to reward finer-grained discriminatory computation.
