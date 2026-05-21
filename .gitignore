@@ -1,22 +1,21 @@
-jax-metal/
-jax/
+# macOS
 .DS_Store
 
 # LaTeX build artifacts
-10-writing/build/
-10-writing/**/*.aux
-10-writing/**/*.fdb_latexmk
-10-writing/**/*.fls
-10-writing/**/*.log
-10-writing/**/*.out
-10-writing/**/*.synctex.gz
-10-writing/**/*.bbl
-10-writing/**/*.blg
-10-writing/**/*.fff
-10-writing/**/*.ttt
-10-writing/**/*.nav
-10-writing/**/*.snm
-10-writing/**/*.toc
+paper/build/
+paper/**/*.aux
+paper/**/*.fdb_latexmk
+paper/**/*.fls
+paper/**/*.log
+paper/**/*.out
+paper/**/*.synctex.gz
+paper/**/*.bbl
+paper/**/*.blg
+paper/**/*.fff
+paper/**/*.ttt
+paper/**/*.nav
+paper/**/*.snm
+paper/**/*.toc
 /*.aux
 /*.fdb_latexmk
 /*.fls
@@ -25,51 +24,21 @@ jax/
 
 # R
 .Rproj.user
-analysis/regression/production/.Rhistory
+.Rhistory
+.RData
 
 # Python
 __pycache__/
 *.pyc
 
 # MCMC inference data (large .nc files, regenerable)
-03-modelling-slider-data/inference_data/*.nc
-05-modelling-production-data/inference_data/*.nc
+models/slider/inference_data/*.nc
+models/production/inference_data/*.nc
 
 # Simulation output CSVs (large, regenerable)
-04-simulation-w-randomstates/simulation_full_run*.csv
-04-simulation-w-randomstates/simulation_test*.csv
+simulation/simulation_full_run*.csv
+simulation/simulation_test*.csv
 
-# Posterior analysis output (regenerable from .nc files)
-03-modelling-slider-data/results/
-05-modelling-production-data/results/
-
-# Claude Code / AI assistant config
-CLAUDE.md
-.mcp.json
-.claude/
-
-# AI skills
-.github/skills/
-
-# AI agent working logs (specs, plans, brainstorm/design docs) — internal,
-# never version-controlled. The repo will be published; git history must not
-# reveal AI-assisted working logs. See CLAUDE.md "Publication Hygiene".
-docs/superpowers/
-
-# Literature (local PDFs and AI-generated notes)
-10-writing/literatures/
-10-writing/literature-notes/
-
-# AI-generated memos and working notes (internal, not for version control)
-10-writing/memos/
-10-writing/*_memo.md
-10-writing/session_start.md
-10-writing/analysis_plan.md
-10-writing/sword_model_analysis.md
-
-# Presentation data (large, regenerable)
-09-presentation/20250710_LMBayes/posteriorSamples_*.csv
-
-# Thesis draft
-10-writing/Masterarbeit_Hening_Wang_1_Entwurf/
-meeting-agenda-*.md
+# Posterior-analysis output (regenerable from .nc files)
+models/slider/results/
+models/production/results/

@@ -1,4 +1,4 @@
-LATEX_DIR := 10-writing
+LATEX_DIR := paper
 LATEXMKRC := $(LATEX_DIR)/.latexmkrc
 DRAFT_TEX := $(LATEX_DIR)/draft.tex
 DRAFT_PDF := $(LATEX_DIR)/draft.pdf
