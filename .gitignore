@@ -51,3 +51,28 @@ simulation/simulation_test*.csv
 # Posterior-analysis output (regenerable from .nc files)
 models/slider/results/
 models/production/results/
+
+# Local tooling config and working notes (per-project, never tracked).
+CLAUDE.md
+.mcp.json
+.claude/
+.github/skills/
+
+# Internal working logs (specs, plans, brainstorm/design docs)
+docs/superpowers/
+
+# Paper-side working notes (memos, literature-note drafts)
+paper/memos/
+paper/literature-notes/
+paper/*_memo.md
+paper/*_memo.pdf
+paper/extension_v5_synthesis.md
+paper/session_start.md
+paper/analysis_plan.md
+paper/sword_model_analysis.md
+meeting-agenda-*.md
+
+# Personal MSc thesis + local literature library (moved out of the repo;
+# kept ignored in case they reappear under paper/)
+paper/Masterarbeit_*/
+paper/literatures/
