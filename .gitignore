@@ -39,6 +39,10 @@ __pycache__/
 04-simulation-w-randomstates/simulation_full_run*.csv
 04-simulation-w-randomstates/simulation_test*.csv
 
+# Posterior analysis output (regenerable from .nc files)
+03-modelling-slider-data/results/
+05-modelling-production-data/results/
+
 # Claude Code / AI assistant config
 CLAUDE.md
 .mcp.json
