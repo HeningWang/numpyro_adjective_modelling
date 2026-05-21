@@ -570,7 +570,7 @@ LOG_LM_RAW_15 = jnp.asarray(_log_lm_np)
 # D=0, C=1, F=2 → one-hot masks for first-word bias
 FIRST_WORD = jnp.array(utterance_list)[:, 0]  # (n_utt,) first token of each utterance
 
-# ── F-present mask (Iter 17 form-as-redundant-modifier boost) ────────────────
+# ── F-present mask (the previous variant form-as-redundant-modifier boost) ────────────────
 # 1 if the utterance contains the F (form, token index 2) word at any position.
 F_PRESENT_15 = jnp.asarray(
     (np.asarray(utterance_list) == 2).any(axis=1).astype(np.float32)
@@ -585,7 +585,7 @@ FULL_PRESENT_15 = jnp.asarray(np.stack([
     for d in range(VOCAB_SIZE)
 ], axis=1))  # (n_utt, 3)
 
-# ── Iter 18 levers ───────────────────────────────────────────────────────────
+# ── levers ───────────────────────────────────────────────────────────
 # (2) Non-canonical-order mask: 1 if BOTH colour (1) and form (2) appear AND
 #     form precedes colour (F-before-C). These are exactly {DFC, FDC, FC, FCD}
 #     — the violations of the canonical colour-before-form adjective order
@@ -1561,7 +1561,7 @@ def incremental_speaker_contextual(
 ) -> jnp.ndarray:
     """Incremental speaker with a context-sensitive production layer.
 
-    Lever 1: the LM term uses raw GPT-2 log-probability (LOG_LM_RAW_15) so the
+    the base contextual variant: the LM term uses raw GPT-2 log-probability (LOG_LM_RAW_15) so the
     cumulative per-token negative log-prob naturally penalizes longer
     utterances, absorbing what was previously six separate gamma_* coefficients
     (gamma_1/2 length, gamma_oneword_1/2 one-word availability, gamma_sharp_1/2
@@ -1702,7 +1702,7 @@ def incremental_speaker_contextual_lambdaunc(
 ) -> jnp.ndarray:
     """Contextual speaker with a principled listener-uncertainty cost term.
 
-    Identical to ``incremental_speaker_contextual`` (Lever 1) except the
+    Identical to ``incremental_speaker_contextual`` (the base contextual variant) except the
     speaker bears an implicit cost proportional to the residual listener
     uncertainty their utterance leaves over the candidate referents:
 
@@ -1712,8 +1712,8 @@ def incremental_speaker_contextual_lambdaunc(
 
     where ``P_listener_final[u]`` is the listener's posterior on the referent
     after consuming utterance ``u`` (the second carry slot of ``lax.scan`` that
-    Lever 1 discards).  As ``lambda_uncertainty -> 0`` this reduces exactly to
-    Lever 1.  As it grows, longer utterances that drive the listener posterior
+    the base contextual variant discards).  As ``lambda_uncertainty -> 0`` this reduces exactly to
+    the base contextual variant.  As it grows, longer utterances that drive the listener posterior
     toward 1 are preferred — capturing the over-specification preference that
     the pre-loop baseline's six ``gamma_*`` step-coefficients were curve-
     fitting, with one theoretically grounded coefficient instead of six.
@@ -2016,7 +2016,7 @@ def jitted_speaker_contextual_hier(
     )
 
 
-# Contextual + listener-uncertainty cost: same as the Lever-1 vmap but with
+# Contextual + listener-uncertainty cost: same as the base contextual variant vmap but with
 # one extra broadcast slot for the scalar lambda_uncertainty parameter.
 vectorized_incremental_speaker_contextual_lambdaunc_hier = jax.vmap(
     incremental_speaker_contextual_lambdaunc,
@@ -2351,7 +2351,7 @@ likelihood_function_incremental_speaker_lowcol_hier = _make_extended_v1_model(
 # ── Contextual compromise model: generic condition-sensitive production layer ─
 
 def _make_contextual_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
-    """C2-contextual (Lever 1): per-dim alpha + RAW LM + lambda_suff. No gammas."""
+    """C2-contextual (the base contextual variant): per-dim alpha + RAW LM + lambda_suff. No gammas."""
     def model(states=None, empirical=None,
               participant_idx=None, n_participants=None,
               sufficient_dim=None, has_one_word_solution=None, is_sharp=None):
@@ -2399,7 +2399,7 @@ def _make_contextual_lambdaunc_model(
     color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0,
 ):
     """Contextual + listener-uncertainty cost (one principled parameter on top
-    of Lever 1).
+    of the base contextual variant).
 
     Adds ``lambda_uncertainty ~ HalfNormal(2.0)``: the speaker bears a cost
     proportional to the residual listener uncertainty after producing each
@@ -2420,7 +2420,7 @@ def _make_contextual_lambdaunc_model(
         epsilon            = numpyro.sample("epsilon",            dist.Beta(1.0, 50.0))
         tau                = numpyro.sample("tau",                dist.HalfNormal(0.2))
 
-        # Same centered delta parameterization as Lever 1 — funnel is weak
+        # Same centered delta parameterization as the base contextual variant — funnel is weak
         # because each subject has enough trials to identify their offset.
         with numpyro.plate("participants", n_participants):
             delta = numpyro.sample("delta", dist.Normal(0.0, tau))
@@ -2449,9 +2449,9 @@ likelihood_function_contextual_lambdaunc_hier = _make_contextual_lambdaunc_model
 
 
 def _make_contextual_freewf_model(color_semval=0.971, form_semval=0.50, k=0.5):
-    """Lever-1 speaker but with ``wf`` (size-semantics noise scale) learned.
+    """the base contextual variant speaker but with ``wf`` (size-semantics noise scale) learned.
 
-    Iter 8 in the R²-first loop. The pre-loop default ``wf = 1.0`` saturates
+    the previous variant in the parameter-tuning sweep. The pre-loop default ``wf = 1.0`` saturates
     the size semantics into its flat regime — sharp and blurred trials get
     nearly identical listener confidences (RSA target ≈ 0.23 vs 0.21 for
     erdc) despite the empirical target-distractor gap being 6.66 vs 4.15.
@@ -2461,7 +2461,7 @@ def _make_contextual_freewf_model(color_semval=0.971, form_semval=0.50, k=0.5):
     propagates the existing sharp/blurred encoding in the size values
     through to a meaningful listener-confidence asymmetry. No new output
     coefficient; the entire mechanism lives in one re-tuned representation
-    parameter. +1 free param vs Lever 1.
+    parameter. +1 free param vs the base contextual variant.
     """
     def model(states=None, empirical=None,
               participant_idx=None, n_participants=None,
@@ -2505,21 +2505,21 @@ likelihood_function_contextual_freewf_hier = _make_contextual_freewf_model(
 )
 
 
-# Iter 9 + Iter 10: size semantics with a fixed reference scale R that
+# size semantics with a fixed reference scale R that
 # anchors the comparison and breaks the function's scale-invariance.
 SIZE_ANCHOR_R = 5.0
 
-# Iter 12: parsimonious fixed wf, set to the posterior median of Iter 11
+# parsimonious fixed wf, set to the posterior median of the previous variant
 # (R²-winning variant on dc subset). Lets the anchored+2-gamma model carry
 # the same wf-tuned representation without paying a free parameter for it.
-# Source: arviz median of log_wf in iter11 NC was -0.3775 → wf = 0.6856.
+# Source: arviz median of log_wf in a prior fit was -0.3775 → wf = 0.6856.
 WF_FIXED_ITER11_MEDIAN = 0.6856
 
-# Iter-17 (contextual_pcalpha_formmod) posterior median of log_beta_lm, used
-# only by the iter-18 β_lm-fixed ABLATION (contextual_pcalpha_canon_betafixed)
+# the previous variant (contextual_pcalpha_formmod) posterior median of log_beta_lm, used
+# only by the a prior variant β_lm-fixed ABLATION (contextual_pcalpha_canon_betafixed)
 # to test how much of lambda_noncanon is genuinely additional vs. signal the
 # free β_lm would otherwise reallocate. Source: arviz median of log_beta_lm
-# in the iter-17 NC = 1.907718 → beta_lm = 6.737698.
+# in the a prior variant NC = 1.907718 → beta_lm = 6.737698.
 LOG_BETA_LM_FIXED_ITER17 = 1.907718
 
 
@@ -2539,18 +2539,18 @@ def incremental_speaker_contextual_anchored(
     beta_lm:               float = 1.00,
     epsilon:               float = 0.01,
 ) -> jnp.ndarray:
-    """Lever-1 speaker with size semantics anchored to an absolute scale R.
+    """the base contextual variant speaker with size semantics anchored to an absolute scale R.
 
     The only structural change vs ``incremental_speaker_contextual`` is the
     size-semantics denominator:
 
         denom = wf * sqrt(sizes² + theta_k² + R²)        (anchored)
-        denom = wf * sqrt(sizes² + theta_k²)             (Lever 1)
+        denom = wf * sqrt(sizes² + theta_k²)             (the base contextual variant)
 
     With ``R = SIZE_ANCHOR_R = 5.0``, the denominator can never collapse
     below ``wf * R``, so the listener cannot saturate the size discriminant
     when the local cluster is tight (which is exactly what was happening in
-    Lever 1 with theta_k pinned to the distractor cluster). Sharp trials
+    the base contextual variant with theta_k pinned to the distractor cluster). Sharp trials
     with their larger target-distractor gaps now produce reliably higher
     z than blurred trials. No new free parameters — R is a fixed grounded
     scale (the typical "small" size in the dataset).
@@ -2910,7 +2910,7 @@ def jitted_speaker_contextual_anchored_gamma_hier(
 
 
 def _make_contextual_anchored_model(color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0):
-    """Iter 9: Lever-1 priors, anchored size semantics (R = 5.0). 0 new params."""
+    """the base contextual variant priors, anchored size semantics (R = 5.0). 0 new params."""
     def model(states=None, empirical=None,
               participant_idx=None, n_participants=None,
               sufficient_dim=None, has_one_word_solution=None, is_sharp=None):
@@ -2951,7 +2951,7 @@ likelihood_function_contextual_anchored_hier = _make_contextual_anchored_model(
 
 
 def _make_contextual_freewf_anchored_model(color_semval=0.971, form_semval=0.50, k=0.5):
-    """Iter 10: anchored size semantics + learned ``wf``. +1 free param."""
+    """anchored size semantics + learned ``wf``. +1 free param."""
     def model(states=None, empirical=None,
               participant_idx=None, n_participants=None,
               sufficient_dim=None, has_one_word_solution=None, is_sharp=None):
@@ -2995,12 +2995,12 @@ likelihood_function_contextual_freewf_anchored_hier = _make_contextual_freewf_an
 
 
 def _make_contextual_anchored_gamma_model(color_semval=0.971, form_semval=0.50, k=0.5):
-    """Iter 11: anchored size semantics + free wf + compact 2-gamma length bonus.
+    """anchored size semantics + free wf + compact 2-gamma length bonus.
 
-    Three new free coefficients vs Lever 1: ``log_wf`` (size-semantics
+    Three new free coefficients vs the base contextual variant: ``log_wf`` (size-semantics
     sensitivity), ``gamma_base`` (per-extra-token length bonus baseline),
     and ``gamma_oneword`` (modulation when the trial has a one-word
-    solution). Total 10 named parameters, vs Lever 1's 7 and the 6-gamma
+    solution). Total 10 named parameters, vs the base contextual variant's 7 and the 6-gamma
     baseline's 13.
 
     Same speaker as ``incremental_speaker_contextual_anchored`` plus the
@@ -3057,7 +3057,7 @@ likelihood_function_contextual_anchored_gamma_hier = _make_contextual_anchored_g
 def _make_contextual_anchored_gamma_fixedwf_model(
     color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
 ):
-    """Iter 12: same as Iter 11 but with ``wf`` hardcoded at the Iter 11
+    """same as the previous variant but with ``wf`` hardcoded at the previous variant
     posterior median (0.6856) instead of sampled. Drops 1 free parameter
     (no more ``log_wf`` sampling), bringing the model to 9 named coefficients
     while keeping the anchored size semantics and the compact 2-gamma
@@ -3110,7 +3110,7 @@ likelihood_function_contextual_anchored_gamma_fixedwf_hier = (
 def _make_contextual_anchored_gamma_fixedwf_pcalpha_model(
     color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
 ):
-    """Iter 14: Iter 12 + hierarchical alpha by ``(participant × condition)``.
+    """+ hierarchical alpha by ``(participant × condition)``.
 
     Replaces the per-participant ``delta`` random effect with a per-
     (participant × condition) one, non-centered for stability with the
@@ -3125,14 +3125,14 @@ def _make_contextual_anchored_gamma_fixedwf_pcalpha_model(
 
     Theory: the residual erdc D over-prediction (P(F | first=D) = 28% model
     vs 42% human) localized in the per-step diagnostic was not closed by
-    free form_semval (Iter 13) — the model's alpha pattern is the
+    free form_semval  — the model's alpha pattern is the
     bottleneck. Allowing alpha to drift differently per (participant,
     condition) lets the posterior find that subjects in erdc trials need
     different overall alpha than in zrdc / brdc, without committing to a
     hand-specified per-suff_dim coefficient.
 
-    Named-coefficient count: 9 (same as Iter 12). The (P × C) cells add
-    +226 latents beyond Iter 12 — within numpyro's plate machinery, not
+    Named-coefficient count: 9 (same as the previous variant). The (P × C) cells add
+    +226 latents beyond the previous variant — within numpyro's plate machinery, not
     new named-scalar parameters.
     """
     def model(states=None, empirical=None,
@@ -3205,9 +3205,9 @@ def incremental_speaker_contextual_anchored_gamma_sharpbonus(
     gamma_sharp:           float = 0.0,
     epsilon:               float = 0.01,
 ) -> jnp.ndarray:
-    """Iter 16: anchored speaker + sharpness-gated length-bonus boost.
+    """anchored speaker + sharpness-gated length-bonus boost.
 
-    Identical to ``incremental_speaker_contextual_anchored_gamma`` (Iter 11+),
+    Identical to ``incremental_speaker_contextual_anchored_gamma`` ,
     except the length-bonus aggregation adds one extra positive coefficient
     that fires on blurred trials:
 
@@ -3217,16 +3217,16 @@ def incremental_speaker_contextual_anchored_gamma_sharpbonus(
         length_bonus[u] = gamma_eff * max(N_WORDS[u] - 1, 0)
 
     Sharp trials: gamma_eff = gamma_base + gamma_oneword * has_one_word_solution
-                  (unchanged from Iter 12+).
+                  (unchanged from the previous variant).
     Blurred trials: gamma_eff gets an extra positive term gamma_sharp, pushing
                     the speaker toward longer utterances on blurred trials
                     across all conditions.
 
-    Targets the dominant residual on the merged main (Iter 14, PR #3):
+    Targets the dominant residual on the merged main :
     erdc-blurred over-stopping (P(STOP | first=D) = 34% model vs 7% human).
     Speaker-side mechanism — captures over-specification under perceptual
     ambiguity by adding length-bonus rather than perturbing listener-side
-    semantics (which Iter 15's blur_R_inflation failed to identify).
+    semantics (which the previous variant's blur_R_inflation failed to identify).
 
     Risk: applies to ALL blurred trials. zrdc-blurred already shows the model
     slightly under-predicting bare C (residual -0.111); a positive
@@ -3419,7 +3419,7 @@ def incremental_speaker_contextual_anchored_gamma_sharpbonus_formmod(
     gamma_sharp:           float = 0.0,
     epsilon:               float = 0.01,
 ) -> jnp.ndarray:
-    """Iter 17: Iter 16 (pcalpha + gammasharp) + erdc-gated F-present boost.
+    """(pcalpha + gammasharp) + erdc-gated F-present boost.
 
     Identical to ``incremental_speaker_contextual_anchored_gamma_sharpbonus``
     except one extra utterance-level coefficient is added to ``log_unnorm``
@@ -3430,13 +3430,12 @@ def incremental_speaker_contextual_anchored_gamma_sharpbonus_formmod(
         log_unnorm[u] = beta_lm * LM[u] + rsa[u] + length_bonus[u]
                       + lambda_form_mod * 1[sufficient_dim == 0] * F_PRESENT[u]
 
-    Mechanism / motivation (per-step + sweep decomposition of Iter 16,
-    scripts/diag_iter16_erdc_decomp.py):
+    Mechanism / motivation (per-step + sweep decomposition of the previous variant):
 
     - In erdc-blurred humans overwhelmingly produce F-containing descriptions
       (DF 36%, DCF 30%) over no-F ones (D 6%, DC 4%): when the sufficient
       dimension is hard-to-perceive size, speakers add the salient orthogonal
-      form feature. Iter 16 inverts this (DC 26%, DCF 20%, DF 6%).
+      form feature. the previous variant inverts this (DC 26%, DCF 20%, DF 6%).
     - A step-2 F-token logit boost was rejected: it inflates the
       non-canonical DFC (D-F-C, human 3%) because it rewards F at position 2,
       fighting the LM's canonical C-before-F order. An utterance-level
@@ -3449,12 +3448,12 @@ def incremental_speaker_contextual_anchored_gamma_sharpbonus_formmod(
       identical predictions for any lambda_form_mod).
 
     At the sweep optimum (~1.5-2) this fixes the erdc D/DC over-prediction
-    and DCF under-prediction (the bulk of the Iter 16 erdc residual mass) with
+    and DCF under-prediction (the bulk of the previous variant erdc residual mass) with
     zero side-effects on zrdc/brdc. The residual erdc DF deficit is
     LM-prior-limited (GPT-2 suppresses bare "D F") and is left for a separate
     LM-downweight lever.
 
-    +1 named coefficient over Iter 16 -> 11 named + 339 latents.
+    +1 named coefficient over the previous variant -> 11 named + 339 latents.
     """
 
     eps            = 1e-8
@@ -3628,17 +3627,17 @@ def jitted_speaker_contextual_anchored_gamma_sharpbonus_formmod_hier(
 def _make_contextual_pcalpha_formmod_model(
     color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
 ):
-    """Iter 17: Iter 14 (pcalpha) + gammasharp + erdc-gated F-present boost.
+    """(pcalpha) + gammasharp + erdc-gated F-present boost.
 
-    Adds ``lambda_form_mod ~ Normal(0, 2)`` over Iter 16 and routes through
+    Adds ``lambda_form_mod ~ Normal(0, 2)`` over the previous variant and routes through
     ``jitted_speaker_contextual_anchored_gamma_sharpbonus_formmod_hier``.
 
-    The prior SD (2.0) matches ``gamma_base``/``gamma_oneword``. The Iter 16
-    sweep (scripts/diag_iter16_erdc_decomp.py) puts the erdc-optimal value
+    The prior SD (2.0) matches ``gamma_base``/``gamma_oneword``. The the previous variant
+    sweep puts the erdc-optimal value
     around 1.5-2 nats; Normal(0, 2) covers that without being strongly
     informative and lets the data pull it back toward 0 if the gate is wrong.
 
-    +1 named coefficient over Iter 16 -> 11 named + 339 latents.
+    +1 named coefficient over the previous variant -> 11 named + 339 latents.
     """
     def model(states=None, empirical=None,
               participant_idx=None, n_participants=None,
@@ -3711,7 +3710,7 @@ def incremental_speaker_contextual_anchored_gamma_sharpbonus_formmod_canon(
     epsilon:               float = 0.01,
     recursive:             bool  = True,
 ) -> jnp.ndarray:
-    """Iter 18: Iter 17 (formmod) + two penalties from the iter-18 diagnostic.
+    """(formmod) + two penalties from the a prior variant diagnostic.
 
     Adds, at the utterance level alongside the LM / length / form-present
     terms:
@@ -3721,7 +3720,7 @@ def incremental_speaker_contextual_anchored_gamma_sharpbonus_formmod_canon(
 
     Both coefficients ~ HalfNormal(2.0) and enter as **penalties** (subtracted).
 
-    Lever 1 — erdc-gated 3-word penalty. The iter-17 residual is a DF↔DCF/DFC
+    the base contextual variant — erdc-gated 3-word penalty. The a prior variant residual is a DF↔DCF/DFC
     mass split: the per-word length bonus γ·(N−1) in erdc/blurred (≈+0.89/word)
     over-rewards the 3rd token, so the model spends DF's mass on DCF/DFC. A
     per-word γ attenuation was rejected by sweep (it dumps mass into the
@@ -3729,23 +3728,23 @@ def incremental_speaker_contextual_anchored_gamma_sharpbonus_formmod_canon(
     proportionally: in the sweep it lifts erdc/blurred DF 0.14→0.22 at
     coefficient ≈1, with DFC collapsing toward the human ~0.03.
 
-    Lever 2 — global non-canonical-order penalty. F_BEFORE_C = {DFC, FDC, FC,
+    extension parameters 2 — global non-canonical-order penalty. F_BEFORE_C = {DFC, FDC, FC,
     FCD}: utterances violating canonical colour-before-form adjective order
     (Cinque 1994; Scott 2002; Sproat & Shih 1991), all ≈0 in human data. The
-    iter-17 DFC over-production is an RSA cheap-F-continuation artefact (small
+    a prior variant DFC over-production is an RSA cheap-F-continuation artefact (small
     alpha_F), NOT an LM problem (the LM residual already prefers DCF > DFC).
     The penalty is global: canonical order is a universal constraint and the
     sweep confirmed zero side-effects on zrdc (untouched) and brdc (DFC nudged
     0.043→0.016, harmless).
 
     Both LM-based fixes for these residuals were tested and rejected
-    (scripts/diag_iter18_lm_downweight.py): uniform LM scaling collapses the
+    : uniform LM scaling collapses the
     distribution, and LM length/ordering decomposition makes DF monotonically
     worse — the anti-DF signal is inseparable from the LM's
     mass-concentration role. The residuals are γ-length + RSA-ordering, not
     LM-encoded.
 
-    +2 named coefficients over Iter 17 -> 13 named + 339 latents.
+    +2 named coefficients over the previous variant -> 13 named + 339 latents.
     """
 
     eps            = 1e-8
@@ -3874,11 +3873,11 @@ def incremental_speaker_contextual_anchored_gamma_sharpbonus_formmod_canon(
     )
     length_bonus = gamma_eff * jnp.maximum(N_WORDS - 1.0, 0.0)
 
-    # Erdc-gated (sufficient_dim == 0) utterance-level F-present boost (Iter 17).
+    # Erdc-gated (sufficient_dim == 0) utterance-level F-present boost .
     erdc_gate = (sufficient_dim == 0).astype(jnp.float32)
     form_present_bonus = lambda_form_mod * erdc_gate * F_PRESENT_15
 
-    # Iter 18 penalties (subtracted).
+    # the previous variant penalties (subtracted).
     len3_penalty     = gamma_len3_erdc * erdc_gate * IS_3WORD_15
     noncanon_penalty = lambda_noncanon * F_BEFORE_C_15
 
@@ -4090,16 +4089,16 @@ def jitted_global_speaker_contextual_anchored_gamma_sharpbonus_formmod_canon_hie
 def _make_contextual_pcalpha_canon_model(
     color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
 ):
-    """Iter 18: Iter 17 (formmod) + erdc 3-word penalty + canonical-order penalty.
+    """(formmod) + erdc 3-word penalty + canonical-order penalty.
 
     Adds ``gamma_len3_erdc ~ HalfNormal(2.0)`` and
-    ``lambda_noncanon ~ HalfNormal(2.0)`` over Iter 17. HalfNormal (positive,
+    ``lambda_noncanon ~ HalfNormal(2.0)`` over the previous variant. HalfNormal (positive,
     entering as subtracted penalties) because both directions are
     theory/diagnostic-determined — over-specification penalty under sufficient
     size, and the canonical colour-before-form constraint — exactly as
     ``gamma_sharp`` uses HalfNormal for a sign-determined length term.
 
-    +2 named coefficients over Iter 17 -> 13 named + 339 latents.
+    +2 named coefficients over the previous variant -> 13 named + 339 latents.
     """
     def model(states=None, empirical=None,
               participant_idx=None, n_participants=None,
@@ -4155,20 +4154,20 @@ likelihood_function_contextual_pcalpha_canon_hier = _make_contextual_pcalpha_can
 def _make_contextual_pcalpha_canon_betafixed_model(
     color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
 ):
-    """Iter-18 ABLATION: identical to ``_make_contextual_pcalpha_canon_model``
-    but ``beta_lm`` is FIXED at the iter-17 posterior median
+    """ABLATION: identical to ``_make_contextual_pcalpha_canon_model``
+    but ``beta_lm`` is FIXED at the a prior variant posterior median
     (exp(LOG_BETA_LM_FIXED_ITER17) ≈ 6.738) instead of being sampled.
 
     Purpose: the canonical-order penalty conceptually overlaps the LM prior
     (GPT-2 already prefers DCF > DFC by ~1.75 nat at the fitted β_lm). In the
-    free-β_lm iter-18 fit, corr(log_beta_lm, lambda_noncanon) = +0.43 and β_lm
+    free-β_lm a prior variant fit, corr(log_beta_lm, lambda_noncanon) = +0.43 and β_lm
     dropped 6.75→6.42 when the penalty entered — so lambda_noncanon may be
     partly reallocated LM signal. Pinning β_lm removes that freedom: if
     lambda_noncanon still lands ≈2.5–2.6 and R² holds ≈0.919, the
     canonical-order signal is genuinely ADDITIONAL, not relabelled LM mass.
 
     Not a ladder iteration — a robustness check. Same 339 latents; 12 named
-    (drops log_beta_lm vs iter-18's 13).
+    (drops log_beta_lm vs a prior variant's 13).
     """
     beta_lm_fixed = float(np.exp(LOG_BETA_LM_FIXED_ITER17))
 
@@ -4227,23 +4226,23 @@ def _make_contextual_pcalpha_canon_parsimony_model(
     color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
     drop: tuple = (), free: tuple = (), cell: str = "inc_rec",
 ):
-    """Parsimony model: iter-18 (``contextual_pcalpha_canon``) minus its two
+    """Parsimony model: a prior variant (``contextual_pcalpha_canon``) minus its two
     free parameter drops, both PROVEN zero-cost in the May-2026 session:
 
-    1. ``log_beta_lm`` FIXED at the iter-17 posterior median
+    1. ``log_beta_lm`` FIXED at the a prior variant posterior median
        (exp(LOG_BETA_LM_FIXED_ITER17) ≈ 6.738) — the β_lm-fixed ablation
-       (``contextual_pcalpha_canon_betafixed``) gave R² identical to iter-18
+       (``contextual_pcalpha_canon_betafixed``) gave R² identical to a prior variant
        and ``lambda_noncanon`` unchanged, so the LM temperature is free to pin.
-    2. ``gamma_len3_erdc`` DROPPED entirely — its iter-18 joint posterior
+    2. ``gamma_len3_erdc`` DROPPED entirely — its a prior variant joint posterior
        collapsed to ≈0.04 [0.00,0.10] (data-dead); the speaker fn still takes
        the argument so we simply pass a constant 0.0 (term ≡ 0).
 
-    Net: iter-18's 13 named → **11 named coefficients + 339 latents**
+    Net: a prior variant's 13 named → **11 named coefficients + 339 latents**
     (``delta_raw``, 113 participants × 3 conditions). Fixed constants
     unchanged: ``color_semval=0.971``, ``form_semval=0.50``, ``k=0.5``,
     ``wf=WF_FIXED_ITER11_MEDIAN``, plus ``beta_lm`` now constant.
 
-    Expected fit: ≈ iter-18 (R²(all) ≈ R²(emp≥.02) ≈ 0.919) at the smallest
+    Expected fit: ≈ a prior variant (R²(all) ≈ R²(emp≥.02) ≈ 0.919) at the smallest
     coefficient set with no remaining data-dead/redundant term — the starting
     point of the parsimony-vs-fit frontier.
 
@@ -4261,7 +4260,7 @@ def _make_contextual_pcalpha_canon_parsimony_model(
     Uniform(0.5, 0.999) (a semantic value below 0.5 would invert the
     predicate, so the lower bound is the vacuous point); k ~ Uniform(0, 1)
     (anchor fraction); wf via ``log_wf ~ Normal(-1.0, 0.5)`` (the established
-    iter-8 freewf convention, prior bulk wf≈0.22–0.61). Each freed constant
+    a prior variant freewf convention, prior bulk wf≈0.22–0.61). Each freed constant
     adds one sampled named parameter.
     """
     beta_lm_fixed = float(np.exp(LOG_BETA_LM_FIXED_ITER17))
@@ -4325,7 +4324,7 @@ def _make_contextual_pcalpha_canon_parsimony_model(
         else:
             wf_r = wf
 
-        # gamma_len3_erdc DROPPED (data-dead in iter-18); term ≡ 0.
+        # gamma_len3_erdc DROPPED (data-dead in a prior variant); term ≡ 0.
         gamma_len3_erdc = 0.0
 
         with numpyro.plate("conditions_p", n_conditions, dim=-1):
@@ -4466,21 +4465,21 @@ likelihood_function_contextual_pcalpha_canon_parsimony_2x2_glob_static_hier = (
 def _make_contextual_pcalpha_gammasharp_model(
     color_semval=0.971, form_semval=0.50, k=0.5, wf=WF_FIXED_ITER11_MEDIAN,
 ):
-    """Iter 16: Iter 14 (pcalpha) + sharpness-gated length-bonus boost.
+    """(pcalpha) + sharpness-gated length-bonus boost.
 
     Identical to ``_make_contextual_anchored_gamma_fixedwf_pcalpha_model`` except
     it samples ``gamma_sharp ~ HalfNormal(2.0)`` and uses
     ``jitted_speaker_contextual_anchored_gamma_sharpbonus_hier`` which adds
     ``gamma_sharp * (1 - is_sharp)`` to the length-bonus aggregation.
 
-    Targets the per-step diagnostic finding on Iter 14 main: speakers in
+    Targets the per-step diagnostic finding on the previous variant main: speakers in
     erdc-blurred trials almost never stop after D (7% vs model's 34%), and
     speakers in erdc-sharp trials stop ~35% (which the model already gets
     right). The single new positive coefficient captures the sharpness-
     conditional over-specification at the speaker side rather than the
-    listener side (which Iter 15's blur_R_inflation failed to identify).
+    listener side (which the previous variant's blur_R_inflation failed to identify).
 
-    +1 named coefficient over Iter 14 → 10 named + 339 latents.
+    +1 named coefficient over the previous variant → 10 named + 339 latents.
     """
     def model(states=None, empirical=None,
               participant_idx=None, n_participants=None,

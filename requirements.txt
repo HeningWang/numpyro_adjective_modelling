@@ -1,0 +1,17 @@
+# Python dependencies for the NumPyro models, simulation, and posterior analysis.
+# Install (CPU):
+#   python -m venv .venv && source .venv/bin/activate
+#   pip install -U pip
+#   pip install -r requirements.txt
+# For GPU inference, replace `jax[cpu]` with the matching `jax[cuda12_pip]` (or
+# similar) wheel for your platform.
+
+jax[cpu]>=0.4.20
+numpyro>=0.13.2
+arviz>=0.16
+numpy>=1.24
+pandas>=2.0
+scipy>=1.10
+matplotlib>=3.7
+seaborn>=0.12
+scikit-learn>=1.3

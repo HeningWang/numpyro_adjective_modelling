@@ -6,6 +6,7 @@ Layout (wide, two rows):
   Row 2: [2×2 Model Comparison]  [Research Questions & Findings]
 """
 
+from pathlib import Path
 import json
 import random
 
@@ -359,7 +360,7 @@ doc = {
     "files": {},
 }
 
-out = "/Users/heningwang/Documents/GitHub/numpyro_adjective_modelling/paper/figures/overview_figure.excalidraw"
+out = str(Path(__file__).resolve().parent / "overview_figure.excalidraw")
 with open(out, "w") as f:
     json.dump(doc, f, indent=2)
 

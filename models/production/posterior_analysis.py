@@ -2,7 +2,7 @@
 
 Replaces the Jupyter notebook + paper/scripts/extract_posteriors.py
 + paper/scripts/extract_posteriors.py.
-Uses shared/posterior_utils.py for common operations.
+Uses analysis/posterior_utils.py for common operations.
 
 Run from the models/production/ directory:
     python posterior_analysis.py

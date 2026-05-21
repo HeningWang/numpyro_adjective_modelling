@@ -14,7 +14,7 @@ rm(list=ls())
 
 plots_dir<- file.path(getwd(),"plots")
 if(!dir.exists(plots_dir)) dir.create(plots_dir, recursive = TRUE, showWarnings = FALSE)
-setwd("~/GitHub/huashan/analysis")
+# setwd("~/GitHub/huashan/analysis")  # set working dir to this script's location when running interactively
 
 data <- read.csv(file = "../data/huashan.csv")
 subj_info <-read.csv(file = "../data/huashan_subj_info.csv")

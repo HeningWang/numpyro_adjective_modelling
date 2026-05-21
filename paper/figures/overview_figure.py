@@ -7,6 +7,7 @@ Hand-drawn (xkcd) style, showing:
   - Bottom:      2×2 model comparison + key finding
 """
 
+from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -337,7 +338,7 @@ with plt.xkcd(scale=1.0, length=100, randomness=2):
         Dx + Dw / 2, Dy + Dh + 0.005, lw=2.0, color="#888")
 
     # ═══════════════════════════════════════════════════════════════════════
-    out = "/Users/heningwang/Documents/GitHub/numpyro_adjective_modelling/paper/figures/"
+    out = str(Path(__file__).resolve().parent) + "/"
     fig.savefig(out + "overview_figure.pdf", bbox_inches="tight", dpi=300)
     fig.savefig(out + "overview_figure.png", bbox_inches="tight", dpi=200)
     print("Saved overview_figure.pdf and overview_figure.png")

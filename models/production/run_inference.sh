@@ -5,7 +5,7 @@ set -e  # stop immediately if a command fails
 # User settings
 # =====================
 
-PYTHON=/Users/heningwang/Documents/GitHub/numpyro_adjective_modelling/jax-metal/bin/python
+PYTHON=python
 SCRIPT=run_inference.py
 NUM_CHAINS=4
 

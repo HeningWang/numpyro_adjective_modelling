@@ -49,11 +49,27 @@ The NumPyro inference code requires JAX and NumPyro. On a CPU host:
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -U pip
-pip install "jax[cpu]" numpyro arviz pandas numpy scipy
+pip install -r requirements.txt
 ```
 
-For GPU inference (recommended for the production model), follow the JAX
-installation guide for your platform and add the matching CUDA wheels.
+For GPU inference (recommended for the production model), replace the
+`jax[cpu]` line in `requirements.txt` with the matching `jax[cuda12_pip]`
+(or similar) wheel for your platform.
+
+### 1b. R environment
+
+The experimental data analyses and the paper's plotting + regression
+scripts run in R (4.x). Install the packages used across the analyses with:
+
+```r
+install.packages(c(
+  "tidyverse", "dplyr", "tidyr", "ggplot2", "purrr", "stringr",
+  "lme4", "lmerTest", "emmeans", "pbkrtest", "MASS", "ordinal", "multcomp",
+  "BayesFactor", "brms", "HDInterval",
+  "effects", "effsize", "memisc", "sjPlot", "sjmisc", "texreg", "xtable",
+  "gridExtra", "RColorBrewer", "lattice", "optimx", "trimr", "pwr"
+))
+```
 
 ### 2. Slider model
 
