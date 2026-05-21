@@ -134,15 +134,3 @@ Subject-info files (`00-*subj-info.csv`) accompany the trial-level data.
 ## License
 
 Released under the MIT License — see [LICENSE](./LICENSE).
-
-## Citation
-
-```bibtex
-@article{wang_adjective_ordering,
-  author  = {Wang, Hening and Schlotterbeck, Fabian and Franke, Michael},
-  title   = {Adjective Ordering in Referential Communication:
-             Subjectivity, Discriminatory Strength, and Incremental Pragmatics},
-  journal = {Open Mind},
-  year    = {forthcoming}
-}
-```
