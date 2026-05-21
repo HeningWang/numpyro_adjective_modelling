@@ -1,1 +1,9 @@
+models/slider/inference_data/mcmc_results_incremental_static_speaker_hier_warmup500_samples500_chains4.nc filter=lfs diff=lfs merge=lfs -text
+models/slider/inference_data/mcmc_results_global_speaker_hier_warmup500_samples500_chains4.nc filter=lfs diff=lfs merge=lfs -text
+models/slider/inference_data/mcmc_results_global_static_speaker_hier_warmup500_samples500_chains4.nc filter=lfs diff=lfs merge=lfs -text
+models/production/inference_data/mcmc_results_2x2best_incremental_recursive_warmup5000_samples2000_chains4.nc filter=lfs diff=lfs merge=lfs -text
+models/production/inference_data/mcmc_results_2x2best_incremental_static_warmup5000_samples2000_chains4.nc filter=lfs diff=lfs merge=lfs -text
+models/production/inference_data/mcmc_results_2x2best_global_recursive_warmup5000_samples2000_chains4.nc filter=lfs diff=lfs merge=lfs -text
+models/production/inference_data/mcmc_results_2x2best_global_static_warmup5000_samples2000_chains4.nc filter=lfs diff=lfs merge=lfs -text
+models/slider/inference_data/mcmc_results_incremental_speaker_hier_warmup500_samples500_chains4.nc filter=lfs diff=lfs merge=lfs -text
 *.nc filter=lfs diff=lfs merge=lfs -text

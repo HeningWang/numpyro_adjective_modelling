@@ -117,7 +117,7 @@ Subject-info files (`00-*subj-info.csv`) accompany the trial-level data.
 
 ## License
 
-TBD.
+Released under the MIT License — see [LICENSE](./LICENSE).
 
 ## Citation
 

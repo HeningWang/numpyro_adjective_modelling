@@ -31,9 +31,18 @@ paper/**/*.toc
 __pycache__/
 *.pyc
 
-# MCMC inference data (large .nc files, regenerable)
+# MCMC inference data (large .nc files, regenerable).
+# The eight paper-reported cells are tracked via git-lfs; everything else is local.
 models/slider/inference_data/*.nc
+!models/slider/inference_data/mcmc_results_incremental_speaker_hier_warmup500_samples500_chains4.nc
+!models/slider/inference_data/mcmc_results_incremental_static_speaker_hier_warmup500_samples500_chains4.nc
+!models/slider/inference_data/mcmc_results_global_speaker_hier_warmup500_samples500_chains4.nc
+!models/slider/inference_data/mcmc_results_global_static_speaker_hier_warmup500_samples500_chains4.nc
 models/production/inference_data/*.nc
+!models/production/inference_data/mcmc_results_2x2best_incremental_recursive_warmup5000_samples2000_chains4.nc
+!models/production/inference_data/mcmc_results_2x2best_incremental_static_warmup5000_samples2000_chains4.nc
+!models/production/inference_data/mcmc_results_2x2best_global_recursive_warmup5000_samples2000_chains4.nc
+!models/production/inference_data/mcmc_results_2x2best_global_static_warmup5000_samples2000_chains4.nc
 
 # Simulation output CSVs (large, regenerable)
 simulation/simulation_full_run*.csv
