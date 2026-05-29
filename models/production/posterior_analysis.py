@@ -34,6 +34,9 @@ from analysis.posterior_utils import (
     plot_correlation_scatter,
     extract_pp_samples,
     save_summary_text,
+    summarize_mcmc_diagnostics,
+    compute_ppc_correlation_metrics,
+    compute_residual_tables,
 )
 from helper import import_dataset
 
@@ -68,7 +71,18 @@ FLAT_TO_CAT = {
 
 # Population-level parameters to diagnose
 POP_VAR_NAMES = ["alpha", "alpha_D", "alpha_C", "alpha_F",
-                 "log_beta", "gamma", "epsilon", "mu_C", "mu_F", "tau"]
+                 "log_beta", "log_beta_order", "lambda_frontload",
+                 "gamma_uncertainty_len", "gamma", "epsilon",
+                 "mu_C", "mu_F", "tau"]
+
+SIMPLIFIED_MODELS = {
+    "simplified_lm_resid": "mcmc_results_simplified_lm_resid_speaker_hier{subset}_{tag}.nc",
+    "simplified_lm_raw": "mcmc_results_simplified_lm_raw_speaker_hier{subset}_{tag}.nc",
+    "simplified_hand_order": "mcmc_results_simplified_hand_order_speaker_hier{subset}_{tag}.nc",
+    "simplified_no_frontload": "mcmc_results_simplified_no_frontload_speaker_hier{subset}_{tag}.nc",
+    "simplified_no_uncertainty_len": "mcmc_results_simplified_no_uncertainty_len_speaker_hier{subset}_{tag}.nc",
+    "simplified_no_order": "mcmc_results_simplified_no_order_speaker_hier{subset}_{tag}.nc",
+}
 
 
 # ── Dataset-specific: PPC for categorical production data ───────────────────
@@ -214,12 +228,75 @@ def export_csvs(df_human, model_summaries, comparison, stats_dir,
         print(f"  [csv] production_correlation.csv ({len(df_corr)} rows)")
 
 
+def build_all_correlation_rows(df_human, model_summaries):
+    """Merge every model PPC summary with human proportions for diagnostics."""
+    rows = []
+    for model_name, df_model in model_summaries.items():
+        df_corr = df_human.merge(
+            df_model[GROUP_COLS + ["utterance_code", "model_mean", "model_lo", "model_hi"]],
+            on=GROUP_COLS + ["utterance_code"],
+            how="outer",
+        ).fillna(0)
+        df_corr["model"] = model_name
+        df_corr["condition"] = df_corr["relevant_property"] + " | " + df_corr["sharpness"]
+        rows.append(df_corr)
+    return pd.concat(rows, ignore_index=True) if rows else pd.DataFrame()
+
+
+def export_simplified_diagnostics(idata_dict, df_human, model_summaries, stats_dir):
+    """Export flexible diagnostics for simplified production-model selection."""
+    if not idata_dict or not model_summaries:
+        return []
+
+    exported = []
+    diag_detail, diag_summary = summarize_mcmc_diagnostics(
+        idata_dict,
+        var_names=POP_VAR_NAMES,
+    )
+    if not diag_detail.empty:
+        out = os.path.join(stats_dir, "production_simplified_mcmc_diagnostics.csv")
+        diag_detail.to_csv(out, index=False)
+        exported.append(out)
+        print("  [csv] production_simplified_mcmc_diagnostics.csv")
+    if not diag_summary.empty:
+        out = os.path.join(stats_dir, "production_simplified_mcmc_model_summary.csv")
+        diag_summary.to_csv(out, index=False)
+        exported.append(out)
+        print("  [csv] production_simplified_mcmc_model_summary.csv")
+
+    corr_rows = build_all_correlation_rows(df_human, model_summaries)
+    if corr_rows.empty:
+        return exported
+
+    metrics = compute_ppc_correlation_metrics(corr_rows)
+    out = os.path.join(stats_dir, "production_simplified_ppc_correlation.csv")
+    metrics.to_csv(out, index=False)
+    exported.append(out)
+    print("  [csv] production_simplified_ppc_correlation.csv")
+
+    by_cell, residual_summary, worst_cells = compute_residual_tables(corr_rows)
+    outputs = [
+        ("production_simplified_ppc_by_condition.csv", by_cell),
+        ("production_simplified_residual_summary.csv", residual_summary),
+        ("production_simplified_residual_worst_cells.csv", worst_cells),
+    ]
+    for fname, df_out in outputs:
+        out = os.path.join(stats_dir, fname)
+        df_out.to_csv(out, index=False)
+        exported.append(out)
+        print(f"  [csv] {fname}")
+    return exported
+
+
 # ── Main ────────────────────────────────────────────────────────────────────
 
 def main():
     parser = argparse.ArgumentParser(description="Production posterior analysis.")
     parser.add_argument("--models", type=str, default=None,
                         help="Comma-separated main model names (default: all 4).")
+    parser.add_argument("--model-set", type=str, default="main",
+                        choices=["main", "simplified"],
+                        help="Which default model set to load when --models is omitted.")
     parser.add_argument("--ablations", type=str, default=None,
                         help="Comma-separated ablation model names (default: all available).")
     parser.add_argument("--warmup", type=int, default=500)
@@ -229,6 +306,8 @@ def main():
                         help="Copy CSVs to paper/data/.")
     parser.add_argument("--out-dir", type=str, default="results",
                         help="Output directory for figures and stats.")
+    parser.add_argument("--subset-tag", type=str, default="",
+                        help="Filename subset tag without leading underscore, e.g. 'dc'.")
     parser.add_argument("--format", type=str, default="pdf", choices=["pdf", "png"],
                         help="Figure format.")
     args = parser.parse_args()
@@ -242,18 +321,29 @@ def main():
         os.makedirs(d, exist_ok=True)
 
     tag = DEFAULT_TAG.format(nw=args.warmup, ns=args.samples, nc=args.chains)
+    subset = f"_{args.subset_tag}" if args.subset_tag else ""
     inference_dir = "./inference_data"
 
     # Resolve model specs
+    default_specs = SIMPLIFIED_MODELS if args.model_set == "simplified" else MAIN_MODELS
+    all_specs = {**MAIN_MODELS, **SIMPLIFIED_MODELS}
     if args.models:
         selected = [m.strip() for m in args.models.split(",")]
-        main_specs = {k: v.format(tag=tag) for k, v in MAIN_MODELS.items() if k in selected}
+        main_specs = {
+            k: v.format(tag=tag, subset=subset)
+            for k, v in all_specs.items() if k in selected
+        }
     else:
-        main_specs = {k: v.format(tag=tag) for k, v in MAIN_MODELS.items()}
+        main_specs = {
+            k: v.format(tag=tag, subset=subset)
+            for k, v in default_specs.items()
+        }
 
     if args.ablations:
         selected_abl = [m.strip() for m in args.ablations.split(",")]
         abl_specs = {k: v.format(tag=tag) for k, v in ABLATION_MODELS.items() if k in selected_abl}
+    elif args.model_set == "simplified":
+        abl_specs = {}
     else:
         abl_specs = {k: v.format(tag=tag) for k, v in ABLATION_MODELS.items()}
 
@@ -341,7 +431,7 @@ def main():
             pred_hi=merged["model_hi"].values,
             emp_lo=merged["human_lo"].values,
             emp_hi=merged["human_hi"].values,
-            labels=[],  # too many labels for legend
+            labels=labels,
             title=f"Production: {best}",
             out_path=os.path.join(ppc_dir, f"correlation_{best}.{fmt}"),
         )
@@ -351,6 +441,16 @@ def main():
     print("Exporting CSVs...")
     export_csvs(df_human, model_summaries, comparison, stats_dir,
                 ablation_comparison=ablation_comparison, best_model=best)
+    simplified_exports = []
+    if args.model_set == "simplified":
+        simplified_exports = export_simplified_diagnostics(
+            idata_dict, df_human, model_summaries, stats_dir
+        )
+        if simplified_exports:
+            summary_blocks.append(
+                "Simplified diagnostics exported:\n"
+                + "\n".join(f"  - {os.path.basename(p)}" for p in simplified_exports)
+            )
 
     # ── 10. Copy to paper/data/ if requested ──
     if args.export_for_r:
@@ -359,7 +459,13 @@ def main():
         import shutil
         for fname in ["production_empirical.csv", "production_predictions.csv",
                       "production_correlation.csv", "production_loo_comparison.csv",
-                      "production_ablation_loo_comparison.csv"]:
+                      "production_ablation_loo_comparison.csv",
+                      "production_simplified_mcmc_diagnostics.csv",
+                      "production_simplified_mcmc_model_summary.csv",
+                      "production_simplified_ppc_correlation.csv",
+                      "production_simplified_ppc_by_condition.csv",
+                      "production_simplified_residual_summary.csv",
+                      "production_simplified_residual_worst_cells.csv"]:
             src = os.path.join(stats_dir, fname)
             if not os.path.exists(src):
                 # Check ablation subdir

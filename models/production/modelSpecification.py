@@ -1831,6 +1831,140 @@ def incremental_speaker_contextual_lambdaunc(
     return (1.0 - epsilon) * model_probs + epsilon / n_utt
 
 
+def incremental_speaker_simplified(
+    states:                jnp.ndarray,
+    sufficient_dim:        int,
+    has_one_word_solution: float,
+    is_sharp:              float,
+    alpha:                 float = 3.0,
+    beta_order:            float = 1.0,
+    lambda_frontload:      float = 0.0,
+    gamma_uncertainty_len: float = 0.0,
+    color_semval:          float = 0.59,
+    form_semval:           float = 0.50,
+    k:                     float = 0.50,
+    wf:                    float = WF_FIXED_ITER11_MEDIAN,
+    epsilon:               float = 0.01,
+    order_scores:          jnp.ndarray = LOG_LM_RESID_15,
+) -> jnp.ndarray:
+    """Simplified production speaker with three broad pressures.
+
+    The model keeps one RSA scale, one baseline order prior, one first-word
+    salience/frontloading pressure, and one uncertainty-gated length pressure.
+    It intentionally avoids residual-specific terms from the extended
+    production model.
+    """
+
+    eps            = 1e-8
+    referent_index = 0
+    n_obj          = states.shape[0]
+
+    del has_one_word_solution
+
+    sizes = states[:, 0]
+    size_sort_idx = jnp.argsort(sizes)
+    sizes_sorted = sizes[size_sort_idx]
+
+    log_order_prior = beta_order * order_scores
+
+    colors = states[:, 1]
+    forms  = states[:, 2]
+    log_color_sem = jnp.log(
+        jnp.where(colors == 1, color_semval, 1.0 - color_semval) + eps
+    )
+    log_form_sem  = jnp.log(
+        jnp.where(forms  == 1, form_semval,  1.0 - form_semval)  + eps
+    )
+
+    uniform     = jnp.ones(n_obj) / n_obj
+    init_scores = jnp.zeros(n_utt)
+    init_posts  = jnp.broadcast_to(uniform, (n_utt, n_obj))
+
+    def step(carry, t):
+        log_scores, per_utt_posts = carry
+
+        cand_mask_t = CANDIDATE_MASK[t]
+        active_t    = ACTIVE_POS[t]
+
+        def size_log_sem_for_utt(post):
+            sv = compute_size_semantics_fast_presorted(
+                sizes,
+                size_sort_idx,
+                sizes_sorted,
+                post,
+                k,
+                wf,
+            )
+            return jnp.log(jnp.clip(sv, eps))
+
+        size_log_sems = jax.vmap(size_log_sem_for_utt)(per_utt_posts)
+
+        log_sem_static = jnp.stack([log_color_sem, log_form_sem], axis=0)
+        log_sem_table = jnp.concatenate([
+            size_log_sems[:, None, :],
+            jnp.broadcast_to(log_sem_static[None, :, :], (n_utt, 2, n_obj)),
+        ], axis=1)
+
+        token_pres_t = TOKEN_PRESENT[t]
+        log_prod_sem = jnp.einsum(
+            "uav, uvo -> uao",
+            token_pres_t,
+            log_sem_table,
+        )
+
+        log_per_utt_posts = jnp.log(jnp.clip(per_utt_posts, eps))
+        log_updated = log_per_utt_posts[:, None, :] + log_prod_sem
+        log_Z = jax.scipy.special.logsumexp(log_updated, axis=-1)
+        log_norm = log_updated - log_Z[:, :, None]
+        log_L_ref = log_norm[:, :, referent_index]
+
+        first_step_gate = (t == 0).astype(jnp.float32)
+        frontload_vec = lambda_frontload * first_step_gate * jnp.array([
+            sufficient_dim == 0,
+            sufficient_dim == 1,
+            sufficient_dim == 2,
+        ], dtype=jnp.float32)
+        logits = jnp.where(
+            cand_mask_t,
+            alpha * log_L_ref + frontload_vec[None, :],
+            -1e9,
+        )
+        local_probs = jax.nn.softmax(logits, axis=-1)
+
+        chosen = jnp.sum(local_probs * ACTUAL_TOK_ONEHOT[t], axis=-1)
+        chosen = jnp.where(active_t, chosen, 1.0)
+        log_chosen = jnp.where(active_t, jnp.log(jnp.clip(chosen, eps)), 0.0)
+
+        selected_log_sem = jnp.einsum(
+            "uv, uvo -> uo",
+            ACTUAL_TOK_ONEHOT[t],
+            log_sem_table,
+        )
+        log_updated_post = log_per_utt_posts + jnp.where(
+            active_t[:, None],
+            selected_log_sem,
+            0.0,
+        )
+        log_Z_post = jax.scipy.special.logsumexp(
+            log_updated_post, axis=-1, keepdims=True
+        )
+        new_per_utt_posts = jnp.exp(log_updated_post - log_Z_post)
+
+        return (log_scores + log_chosen, new_per_utt_posts), None
+
+    (log_final_scores, _), _ = lax.scan(
+        step,
+        (init_scores, init_posts),
+        jnp.arange(T),
+    )
+
+    blur_gate = 1.0 - is_sharp
+    length_bonus = gamma_uncertainty_len * blur_gate * jnp.maximum(N_WORDS - 1.0, 0.0)
+    log_unnorm = log_order_prior + log_final_scores + length_bonus
+    model_probs = jax.nn.softmax(log_unnorm)
+    return (1.0 - epsilon) * model_probs + epsilon / n_utt
+
+
 # ── Vectorise over trials ──────────────────────────────────────────────────────
 vectorized_incremental_speaker = jax.vmap(
     incremental_speaker,
@@ -2050,6 +2184,38 @@ def jitted_speaker_contextual_lambdaunc_hier(
         alpha_D_per_trial, alpha_C_per_trial, alpha_F_per_trial,
         lambda_suff, color_semval, form_semval, k, wf, beta_lm,
         lambda_uncertainty, epsilon,
+    )
+
+
+vectorized_incremental_speaker_simplified_hier = jax.vmap(
+    incremental_speaker_simplified,
+    in_axes=(0,    # states
+             0,    # sufficient_dim
+             0,    # has_one_word_solution
+             0,    # is_sharp
+             0,    # alpha
+             None, # beta_order
+             None, # lambda_frontload
+             None, # gamma_uncertainty_len
+             None, # color_semval
+             None, # form_semval
+             None, # k
+             None, # wf
+             None, # epsilon
+             None, # order_scores
+             ),
+)
+
+@jax.jit
+def jitted_speaker_simplified_hier(
+    states, sufficient_dim, has_one_word_solution, is_sharp,
+    alpha_per_trial, beta_order, lambda_frontload, gamma_uncertainty_len,
+    color_semval, form_semval, k, wf, epsilon, order_scores,
+):
+    return vectorized_incremental_speaker_simplified_hier(
+        states, sufficient_dim, has_one_word_solution, is_sharp,
+        alpha_per_trial, beta_order, lambda_frontload, gamma_uncertainty_len,
+        color_semval, form_semval, k, wf, epsilon, order_scores,
     )
 
 
@@ -2445,6 +2611,94 @@ def _make_contextual_lambdaunc_model(
 
 likelihood_function_contextual_lambdaunc_hier = _make_contextual_lambdaunc_model(
     color_semval=0.971, form_semval=0.50, k=0.5, wf=1.0,
+)
+
+
+def _make_simplified_model(
+    color_semval=0.59,
+    form_semval=0.50,
+    k=0.5,
+    wf=WF_FIXED_ITER11_MEDIAN,
+    order_mode="lm_resid",
+    drop: tuple = (),
+):
+    """Three-pressure production model for anti-overfitting refits."""
+    _valid_modes = {"lm_resid", "lm_raw", "hand_order", "none"}
+    if order_mode not in _valid_modes:
+        raise ValueError(f"Unsupported simplified order_mode {order_mode!r}; "
+                         f"expected {sorted(_valid_modes)}")
+    _valid_drops = {"frontload", "uncertainty_len"}
+    drop = frozenset(drop)
+    _bad = drop - _valid_drops
+    if _bad:
+        raise ValueError(f"Unsupported simplified drop(s): {sorted(_bad)}; "
+                         f"supported: {sorted(_valid_drops)}")
+
+    if order_mode == "lm_resid":
+        order_scores = LOG_LM_RESID_15
+    elif order_mode == "lm_raw":
+        order_scores = LOG_LM_RAW_15
+    elif order_mode == "hand_order":
+        order_scores = -NONCANON_MASK
+    else:
+        order_scores = jnp.zeros_like(LOG_LM_RESID_15)
+
+    def model(states=None, empirical=None,
+              participant_idx=None, n_participants=None,
+              sufficient_dim=None, has_one_word_solution=None, is_sharp=None):
+        alpha = numpyro.sample("alpha", dist.HalfNormal(5.0))
+        if order_mode == "none":
+            beta_order = 0.0
+        else:
+            log_beta_order = numpyro.sample("log_beta_order", dist.Normal(0.0, 0.5))
+            beta_order = jnp.exp(log_beta_order)
+        lambda_frontload = (
+            0.0 if "frontload" in drop
+            else numpyro.sample("lambda_frontload", dist.Normal(0.0, 1.0))
+        )
+        gamma_uncertainty_len = (
+            0.0 if "uncertainty_len" in drop
+            else numpyro.sample("gamma_uncertainty_len", dist.HalfNormal(2.0))
+        )
+        epsilon = numpyro.sample("epsilon", dist.Beta(1.0, 50.0))
+        tau = numpyro.sample("tau", dist.HalfNormal(0.2))
+
+        with numpyro.plate("participants", n_participants):
+            delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+        alpha_per_trial = jnp.maximum(alpha + delta[participant_idx], 0.0)
+
+        with numpyro.plate("data", len(states)):
+            probs = jitted_speaker_simplified_hier(
+                states, sufficient_dim, has_one_word_solution, is_sharp,
+                alpha_per_trial, beta_order, lambda_frontload,
+                gamma_uncertainty_len, color_semval, form_semval, k, wf,
+                epsilon, order_scores,
+            )
+            if empirical is None:
+                numpyro.sample("obs", dist.Categorical(probs=probs))
+            else:
+                numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
+    return model
+
+
+likelihood_function_simplified_lm_resid_hier = _make_simplified_model(
+    order_mode="lm_resid",
+)
+likelihood_function_simplified_lm_raw_hier = _make_simplified_model(
+    order_mode="lm_raw",
+)
+likelihood_function_simplified_hand_order_hier = _make_simplified_model(
+    order_mode="hand_order",
+)
+likelihood_function_simplified_no_frontload_hier = _make_simplified_model(
+    order_mode="lm_resid", drop=("frontload",),
+)
+likelihood_function_simplified_no_uncertainty_len_hier = _make_simplified_model(
+    order_mode="lm_resid", drop=("uncertainty_len",),
+)
+likelihood_function_simplified_no_order_hier = _make_simplified_model(
+    order_mode="none",
 )
 
 

@@ -20,6 +20,174 @@ import pandas as pd
 from scipy.stats import norm as sp_norm, pearsonr
 
 
+def _safe_pearson(x: np.ndarray, y: np.ndarray) -> float:
+    if len(x) < 2 or np.std(x) == 0 or np.std(y) == 0:
+        return float("nan")
+    return float(pearsonr(x, y)[0])
+
+
+def compute_ppc_correlation_metrics(
+    df: pd.DataFrame,
+    model_col: str = "model",
+    empirical_col: str = "human_mean",
+    predicted_col: str = "model_mean",
+) -> pd.DataFrame:
+    """Summarise PPC fit with flexible descriptive metrics.
+
+    The metrics are diagnostic aids, not hard inclusion thresholds.  They are
+    exported so qualitative residual checks can be read alongside compact
+    correlation and error summaries.
+    """
+    records = []
+    for model, sub in df.groupby(model_col, dropna=False):
+        scopes = {
+            "all_cells": sub,
+            "nonzero_cells": sub[(sub[empirical_col] > 0) | (sub[predicted_col] > 0)],
+        }
+        for scope, sdf in scopes.items():
+            x = sdf[empirical_col].to_numpy(dtype=float)
+            y = sdf[predicted_col].to_numpy(dtype=float)
+            r = _safe_pearson(x, y)
+            if len(x) >= 2 and np.std(x) > 0:
+                slope, intercept = np.polyfit(x, y, deg=1)
+            else:
+                slope, intercept = float("nan"), float("nan")
+            residual = y - x
+            records.append({
+                model_col: model,
+                "scope": scope,
+                "n_points": int(len(sdf)),
+                "r": r,
+                "r2": r ** 2 if np.isfinite(r) else float("nan"),
+                "mae": float(np.mean(np.abs(residual))) if len(residual) else float("nan"),
+                "rmse": float(np.sqrt(np.mean(residual ** 2))) if len(residual) else float("nan"),
+                "slope": float(slope),
+                "intercept": float(intercept),
+            })
+    return pd.DataFrame.from_records(records)
+
+
+def compute_residual_tables(
+    df: pd.DataFrame,
+    model_col: str = "model",
+    group_cols: Optional[List[str]] = None,
+    top_n: int = 10,
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Return by-cell, by-condition, and worst-cell PPC residual summaries."""
+    if group_cols is None:
+        group_cols = ["relevant_property", "sharpness"]
+
+    by_cell = df.copy()
+    by_cell["signed_residual"] = by_cell["model_mean"] - by_cell["human_mean"]
+    by_cell["abs_residual"] = by_cell["signed_residual"].abs()
+    if {"model_lo", "model_hi", "human_mean"}.issubset(by_cell.columns):
+        by_cell["human_mean_covered_by_model_ci"] = (
+            (by_cell["human_mean"] >= by_cell["model_lo"])
+            & (by_cell["human_mean"] <= by_cell["model_hi"])
+        )
+    if {"human_lo", "human_hi", "model_mean"}.issubset(by_cell.columns):
+        by_cell["model_mean_covered_by_human_ci"] = (
+            (by_cell["model_mean"] >= by_cell["human_lo"])
+            & (by_cell["model_mean"] <= by_cell["human_hi"])
+        )
+
+    summary_records = []
+    worst_records = []
+    sort_cols = [model_col] + group_cols
+    for keys, sub in by_cell.groupby(sort_cols, dropna=False):
+        if not isinstance(keys, tuple):
+            keys = (keys,)
+        idx = sub["abs_residual"].idxmax()
+        worst = sub.loc[idx]
+        coverage_col = "human_mean_covered_by_model_ci"
+        coverage_rate = (
+            float(sub[coverage_col].mean()) if coverage_col in sub.columns else float("nan")
+        )
+        row = dict(zip(sort_cols, keys))
+        row.update({
+            "mae": float(sub["abs_residual"].mean()),
+            "rmse": float(np.sqrt(np.mean(sub["signed_residual"] ** 2))),
+            "max_abs_residual": float(worst["abs_residual"]),
+            "worst_utterance_code": int(worst["utterance_code"]),
+            "worst_utterance_label": worst["utterance_label"],
+            "worst_human_mean": float(worst["human_mean"]),
+            "worst_model_mean": float(worst["model_mean"]),
+            "worst_signed_residual": float(worst["signed_residual"]),
+            "coverage_rate": coverage_rate,
+        })
+        summary_records.append(row)
+
+        worst_sub = sub.sort_values("abs_residual", ascending=False).head(top_n).copy()
+        worst_sub["residual_rank"] = np.arange(1, len(worst_sub) + 1)
+        worst_records.append(worst_sub)
+
+    summary = pd.DataFrame.from_records(summary_records)
+    worst_cells = (
+        pd.concat(worst_records, ignore_index=True)
+        if worst_records else pd.DataFrame(columns=list(by_cell.columns) + ["residual_rank"])
+    )
+    return by_cell, summary, worst_cells
+
+
+def summarize_mcmc_diagnostics(
+    idata_dict: Dict[str, az.InferenceData],
+    var_names: Optional[List[str]] = None,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Export ArviZ summary diagnostics in long and model-level forms."""
+    detail_frames = []
+    summary_records = []
+    for model_name, idata in idata_dict.items():
+        selected = var_names
+        if selected is None:
+            selected = [v for v in idata.posterior.data_vars if v != "delta"]
+        selected = [v for v in selected if v in idata.posterior.data_vars]
+        if not selected:
+            continue
+
+        summary = az.summary(idata, var_names=selected).reset_index()
+        summary = summary.rename(columns={summary.columns[0]: "parameter"})
+        summary.insert(0, "model", model_name)
+        detail_frames.append(summary)
+
+        rhat = pd.to_numeric(summary.get("r_hat"), errors="coerce")
+        ess_bulk = pd.to_numeric(summary.get("ess_bulk"), errors="coerce")
+        ess_tail = pd.to_numeric(summary.get("ess_tail"), errors="coerce")
+        n_divergent = 0
+        if hasattr(idata, "sample_stats") and "diverging" in idata.sample_stats:
+            n_divergent = int(idata.sample_stats["diverging"].sum().values)
+            n_draws = int(idata.sample_stats["diverging"].size)
+        else:
+            n_draws = 0
+        max_rhat = float(rhat.max(skipna=True)) if not rhat.dropna().empty else float("nan")
+        min_ess_bulk = (
+            float(ess_bulk.min(skipna=True)) if not ess_bulk.dropna().empty else float("nan")
+        )
+        min_ess_tail = (
+            float(ess_tail.min(skipna=True)) if not ess_tail.dropna().empty else float("nan")
+        )
+        status = "pass"
+        if n_divergent > 0 or (np.isfinite(max_rhat) and max_rhat > 1.05):
+            status = "fail"
+        elif np.isfinite(max_rhat) and max_rhat > 1.01:
+            status = "warn"
+        summary_records.append({
+            "model": model_name,
+            "n_parameters": int(len(summary)),
+            "max_r_hat": max_rhat,
+            "n_r_hat_gt_1_01": int((rhat > 1.01).sum()),
+            "n_r_hat_gt_1_05": int((rhat > 1.05).sum()),
+            "min_ess_bulk": min_ess_bulk,
+            "min_ess_tail": min_ess_tail,
+            "n_divergent": n_divergent,
+            "divergence_rate": (n_divergent / n_draws) if n_draws else float("nan"),
+            "diagnostic_status": status,
+        })
+
+    detail = pd.concat(detail_frames, ignore_index=True) if detail_frames else pd.DataFrame()
+    model_summary = pd.DataFrame.from_records(summary_records)
+    return detail, model_summary
+
+
 # ── Loading ──────────────────────────────────────────────────────────────────
 
 def load_models(
