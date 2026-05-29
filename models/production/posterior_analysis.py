@@ -72,7 +72,7 @@ FLAT_TO_CAT = {
 # Population-level parameters to diagnose
 POP_VAR_NAMES = ["alpha", "alpha_D", "alpha_C", "alpha_F",
                  "log_beta", "log_beta_order", "lambda_frontload",
-                 "gamma_uncertainty_len", "gamma", "epsilon",
+                 "lambda_salience", "gamma_uncertainty_len", "gamma", "epsilon",
                  "mu_C", "mu_F", "tau"]
 
 SIMPLIFIED_MODELS = {
@@ -82,6 +82,10 @@ SIMPLIFIED_MODELS = {
     "simplified_no_frontload": "mcmc_results_simplified_no_frontload_speaker_hier{subset}_{tag}.nc",
     "simplified_no_uncertainty_len": "mcmc_results_simplified_no_uncertainty_len_speaker_hier{subset}_{tag}.nc",
     "simplified_no_order": "mcmc_results_simplified_no_order_speaker_hier{subset}_{tag}.nc",
+    "principled": "mcmc_results_principled_speaker_hier{subset}_{tag}.nc",
+    "principled_no_order": "mcmc_results_principled_no_order_speaker_hier{subset}_{tag}.nc",
+    "principled_no_salience": "mcmc_results_principled_no_salience_speaker_hier{subset}_{tag}.nc",
+    "principled_no_uncertainty_len": "mcmc_results_principled_no_uncertainty_len_speaker_hier{subset}_{tag}.nc",
 }
 
 
