@@ -87,6 +87,28 @@ SIMPLIFIED_MODELS = {
 
 # ── Dataset-specific: PPC for categorical production data ───────────────────
 
+def filter_dataset_for_subset_tag(df, subset_tag):
+    """Mirror run_inference.py's compact condition-subset filename tags."""
+    if not subset_tag:
+        return df
+    if "conditions" not in df.columns:
+        raise ValueError("--subset-tag requires a dataset with a 'conditions' column.")
+
+    tag = subset_tag.strip().lower().lstrip("_")
+    if not tag:
+        return df
+    if len(tag) % 2 != 0:
+        raise ValueError(
+            f"Cannot decode subset tag '{subset_tag}'. Expected paired stems like 'dc'."
+        )
+
+    stems = {tag[i:i + 2] for i in range(0, len(tag), 2)}
+    keep = df["conditions"].astype(str).str[2:4].str.lower().isin(stems)
+    out = df.loc[keep].reset_index(drop=True)
+    if out.empty:
+        raise ValueError(f"subset tag '{subset_tag}' matched zero dataset rows.")
+    return out
+
 def compute_condition_proportions(pred_draws, cond_df, max_draws=500):
     """Compute per-condition utterance-type proportions from posterior draws.
 
@@ -353,6 +375,10 @@ def main():
     print("Loading dataset...")
     data = import_dataset()
     df = data["df"].copy()
+    if args.subset_tag:
+        n_before = len(df)
+        df = filter_dataset_for_subset_tag(df, args.subset_tag)
+        print(f"  [subset] Kept {len(df)}/{n_before} rows for subset tag '{args.subset_tag}'")
     all_codes = sorted(df["annotation_seq_flat"].unique())
     summary_blocks.append(f"Dataset: {len(df)} observations, {len(all_codes)} utterance types")
 
