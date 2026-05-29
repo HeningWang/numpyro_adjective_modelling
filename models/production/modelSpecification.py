@@ -2099,8 +2099,7 @@ def incremental_speaker_principled(
         log_norm = log_updated - log_Z[:, :, None]
         log_L_ref = log_norm[:, :, referent_index]
 
-        first_step_gate = (t == 0).astype(jnp.float32)
-        salience_boost = lambda_salience * first_step_gate * salience_vec
+        salience_boost = lambda_salience * salience_vec
         logits = jnp.where(
             cand_mask_t,
             alpha * log_L_ref + salience_boost[None, :],
