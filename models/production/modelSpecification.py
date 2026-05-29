@@ -1843,7 +1843,7 @@ def incremental_speaker_simplified(
     color_semval:          float = 0.59,
     form_semval:           float = 0.50,
     k:                     float = 0.50,
-    wf:                    float = WF_FIXED_ITER11_MEDIAN,
+    wf:                    float = 0.6856,
     epsilon:               float = 0.01,
     order_scores:          jnp.ndarray = LOG_LM_RESID_15,
 ) -> jnp.ndarray:
@@ -2618,7 +2618,7 @@ def _make_simplified_model(
     color_semval=0.59,
     form_semval=0.50,
     k=0.5,
-    wf=WF_FIXED_ITER11_MEDIAN,
+    wf=0.6856,
     order_mode="lm_resid",
     drop: tuple = (),
 ):
