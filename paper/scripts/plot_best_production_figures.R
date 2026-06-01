@@ -1,5 +1,5 @@
 # =============================================================================
-#  CSP-styled figures for the advocated extended production model
+#  CSP-styled figures for the advocated principled production model
 #  Produces (matching plotting_main_paper.R style exactly):
 #    figures/production_ppc_barplot_best.pdf
 #    figures/production_correlation_best.pdf
@@ -42,6 +42,8 @@ sharp_labels <- c(
   "blurred" = "Low"
 )
 rename_D_to_S <- function(x) gsub("D", "S", x)
+best_model_id <- "principled_salience_stop_regularized_2x2_inc_static"
+model_display <- "Incremental, context-fixed"
 
 # ── Load best-model data ─────────────────────────────────────────────────────
 df_prod_emp  <- read_csv("data/production_empirical.csv")
@@ -54,9 +56,10 @@ df_prod_corr <- df_prod_corr %>%
   mutate(utterance_label = rename_D_to_S(utterance_label))
 
 # =============================================================================
-#  PPC barplot — empirical vs advocated extended model, by condition
+#  PPC barplot — empirical vs advocated principled model, by condition
 # =============================================================================
 df_prod_pred_nice <- df_prod_pred %>%
+  filter(model == best_model_id) %>%
   mutate(utterance_label = rename_D_to_S(utterance_label)) %>%
   mutate(
     relevant_property = factor(relevant_property, levels = names(rp_labels),
@@ -76,7 +79,7 @@ df_prod_emp_nice <- df_prod_emp %>%
 df_ppc_model <- df_prod_pred_nice %>%
   select(relevant_property, sharpness, utterance_label,
          mean = model_mean, lo = model_lo, hi = model_hi) %>%
-  mutate(source = "Extended model")
+  mutate(source = model_display)
 
 df_ppc_human <- df_prod_emp_nice %>%
   select(relevant_property, sharpness, utterance_label,
@@ -108,7 +111,7 @@ df_ppc_top <- df_ppc %>%
       utterance_label,
       levels = rev(intersect(utt_order, top_utts_ppc))
     ),
-    source = factor(source, levels = c("Empirical", "Extended model"))
+    source = factor(source, levels = c("Empirical", model_display))
   )
 
 fig_ppc <- df_ppc_top %>%
@@ -137,9 +140,10 @@ ggsave(file.path(fig_dir, "production_ppc_barplot_best.pdf"), fig_ppc,
 cat("[✓] production_ppc_barplot_best.pdf\n")
 
 # =============================================================================
-#  Correlation — advocated extended model vs. empirical
+#  Correlation — advocated principled model vs. empirical
 # =============================================================================
 df_prod_corr <- df_prod_corr %>%
+  { if ("model" %in% names(.)) filter(., model == best_model_id) else . } %>%
   mutate(
     relevant_property = factor(relevant_property, levels = names(rp_labels),
                                labels = rp_labels),
@@ -174,7 +178,7 @@ fig_corr <- df_prod_corr_nz %>%
   ) +
   labs(
     x = "Empirical proportion",
-    y = "Predicted proportion (extended model, 95% CI)"
+    y = "Predicted proportion (incremental, context-fixed; 95% CI)"
   ) +
   coord_fixed() +
   theme_model() +
@@ -185,13 +189,13 @@ ggsave(file.path(fig_dir, "production_correlation_best.pdf"), fig_corr,
 cat("[✓] production_correlation_best.pdf\n")
 
 # =============================================================================
-#  ELPD comparison — best-model parameter-matched 2x2
+#  ELPD comparison — principled parameter-matched 2x2
 # =============================================================================
 model_labels <- c(
-  "incremental_recursive" = "Incremental, context-updating",
-  "incremental_static"    = "Incremental, context-fixed",
-  "global_recursive"      = "Global, context-updating",
-  "global_static"         = "Global, context-fixed"
+  "principled_salience_stop_regularized_2x2_inc_static"  = "Incremental, context-fixed",
+  "principled_salience_stop_regularized_2x2_inc_rec"     = "Incremental, context-updating",
+  "principled_salience_stop_regularized_2x2_glob_static" = "Global, context-fixed",
+  "principled_salience_stop_regularized_2x2_glob_rec"    = "Global, context-updating"
 )
 
 df_prod_loo <- read_csv("data/production_loo_comparison_best.csv") %>%

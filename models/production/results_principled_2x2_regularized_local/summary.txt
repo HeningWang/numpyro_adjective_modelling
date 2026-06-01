@@ -1,0 +1,68 @@
+Dataset: 3196 observations, 15 utterance types
+
+=== principled_salience_stop_regularized_2x2_inc_rec ===
+                    mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
+alpha              1.430  0.138   1.169    1.678      0.002    0.001    4120.0    5432.0    1.0
+log_beta_order     0.593  0.029   0.538    0.645      0.000    0.000    6089.0    5925.0    1.0
+lambda_salience    1.573  0.040   1.499    1.650      0.000    0.000    6885.0    6297.0    1.0
+rho_salience_stop  0.493  0.048   0.406    0.588      0.000    0.001    9385.0    6126.0    1.0
+epsilon            0.003  0.003   0.000    0.009      0.000    0.000    6140.0    3183.0    1.0
+tau                0.837  0.082   0.683    0.990      0.002    0.001    1898.0    3796.0    1.0
+
+
+  Participant intercepts (principled_salience_stop_regularized_2x2_inc_rec): n=113, mean(δ)=0.0004, sd(δ)=0.6837, τ=0.8372
+
+=== principled_salience_stop_regularized_2x2_inc_static ===
+                    mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
+alpha              1.441  0.137   1.165    1.682      0.002    0.001    4299.0    5533.0    1.0
+log_beta_order     0.592  0.028   0.540    0.645      0.000    0.000    5844.0    6222.0    1.0
+lambda_salience    1.573  0.040   1.500    1.651      0.000    0.000    6906.0    6255.0    1.0
+rho_salience_stop  0.492  0.048   0.406    0.587      0.001    0.001    9104.0    5481.0    1.0
+epsilon            0.003  0.003   0.000    0.009      0.000    0.000    6223.0    3555.0    1.0
+tau                0.841  0.081   0.687    0.993      0.002    0.001    1979.0    3973.0    1.0
+
+
+  Participant intercepts (principled_salience_stop_regularized_2x2_inc_static): n=113, mean(δ)=0.0003, sd(δ)=0.6881, τ=0.8406
+
+=== principled_salience_stop_regularized_2x2_glob_rec ===
+                    mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
+alpha              1.732  2.865   0.000    7.288      1.411    0.842       7.0      29.0   1.53
+log_beta_order     0.893  1.166   0.147    2.994      0.581    0.336       7.0      29.0   1.53
+lambda_salience    1.833  0.287   1.176    2.114      0.119    0.092       9.0      27.0   1.45
+rho_salience_stop  0.065  0.143   0.000    0.366      0.051    0.047       8.0      29.0   1.47
+epsilon            0.186  0.317   0.000    0.742      0.158    0.091       7.0      29.0   1.53
+tau                0.188  0.108   0.026    0.386      0.019    0.009      33.0     101.0   1.10
+
+
+  Participant intercepts (principled_salience_stop_regularized_2x2_glob_rec): n=113, mean(δ)=-0.0009, sd(δ)=0.0343, τ=0.1877
+
+=== principled_salience_stop_regularized_2x2_glob_static ===
+                    mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
+alpha              1.870  3.121   0.000    7.915      1.538    0.918       7.0      29.0   1.53
+log_beta_order     0.890  1.159   0.156    2.988      0.577    0.334       7.0      29.0   1.54
+lambda_salience    1.797  0.342   1.021    2.101      0.150    0.108       8.0      27.0   1.48
+rho_salience_stop  0.066  0.143   0.000    0.367      0.052    0.047       8.0      28.0   1.46
+epsilon            0.186  0.317   0.000    0.742      0.158    0.091       7.0      29.0   1.53
+tau                0.180  0.102   0.034    0.374      0.021    0.010      29.0      77.0   1.12
+
+
+  Participant intercepts (principled_salience_stop_regularized_2x2_glob_static): n=113, mean(δ)=-0.0012, sd(δ)=0.0318, τ=0.1801
+
+LOO Model Comparison:
+                                                      rank     elpd_loo       p_loo    elpd_diff  weight         se        dse  warning scale
+principled_salience_stop_regularized_2x2_inc_static      0 -6367.339757   49.008131     0.000000     1.0  54.081386   0.000000    False   log
+principled_salience_stop_regularized_2x2_inc_rec         1 -6369.320021   48.554351     1.980264     0.0  54.036408   0.370771    False   log
+principled_salience_stop_regularized_2x2_glob_rec        2 -7730.713019  615.512205  1363.373262     0.0  34.073026  33.343267     True   log
+principled_salience_stop_regularized_2x2_glob_static     3 -7731.072659  615.754305  1363.732902     0.0  34.052948  33.356782     True   log
+
+Best: principled_salience_stop_regularized_2x2_inc_static vs principled_salience_stop_regularized_2x2_inc_rec: Δelpd=1.98, dse=0.37, |Δ|/dse=5.34
+
+  Correlation (Production: principled_salience_stop_regularized_2x2_inc_static): r=0.7276, r²=0.5294, p=4.56e-16
+
+Simplified diagnostics exported:
+  - production_simplified_mcmc_diagnostics.csv
+  - production_simplified_mcmc_model_summary.csv
+  - production_simplified_ppc_correlation.csv
+  - production_simplified_ppc_by_condition.csv
+  - production_simplified_residual_summary.csv
+  - production_simplified_residual_worst_cells.csv

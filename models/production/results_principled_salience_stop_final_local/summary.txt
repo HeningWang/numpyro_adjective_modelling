@@ -1,0 +1,41 @@
+Dataset: 3196 observations, 15 utterance types
+
+=== principled_no_uncertainty_len ===
+                  mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
+alpha            1.527  0.145   1.260    1.809      0.003    0.002    1953.0    2447.0    1.0
+log_beta_order   0.531  0.028   0.480    0.587      0.001    0.000    3195.0    2872.0    1.0
+lambda_salience  1.453  0.038   1.379    1.520      0.001    0.001    3606.0    3153.0    1.0
+epsilon          0.003  0.003   0.000    0.009      0.000    0.000    3406.0    1791.0    1.0
+tau              0.989  0.099   0.807    1.176      0.003    0.002    1142.0    1821.0    1.0
+
+
+  Participant intercepts (principled_no_uncertainty_len): n=113, mean(δ)=-0.0019, sd(δ)=0.8082, τ=0.9891
+
+=== principled_salience_stop ===
+                    mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
+alpha              1.475  0.150   1.210    1.770      0.005    0.003    1003.0    1922.0   1.00
+log_beta_order     0.591  0.029   0.537    0.645      0.001    0.000    2599.0    2593.0   1.00
+lambda_salience    1.575  0.041   1.498    1.650      0.001    0.001    2736.0    2620.0   1.00
+rho_salience_stop  0.496  0.046   0.414    0.584      0.001    0.001    3888.0    2677.0   1.00
+epsilon            0.004  0.003   0.000    0.010      0.000    0.000    2325.0    1324.0   1.00
+tau                0.988  0.102   0.793    1.173      0.004    0.002     800.0    1441.0   1.01
+
+
+  Participant intercepts (principled_salience_stop): n=113, mean(δ)=-0.0003, sd(δ)=0.8017, τ=0.9876
+
+LOO Model Comparison:
+                               rank     elpd_loo      p_loo  elpd_diff        weight         se       dse  warning scale
+principled_salience_stop          0 -6367.186884  56.385985   0.000000  1.000000e+00  54.428922   0.00000    False   log
+principled_no_uncertainty_len     1 -6419.751978  56.317355  52.565094  7.830181e-12  51.794707  10.06587    False   log
+
+Best: principled_salience_stop vs principled_no_uncertainty_len: Δelpd=52.57, dse=10.07, |Δ|/dse=5.22
+
+  Correlation (Production: principled_salience_stop): r=0.7270, r²=0.5285, p=4.96e-16
+
+Simplified diagnostics exported:
+  - production_simplified_mcmc_diagnostics.csv
+  - production_simplified_mcmc_model_summary.csv
+  - production_simplified_ppc_correlation.csv
+  - production_simplified_ppc_by_condition.csv
+  - production_simplified_residual_summary.csv
+  - production_simplified_residual_worst_cells.csv

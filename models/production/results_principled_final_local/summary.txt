@@ -1,0 +1,41 @@
+Dataset: 3196 observations, 15 utterance types
+
+=== principled ===
+                        mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
+alpha                  1.517  0.146   1.240    1.789      0.004    0.002    1505.0    2144.0    1.0
+log_beta_order         0.527  0.028   0.470    0.576      0.001    0.000    2831.0    2787.0    1.0
+lambda_salience        1.454  0.039   1.382    1.526      0.001    0.001    3288.0    3022.0    1.0
+gamma_uncertainty_len  0.446  0.316   0.000    1.015      0.005    0.005    2833.0    1664.0    1.0
+epsilon                0.003  0.003   0.000    0.009      0.000    0.000    3172.0    1766.0    1.0
+tau                    0.992  0.099   0.806    1.171      0.003    0.001    1017.0    2166.0    1.0
+
+
+  Participant intercepts (principled): n=113, mean(δ)=0.0006, sd(δ)=0.8114, τ=0.9922
+
+=== principled_no_uncertainty_len ===
+                  mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
+alpha            1.527  0.145   1.260    1.809      0.003    0.002    1953.0    2447.0    1.0
+log_beta_order   0.531  0.028   0.480    0.587      0.001    0.000    3195.0    2872.0    1.0
+lambda_salience  1.453  0.038   1.379    1.520      0.001    0.001    3606.0    3153.0    1.0
+epsilon          0.003  0.003   0.000    0.009      0.000    0.000    3406.0    1791.0    1.0
+tau              0.989  0.099   0.807    1.176      0.003    0.002    1142.0    1821.0    1.0
+
+
+  Participant intercepts (principled_no_uncertainty_len): n=113, mean(δ)=-0.0019, sd(δ)=0.8082, τ=0.9891
+
+LOO Model Comparison:
+                               rank     elpd_loo      p_loo  elpd_diff  weight         se       dse  warning scale
+principled_no_uncertainty_len     0 -6419.751978  56.317355   0.000000     1.0  51.794707  0.000000    False   log
+principled                        1 -6420.246199  56.892493   0.494221     0.0  51.834358  0.877088    False   log
+
+Best: principled_no_uncertainty_len vs principled: Δelpd=0.49, dse=0.88, |Δ|/dse=0.56
+
+  Correlation (Production: principled_no_uncertainty_len): r=0.7012, r²=0.4917, p=1.40e-14
+
+Simplified diagnostics exported:
+  - production_simplified_mcmc_diagnostics.csv
+  - production_simplified_mcmc_model_summary.csv
+  - production_simplified_ppc_correlation.csv
+  - production_simplified_ppc_by_condition.csv
+  - production_simplified_residual_summary.csv
+  - production_simplified_residual_worst_cells.csv

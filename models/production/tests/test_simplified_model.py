@@ -46,6 +46,18 @@ PRINCIPLED_KW = dict(
     epsilon=0.01,
 )
 
+COLOR_SALIENT_STATES = jnp.asarray(
+    [
+        [0.8, 1, 1],
+        [0.7, 0, 1],
+        [0.6, 0, 1],
+        [0.5, 0, 0],
+        [0.4, 0, 1],
+        [0.3, 0, 0],
+    ],
+    dtype=jnp.float32,
+)
+
 
 def test_simplified_speaker_is_simplex_and_mechanisms_change_output():
     base = np.asarray(ms.incremental_speaker_simplified(STATES, **BASE_KW))
@@ -103,6 +115,71 @@ def test_principled_speaker_is_simplex_and_uses_soft_features():
     assert not np.allclose(base, no_uncertainty, atol=1e-4)
 
 
+def test_principled_salience_stop_favors_single_salient_adjective():
+    base_kw = {
+        **PRINCIPLED_KW,
+        "gamma_uncertainty_len": jnp.float32(0.0),
+        "order_scores": jnp.zeros(ms.n_utt),
+    }
+    no_stop = np.asarray(
+        ms.incremental_speaker_principled(
+            COLOR_SALIENT_STATES,
+            **{**base_kw, "rho_salience_stop": jnp.float32(0.0)},
+        )
+    )
+    with_stop = np.asarray(
+        ms.incremental_speaker_principled(
+            COLOR_SALIENT_STATES,
+            **{**base_kw, "rho_salience_stop": jnp.float32(2.0)},
+        )
+    )
+
+    assert with_stop[5] > no_stop[5]  # C
+    assert with_stop[[6, 7, 8, 9]].sum() < no_stop[[6, 7, 8, 9]].sum()
+
+
+def test_principled_base_salience_constants_are_fixed_sweep_inputs():
+    default = np.asarray(ms.incremental_speaker_principled(STATES, **PRINCIPLED_KW))
+    higher_color = np.asarray(
+        ms.incremental_speaker_principled(
+            STATES,
+            **{
+                **PRINCIPLED_KW,
+                "base_visual_salience": jnp.asarray([0.0, 1.6, 0.25], dtype=jnp.float32),
+            },
+        )
+    )
+
+    assert np.allclose(default.sum(), 1.0, atol=1e-4)
+    assert np.allclose(higher_color.sum(), 1.0, atol=1e-4)
+    assert not np.allclose(default, higher_color, atol=1e-4)
+
+
+def test_principled_2x2_architectures_are_simplex_and_distinct():
+    inc_rec = np.asarray(ms.incremental_speaker_principled(STATES, **PRINCIPLED_KW))
+    inc_static = np.asarray(
+        ms.incremental_speaker_principled(
+            STATES,
+            **{**PRINCIPLED_KW, "recursive": False},
+        )
+    )
+    glob_rec = np.asarray(ms.global_speaker_principled(COLOR_SALIENT_STATES, **PRINCIPLED_KW))
+    glob_static = np.asarray(
+        ms.global_speaker_principled(
+            COLOR_SALIENT_STATES,
+            **{**PRINCIPLED_KW, "recursive": False},
+        )
+    )
+
+    for probs in (inc_rec, inc_static, glob_rec, glob_static):
+        assert np.all(probs >= 0.0)
+        assert np.allclose(probs.sum(), 1.0, atol=1e-4)
+
+    assert not np.allclose(inc_rec, inc_static, atol=1e-4)
+    assert not np.allclose(inc_rec, glob_rec, atol=1e-4)
+    assert not np.allclose(glob_rec, glob_static, atol=1e-4)
+
+
 def test_principled_models_register_for_hierarchical_inference():
     import run_inference as ri
 
@@ -111,6 +188,15 @@ def test_principled_models_register_for_hierarchical_inference():
         "principled_no_order",
         "principled_no_salience",
         "principled_no_uncertainty_len",
+        "principled_salience_stop",
+        "principled_salience_stop_regularized",
+        "principled_salience_stop_strong_regularized",
+        "principled_salience_stop_regularized_2x2_inc_rec",
+        "principled_salience_stop_regularized_2x2_inc_static",
+        "principled_salience_stop_regularized_2x2_glob_rec",
+        "principled_salience_stop_regularized_2x2_glob_static",
+        "principled_salience_stop_regularized_2x2_glob_rec_fixedeps",
+        "principled_salience_stop_regularized_2x2_glob_static_fixedeps",
     ):
         assert key in ri.HIER_MODELS
 
@@ -119,5 +205,8 @@ if __name__ == "__main__":
     test_simplified_speaker_is_simplex_and_mechanisms_change_output()
     test_simplified_models_register_for_hierarchical_inference()
     test_principled_speaker_is_simplex_and_uses_soft_features()
+    test_principled_salience_stop_favors_single_salient_adjective()
+    test_principled_base_salience_constants_are_fixed_sweep_inputs()
+    test_principled_2x2_architectures_are_simplex_and_distinct()
     test_principled_models_register_for_hierarchical_inference()
     print("PASS simplified model tests")

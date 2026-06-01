@@ -1,0 +1,5 @@
+model,n_parameters,max_r_hat,n_r_hat_gt_1_01,n_r_hat_gt_1_05,min_ess_bulk,min_ess_tail,n_divergent,divergence_rate,diagnostic_status
+principled_salience_stop_regularized_2x2_inc_rec,6,1.0,0,0,1898.0,3183.0,0,0.0,pass
+principled_salience_stop_regularized_2x2_inc_static,6,1.0,0,0,1979.0,3555.0,0,0.0,pass
+principled_salience_stop_regularized_2x2_glob_rec,6,1.53,6,6,7.0,27.0,0,0.0,fail
+principled_salience_stop_regularized_2x2_glob_static,6,1.54,6,6,7.0,27.0,0,0.0,fail

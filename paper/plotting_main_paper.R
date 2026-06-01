@@ -242,6 +242,7 @@ df_prod_pred <- read_csv("data/production_predictions.csv")
 df_prod_corr <- read_csv("data/production_correlation.csv")
 df_prod_loo  <- read_csv("data/production_loo_comparison.csv") %>%
   rename(model = 1)
+best_production_model <- "principled_salience_stop_regularized_2x2_inc_static"
 
 # ── Remap utterance labels: D → S ───────────────────────────────────────────
 rename_D_to_S <- function(x) gsub("D", "S", x)
@@ -323,12 +324,12 @@ df_prod_pred_nice <- df_prod_pred %>%
                        labels = sharp_labels)
   )
 
-# Select the best model (incremental_recursive) for the PPC comparison
+# Select the advocated principled model for the PPC comparison
 df_ppc_model <- df_prod_pred_nice %>%
-  filter(model == "incremental_recursive") %>%
+  filter(model == best_production_model) %>%
   select(relevant_property, sharpness, utterance_label,
          mean = model_mean, lo = model_lo, hi = model_hi) %>%
-  mutate(source = "Incremental, context-updating")
+  mutate(source = "Incremental, context-fixed")
 
 df_ppc_human <- df_prod_emp %>%
   select(relevant_property, sharpness, utterance_label,
@@ -367,7 +368,7 @@ df_ppc_top <- df_ppc %>%
     source = factor(
       source,
       levels = c("Empirical",
-                  "Incremental, context-updating")
+                  "Incremental, context-fixed")
     )
   )
 
@@ -438,7 +439,7 @@ fig5 <- df_prod_corr_nz %>%
   ) +
   labs(
     x = "Empirical proportion",
-    y = "Predicted proportion (inc. context-updating, 95% CI)"
+    y = "Predicted proportion (inc. context-fixed, 95% CI)"
   ) +
   coord_fixed() +
   theme_model() +
@@ -453,10 +454,17 @@ cat("[✓] production_correlation_inc_hier.pdf\n")
 #  FIGURE 6 — Model comparison (LOO ELPD) — Production, 2×2 speaker × semantics
 # =============================================================================
 
+production_model_labels <- c(
+  "principled_salience_stop_regularized_2x2_inc_static"  = "Incremental, context-fixed",
+  "principled_salience_stop_regularized_2x2_inc_rec"     = "Incremental, context-updating",
+  "principled_salience_stop_regularized_2x2_glob_static" = "Global, context-fixed",
+  "principled_salience_stop_regularized_2x2_glob_rec"    = "Global, context-updating"
+)
+
 df_prod_loo_plot <- df_prod_loo %>%
   mutate(
-    model_label = factor(model_labels[model],
-                         levels = rev(model_labels[order(match(names(model_labels), model))])),
+    model_label = factor(production_model_labels[model],
+                         levels = rev(production_model_labels[order(match(names(production_model_labels), model))])),
     is_best = rank == 0
   )
 
