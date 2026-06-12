@@ -66,22 +66,22 @@ This account connects subjectivity-based explanations of canonical order with ef
 % =============================================================================
 
 Adjective ordering provides a window onto how speakers coordinate stable linguistic preferences with the demands of situated reference.
-In a phrase such as \emph{the big blue sticker}, the speaker selects a set of properties and determines the sequence in which those properties will guide the listener's search.
+In a phrase such as \emph{the big blue sticker}, the speaker chooses which properties to mention and the sequence in which those properties will guide the listener's search.
 This sequence is constrained by robust ordering preferences: across languages, speakers tend to prefer orders such as ``big brown bag'' over ``brown big bag'' \citep{scontras2023adjective,sproat1991}.
-At the same time, referential scenes create local pressures on ordering.
-If colour identifies the target more efficiently than size, the communicatively useful first modifier may conflict with the canonical size-first preference.
+At the same time, the referential scene creates local pressures on ordering.
+If colour identifies the target more efficiently than size, the communicatively useful first modifier may conflict with the canonical size-first preference \citep{fukumura2018ordering,rubio2021wordorder}.
 
 These observations raise a mechanistic question for theories of adjective ordering.
 Stable semantic or lexical factors account for why some adjective classes tend to occur closer to the noun, while context-sensitive efficiency accounts explain why locally useful properties may be mentioned early.
-What remains underspecified is how these sources of order preference are combined, and which component of the production-and-interpretation system carries the context sensitivity.
-In particular, context sensitivity can enter through semantic composition, when the interpretation of a gradable adjective changes as the comparison class is narrowed, or through speaker choice, when the speaker selects modifiers one at a time in response to their current discriminatory value.
+What remains underspecified is how these sources of order preference are combined, and which component of the speaker-listener system carries the context sensitivity.
+In particular, context sensitivity can enter through semantic composition, when the interpretation of a gradable adjective changes as the comparison class is narrowed, or through speaker choice, when the speaker selects modifiers one at a time in response to the current discriminatory value of each property.
 
 We ask whether context-sensitive adjective ordering is better explained by context-updating semantic composition, by incremental speaker choice, or by both mechanisms together, once stable order expectations and perceptual salience are represented explicitly.
 If context sensitivity comes from semantic composition, adjective meanings become order-dependent because each modifier is interpreted relative to the comparison class established during composition.
-If it comes from production, meanings can remain fixed from the scene while the speaker's word-by-word choices adapt to the listener's evolving information state.
+If it comes from production, meanings can remain fixed relative to the scene while the speaker's word-by-word choices adapt to the listener's evolving information state.
 
 We address this question in three linked steps.
-First, the experiments establish which qualitative ordering patterns the model aims to explain: a stable size-first pressure, modulation by referential context, and the richer length and redundancy patterns exposed by production.
+First, the experiments establish which qualitative ordering patterns the model aims to explain: a stable size-first pressure, modulation by referential context, and the richer length and redundancy patterns revealed in production.
 Second, the model comparison asks which mechanisms improve out-of-sample prediction of these patterns once they are placed in the same RSA architecture.
 Third, the simulation asks what context-updating composition contributes as a generative mechanism, independently of fitted production parameters.
 
@@ -106,11 +106,16 @@ However, the simulation shows that context-updating composition can still genera
 \end{figure}
 
 The remainder of the paper is structured as follows.
-\Cref{sec:background} reviews prior work on adjective ordering, referential efficiency, and incremental pragmatic modeling.
+\ifdefined\ReviewSectionsOneToThree
+This review excerpt contains the Introduction, Background, and Modelling Framework sections.
+The full manuscript then reports the experiments, model comparison, simulation study, and general discussion.
+\else
+\Cref{sec:background} reviews prior work on adjective ordering, referential efficiency, and incremental pragmatic modelling.
 \Cref{sec:framework} introduces the modelling framework, and \Cref{sec:model} gives the formal specification.
 \Cref{sec:experiments} reports the two referential studies.
 \Cref{sec:modelcomparison,sec:simulation} present the fitted model comparison and simulation study.
 \Cref{sec:discussion} summarizes the results and discusses their implications.
+\fi
 
 % =============================================================================
 \section{Background}
@@ -118,7 +123,7 @@ The remainder of the paper is structured as follows.
 % =============================================================================
 
 Research on adjective ordering has identified several stable predictors of preferred order, including meaning-based factors such as closeness to the noun and inherentness \citep{sweet1898,whorf1945grammatical,martin1969a}, class-based hierarchies \citep{quirk1972,dixon1982,cinque1994,scott2002}, and information-theoretic measures \citep{Hahn_information_2018,futrell-etal-2020-determines,dyer2023evaluating}.
-These predictors explain substantial structure, but complementary variance remains even for strong individual predictors \citep[for an overview, see][]{scontras2023adjective,dyer2023evaluating}.
+These predictors explain substantial structure, but residual variation remains even for strong individual predictors \citep[for an overview, see][]{scontras2023adjective,dyer2023evaluating}.
 Ordering preferences are also context-sensitive in ways that fixed hierarchies do not fully capture \citep{trotzke2019,fukumura2018ordering}.
 The present account therefore draws on three lines of work that speak directly to the source of this context sensitivity: subjectivity-based composition, referential efficiency, and incremental pragmatic choice.
 
@@ -131,7 +136,7 @@ Subsequent cross-linguistic work suggests that this relationship is not peculiar
 This relation is directly relevant to size--colour sequences because size adjectives are typically more subjective and gradable than colour adjectives, yielding an expected size-first baseline in prenominal modification.
 
 \citet{scontras2019grammatical} argue that the explanatory core of this effect lies in restrictive composition.
-Assuming a prenominal hierarchical underlying structure, the adjective closest to the noun composes first with the nominal denotation, and the outer adjective applies to the result of that restriction.
+Assuming a hierarchical prenominal structure, the adjective closest to the noun composes first with the nominal denotation, and the outer adjective applies to the result of that restriction.
 The outer, more subjective adjective is therefore evaluated against a comparison class that has already been narrowed by the inner, less subjective adjective.
 In such a restricted comparison class, placing the less subjective adjective closer to the noun is advantageous because its interpretation provides a more stable basis for subsequent gradable modification.
 \citet{franke2019subjectivity} make the same intuition explicit in simulation, showing that subjectivity-aligned orders increase average communicative success under sequential composition with noisy meanings.
@@ -145,8 +150,8 @@ This identifies a plausible compositional source for canonical ordering in the p
 \label{sec:bg:efficiency}
 
 A second source of ordering pressure comes from referential efficiency.
-A separate line of work has shown that adjective use is sensitive to the demands of the immediate communicative context, including whether a modifier helps the listener identify the referent quickly and efficiently \citep{rubio2016redundant,rubio2019overinformative,degen2020redundancy}.
-This literature treats adjective choice and adjective order as part of a broader problem of reference generation rather than as the expression of a static lexical hierarchy; Van Gompel and colleagues' conceptualization model makes the same commitment by deriving property choice from the contrast set available to the speaker \citep{fukumura2010use,van2019conceptualization}.
+A separate line of work has shown that adjective use is sensitive to the demands of the immediate communicative context, including whether a modifier helps the listener identify the referent efficiently \citep{rubio2016redundant,rubio2019overinformative,degen2020redundancy}.
+This literature treats adjective choice and adjective order as part of a broader problem of reference generation rather than as the expression of a static lexical hierarchy; a related commitment appears in Van Gompel and colleagues' conceptualization model, which derives property choice from the contrast set available to the speaker \citep{fukumura2010use,van2019conceptualization}.
 
 \citet{fukumura2018ordering} provide a direct empirical precedent for the present experiments.
 In their production studies, speakers were more likely to place the more discriminating adjective first, consistent with a \emph{discriminatory efficiency hypothesis}: order should reflect which property best distinguishes the target in the current scene.
@@ -169,10 +174,11 @@ The relevant test is whether size-first preferences persist, weaken, or reverse 
 The Rational Speech Act (RSA) framework provides the formal basis for comparing these pressures.
 In RSA, a pragmatic speaker selects utterances by reasoning about a listener's posterior, and the listener in turn reasons about the speaker's choice \citep{goodman2016pragmatic,degen2023rational}.
 Although standard RSA treats complete utterances as the units of choice, the same logic can be defined incrementally, with the speaker choosing one word at a time on the basis of how each token updates the listener's beliefs \citep{cohngordon2019incremental}.
-Existing incremental pragmatic models and related work on redundancy establish that word-by-word reasoning can capture asymmetries between adjective positions and between prenominal and postnominal systems \citep{degen2020redundancy,rubio2021wordorder}.
+Existing incremental pragmatic models and related work on redundancy show that word-by-word reasoning can capture asymmetries between adjective positions and between prenominal and postnominal systems \citep{degen2020redundancy,rubio2021wordorder}.
 These accounts typically update the listener's posterior online while keeping adjective meanings fixed relative to the scene.
-\citet{schlotterbeck2023incremental} introduced a closely related alternative in which the threshold for a gradable adjective is recomputed from the listener's current posterior at each stage of composition, together with the slider-rating paradigm that forms the basis for one of the experiments reported here.
-That study provided a qualitative fit in which the model captured both a subjectivity-driven baseline ordering and a discriminatory-strength modulation.
+\citet{schlotterbeck2023incremental} introduced a closely related alternative, together with the slider-rating paradigm that forms the basis for one of the experiments reported here.
+In that model, the threshold for a gradable adjective is recomputed from the listener's current posterior at each stage of composition.
+The study provided a qualitative fit in which the model captured both a subjectivity-driven baseline ordering and a discriminatory-strength modulation.
 It did not separate context-updating semantic composition from incremental speaker choice in a joint quantitative comparison, so the same qualitative pattern remained compatible with multiple mechanisms.
 
 % =============================================================================
@@ -180,11 +186,15 @@ It did not separate context-updating semantic composition from incremental speak
 \label{sec:framework}
 % =============================================================================
 
-We extend \citet{schlotterbeck2023incremental} by separating the mechanisms left open in the Background.
+We extend \citet{schlotterbeck2023incremental} by separating the mechanisms left open by the preceding literature.
 The framework embeds their proposal in a systematic $2 \times 2$ comparison of speaker architecture and semantic regime, including a context-fixed ablation.
 It adds a constrained production experiment with a richer response space and a simulation study that asks which ordering effects follow from context-updating composition outside the fitted empirical models.
 Bayesian model comparison then quantifies which mechanisms add predictive accuracy once production-specific order and salience pressures are represented explicitly.
+\ifdefined\ReviewSectionsOneToThree
+Here we describe the framework at a conceptual level; the full manuscript gives the meaning functions, speaker definitions, and inference setup formally in the next section.
+\else
 Here we describe the framework at a conceptual level; the meaning functions, speaker definitions, and inference setup are given formally in \Cref{sec:model}.
+\fi
 The remaining subsections develop these components in turn.
 
 \subsection{Reference, Scenes, and the Speaker's Problem}
@@ -198,18 +208,20 @@ Because objects differ along three properties, the same referent can be describe
 \subsection{Two Mechanisms for Order Sensitivity}
 \label{sec:framework:mechanisms}
 
-Determinate properties such as colour and form are treated as nearly categorical, whereas size is gradable: whether an object counts as ``big'' depends on the comparison class it is evaluated against, so the size term is informative only relative to the objects currently under consideration.
+Determinate properties such as colour and form are treated as nearly categorical, whereas size is gradable.
+Whether an object counts as ``big'' depends on the comparison class it is evaluated against, so the size term is informative only relative to the objects currently under consideration.
 Against this background, the framework isolates two ways in which adjective order can come to matter.
 The first is the \emph{speaker architecture}.
-A global speaker evaluates complete adjective strings and chooses among them as wholes, whereas an incremental speaker chooses one adjective at a time, weighing at each step how the next word would reshape the listener's beliefs.
-For an incremental speaker, a modifier is evaluated at the moment it is produced, by the belief update it would cause before later words are heard.
+A global speaker evaluates complete adjective strings and chooses among them as wholes, whereas an incremental speaker chooses one adjective at a time, weighing how the next word would reshape the listener's beliefs at each step.
+For an incremental speaker, a modifier is evaluated at the moment it is produced, according to the belief update it would cause before later words are heard.
 The second is the \emph{semantic regime}.
 Under context-fixed semantics, the size threshold is computed once from the scene and held constant, so reordering the adjectives cannot change what ``big'' means.
-Under context-updating semantics, the threshold is recomputed from the listener's running beliefs, so that once ``blue'' has restricted attention to blue objects, ``big'' is judged against just those objects; ``big blue'' and ``blue big'' can then differ even though they contain the same words.
+Under context-updating semantics, the threshold is recomputed from the listener's running beliefs.
+Once ``blue'' has restricted attention to blue objects, ``big'' is judged against just those objects; ``big blue'' and ``blue big'' can then differ even though they contain the same words.
 This non-commutativity connects to \citeauthor{teodorescu2006}'s (\citeyear{teodorescu2006}) observation that ordering restrictions weaken precisely when the alternative orders are not truth-conditionally equivalent.
 
-Crossing these two binary choices yields a $2 \times 2$ space of models --- speaker architecture (global vs.\ incremental) by semantic regime (context-fixed vs.\ context-updating).
-The global context-fixed model is the baseline, and the closest to the vanilla RSA model: meanings are fixed and the speaker evaluates complete strings, so any order preference comes from the shared order prior.
+Crossing these two binary distinctions yields a $2 \times 2$ space of models --- speaker architecture (global vs.\ incremental) by semantic regime (context-fixed vs.\ context-updating).
+The global context-fixed model is the baseline and the closest to the vanilla RSA model: meanings are fixed and the speaker evaluates complete strings, so any order preference comes from the shared order prior.
 The global context-updating model adds posterior-dependent meanings, the incremental context-fixed model adds word-by-word speaker choice, and the incremental context-updating model combines both sources.
 All four models include the same basic ingredients needed to connect the model to the experimental task: a prior over adjective orders and a utility term based on referential informativeness.
 The production models additionally include visual salience and stopping components because the production task allows one-, two-, and three-adjective strings; these components are held constant across models so that the $2 \times 2$ comparison isolates the contribution of semantic regime and speaker architecture.
@@ -220,8 +232,8 @@ The production models additionally include visual salience and stopping componen
 This framework yields qualitative predictions that the two experiments are designed to test (\Cref{tab:predictions}).
 A stable, subjectivity-aligned ordering prior yields a baseline size-first preference that survives even when colour alone identifies the referent (P1).
 The pragmatic component is sensitive to which property discriminates the referent in the current scene, so the size-first preference should weaken as colour becomes the more useful property (P2).
-The size-discriminability manipulation provides a proxy-based diagnostic extension of this idea: if lower visual reliability behaves like a display-level analogue of subjectivity, then low-discriminability size contrasts should strengthen the size-first preference (P3).
-This prediction is our extrapolation from the compositional logic in \citet{franke2019subjectivity,scontras2020incremental}: if lower discriminability makes size interpretation noisier, placing colour closer to the noun restricts the comparison class before size is evaluated, which corresponds to a size-first order preference in the German prenominal sequence.
+The size-discriminability manipulation provides a proxy-based diagnostic extension of this logic: if lower visual reliability behaves like a display-level analogue of subjectivity, then low-discriminability size contrasts should strengthen the size-first preference (P3).
+This prediction extrapolates from the compositional logic in \citet{franke2019subjectivity,scontras2020incremental}: if lower discriminability makes size interpretation noisier, placing colour closer to the noun restricts the comparison class before size is evaluated, which corresponds to a size-first order preference in the German prenominal sequence.
 Finally, because production allows the full inventory of one-, two-, and three-adjective strings, the framework predicts a graded over-informativity gradient that the binary slider task cannot reveal; if low size discriminability makes size less reliable for reference, low-discriminability displays should elicit longer, more redundant strings (P4).
 
 \begin{table}[H]
@@ -230,15 +242,25 @@ Finally, because production allows the full inventory of one-, two-, and three-a
   \centering
   \begin{tabularx}{\textwidth}{lXl}
     \toprule
-     & \textbf{Prediction} & \textbf{Tested in} \\
+    \textbf{Label} & \textbf{Prediction} & \textbf{Tested in} \\
     \midrule
     P1 & A baseline size-first pressure is detectable even when colour alone identifies the referent. & Exp.\ 1 \& 2 \\
     P2 & The size-first preference weakens as colour becomes the more discriminating property. & Exp.\ 1 \& 2 \\
     P3 & If low visual size discriminability behaves like a display-level proxy for subjectivity, it yields a stronger size-first preference. & Exp.\ 1 \& 2 \\
-    P4 & Production exposes a graded over-informativity gradient across one-, two-, and three-adjective strings, and that gradient is modulated by size discriminability. & Exp.\ 2 \\
+    P4 & The production task exposes a graded over-informativity gradient across one-, two-, and three-adjective strings, and that gradient is modulated by size discriminability. & Exp.\ 2 \\
     \bottomrule
   \end{tabularx}
 \end{table}
+
+\ifdefined\ReviewSectionsOneToThree
+\clearpage
+\bibliographystyle{apacite}
+\bibliography{references}
+\let\ReviewSectionsStop\enddocument
+\else
+\let\ReviewSectionsStop\relax
+\fi
+\ReviewSectionsStop
 
 % =============================================================================
 \section{Experiments}
@@ -246,26 +268,27 @@ Finally, because production allows the full inventory of one-, two-, and three-a
 % =============================================================================
 
 We tested the qualitative predictions of the modelling framework (\Cref{tab:predictions}) with two complementary online referential tasks in German.
-Experiment~1 used graded slider judgments to measure how acceptable competing adjective orders are in a controlled scene.
-Experiment~2 used constrained production to measure which adjective sequences speakers actually choose in the same referential displays.
-Comparing the two tasks lets us ask whether the same context manipulation appears in both explicit order judgments and constrained production.
+Experiment~1 measured explicit order preferences in a slider-rating task, whereas Experiment~2 measured adjective selection and ordering in constrained production.
+Comparing the two tasks lets us ask whether the same context manipulations affect both direct judgments between competing orders and speakers' own adjective choices.
 
 \subsection{Shared Method}
 
 \subsubsection{Design}
 
-Both experiments used the same referential design.
+Both experiments shared the same basic referential design.
+The response format differed across experiments, but the visual displays and target-definition logic were shared.
 On every critical trial, participants saw a six-object display with one framed target.
-Experiment~1 asked participants to judge competing adjective orders for that target, whereas Experiment~2 asked them to produce adjective material for it.
 The target was always the largest object that matched the intended colour and form.
-The analyses reported here focus on the theoretically central size--colour subset.
-Within that subset, referential context had three levels: size-sufficient (size alone identifies the target), colour-sufficient (colour alone identifies the target), and both-necessary (neither property alone suffices).
-A second factor, size discriminability, varied whether the size contrast between the target and its size competitors was high or low.
-High-discriminability displays made the target--competitor size contrast visually pronounced, whereas low-discriminability displays made size a less reliable cue.
-Referential context varied within participants; size discriminability was manipulated between participants, so each participant experienced a consistent level of visual size reliability throughout the task (\Cref{tab:design}).
+The analyses reported here focus on the theoretically central size--colour subset.\footnote{The broader paradigm also included size--form and colour--form trials to widen the material base and reduce dependence on a single adjective pairing.
+These conditions remain part of the experimental design, but the present analysis concentrates on the size--colour subset because it provides the clearest contrast between a gradable adjective and a determinate feature adjective.
+The exact size values, target--competitor gap construction, and list assignment are reported in \Cref{sec:appendix:methods-transparency}.}
+Within that subset, referential context varied within participants and had three levels: size-sufficient, colour-sufficient, and both-necessary.
+A second, between-participant factor, size discriminability, varied the size gap between the target and its size competitors.
+High-discriminability displays used larger target--competitor gaps, making the size contrast visually pronounced, whereas low-discriminability displays used smaller gaps, making size a less reliable cue.
+This factor was manipulated between participants so that each participant experienced a consistent level of visual size contrast throughout the task (\Cref{tab:design}).
 
 \begin{table}[h]
-  \caption{Shared design of the reported size--colour analyses}
+  \caption{Shared design of the two experiments.}
   \label{tab:design}
   \centering
   \begin{tabularx}{0.88\textwidth}{lX}
@@ -274,15 +297,10 @@ Referential context varied within participants; size discriminability was manipu
     \midrule
     Referential context & Size-sufficient, colour-sufficient, both-necessary \\
     Size discriminability & High (strong size contrast), low (weak size contrast) \\
-    \midrule
-    \multicolumn{2}{p{0.84\textwidth}}{\textit{Fixed display property.} The referent is the largest, colour-matching, form-matching object in a six-object context.} \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
-The broader paradigm also included size--form and colour--form trials to widen the material base and reduce dependence on a single adjective pairing.
-These conditions remain part of the experimental design, but the present analysis concentrates on the size--colour subset because it provides the clearest contrast between a gradable adjective and a determinate feature adjective.
-The exact size values, target--competitor gap construction, and list assignment are reported in \Cref{sec:appendix:methods-transparency}.
 
 
 \subsubsection{Materials}
