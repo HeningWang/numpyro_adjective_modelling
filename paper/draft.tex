@@ -305,30 +305,33 @@ This factor was manipulated between participants so that each participant experi
 
 \subsubsection{Materials}
 
-The experiments were built from 27 underlying scene types.
-Each display contained six objects varying in size and in discrete colour and form values.
-The target was marked with a coloured frame (\Cref{fig:item}).
-Critical vocabularies were fixed across the study, with six colour terms and six form terms reused throughout the scene set, and the modified noun was always \textit{Aufkleber} (`sticker').
-Items were distributed across participants in a Latin-square design.
-Each participant saw each underlying scene type once in each referential-context condition, with condition--item pairings counterbalanced across lists and size-discriminability group assigned between participants.
-In the computational model, each display can be represented as a $6 \times 3$ matrix $(s, c, f)$ with the referent at index 0, but the experimental task presented these scenes as ordinary visual arrays rather than as explicit feature lists.
+An example item is shown in \Cref{fig:item}.
+Items were distributed across participants in a Latin-square design, so that scene templates and condition assignments were counterbalanced across lists.
+In addition to list counterbalancing, the critical scenes were realised through systematic permutations of colour and form values, creating variability in the surface displays while preserving the referential structure required by each condition.
+These permutations were applied to 27 critical scene templates, each specifying an abstract six-object configuration with a target, competitors, and distractors.
+Critical vocabularies were fixed across the study, with six colour terms and six form terms reused throughout the scene set; the modified noun was always \textit{Aufkleber} (`sticker').\footnote{The form values were presented with German adjectival forms, such as \emph{runden} for round/circle and \emph{quadratischen} for square, so that form could occupy the same prenominal adjective position as colour and size.}
+For the computational model, each display was represented as a $6 \times 3$ matrix, with one row per object and three columns for size ($s$), colour ($c$), and form ($f$).
+The referent was stored at index 0, but participants saw the displays as ordinary visual arrays rather than as explicit feature lists.
 
 \begin{figure}[ht]
   \centering
   \includegraphics[width=0.78\textwidth]{experiment_trial_snapshot.png}
-  \caption{Example slider-rating trial from the experiment interface. The framed object is the target; participants rated which of the two German descriptions better identified it for a partner who could see the same stickers but not the frame or spatial layout.}
+  \caption{Example slider-rating trial from the experiment.}
   \label{fig:item}
 \end{figure}
 
 \subsubsection{Procedure}
 
 Participants completed the experiments online via Prolific and were instructed to identify the framed target using its perceptual properties, not spatial descriptions such as \emph{left} or \emph{right}.
-The cover story framed each trial as a telephone conversation about collectible stickers: participants saw a set of six stickers on screen, one highlighted by a coloured frame, and were asked to refer to the target for a partner who could see the same stickers but neither the frame nor the spatial layout.
-This made spatial terms uninformative and forced reliance on adjective descriptions.
+The task was designed as a simple reference game: participants either evaluated or produced a description that would allow another person to identify the target accurately and efficiently.
+The cover story framed each trial as a telephone conversation about collectible stickers: participants saw a set of six stickers on screen, one highlighted by a coloured frame, and were asked to refer to the target for a partner who could see the same stickers in a different order but could not see the frame.
 Both experiments began with a consent form and a brief practice block (three training trials with feedback) that familiarised participants with the interface and the referential task.
 The main trials were divided into four blocks of approximately equal length, with self-paced breaks between blocks.
 Trial order within each block was randomised independently for each participant.
-The two experiments differed in response format: Experiment~1 presented two competing adjective orders on a continuous slider (180 trials total, drawn from one of six counterbalanced lists), whereas Experiment~2 asked participants to type the adjective material they would place before the noun in a text box(135 trials, again from one of six lists, plus two additional dictionary-style practice items).
+Experiment~1 presented two competing adjective orders on a continuous slider and asked participants which description would better identify the target for their partner.
+It contained 180 trials in total: 81 critical trials and 99 filler or control trials, drawn from one of six counterbalanced lists.
+Experiment~2 used the same list structure for the critical trials but asked participants to type the adjective material they would place before the noun \textit{Aufkleber} to describe the target to their partner.
+Each participant completed 135 main trials, including 81 critical trials and 54 filler or control trials.\footnote{The number of filler and control trials was reduced in Experiment~2 because typed production responses were slower and more effortful than slider judgments.}
 
 \subsection{Experiment 1: Slider-Rating Study}
 \label{sec:exp:slider}
