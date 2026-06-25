@@ -244,6 +244,66 @@ def test_principled_response_policy_zero_recovers_base_and_shifts_output():
     assert three_word_penalty[three_words].sum() < base[three_words].sum()
 
 
+def test_principled_response_policy_can_suppress_sharp_one_word_form():
+    base_kw = {
+        **PRINCIPLED_KW,
+        "sufficient_dim": jnp.int32(0),
+        "has_one_word_solution": jnp.float32(1.0),
+        "gamma_uncertainty_len": jnp.float32(0.0),
+        "rho_salience_stop": jnp.float32(0.5),
+        "is_colour_sufficient": jnp.float32(0.0),
+        "lambda_sufficient_single": jnp.float32(0.0),
+        "lambda_reliability_form": jnp.float32(1.5),
+        "lambda_sufficient_form_pair": jnp.float32(1.5),
+        "lambda_three_word_penalty": jnp.float32(0.0),
+    }
+    sharp_without_suppression = np.asarray(
+        ms.incremental_speaker_principled_response_policy(
+            COLOR_SALIENT_STATES,
+            **{
+                **base_kw,
+                "is_sharp": jnp.float32(1.0),
+                "lambda_sharp_form_suppression": jnp.float32(0.0),
+            },
+        )
+    )
+    sharp_with_suppression = np.asarray(
+        ms.incremental_speaker_principled_response_policy(
+            COLOR_SALIENT_STATES,
+            **{
+                **base_kw,
+                "is_sharp": jnp.float32(1.0),
+                "lambda_sharp_form_suppression": jnp.float32(2.0),
+            },
+        )
+    )
+    blurred_with_suppression = np.asarray(
+        ms.incremental_speaker_principled_response_policy(
+            COLOR_SALIENT_STATES,
+            **{
+                **base_kw,
+                "is_sharp": jnp.float32(0.0),
+                "lambda_sharp_form_suppression": jnp.float32(2.0),
+            },
+        )
+    )
+    blurred_without_suppression = np.asarray(
+        ms.incremental_speaker_principled_response_policy(
+            COLOR_SALIENT_STATES,
+            **{
+                **base_kw,
+                "is_sharp": jnp.float32(0.0),
+                "lambda_sharp_form_suppression": jnp.float32(0.0),
+            },
+        )
+    )
+
+    f_present = np.asarray(ms.F_PRESENT_15, dtype=bool)
+    assert np.allclose(sharp_with_suppression.sum(), 1.0, atol=1e-4)
+    assert sharp_with_suppression[f_present].sum() < sharp_without_suppression[f_present].sum()
+    assert np.allclose(blurred_with_suppression, blurred_without_suppression, atol=1e-5)
+
+
 def test_global_principled_response_policy_zero_recovers_base_and_shifts_output():
     base_kw = {
         **PRINCIPLED_KW,
@@ -295,6 +355,7 @@ def test_global_principled_response_policy_jitted_batch_is_simplex():
             jnp.float32(0.5),
             jnp.float32(1.5),
             jnp.float32(1.5),
+            jnp.float32(0.0),
             jnp.float32(0.0),
             jnp.float32(0.0),
             jnp.float32(0.0),
@@ -385,6 +446,8 @@ def test_principled_models_register_for_hierarchical_inference():
         "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_static",
         "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_rec_fixedeps",
         "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_static_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_sharpform_2x2_inc_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_sharpform_2x2_inc_static_fixedeps",
         "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_rec_fixedeps",
         "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_static_fixedeps",
         "principled_salience_stop_regularized_2x2_glob_rec",
@@ -402,6 +465,7 @@ if __name__ == "__main__":
     test_principled_salience_stop_favors_single_salient_adjective()
     test_principled_planned_prefix_zero_scale_recovers_base_and_can_shift_output()
     test_principled_response_policy_zero_recovers_base_and_shifts_output()
+    test_principled_response_policy_can_suppress_sharp_one_word_form()
     test_global_principled_response_policy_zero_recovers_base_and_shifts_output()
     test_global_principled_response_policy_jitted_batch_is_simplex()
     test_principled_base_salience_constants_are_fixed_sweep_inputs()
