@@ -28,10 +28,14 @@ from modelSpecification import (
     canonicalize_speaker_type,
     likelihood_gb_speaker,
     likelihood_inc_speaker,
+    likelihood_planned_usefulness_order_speaker,
+    likelihood_planned_usefulness_order_speaker_static,
     likelihood_gb_speaker_static,
     likelihood_inc_speaker_frozen,
     likelihood_gb_speaker_hier,
     likelihood_inc_speaker_hier,
+    likelihood_planned_usefulness_order_speaker_hier,
+    likelihood_planned_usefulness_order_speaker_static_hier,
     likelihood_gb_speaker_static_hier,
     likelihood_inc_speaker_frozen_hier,
     likelihood_inc_speaker_hier_free_csv,
@@ -55,7 +59,7 @@ def run_inference(
     if (pi0 + pi1) >= 0.95:
         raise ValueError(f"Boundary masses too large for ZOIB: pi0+pi1={pi0+pi1:.3f}")
 
-    if canonical_speaker_type in ("global", "incremental"):
+    if canonical_speaker_type in ("global", "incremental", "planned_usefulness_order"):
         L1_all, L2_all = precompute_listeners(states_train)
     else:
         L1_all, L2_all = precompute_listeners_frozen(states_train)
@@ -77,14 +81,19 @@ def run_inference(
         model = likelihood_gb_speaker
     elif canonical_speaker_type == "incremental":
         model = likelihood_inc_speaker
+    elif canonical_speaker_type == "planned_usefulness_order":
+        model = likelihood_planned_usefulness_order_speaker
     elif canonical_speaker_type == "global_static":
         model = likelihood_gb_speaker_static
     elif canonical_speaker_type == "incremental_static":
         model = likelihood_inc_speaker_frozen
+    elif canonical_speaker_type == "planned_usefulness_order_static":
+        model = likelihood_planned_usefulness_order_speaker_static
     else:
         raise ValueError(
             "Invalid speaker type. Choose 'global', 'incremental', "
-            "'global_static', or 'incremental_static' "
+            "'planned_usefulness_order', 'global_static', "
+            "'incremental_static', or 'planned_usefulness_order_static' "
             "(legacy alias: 'incremental_frozen')."
         )
 
@@ -158,12 +167,12 @@ def run_inference_hier(
         )
 
     if color_semvalue is not None:
-        if canonical_speaker_type in ("global", "incremental"):
+        if canonical_speaker_type in ("global", "incremental", "planned_usefulness_order"):
             L1_all, L2_all = precompute_listeners_at_csv(states_train, color_semvalue)
         else:
             L1_all, L2_all = precompute_listeners_frozen_at_csv(states_train, color_semvalue)
         print(f"Listeners precomputed at color_semvalue = {color_semvalue}.")
-    elif canonical_speaker_type in ("global", "incremental"):
+    elif canonical_speaker_type in ("global", "incremental", "planned_usefulness_order"):
         L1_all, L2_all = precompute_listeners(states_train)
     else:
         L1_all, L2_all = precompute_listeners_frozen(states_train)
@@ -196,14 +205,19 @@ def run_inference_hier(
         model = likelihood_gb_speaker_hier
     elif canonical_speaker_type == "incremental":
         model = likelihood_inc_speaker_hier
+    elif canonical_speaker_type == "planned_usefulness_order":
+        model = likelihood_planned_usefulness_order_speaker_hier
     elif canonical_speaker_type == "global_static":
         model = likelihood_gb_speaker_static_hier
     elif canonical_speaker_type == "incremental_static":
         model = likelihood_inc_speaker_frozen_hier
+    elif canonical_speaker_type == "planned_usefulness_order_static":
+        model = likelihood_planned_usefulness_order_speaker_static_hier
     else:
         raise ValueError(
             "Invalid speaker type. Choose 'global', 'incremental', "
-            "'global_static', or 'incremental_static' "
+            "'planned_usefulness_order', 'global_static', "
+            "'incremental_static', or 'planned_usefulness_order_static' "
             "(legacy alias: 'incremental_frozen')."
         )
 
@@ -252,7 +266,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run speaker inference with NumPyro.")
     parser.add_argument("--speaker_type", type=str,
                         choices=["global", "incremental", "global_static",
-                                 "incremental_static", "incremental_frozen"],
+                                 "incremental_static", "incremental_frozen",
+                                 "planned_usefulness_order",
+                                 "planned_usefulness_order_static"],
                         default="global",
                         help="Choose the speaker model type.")
     parser.add_argument("--num_samples", type=int, default=500, help="Number of posterior samples.")

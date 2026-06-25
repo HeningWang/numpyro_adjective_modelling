@@ -33,6 +33,8 @@ from analysis.posterior_utils import (
     plot_correlation_scatter,
     extract_pp_samples,
     save_summary_text,
+    summarize_mcmc_diagnostics,
+    compute_ppc_correlation_metrics,
 )
 from modelSpecification import import_dataset
 
@@ -47,13 +49,17 @@ ALL_MODELS = {
     "incremental_static":    "mcmc_results_incremental_static_speaker_hier_{tag}.nc",
     "global_recursive":      "mcmc_results_global_speaker_hier_{tag}.nc",
     "global_static":         "mcmc_results_global_static_speaker_hier_{tag}.nc",
+    "planned_usefulness_order": "mcmc_results_planned_usefulness_order_speaker_hier_{tag}.nc",
+    "planned_usefulness_order_static": (
+        "mcmc_results_planned_usefulness_order_static_speaker_hier_{tag}.nc"
+    ),
 }
 
 GROUP_COLS = ["relevant_property", "sharpness"]
 BEST_MODEL = "incremental_recursive"
 
 # Population-level parameters to diagnose per model
-POP_VAR_NAMES = ["alpha", "bias", "sigma", "tau"]
+POP_VAR_NAMES = ["alpha", "bias", "usefulness_order_scale", "sigma", "tau"]
 
 
 # ── Dataset-specific: PPC for continuous slider ─────────────────────────────
@@ -174,6 +180,34 @@ def export_csvs(df, idata_dict, pred_means, stats_dir):
     cond_emp.to_csv(out_cond, index=False)
     print(f"  [csv] slider_condition_summary.csv ({len(cond_emp)} rows)")
 
+    ppc_rows = []
+    for model_name in idata_dict:
+        pred_col = f"pred_mean_{model_name}"
+        if pred_col not in cond_emp.columns:
+            continue
+        sub = cond_emp[GROUP_COLS + ["emp_mean", pred_col]].copy()
+        sub = sub.rename(columns={"emp_mean": "human_mean", pred_col: "model_mean"})
+        sub["model"] = model_name
+        sub["signed_residual"] = sub["model_mean"] - sub["human_mean"]
+        sub["abs_residual"] = sub["signed_residual"].abs()
+        ppc_rows.append(sub)
+
+    if ppc_rows:
+        ppc_long = pd.concat(ppc_rows, ignore_index=True)
+        ppc_long = ppc_long[
+            ["model"] + GROUP_COLS + [
+                "human_mean", "model_mean", "signed_residual", "abs_residual",
+            ]
+        ]
+        out_ppc = os.path.join(stats_dir, "slider_ppc_by_condition.csv")
+        ppc_long.to_csv(out_ppc, index=False)
+        print(f"  [csv] slider_ppc_by_condition.csv ({len(ppc_long)} rows)")
+
+        metrics = compute_ppc_correlation_metrics(ppc_long)
+        out_ppc_metrics = os.path.join(stats_dir, "slider_ppc_correlation.csv")
+        metrics.to_csv(out_ppc_metrics, index=False)
+        print("  [csv] slider_ppc_correlation.csv")
+
     return out_emp, out_pred, out_cond
 
 
@@ -239,6 +273,23 @@ def main():
         if s_intercept:
             summary_blocks.append(s_intercept)
 
+    diag_detail, diag_summary = summarize_mcmc_diagnostics(
+        idata_dict,
+        var_names=POP_VAR_NAMES,
+    )
+    if not diag_detail.empty:
+        diag_detail.to_csv(
+            os.path.join(stats_dir, "slider_mcmc_diagnostics.csv"),
+            index=False,
+        )
+        print("  [csv] slider_mcmc_diagnostics.csv")
+    if not diag_summary.empty:
+        diag_summary.to_csv(
+            os.path.join(stats_dir, "slider_mcmc_model_summary.csv"),
+            index=False,
+        )
+        print("  [csv] slider_mcmc_model_summary.csv")
+
     # ── 4. Posterior predictive checks ──
     print("Computing posterior predictive checks...")
     pred_means = compute_ppc_slider(idata_dict, df, ppc_dir, fmt=fmt)
@@ -290,7 +341,9 @@ def main():
         os.makedirs(r_data_dir, exist_ok=True)
         import shutil
         for fname in ["slider_empirical.csv", "slider_predictions.csv",
-                      "slider_condition_summary.csv", "slider_loo_comparison.csv"]:
+                      "slider_condition_summary.csv", "slider_loo_comparison.csv",
+                      "slider_ppc_by_condition.csv", "slider_ppc_correlation.csv",
+                      "slider_mcmc_diagnostics.csv", "slider_mcmc_model_summary.csv"]:
             src = os.path.join(stats_dir, fname)
             if os.path.exists(src):
                 shutil.copy2(src, os.path.join(r_data_dir, fname))

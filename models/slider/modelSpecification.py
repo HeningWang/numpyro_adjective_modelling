@@ -816,6 +816,38 @@ def _inc_speaker_from_listeners(L1, L2, alpha, bias):
     return S_inc[0, 0]
 
 
+def _usefulness_adjusted_order_bias(L1, bias, usefulness_order_scale):
+    size_usefulness = L1[0, 0]
+    color_usefulness = L1[1, 0]
+    color_advantage = color_usefulness - size_usefulness
+    return jnp.maximum(bias - usefulness_order_scale * color_advantage, 0.0)
+
+
+def _planned_usefulness_order_from_listeners(L1, L2, alpha, bias, usefulness_order_scale):
+    """Planned incremental speaker with usefulness-moderated order pressure."""
+    eps = 1e-20
+    effective_bias = _usefulness_adjusted_order_bias(L1, bias, usefulness_order_scale)
+
+    util_d = alpha * jnp.log(jnp.clip(L1[0, 0], eps, 1.0))
+    util_c = alpha * jnp.log(jnp.clip(L1[1, 0], eps, 1.0))
+    util_dc = alpha * jnp.log(jnp.clip(L2[0, 0], eps, 1.0))
+    util_cd = alpha * jnp.log(jnp.clip(L2[1, 0], eps, 1.0)) - effective_bias
+
+    prefix_value_d = logsumexp(jnp.array([util_d, util_dc]))
+    prefix_value_c = logsumexp(jnp.array([util_c, util_cd]))
+    first_step = jax.nn.softmax(jnp.array([prefix_value_d, prefix_value_c]))
+
+    continue_after_d = jax.nn.softmax(jnp.array([util_dc, util_d]))[0]
+    continue_after_c = jax.nn.softmax(jnp.array([util_cd, util_c]))[0]
+
+    chain_dc = first_step[0] * continue_after_d
+    chain_cd = first_step[1] * continue_after_c
+    final_order = jax.nn.softmax(
+        jnp.log(jnp.clip(jnp.array([chain_dc, chain_cd]), eps, 1.0))
+    )
+    return final_order[0]
+
+
 def _global_speaker_from_listeners(L2, alpha, bias):
     """Global speaker for one trial given precomputed L2 listener array.
 
@@ -841,6 +873,13 @@ jitted_global_speaker_fast = jax.jit(
 
 jitted_inc_speaker_fast = jax.jit(
     jax.vmap(_inc_speaker_from_listeners, in_axes=(0, 0, None, None))
+)
+
+jitted_planned_usefulness_order_speaker_fast = jax.jit(
+    jax.vmap(
+        _planned_usefulness_order_from_listeners,
+        in_axes=(0, 0, None, None, None),
+    )
 )
 
 
@@ -917,6 +956,23 @@ def likelihood_inc_speaker(states=None, data=None, pi0=0.01, pi1=0.01, L1_all=No
             data = jnp.clip(data, 0.0, 1.0)
         numpyro.sample("obs", ZOIB(model_prob, sigma, pi0, pi1), obs=data)
 
+
+def likelihood_planned_usefulness_order_speaker(
+    states=None, data=None, pi0=0.01, pi1=0.01, L1_all=None, L2_all=None
+):
+    alpha = numpyro.sample("alpha", dist.HalfNormal(5.0))
+    bias = numpyro.sample("bias", dist.HalfNormal(2.0))
+    usefulness_order_scale = numpyro.sample("usefulness_order_scale", dist.HalfNormal(8.0))
+    sigma = numpyro.sample("sigma", dist.HalfNormal(0.3))
+    with numpyro.plate("data", L1_all.shape[0]):
+        model_prob = jitted_planned_usefulness_order_speaker_fast(
+            L1_all, L2_all, alpha, bias, usefulness_order_scale
+        )
+        model_prob = jnp.clip(model_prob, 1e-6, 1 - 1e-6)
+        if data is not None:
+            data = jnp.clip(data, 0.0, 1.0)
+        numpyro.sample("obs", ZOIB(model_prob, sigma, pi0, pi1), obs=data)
+
 # ── Static-semantics pooled likelihood functions ──
 
 def likelihood_gb_speaker_static(states=None, data=None, pi0=0.01, pi1=0.01, L1_all=None, L2_all=None):
@@ -943,6 +999,20 @@ def likelihood_inc_speaker_frozen(states=None, data=None, pi0=0.01, pi1=0.01, L1
         if data is not None:
             data = jnp.clip(data, 0.0, 1.0)
         numpyro.sample("obs", ZOIB(model_prob, sigma, pi0, pi1), obs=data)
+
+
+def likelihood_planned_usefulness_order_speaker_static(
+    states=None, data=None, pi0=0.01, pi1=0.01, L1_all=None, L2_all=None
+):
+    """Planned usefulness-order speaker with static size semantics."""
+    return likelihood_planned_usefulness_order_speaker(
+        states=states,
+        data=data,
+        pi0=pi0,
+        pi1=pi1,
+        L1_all=L1_all,
+        L2_all=L2_all,
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1071,6 +1141,32 @@ def likelihood_inc_speaker_hier(
         numpyro.sample("obs", ZOIB(model_prob, sigma, pi0, pi1), obs=data)
 
 
+def likelihood_planned_usefulness_order_speaker_hier(
+    states=None, data=None,
+    pi0: float = 0.01, pi1: float = 0.01,
+    participant_idx=None, n_participants: int = 1,
+    L1_all=None, L2_all=None,
+):
+    """Planned incremental speaker with usefulness-moderated order pressure."""
+    alpha = numpyro.sample("alpha", dist.HalfNormal(5.0))
+    bias = numpyro.sample("bias", dist.HalfNormal(2.0))
+    usefulness_order_scale = numpyro.sample("usefulness_order_scale", dist.HalfNormal(8.0))
+    sigma = numpyro.sample("sigma", dist.HalfNormal(0.3))
+    tau = numpyro.sample("tau", dist.HalfNormal(0.2))
+
+    with numpyro.plate("participants", n_participants):
+        delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+    with numpyro.plate("data", L1_all.shape[0]):
+        rsa_prob = jitted_planned_usefulness_order_speaker_fast(
+            L1_all, L2_all, alpha, bias, usefulness_order_scale
+        )
+        model_prob = jnp.clip(rsa_prob + delta[participant_idx], 1e-6, 1 - 1e-6)
+        if data is not None:
+            data = jnp.clip(data, 0.0, 1.0)
+        numpyro.sample("obs", ZOIB(model_prob, sigma, pi0, pi1), obs=data)
+
+
 # ── Static-semantics hierarchical likelihood functions ──
 
 def likelihood_gb_speaker_static_hier(
@@ -1117,6 +1213,25 @@ def likelihood_inc_speaker_frozen_hier(
         if data is not None:
             data = jnp.clip(data, 0.0, 1.0)
         numpyro.sample("obs", ZOIB(model_prob, sigma, pi0, pi1), obs=data)
+
+
+def likelihood_planned_usefulness_order_speaker_static_hier(
+    states=None, data=None,
+    pi0: float = 0.01, pi1: float = 0.01,
+    participant_idx=None, n_participants: int = 1,
+    L1_all=None, L2_all=None,
+):
+    """Static-semantics planned usefulness-order speaker."""
+    return likelihood_planned_usefulness_order_speaker_hier(
+        states=states,
+        data=data,
+        pi0=pi0,
+        pi1=pi1,
+        participant_idx=participant_idx,
+        n_participants=n_participants,
+        L1_all=L1_all,
+        L2_all=L2_all,
+    )
 
 
 def likelihood_inc_speaker_hier_fast(
