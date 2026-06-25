@@ -679,16 +679,16 @@ The constrained-production fits then apply the same production extensions --- or
 \label{sec:model:variants}
 % =============================================================================
 
-The $2 \times 2$ comparison crosses the two mechanisms introduced in \Cref{sec:framework:mechanisms}: speaker architecture (global vs.\ incremental) and semantic regime (context-fixed vs.\ context-updating).
-The comparison is fitted independently to both datasets with hierarchical participant pooling.
-Within each dataset, the four models use matched parameter inventories.
-Fit differences are therefore interpreted as evidence about speaker architecture and semantic regime rather than as a consequence of unequal expressive flexibility, subject to the diagnostic caveats reported below and in the appendix.
-The comparison is diagnostic in three ways.
+The model comparison tests the two mechanisms introduced in \Cref{sec:framework:mechanisms}: speaker architecture (global vs.\ incremental) and semantic regime (context-fixed vs.\ context-updating).
+The constrained-production study provides the main parameter-matched $2 \times 2$ architecture-by-semantics comparison.
+The slider-rating study uses the same mechanistic baseline but, after the speaker-policy exploration reported below, is summarized with heldout model selection among incremental speaker-policy variants.
+Fit differences are therefore interpreted with different emphases across tasks: slider ratings diagnose whether a planned-usefulness response policy improves the graded order preference, whereas constrained production diagnoses the architecture-by-semantics contrast in the richer categorical response space.
+The production $2 \times 2$ comparison is diagnostic in three ways.
 A consistent advantage for incremental over global speakers would indicate that word-by-word choice contributes predictive accuracy beyond utterance-level choice.
 A consistent advantage for context-updating over context-fixed semantics would indicate that recomputing gradable meanings from the compositionally updated comparison class contributes predictive accuracy beyond incremental belief updating alone.
 A positive difference-in-differences would indicate that the value of context-updating semantics depends on whether production itself is incremental.
 We use Pareto-smoothed importance-sampling leave-one-out cross-validation \citep[PSIS-LOO;][]{vehtari2017practical}.
-For each comparison, we report differences in expected log pointwise predictive density ($\Delta$ELPD) relative to the best-fitting model together with the difference standard error (dse).
+For PSIS-LOO comparisons, we report differences in expected log pointwise predictive density ($\Delta$ELPD) relative to the best-fitting model together with the difference standard error (dse).
 A ratio $|\Delta\text{ELPD}|/\text{dse}$ substantially greater than 1 is treated as evidence for a clear difference in out-of-sample predictive accuracy.
 All models were implemented in NumPyro \citep{phan2019composable} and estimated with four MCMC chains using the NUTS sampler \citep{hoffman2014no}.
 All models reported in the main text use hierarchical participant-level pooling, implemented as participant-level offsets on the rationality parameter.
@@ -696,7 +696,7 @@ The incremental production models that drive the main comparison converged clean
 The inferential focus is the comparison among incremental models, because these models both fit the data well and have acceptable MCMC diagnostics.
 Global models are retained as structurally informative baselines, but when they combine very poor predictive fit with weak diagnostics, their parameter estimates should not be interpreted substantively.
 \Cref{sec:appendix:model-diagnostics} reports the available PSIS-LOO warnings, convergence summaries, and production Pareto-$k$ counts for the main comparisons.
-Dataset-specific parameter inventories, likelihoods, and sampler settings are introduced with each subsection below.
+Dataset-specific parameter inventories, likelihoods, heldout summaries, and sampler settings are introduced with each subsection below.
 
 \subsection{Slider-Rating Study}
 
@@ -724,8 +724,10 @@ Dataset-specific parameter inventories, likelihoods, and sampler settings are in
   (b) Observed vs.\ predicted condition means; dashed line is identity.}
   \label{fig:slider-results}
 \end{figure}
-The slider $2 \times 2$ is fitted on a minimal speaker with a single rationality parameter $\alpha$, a bias intercept $b$, and a participant-level offset, with the semantic constants held fixed at $k = 0.5$, $w_f = 1.0$, and $\nu = 0.80$.
-Slider responses cluster at the boundaries (0 and 1) and are modelled with a Zero-One-Inflated Beta likelihood; each chain drew 500 warmup and 500 post-warmup samples (target acceptance probability $= 0.90$, maximum tree depth $= 8$).
+The slider models use a Zero-One-Inflated Beta likelihood because responses cluster at the boundaries (0 and 1).
+The greedy baseline speaker has a rationality parameter and participant-level offsets, and the planned-usefulness variants add a response policy that evaluates the expected usefulness of producing the order as a planned sequence.
+The semantic constants are held fixed at $k = 0.5$, $w_f = 1.0$, and $\nu = 0.80$ for the paper-facing slider comparison.
+Each full-sample chain drew 500 warmup and 500 post-warmup samples (target acceptance probability $= 0.90$, maximum tree depth $= 8$), and the heldout comparison used five folds.
 
 \Cref{fig:slider-model} shows the heldout comparison for the slider data after the speaker-policy exploration.
 Because full-sample PSIS-LOO for the richer slider variants produced unstable Pareto diagnostics, we use five-fold heldout ELPD as the model-selection summary.
@@ -843,21 +845,20 @@ The posterior for the order-prior weight is clearly positive ($\log\beta \approx
 Pragmatic rationality is positive ($\alpha \approx 2.03$), the visual-salience weight is clearly identified ($\lambda_\text{salience} \approx 1.42$), and salience-sensitive continuation costs are small in the final model ($\rho_\text{stop} \approx 0.02$).
 The response-policy terms are also clearly positive, including the sharp-size bare-size bonus ($\approx 1.22$) and the sharp-size size--form pair penalty ($\approx 1.07$).
 These terms nearly eliminate the targeted first/sharp bare-size and size--form residuals (absolute residuals below $0.002$), while the largest remaining qualitative miss is under-prediction of size--colour responses in both-necessary sharp displays.
-The participant-level spread is substantial but well behaved ($\tau \approx 0.84$), indicating stable individual variation in pragmatic strength.
+The participant-level spread is substantial but well behaved ($\tau \approx 0.94$), indicating stable individual variation in pragmatic strength.
 
 \FloatBarrier
 
 \subsection{Discussion}
 
-Comparing the two datasets yields a consistent architecture result.
-Both datasets favour incremental choice over global utterance evaluation in predictive fit, but they support that conclusion in different response spaces.
-In the slider data, the two incremental semantic regimes are statistically indistinguishable ($|\Delta\text{ELPD}|/\text{dse} = 0.32$).
-In the production data, the two incremental regimes are close relative to the architecture effect, but the context-fixed model is favoured by a small and precise difference.
-Thus the empirical comparison does not support the expected additional benefit of context-updating semantics in production.
+Comparing the two datasets yields a consistent lesson about the speaker policy, but not a consistent positive effect of context-updating semantics.
+The slider data favour a planned-usefulness policy over the greedy incremental baseline, with clearer gains in PPC than in heldout ELPD.
+The production data provide the sharper architecture result: the two incremental models strongly outperform the two global models, while the incremental context-fixed and context-updating variants have very similar predictive performance.
+Thus the empirical comparison does not support the expected additional benefit of context-updating semantics in either task.
 Context-updating composition still has a defined role in the mechanism space: the simulation asks what it can generate on its own, and it supplies order sensitivity for a global speaker without an order prior.
-In the fitted production comparison, that role does not translate into best predictive performance once the model includes an order-only prior, visual salience, and incremental choice.
+In the fitted production comparison, that role does not translate into best predictive performance once the model includes an order-only prior, visual salience, response-policy terms, and incremental choice.
 The response-space asymmetry is instead reflected in what each task identifies.
-The binary slider response space is informative about incremental pragmatic evaluation but weakly identifies the sharpness of the colour predicate; the production response space exposes a richer pattern of one-, two-, and three-adjective choices, making the incremental production process more diagnostic.
+The binary slider response space is informative about order-level response policy but compresses the empirical range; the production response space exposes a richer pattern of one-, two-, and three-adjective choices, making the incremental production process more diagnostic.
 
 % =============================================================================
 \section{Simulation Study}
