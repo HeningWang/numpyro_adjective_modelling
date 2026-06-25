@@ -153,6 +153,111 @@ def test_anchored_mixture_hier_smoke_trace():
     assert "obs" in trace
 
 
+def test_production_anchor_cli_registration():
+    expected = {
+        "production_anchor_sizesharp_2x2_inc_rec",
+        "production_anchor_sizesharp_2x2_inc_static",
+        "production_anchor_sizesharp_2x2_glob_rec",
+        "production_anchor_sizesharp_2x2_glob_static",
+    }
+
+    assert expected.issubset(set(run_inference.SPEAKER_CHOICES))
+    assert (
+        run_inference.get_hier_model("production_anchor_sizesharp_2x2_inc_rec")
+        is ms.likelihood_production_anchor_inc_speaker_hier
+    )
+    assert (
+        run_inference.get_hier_model("production_anchor_sizesharp_2x2_inc_static")
+        is ms.likelihood_production_anchor_inc_speaker_hier
+    )
+    assert (
+        run_inference.get_hier_model("production_anchor_sizesharp_2x2_glob_rec")
+        is ms.likelihood_production_anchor_global_speaker_hier
+    )
+    assert (
+        run_inference.get_hier_model("production_anchor_sizesharp_2x2_glob_static")
+        is ms.likelihood_production_anchor_global_speaker_hier
+    )
+
+
+def test_production_anchor_speakers_return_valid_probabilities():
+    states = jnp.array(
+        [
+            [10.0, 1.0, 1.0],
+            [8.0, 1.0, 0.0],
+            [3.0, 0.0, 1.0],
+            [2.0, 0.0, 0.0],
+        ],
+        dtype=jnp.float32,
+    )
+    L1, L2 = ms.precompute_listeners_production_anchor(jnp.stack([states]), recursive=True)
+
+    inc = ms.jitted_production_anchor_inc_speaker_fast(
+        L1,
+        L2,
+        jnp.stack([states]),
+        jnp.array([1.0], dtype=jnp.float32),
+        jnp.array([2.0], dtype=jnp.float32),
+        1.0,
+        0.5,
+        ms.PRODUCTION_ANCHOR_EPSILON,
+    )
+    glob = ms.jitted_production_anchor_global_speaker_fast(
+        L2,
+        jnp.array([2.0], dtype=jnp.float32),
+        1.0,
+        ms.PRODUCTION_ANCHOR_EPSILON,
+    )
+
+    assert inc.shape == (1,)
+    assert glob.shape == (1,)
+    assert np.all(np.isfinite(np.asarray(inc)))
+    assert np.all(np.isfinite(np.asarray(glob)))
+    assert 0.0 <= float(inc[0]) <= 1.0
+    assert 0.0 <= float(glob[0]) <= 1.0
+
+
+def test_production_anchor_hier_smoke_trace():
+    l1, l2 = make_listener_arrays()
+    model = handlers.seed(
+        ms.likelihood_production_anchor_inc_speaker_hier,
+        random.PRNGKey(0),
+    )
+    trace = handlers.trace(model).get_trace(
+        states=jnp.stack([
+            jnp.array(
+                [
+                    [10.0, 1.0, 1.0],
+                    [8.0, 1.0, 0.0],
+                    [3.0, 0.0, 1.0],
+                ],
+                dtype=jnp.float32,
+            ),
+            jnp.array(
+                [
+                    [9.0, 1.0, 1.0],
+                    [8.0, 0.0, 0.0],
+                    [4.0, 0.0, 1.0],
+                ],
+                dtype=jnp.float32,
+            ),
+        ]),
+        data=jnp.array([0.4, 0.6]),
+        pi0=0.01,
+        pi1=0.01,
+        participant_idx=jnp.array([0, 1]),
+        n_participants=2,
+        L1_all=jnp.stack([l1, l1]),
+        L2_all=jnp.stack([l2, l2]),
+        is_sharp_all=jnp.array([1.0, 0.0], dtype=jnp.float32),
+    )
+
+    assert "log_beta_order" in trace
+    assert "lambda_salience" in trace
+    assert "epsilon" in trace
+    assert "obs" in trace
+
+
 if __name__ == "__main__":
     test_usefulness_adjusted_order_bias_drops_for_color_advantage()
     test_planned_usefulness_order_returns_valid_probability()
@@ -162,4 +267,7 @@ if __name__ == "__main__":
     test_planned_usefulness_mixture_respects_endpoints()
     test_anchored_mixture_cli_registration()
     test_anchored_mixture_hier_smoke_trace()
+    test_production_anchor_cli_registration()
+    test_production_anchor_speakers_return_valid_probabilities()
+    test_production_anchor_hier_smoke_trace()
     print("PASS planned usefulness-order speaker tests")

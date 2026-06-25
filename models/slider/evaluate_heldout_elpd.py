@@ -28,7 +28,7 @@ THIS_DIR = Path(__file__).resolve().parent
 REPO_ROOT = THIS_DIR.parents[1]
 sys.path.insert(0, str(THIS_DIR))
 
-from modelSpecification import import_dataset_hier  # noqa: E402
+from modelSpecification import import_dataset_hier, slider_is_sharp_vector  # noqa: E402
 from run_inference import (  # noqa: E402
     balanced_fold_ids,
     canonicalize_speaker_type,
@@ -48,6 +48,10 @@ MODEL_TO_SPEAKER = {
     "planned_usefulness_mixture_static": "planned_usefulness_mixture_static",
     "planned_usefulness_mixture_anchored": "planned_usefulness_mixture_anchored",
     "planned_usefulness_mixture_anchored_static": "planned_usefulness_mixture_anchored_static",
+    "production_anchor_sizesharp_2x2_inc_rec": "production_anchor_sizesharp_2x2_inc_rec",
+    "production_anchor_sizesharp_2x2_inc_static": "production_anchor_sizesharp_2x2_inc_static",
+    "production_anchor_sizesharp_2x2_glob_rec": "production_anchor_sizesharp_2x2_glob_rec",
+    "production_anchor_sizesharp_2x2_glob_static": "production_anchor_sizesharp_2x2_glob_static",
 }
 
 PAIR_SPECS = (
@@ -96,6 +100,26 @@ PAIR_SPECS = (
         "planned_usefulness_mixture_anchored_static",
         "incremental_static",
         "anchored_mixture_vs_greedy_static",
+    ),
+    (
+        "production_anchor_sizesharp_2x2_inc_rec",
+        "production_anchor_sizesharp_2x2_glob_rec",
+        "production_anchor_architecture_recursive",
+    ),
+    (
+        "production_anchor_sizesharp_2x2_inc_static",
+        "production_anchor_sizesharp_2x2_glob_static",
+        "production_anchor_architecture_static",
+    ),
+    (
+        "production_anchor_sizesharp_2x2_inc_static",
+        "production_anchor_sizesharp_2x2_inc_rec",
+        "production_anchor_semantics_incremental",
+    ),
+    (
+        "production_anchor_sizesharp_2x2_glob_static",
+        "production_anchor_sizesharp_2x2_glob_rec",
+        "production_anchor_semantics_global",
     ),
 )
 
@@ -187,6 +211,7 @@ def heldout_fold_data(fold: int, num_folds: int, fold_seed: int):
         "pi0": pi0,
         "pi1": pi1,
         "df": df.loc[heldout_mask].copy(),
+        "is_sharp": jnp.asarray(np.asarray(slider_is_sharp_vector(df))[heldout_mask]),
     }
 
 
@@ -214,19 +239,35 @@ def score_fold(
     idata = az.from_netcdf(path)
     posterior_samples = posterior_samples_from_idata(idata)
     diagnostics = fold_diagnostics(idata, args.max_r_hat)
-    ll = log_likelihood(
-        model,
-        posterior_samples,
-        heldout["states"],
-        heldout["data"],
-        heldout["pi0"],
-        heldout["pi1"],
-        heldout["participant_idx"],
-        heldout["n_participants"],
-        L1_all,
-        L2_all,
-        parallel=False,
-    )["obs"]
+    if speaker.startswith("production_anchor_sizesharp_2x2_"):
+        ll = log_likelihood(
+            model,
+            posterior_samples,
+            heldout["states"],
+            heldout["data"],
+            heldout["pi0"],
+            heldout["pi1"],
+            heldout["participant_idx"],
+            heldout["n_participants"],
+            L1_all,
+            L2_all,
+            heldout["is_sharp"],
+            parallel=False,
+        )["obs"]
+    else:
+        ll = log_likelihood(
+            model,
+            posterior_samples,
+            heldout["states"],
+            heldout["data"],
+            heldout["pi0"],
+            heldout["pi1"],
+            heldout["participant_idx"],
+            heldout["n_participants"],
+            L1_all,
+            L2_all,
+            parallel=False,
+        )["obs"]
     ll_np = np.asarray(ll)
     if ll_np.ndim != 2:
         ll_np = ll_np.reshape((ll_np.shape[0], -1))

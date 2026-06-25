@@ -688,6 +688,18 @@ FIXED_BIAS = 2.0
 FIXED_COLOR_SEMVALUE = 0.8
 FIXED_K = 0.5
 FIXED_WF = 1.0
+PRODUCTION_ANCHOR_COLOR_SEMVALUE = 0.59
+PRODUCTION_ANCHOR_K = 0.50
+PRODUCTION_ANCHOR_WF = 0.6856
+PRODUCTION_ANCHOR_EPSILON = 0.003
+PRODUCTION_ANCHOR_ORDER_SCORES = jnp.array(
+    [0.9516353951510996, -0.9516353951510994],
+    dtype=jnp.float32,
+)
+PRODUCTION_ANCHOR_BASE_VISUAL_SALIENCE = jnp.array(
+    [0.0, 1.0, 0.25],
+    dtype=jnp.float32,
+)
 
 @jax.jit
 def jitted_global_speaker(states, alpha, bias):
@@ -1589,6 +1601,231 @@ def precompute_listeners_at_csv(states, color_semvalue):
 def precompute_listeners_frozen_at_csv(states, color_semvalue):
     """Frozen-size analogue of :func:`precompute_listeners_at_csv`."""
     return _vmap_L1_csv(states, color_semvalue), _vmap_L2_frozen_csv(states, color_semvalue)
+
+
+def precompute_listeners_production_anchor(states, recursive: bool = True):
+    """Precompute slider listeners at the production anchor semantic constants."""
+    vmap_l1 = jax.vmap(
+        lambda s: literal_listener_one_word(
+            s,
+            PRODUCTION_ANCHOR_COLOR_SEMVALUE,
+            PRODUCTION_ANCHOR_WF,
+            PRODUCTION_ANCHOR_K,
+        ),
+        in_axes=(0,),
+    )
+    listener_fn = literal_listener_recursive if recursive else literal_listener_recursive_frozen
+    vmap_l2 = jax.vmap(
+        lambda s: listener_fn(
+            2,
+            s,
+            PRODUCTION_ANCHOR_COLOR_SEMVALUE,
+            PRODUCTION_ANCHOR_WF,
+            PRODUCTION_ANCHOR_K,
+        ),
+        in_axes=(0,),
+    )
+    return vmap_l1(states), vmap_l2(states)
+
+
+def slider_is_sharp_vector(df):
+    """Return production-style sharpness covariate for slider observations."""
+    return jnp.array(
+        df["sharpness"].astype(str).eq("sharp").to_numpy(dtype=np.float32),
+        dtype=jnp.float32,
+    )
+
+
+def _production_anchor_visual_salience_scores(states, is_sharp):
+    """Production final-model visual salience scores, restricted to D/C order."""
+    sizes = states[:, 0]
+    colors = states[:, 1]
+    forms = states[:, 2]
+
+    size_scale = jnp.std(sizes) + 1e-8
+    size_margin = (sizes[0] - jnp.max(sizes[1:])) / size_scale
+    size_contrast = jax.nn.sigmoid(size_margin) * (0.5 + 0.5 * is_sharp)
+    color_contrast = 1.0 - jnp.mean((colors[1:] == colors[0]).astype(jnp.float32))
+    form_contrast = 1.0 - jnp.mean((forms[1:] == forms[0]).astype(jnp.float32))
+
+    raw = PRODUCTION_ANCHOR_BASE_VISUAL_SALIENCE + jnp.array(
+        [size_contrast, color_contrast, form_contrast],
+        dtype=jnp.float32,
+    )
+    return raw - jnp.mean(raw)
+
+
+def _production_anchor_inc_from_listeners(
+    L1,
+    L2,
+    states,
+    is_sharp,
+    alpha,
+    beta_order,
+    lambda_salience,
+    epsilon=PRODUCTION_ANCHOR_EPSILON,
+):
+    """Production-style incremental order policy for the slider's DC/CD pair."""
+    eps = 1e-20
+    salience = _production_anchor_visual_salience_scores(states, is_sharp)
+    d_salience = salience[0]
+    c_salience = salience[1]
+
+    util_first_d = alpha * jnp.log(jnp.clip(L1[0, 0], eps, 1.0)) + lambda_salience * d_salience
+    util_first_c = alpha * jnp.log(jnp.clip(L1[1, 0], eps, 1.0)) + lambda_salience * c_salience
+    first = jax.nn.softmax(jnp.array([util_first_d, util_first_c]))
+
+    util_dc = alpha * jnp.log(jnp.clip(L2[0, 0], eps, 1.0)) + lambda_salience * c_salience
+    util_d_stop = alpha * jnp.log(jnp.clip(L1[0, 0], eps, 1.0))
+    continue_after_d = jax.nn.softmax(jnp.array([util_dc, util_d_stop]))[0]
+
+    util_cd = alpha * jnp.log(jnp.clip(L2[1, 0], eps, 1.0)) + lambda_salience * d_salience
+    util_c_stop = alpha * jnp.log(jnp.clip(L1[1, 0], eps, 1.0))
+    continue_after_c = jax.nn.softmax(jnp.array([util_cd, util_c_stop]))[0]
+
+    chain_dc = first[0] * continue_after_d
+    chain_cd = first[1] * continue_after_c
+    logits = (
+        jnp.log(jnp.clip(jnp.array([chain_dc, chain_cd]), eps, 1.0))
+        + beta_order * PRODUCTION_ANCHOR_ORDER_SCORES
+    )
+    probs = jax.nn.softmax(logits)
+    return (1.0 - epsilon) * probs[0] + epsilon / 2.0
+
+
+def _production_anchor_global_from_listeners(
+    L2,
+    alpha,
+    beta_order,
+    epsilon=PRODUCTION_ANCHOR_EPSILON,
+):
+    """Production-style global order policy for the slider's DC/CD pair."""
+    eps = 1e-20
+    logits = (
+        alpha * jnp.log(jnp.clip(jnp.array([L2[0, 0], L2[1, 0]]), eps, 1.0))
+        + beta_order * PRODUCTION_ANCHOR_ORDER_SCORES
+    )
+    probs = jax.nn.softmax(logits)
+    return (1.0 - epsilon) * probs[0] + epsilon / 2.0
+
+
+jitted_production_anchor_inc_speaker_fast = jax.jit(
+    jax.vmap(
+        _production_anchor_inc_from_listeners,
+        in_axes=(0, 0, 0, 0, 0, None, None, None),
+    )
+)
+
+jitted_production_anchor_global_speaker_fast = jax.jit(
+    jax.vmap(
+        _production_anchor_global_from_listeners,
+        in_axes=(0, 0, None, None),
+    )
+)
+
+
+def _sample_production_anchor_population():
+    alpha = numpyro.sample("alpha", dist.HalfNormal(3.0))
+    log_beta_order = numpyro.sample("log_beta_order", dist.Normal(0.0, 0.35))
+    beta_order = jnp.exp(log_beta_order)
+    lambda_salience = numpyro.sample("lambda_salience", dist.HalfNormal(1.0))
+    numpyro.deterministic("epsilon", jnp.asarray(PRODUCTION_ANCHOR_EPSILON))
+    return alpha, beta_order, lambda_salience
+
+
+def _sample_production_anchor_hierarchy(n_participants):
+    tau = numpyro.sample("tau", dist.HalfNormal(0.15))
+    with numpyro.plate("participants", n_participants):
+        delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+    return delta
+
+
+def likelihood_production_anchor_inc_speaker(
+    states=None, data=None, pi0=0.01, pi1=0.01, L1_all=None, L2_all=None, is_sharp_all=None
+):
+    """Production final-family incremental anchor reduced to slider DC/CD order."""
+    alpha, beta_order, lambda_salience = _sample_production_anchor_population()
+    sigma = numpyro.sample("sigma", dist.HalfNormal(0.3))
+    is_sharp_all = (
+        jnp.ones(L1_all.shape[0], dtype=jnp.float32)
+        if is_sharp_all is None else is_sharp_all
+    )
+    with numpyro.plate("data", L1_all.shape[0]):
+        alpha_per_trial = jnp.full(L1_all.shape[0], alpha)
+        model_prob = jitted_production_anchor_inc_speaker_fast(
+            L1_all, L2_all, states, is_sharp_all,
+            alpha_per_trial, beta_order, lambda_salience, PRODUCTION_ANCHOR_EPSILON,
+        )
+        model_prob = jnp.clip(model_prob, 1e-6, 1 - 1e-6)
+        if data is not None:
+            data = jnp.clip(data, 0.0, 1.0)
+        numpyro.sample("obs", ZOIB(model_prob, sigma, pi0, pi1), obs=data)
+
+
+def likelihood_production_anchor_global_speaker(
+    states=None, data=None, pi0=0.01, pi1=0.01, L1_all=None, L2_all=None, is_sharp_all=None
+):
+    """Production final-family global anchor reduced to slider DC/CD order."""
+    del L1_all, is_sharp_all
+    alpha, beta_order, _lambda_salience = _sample_production_anchor_population()
+    sigma = numpyro.sample("sigma", dist.HalfNormal(0.3))
+    with numpyro.plate("data", L2_all.shape[0]):
+        alpha_per_trial = jnp.full(L2_all.shape[0], alpha)
+        model_prob = jitted_production_anchor_global_speaker_fast(
+            L2_all, alpha_per_trial, beta_order, PRODUCTION_ANCHOR_EPSILON
+        )
+        model_prob = jnp.clip(model_prob, 1e-6, 1 - 1e-6)
+        if data is not None:
+            data = jnp.clip(data, 0.0, 1.0)
+        numpyro.sample("obs", ZOIB(model_prob, sigma, pi0, pi1), obs=data)
+
+
+def likelihood_production_anchor_inc_speaker_hier(
+    states=None, data=None,
+    pi0: float = 0.01, pi1: float = 0.01,
+    participant_idx=None, n_participants: int = 1,
+    L1_all=None, L2_all=None, is_sharp_all=None,
+):
+    """Production-anchor incremental slider cell with production-style alpha variation."""
+    alpha, beta_order, lambda_salience = _sample_production_anchor_population()
+    sigma = numpyro.sample("sigma", dist.HalfNormal(0.3))
+    delta = _sample_production_anchor_hierarchy(n_participants)
+    is_sharp_all = (
+        jnp.ones(L1_all.shape[0], dtype=jnp.float32)
+        if is_sharp_all is None else is_sharp_all
+    )
+    alpha_per_trial = jnp.maximum(alpha + delta[participant_idx], 0.0)
+    with numpyro.plate("data", L1_all.shape[0]):
+        model_prob = jitted_production_anchor_inc_speaker_fast(
+            L1_all, L2_all, states, is_sharp_all,
+            alpha_per_trial, beta_order, lambda_salience, PRODUCTION_ANCHOR_EPSILON,
+        )
+        model_prob = jnp.clip(model_prob, 1e-6, 1 - 1e-6)
+        if data is not None:
+            data = jnp.clip(data, 0.0, 1.0)
+        numpyro.sample("obs", ZOIB(model_prob, sigma, pi0, pi1), obs=data)
+
+
+def likelihood_production_anchor_global_speaker_hier(
+    states=None, data=None,
+    pi0: float = 0.01, pi1: float = 0.01,
+    participant_idx=None, n_participants: int = 1,
+    L1_all=None, L2_all=None, is_sharp_all=None,
+):
+    """Production-anchor global slider cell with production-style alpha variation."""
+    del states, L1_all, is_sharp_all
+    alpha, beta_order, _lambda_salience = _sample_production_anchor_population()
+    sigma = numpyro.sample("sigma", dist.HalfNormal(0.3))
+    delta = _sample_production_anchor_hierarchy(n_participants)
+    alpha_per_trial = jnp.maximum(alpha + delta[participant_idx], 0.0)
+    with numpyro.plate("data", L2_all.shape[0]):
+        model_prob = jitted_production_anchor_global_speaker_fast(
+            L2_all, alpha_per_trial, beta_order, PRODUCTION_ANCHOR_EPSILON
+        )
+        model_prob = jnp.clip(model_prob, 1e-6, 1 - 1e-6)
+        if data is not None:
+            data = jnp.clip(data, 0.0, 1.0)
+        numpyro.sample("obs", ZOIB(model_prob, sigma, pi0, pi1), obs=data)
 
 
 def likelihood_inc_speaker_hier_free_csv(

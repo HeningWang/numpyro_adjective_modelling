@@ -79,6 +79,20 @@ def test_heldout_speaker_ablation_specs_cover_signed_order_variants():
         "planned_usefulness_mixture_anchored_static",
         "incremental_static",
     ) in pairs
+    assert heldout.MODEL_TO_SPEAKER["production_anchor_sizesharp_2x2_inc_rec"] == (
+        "production_anchor_sizesharp_2x2_inc_rec"
+    )
+    assert heldout.MODEL_TO_SPEAKER["production_anchor_sizesharp_2x2_glob_static"] == (
+        "production_anchor_sizesharp_2x2_glob_static"
+    )
+    assert (
+        "production_anchor_sizesharp_2x2_inc_rec",
+        "production_anchor_sizesharp_2x2_glob_rec",
+    ) in pairs
+    assert (
+        "production_anchor_sizesharp_2x2_inc_static",
+        "production_anchor_sizesharp_2x2_inc_rec",
+    ) in pairs
 
 
 def test_full_run_recommendation_requires_ppc_success():

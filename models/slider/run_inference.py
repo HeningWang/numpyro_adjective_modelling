@@ -30,6 +30,8 @@ from modelSpecification import (
     precompute_listeners_frozen,
     precompute_listeners_at_csv,
     precompute_listeners_frozen_at_csv,
+    precompute_listeners_production_anchor,
+    slider_is_sharp_vector,
     canonicalize_speaker_type,
     likelihood_gb_speaker,
     likelihood_inc_speaker,
@@ -41,6 +43,8 @@ from modelSpecification import (
     likelihood_planned_signed_usefulness_order_speaker_static,
     likelihood_planned_usefulness_mixture_speaker_static,
     likelihood_planned_usefulness_mixture_anchored_speaker_static,
+    likelihood_production_anchor_inc_speaker,
+    likelihood_production_anchor_global_speaker,
     likelihood_gb_speaker_static,
     likelihood_inc_speaker_frozen,
     likelihood_gb_speaker_hier,
@@ -53,6 +57,8 @@ from modelSpecification import (
     likelihood_planned_signed_usefulness_order_speaker_static_hier,
     likelihood_planned_usefulness_mixture_speaker_static_hier,
     likelihood_planned_usefulness_mixture_anchored_speaker_static_hier,
+    likelihood_production_anchor_inc_speaker_hier,
+    likelihood_production_anchor_global_speaker_hier,
     likelihood_gb_speaker_static_hier,
     likelihood_inc_speaker_frozen_hier,
     likelihood_inc_speaker_hier_free_csv,
@@ -67,6 +73,15 @@ RECURSIVE_LISTENER_SPEAKERS = {
     "planned_usefulness_signed_order",
     "planned_usefulness_mixture",
     "planned_usefulness_mixture_anchored",
+    "production_anchor_sizesharp_2x2_inc_rec",
+    "production_anchor_sizesharp_2x2_glob_rec",
+}
+
+PRODUCTION_ANCHOR_SPEAKERS = {
+    "production_anchor_sizesharp_2x2_inc_rec",
+    "production_anchor_sizesharp_2x2_inc_static",
+    "production_anchor_sizesharp_2x2_glob_rec",
+    "production_anchor_sizesharp_2x2_glob_static",
 }
 
 SPEAKER_CHOICES = [
@@ -83,6 +98,10 @@ SPEAKER_CHOICES = [
     "planned_usefulness_mixture_static",
     "planned_usefulness_mixture_anchored",
     "planned_usefulness_mixture_anchored_static",
+    "production_anchor_sizesharp_2x2_inc_rec",
+    "production_anchor_sizesharp_2x2_inc_static",
+    "production_anchor_sizesharp_2x2_glob_rec",
+    "production_anchor_sizesharp_2x2_glob_static",
 ]
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -165,6 +184,11 @@ def balanced_fold_ids(
 
 
 def select_listener_precompute(canonical_speaker_type: str, states, color_semvalue=None):
+    if canonical_speaker_type in PRODUCTION_ANCHOR_SPEAKERS:
+        return precompute_listeners_production_anchor(
+            states,
+            recursive=canonical_speaker_type in RECURSIVE_LISTENER_SPEAKERS,
+        )
     if color_semvalue is not None:
         if canonical_speaker_type in RECURSIVE_LISTENER_SPEAKERS:
             return precompute_listeners_at_csv(states, color_semvalue)
@@ -208,6 +232,14 @@ def get_hier_model(canonical_speaker_type: str, free_color_semvalue: bool = Fals
         return likelihood_planned_usefulness_mixture_speaker_static_hier
     if canonical_speaker_type == "planned_usefulness_mixture_anchored_static":
         return likelihood_planned_usefulness_mixture_anchored_speaker_static_hier
+    if canonical_speaker_type == "production_anchor_sizesharp_2x2_inc_rec":
+        return likelihood_production_anchor_inc_speaker_hier
+    if canonical_speaker_type == "production_anchor_sizesharp_2x2_inc_static":
+        return likelihood_production_anchor_inc_speaker_hier
+    if canonical_speaker_type == "production_anchor_sizesharp_2x2_glob_rec":
+        return likelihood_production_anchor_global_speaker_hier
+    if canonical_speaker_type == "production_anchor_sizesharp_2x2_glob_static":
+        return likelihood_production_anchor_global_speaker_hier
     raise ValueError(
         "Invalid speaker type. Choose 'global', 'incremental', "
         "planned usefulness variants, 'global_static', "
@@ -225,6 +257,7 @@ def run_inference(
 ):
     canonical_speaker_type = canonicalize_speaker_type(speaker_type)
     states_train, empirical_train, df = import_dataset()
+    is_sharp_train = slider_is_sharp_vector(df)
 
     empirical_train_np = np.asarray(empirical_train)
     pi0 = float(np.mean(np.isclose(empirical_train_np, 0.0)))
@@ -272,6 +305,14 @@ def run_inference(
         model = likelihood_planned_usefulness_mixture_speaker_static
     elif canonical_speaker_type == "planned_usefulness_mixture_anchored_static":
         model = likelihood_planned_usefulness_mixture_anchored_speaker_static
+    elif canonical_speaker_type == "production_anchor_sizesharp_2x2_inc_rec":
+        model = likelihood_production_anchor_inc_speaker
+    elif canonical_speaker_type == "production_anchor_sizesharp_2x2_inc_static":
+        model = likelihood_production_anchor_inc_speaker
+    elif canonical_speaker_type == "production_anchor_sizesharp_2x2_glob_rec":
+        model = likelihood_production_anchor_global_speaker
+    elif canonical_speaker_type == "production_anchor_sizesharp_2x2_glob_static":
+        model = likelihood_production_anchor_global_speaker
     else:
         raise ValueError(
             "Invalid speaker type. Choose 'global', 'incremental', "
@@ -283,16 +324,36 @@ def run_inference(
     kernel = NUTS(model, dense_mass=True, max_tree_depth=8, target_accept_prob=0.9)
     mcmc = MCMC(kernel, num_warmup=num_warmup, num_samples=num_samples,
                 num_chains=num_chains, chain_method="vectorized")
-    mcmc.run(rng_key_, states_train, empirical_train, pi0, pi1, L1_all, L2_all)
+    if canonical_speaker_type in PRODUCTION_ANCHOR_SPEAKERS:
+        mcmc.run(
+            rng_key_,
+            states_train,
+            empirical_train,
+            pi0,
+            pi1,
+            L1_all,
+            L2_all,
+            is_sharp_train,
+        )
+    else:
+        mcmc.run(rng_key_, states_train, empirical_train, pi0, pi1, L1_all, L2_all)
     mcmc.print_summary()
 
     posterior_samples = mcmc.get_samples()
-    posterior_predictive = Predictive(model, posterior_samples)(
-        PRNGKey(1), states_train, None, pi0, pi1, L1_all, L2_all
-    )
-    prior = Predictive(model, num_samples=1000)(
-        PRNGKey(2), states_train, None, pi0, pi1, L1_all, L2_all
-    )
+    if canonical_speaker_type in PRODUCTION_ANCHOR_SPEAKERS:
+        posterior_predictive = Predictive(model, posterior_samples)(
+            PRNGKey(1), states_train, None, pi0, pi1, L1_all, L2_all, is_sharp_train
+        )
+        prior = Predictive(model, num_samples=1000)(
+            PRNGKey(2), states_train, None, pi0, pi1, L1_all, L2_all, is_sharp_train
+        )
+    else:
+        posterior_predictive = Predictive(model, posterior_samples)(
+            PRNGKey(1), states_train, None, pi0, pi1, L1_all, L2_all
+        )
+        prior = Predictive(model, num_samples=1000)(
+            PRNGKey(2), states_train, None, pi0, pi1, L1_all, L2_all
+        )
 
     N = states_train.shape[0]
     numpyro_data = az.from_numpyro(
@@ -373,6 +434,7 @@ def run_inference_hier(
         states_train = states_all
         empirical_train = empirical_all
         participant_idx = participant_idx_all
+        train_mask = None
 
     empirical_train_np = np.asarray(empirical_train)
     pi0 = float(np.mean(np.isclose(empirical_train_np, 0.0)))
@@ -400,6 +462,8 @@ def run_inference_hier(
     else:
         L1_all, L2_all = select_listener_precompute(canonical_speaker_type, states_train)
     print("Listeners precomputed.")
+    is_sharp_all = slider_is_sharp_vector(df)
+    is_sharp_train = is_sharp_all if train_mask is None else is_sharp_all[train_mask]
 
     if free_color_semvalue:
         suffix = "_free_csv"
@@ -430,21 +494,40 @@ def run_inference_hier(
         num_chains=num_chains,
         chain_method="vectorized",
     )
-    mcmc.run(
-        rng_key_, states_train, empirical_train,
-        pi0, pi1, participant_idx, n_participants, L1_all, L2_all,
-    )
+    if canonical_speaker_type in PRODUCTION_ANCHOR_SPEAKERS:
+        mcmc.run(
+            rng_key_, states_train, empirical_train,
+            pi0, pi1, participant_idx, n_participants, L1_all, L2_all,
+            is_sharp_train,
+        )
+    else:
+        mcmc.run(
+            rng_key_, states_train, empirical_train,
+            pi0, pi1, participant_idx, n_participants, L1_all, L2_all,
+        )
     mcmc.print_summary(exclude_deterministic=False)
 
     posterior_samples = mcmc.get_samples()
-    posterior_predictive = Predictive(model, posterior_samples)(
-        PRNGKey(1), states_train, None,
-        pi0, pi1, participant_idx, n_participants, L1_all, L2_all,
-    )
-    prior = Predictive(model, num_samples=1000)(
-        PRNGKey(2), states_train, None,
-        pi0, pi1, participant_idx, n_participants, L1_all, L2_all,
-    )
+    if canonical_speaker_type in PRODUCTION_ANCHOR_SPEAKERS:
+        posterior_predictive = Predictive(model, posterior_samples)(
+            PRNGKey(1), states_train, None,
+            pi0, pi1, participant_idx, n_participants, L1_all, L2_all,
+            is_sharp_train,
+        )
+        prior = Predictive(model, num_samples=1000)(
+            PRNGKey(2), states_train, None,
+            pi0, pi1, participant_idx, n_participants, L1_all, L2_all,
+            is_sharp_train,
+        )
+    else:
+        posterior_predictive = Predictive(model, posterior_samples)(
+            PRNGKey(1), states_train, None,
+            pi0, pi1, participant_idx, n_participants, L1_all, L2_all,
+        )
+        prior = Predictive(model, num_samples=1000)(
+            PRNGKey(2), states_train, None,
+            pi0, pi1, participant_idx, n_participants, L1_all, L2_all,
+        )
 
     N = states_train.shape[0]
     numpyro_data = az.from_numpyro(
