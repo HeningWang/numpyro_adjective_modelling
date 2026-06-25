@@ -2561,6 +2561,95 @@ def incremental_speaker_principled_planned_prefix(
     return (1.0 - epsilon) * model_probs + epsilon / n_utt
 
 
+def _apply_principled_response_policy(
+    probs: jnp.ndarray,
+    sufficient_dim: int,
+    has_one_word_solution: float,
+    is_colour_sufficient: float,
+    lambda_sufficient_single: float,
+    lambda_reliability_form: float,
+) -> jnp.ndarray:
+    dim_count = jnp.sum(FULL_PRESENT_15, axis=1)
+    single_dim = (dim_count == 1.0).astype(jnp.float32)
+    dim_id = jnp.argmax(FULL_PRESENT_15, axis=1)
+    sufficient_match = (
+        (sufficient_dim >= 0)
+        & (dim_id == sufficient_dim)
+        & (N_WORDS == 1.0)
+    ).astype(jnp.float32)
+    sufficient_single_bonus = (
+        lambda_sufficient_single
+        * has_one_word_solution
+        * single_dim
+        * sufficient_match
+    )
+    reliability_form_bonus = (
+        lambda_reliability_form
+        * (1.0 - is_colour_sufficient)
+        * F_PRESENT_15
+    )
+    logits = (
+        jnp.log(jnp.clip(probs, 1e-12))
+        + sufficient_single_bonus
+        + reliability_form_bonus
+    )
+    return jax.nn.softmax(logits)
+
+
+def incremental_speaker_principled_response_policy(
+    states:                    jnp.ndarray,
+    sufficient_dim:            int,
+    has_one_word_solution:     float,
+    is_sharp:                  float,
+    is_colour_sufficient:      float,
+    alpha:                     float = 3.0,
+    beta_order:                float = 1.0,
+    lambda_salience:           float = 0.0,
+    rho_salience_stop:         float = 0.0,
+    lambda_sufficient_single:  float = 0.0,
+    lambda_reliability_form:   float = 0.0,
+    gamma_uncertainty_len:     float = 0.0,
+    color_semval:              float = 0.59,
+    form_semval:               float = 0.50,
+    k:                         float = 0.50,
+    wf:                        float = 0.6856,
+    epsilon:                   float = 0.01,
+    order_scores:              jnp.ndarray = LOG_LM_ORDER_ONLY_15,
+    base_visual_salience:      jnp.ndarray = BASE_VISUAL_SALIENCE,
+    recursive:                 bool = True,
+    size_context_mode:         str = "posterior",
+) -> jnp.ndarray:
+    """Principled incremental speaker plus two response-policy pressures."""
+    base_probs = incremental_speaker_principled(
+        states,
+        sufficient_dim,
+        has_one_word_solution,
+        is_sharp,
+        alpha,
+        beta_order,
+        lambda_salience,
+        rho_salience_stop,
+        gamma_uncertainty_len,
+        color_semval,
+        form_semval,
+        k,
+        wf,
+        epsilon,
+        order_scores,
+        base_visual_salience,
+        recursive=recursive,
+        size_context_mode=size_context_mode,
+    )
+    return _apply_principled_response_policy(
+        base_probs,
+        sufficient_dim,
+        has_one_word_solution,
+        is_colour_sufficient,
+        lambda_sufficient_single,
+        lambda_reliability_form,
+    )
+
+
 def global_speaker_principled(
     states:                jnp.ndarray,
     sufficient_dim:        int,
@@ -2924,6 +3013,32 @@ vectorized_incremental_speaker_principled_planned_hier = jax.vmap(
              ),
 )
 
+vectorized_incremental_speaker_principled_response_policy_hier = jax.vmap(
+    incremental_speaker_principled_response_policy,
+    in_axes=(0,    # states
+             0,    # sufficient_dim
+             0,    # has_one_word_solution
+             0,    # is_sharp
+             0,    # is_colour_sufficient
+             0,    # alpha
+             None, # beta_order
+             None, # lambda_salience
+             None, # rho_salience_stop
+             None, # lambda_sufficient_single
+             None, # lambda_reliability_form
+             None, # gamma_uncertainty_len
+             None, # color_semval
+             None, # form_semval
+             None, # k
+             None, # wf
+             None, # epsilon
+             None, # order_scores
+             None, # base_visual_salience
+             None, # recursive
+             None, # size_context_mode
+             ),
+)
+
 @partial(jax.jit, static_argnames=("recursive", "size_context_mode"))
 def jitted_speaker_principled_hier(
     states, sufficient_dim, has_one_word_solution, is_sharp,
@@ -2954,6 +3069,23 @@ def jitted_speaker_principled_planned_hier(
         planning_scale, gamma_uncertainty_len, color_semval, form_semval, k,
         wf, epsilon, order_scores, base_visual_salience, recursive,
         size_context_mode,
+    )
+
+
+@partial(jax.jit, static_argnames=("recursive", "size_context_mode"))
+def jitted_speaker_principled_response_policy_hier(
+    states, sufficient_dim, has_one_word_solution, is_sharp, is_colour_sufficient,
+    alpha_per_trial, beta_order, lambda_salience, rho_salience_stop,
+    lambda_sufficient_single, lambda_reliability_form, gamma_uncertainty_len,
+    color_semval, form_semval, k, wf, epsilon, order_scores,
+    base_visual_salience, recursive=True, size_context_mode="posterior",
+):
+    return vectorized_incremental_speaker_principled_response_policy_hier(
+        states, sufficient_dim, has_one_word_solution, is_sharp,
+        is_colour_sufficient, alpha_per_trial, beta_order, lambda_salience,
+        rho_salience_stop, lambda_sufficient_single, lambda_reliability_form,
+        gamma_uncertainty_len, color_semval, form_semval, k, wf, epsilon,
+        order_scores, base_visual_salience, recursive, size_context_mode,
     )
 
 
@@ -3487,6 +3619,8 @@ PRINCIPLED_PRIOR_PROFILES = {
         "lambda_salience_scale": 2.0,
         "rho_salience_stop_scale": 2.0,
         "planning_scale": 1.0,
+        "lambda_sufficient_single_scale": 2.0,
+        "lambda_reliability_form_scale": 2.0,
         "gamma_uncertainty_len_scale": 2.0,
         "tau_scale": 0.2,
     },
@@ -3496,6 +3630,8 @@ PRINCIPLED_PRIOR_PROFILES = {
         "lambda_salience_scale": 1.0,
         "rho_salience_stop_scale": 0.75,
         "planning_scale": 0.75,
+        "lambda_sufficient_single_scale": 1.5,
+        "lambda_reliability_form_scale": 1.5,
         "gamma_uncertainty_len_scale": 1.0,
         "tau_scale": 0.15,
     },
@@ -3505,6 +3641,8 @@ PRINCIPLED_PRIOR_PROFILES = {
         "lambda_salience_scale": 0.75,
         "rho_salience_stop_scale": 0.5,
         "planning_scale": 0.5,
+        "lambda_sufficient_single_scale": 1.0,
+        "lambda_reliability_form_scale": 1.0,
         "gamma_uncertainty_len_scale": 0.75,
         "tau_scale": 0.10,
     },
@@ -3515,6 +3653,7 @@ def _make_principled_model(
     drop: tuple = (),
     salience_stop: bool = False,
     planned_prefix: bool = False,
+    response_policy: bool = False,
     prior_profile: str = "default",
     cell: str = "inc_rec",
     fixed_epsilon: float | None = None,
@@ -3540,6 +3679,10 @@ def _make_principled_model(
                          f"supported: {sorted(_valid_cells)}")
     if planned_prefix and cell in ("glob_rec", "glob_static"):
         raise ValueError("planned_prefix is defined for incremental 2x2 cells.")
+    if response_policy and cell in ("glob_rec", "glob_static"):
+        raise ValueError("response_policy is defined for incremental 2x2 cells.")
+    if planned_prefix and response_policy:
+        raise ValueError("planned_prefix and response_policy are separate variants.")
     _valid_size_context_modes = {"posterior", "comparison_class"}
     if size_context_mode not in _valid_size_context_modes:
         raise ValueError(
@@ -3551,6 +3694,8 @@ def _make_principled_model(
     order_scores = jnp.zeros_like(LOG_LM_ORDER_ONLY_15) if "order" in drop else LOG_LM_ORDER_ONLY_15
     if planned_prefix:
         speaker_fn = jitted_speaker_principled_planned_hier
+    elif response_policy:
+        speaker_fn = jitted_speaker_principled_response_policy_hier
     else:
         speaker_fn = (
             jitted_global_speaker_principled_hier
@@ -3561,7 +3706,8 @@ def _make_principled_model(
 
     def model(states=None, empirical=None,
               participant_idx=None, n_participants=None,
-              sufficient_dim=None, has_one_word_solution=None, is_sharp=None):
+              sufficient_dim=None, has_one_word_solution=None, is_sharp=None,
+              is_colour_sufficient=None):
         alpha = numpyro.sample("alpha", dist.HalfNormal(priors["alpha_scale"]))
         if "order" in drop:
             beta_order = 0.0
@@ -3592,6 +3738,20 @@ def _make_principled_model(
             )
             if planned_prefix else 0.0
         )
+        lambda_sufficient_single = (
+            numpyro.sample(
+                "lambda_sufficient_single",
+                dist.HalfNormal(priors["lambda_sufficient_single_scale"]),
+            )
+            if response_policy else 0.0
+        )
+        lambda_reliability_form = (
+            numpyro.sample(
+                "lambda_reliability_form",
+                dist.HalfNormal(priors["lambda_reliability_form_scale"]),
+            )
+            if response_policy else 0.0
+        )
         gamma_uncertainty_len = (
             0.0 if "uncertainty_len" in drop
             else numpyro.sample(
@@ -3618,6 +3778,16 @@ def _make_principled_model(
                     alpha_per_trial, beta_order, lambda_salience,
                     rho_salience_stop, planning_scale, gamma_uncertainty_len,
                     0.59, 0.50, 0.50, 0.6856, epsilon, order_scores,
+                    BASE_VISUAL_SALIENCE, recursive=recursive,
+                    size_context_mode=size_context_mode,
+                )
+            elif response_policy:
+                probs = speaker_fn(
+                    states, sufficient_dim, has_one_word_solution, is_sharp,
+                    is_colour_sufficient, alpha_per_trial, beta_order,
+                    lambda_salience, rho_salience_stop, lambda_sufficient_single,
+                    lambda_reliability_form, gamma_uncertainty_len, 0.59, 0.50,
+                    0.50, 0.6856, epsilon, order_scores,
                     BASE_VISUAL_SALIENCE, recursive=recursive,
                     size_context_mode=size_context_mode,
                 )
@@ -3715,6 +3885,20 @@ likelihood_function_principled_salience_stop_regularized_plannedprefix_2x2_inc_s
     drop=("uncertainty_len",),
     salience_stop=True,
     planned_prefix=True,
+    prior_profile="regularized",
+    cell="inc_static",
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_inc_rec_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    prior_profile="regularized",
+    cell="inc_rec",
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_inc_static_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
     prior_profile="regularized",
     cell="inc_static",
 )

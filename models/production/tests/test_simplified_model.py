@@ -141,6 +141,7 @@ def test_principled_salience_stop_favors_single_salient_adjective():
 def test_principled_planned_prefix_zero_scale_recovers_base_and_can_shift_output():
     base_kw = {
         **PRINCIPLED_KW,
+        "has_one_word_solution": jnp.float32(1.0),
         "gamma_uncertainty_len": jnp.float32(0.0),
         "rho_salience_stop": jnp.float32(0.5),
     }
@@ -162,6 +163,58 @@ def test_principled_planned_prefix_zero_scale_recovers_base_and_can_shift_output
     assert np.allclose(planned.sum(), 1.0, atol=1e-4)
     assert np.allclose(base, planned_zero, atol=1e-5)
     assert not np.allclose(base, planned, atol=1e-4)
+
+
+def test_principled_response_policy_zero_recovers_base_and_shifts_output():
+    base_kw = {
+        **PRINCIPLED_KW,
+        "has_one_word_solution": jnp.float32(1.0),
+        "gamma_uncertainty_len": jnp.float32(0.0),
+        "rho_salience_stop": jnp.float32(0.5),
+    }
+    base = np.asarray(ms.incremental_speaker_principled(COLOR_SALIENT_STATES, **base_kw))
+    response_zero = np.asarray(
+        ms.incremental_speaker_principled_response_policy(
+            COLOR_SALIENT_STATES,
+            **{
+                **base_kw,
+                "is_colour_sufficient": jnp.float32(1.0),
+                "lambda_sufficient_single": jnp.float32(0.0),
+                "lambda_reliability_form": jnp.float32(0.0),
+            },
+        )
+    )
+    sufficient_single = np.asarray(
+        ms.incremental_speaker_principled_response_policy(
+            COLOR_SALIENT_STATES,
+            **{
+                **base_kw,
+                "is_colour_sufficient": jnp.float32(1.0),
+                "lambda_sufficient_single": jnp.float32(1.5),
+                "lambda_reliability_form": jnp.float32(0.0),
+            },
+        )
+    )
+    reliability_form = np.asarray(
+        ms.incremental_speaker_principled_response_policy(
+            COLOR_SALIENT_STATES,
+            **{
+                **base_kw,
+                "sufficient_dim": jnp.int32(-1),
+                "has_one_word_solution": jnp.float32(0.0),
+                "is_colour_sufficient": jnp.float32(0.0),
+                "lambda_sufficient_single": jnp.float32(0.0),
+                "lambda_reliability_form": jnp.float32(1.5),
+            },
+        )
+    )
+
+    f_present = np.asarray(ms.F_PRESENT_15, dtype=bool)
+    assert np.all(response_zero >= 0.0)
+    assert np.allclose(response_zero.sum(), 1.0, atol=1e-4)
+    assert np.allclose(base, response_zero, atol=1e-5)
+    assert sufficient_single[5] > base[5]  # C is sufficient in base_kw.
+    assert reliability_form[f_present].sum() > base[f_present].sum()
 
 
 def test_principled_base_salience_constants_are_fixed_sweep_inputs():
@@ -221,6 +274,8 @@ def test_principled_models_register_for_hierarchical_inference():
         "principled_salience_stop_regularized_2x2_inc_static",
         "principled_salience_stop_regularized_plannedprefix_2x2_inc_rec",
         "principled_salience_stop_regularized_plannedprefix_2x2_inc_static",
+        "principled_salience_stop_regularized_responsepolicy_2x2_inc_rec",
+        "principled_salience_stop_regularized_responsepolicy_2x2_inc_static",
         "principled_salience_stop_regularized_2x2_glob_rec",
         "principled_salience_stop_regularized_2x2_glob_static",
         "principled_salience_stop_regularized_2x2_glob_rec_fixedeps",
@@ -235,6 +290,7 @@ if __name__ == "__main__":
     test_principled_speaker_is_simplex_and_uses_soft_features()
     test_principled_salience_stop_favors_single_salient_adjective()
     test_principled_planned_prefix_zero_scale_recovers_base_and_can_shift_output()
+    test_principled_response_policy_zero_recovers_base_and_shifts_output()
     test_principled_base_salience_constants_are_fixed_sweep_inputs()
     test_principled_2x2_architectures_are_simplex_and_distinct()
     test_principled_models_register_for_hierarchical_inference()
