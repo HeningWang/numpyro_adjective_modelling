@@ -506,11 +506,14 @@ def plot_correlation_scatter(
 
     colors = plt.cm.tab10(np.linspace(0, 1, len(labels)))
     for i in range(len(labels)):
-        yerr_lo = pred_mean[i] - pred_lo[i]
-        yerr_hi = pred_hi[i] - pred_mean[i]
+        yerr_lo = max(0.0, float(pred_mean[i] - pred_lo[i]))
+        yerr_hi = max(0.0, float(pred_hi[i] - pred_mean[i]))
         xerr = None
         if emp_lo is not None and emp_hi is not None:
-            xerr = [[emp_vals[i] - emp_lo[i]], [emp_hi[i] - emp_vals[i]]]
+            xerr = [
+                [max(0.0, float(emp_vals[i] - emp_lo[i]))],
+                [max(0.0, float(emp_hi[i] - emp_vals[i]))],
+            ]
         ax.errorbar(emp_vals[i], pred_mean[i],
                     yerr=[[yerr_lo], [yerr_hi]],
                     xerr=xerr,
