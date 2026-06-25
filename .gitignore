@@ -79,6 +79,8 @@ models/*/results_semantic_variant_forward_audit/stats/*_by_observation.csv
 models/*/results_speaker_variant_forward_audit/stats/*_predictions.csv
 models/*/results_response_policy_forward_audit/stats/*_by_condition.csv
 models/*/results_response_policy_forward_audit/stats/*_category_residuals.csv
+models/*/results_bounded_form_forward_audit/stats/*_by_condition.csv
+models/*/results_bounded_form_forward_audit/stats/*_category_residuals.csv
 
 # Local tooling config and working notes (per-project, never tracked).
 CLAUDE.md
