@@ -1,0 +1,9 @@
+model,speaker_type,total_heldout_elpd,mean_fold_elpd,se_fold_elpd,n_heldout,n_folds,n_parameters,max_r_hat,n_r_hat_gt_1_01,n_r_hat_gt_1_05,min_ess_bulk,min_ess_tail,n_divergent,n_draws,divergence_rate,diagnostic_status,diagnostics_ok
+planned_usefulness_order_static,planned_usefulness_order_static,-2764.3997802734375,-552.8799560546875,10.74602011642549,3485,5,139,1.01,0,0,266.0,540.0,1,10000,0.0001,fail,False
+planned_usefulness_signed_order_static,planned_usefulness_signed_order_static,-2764.4097290039062,-552.8819458007813,10.73821701067363,3485,5,139,1.01,0,0,280.0,455.0,0,10000,0.0,pass,True
+planned_usefulness_mixture_static,planned_usefulness_mixture_static,-2765.0987548828125,-553.0197509765625,10.768570370827469,3485,5,140,1.01,0,0,489.0,460.0,0,10000,0.0,pass,True
+planned_usefulness_signed_order,planned_usefulness_signed_order,-2765.1373291015625,-553.0274658203125,10.737746090127692,3485,5,139,1.01,0,0,343.0,585.0,1,10000,0.0001,fail,False
+planned_usefulness_order,planned_usefulness_order,-2765.2147216796875,-553.0429443359375,10.738427579357335,3485,5,139,1.02,1,0,304.0,476.0,0,10000,0.0,warn,True
+incremental_static,incremental_static,-2765.5162353515625,-553.1032470703125,10.753232557406811,3485,5,138,1.01,0,0,454.0,815.0,1,10000,0.0001,fail,False
+planned_usefulness_mixture,planned_usefulness_mixture,-2765.5287475585938,-553.1057495117187,10.758884400070585,3485,5,140,1.02,3,0,401.0,193.0,0,10000,0.0,warn,True
+incremental_recursive,incremental,-2765.744140625,-553.148828125,10.753312005222165,3485,5,138,1.01,0,0,443.0,713.0,0,10000,0.0,pass,True

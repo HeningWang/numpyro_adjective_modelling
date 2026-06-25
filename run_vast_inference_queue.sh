@@ -177,6 +177,9 @@ echo "Vast inference queue complete in $((queue_end - queue_start))s."
 
 if [[ "${CHECK_ARTIFACTS}" == "1" ]]; then
   checker_args=(check_vast_artifacts.py --tasks "${TASKS}" --artifact-tag "${ARTIFACT_TAG}")
+  if [[ "${DRY_RUN}" != "1" ]]; then
+    checker_args+=(--fail-incomplete)
+  fi
   echo ""
   "${PYTHON_BIN}" "${checker_args[@]}"
 fi

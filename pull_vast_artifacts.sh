@@ -9,7 +9,8 @@ DRY_RUN="${DRY_RUN:-0}"
 PRINT_ONLY="${PRINT_ONLY:-0}"
 CHECK_ARTIFACTS="${CHECK_ARTIFACTS:-1}"
 ARTIFACT_TASKS="${ARTIFACT_TASKS:-all}"
-CHECK_FAIL_INCOMPLETE="${CHECK_FAIL_INCOMPLETE:-0}"
+CHECK_FAIL_INCOMPLETE="${CHECK_FAIL_INCOMPLETE:-auto}"
+ARTIFACT_STATUS_CSV="${ARTIFACT_STATUS_CSV:-analysis/results_model_selection/stats/vast_artifact_status.csv}"
 ARTIFACT_TAG="${ARTIFACT_TAG:-tm}"
 SLIDER_FULL_SPEAKERS="${SLIDER_FULL_SPEAKERS:-incremental incremental_static planned_usefulness_order planned_usefulness_order_static planned_usefulness_signed_order planned_usefulness_signed_order_static planned_usefulness_mixture planned_usefulness_mixture_static}"
 SLIDER_ABLATION_SPEAKERS="${SLIDER_ABLATION_SPEAKERS:-planned_usefulness_signed_order planned_usefulness_signed_order_static planned_usefulness_mixture planned_usefulness_mixture_static}"
@@ -110,6 +111,8 @@ echo "  python     : ${PYTHON_BIN}"
 echo "  dry run    : ${DRY_RUN}"
 echo "  print only : ${PRINT_ONLY}"
 echo "  check files: ${CHECK_ARTIFACTS}"
+echo "  fail incomplete: ${CHECK_FAIL_INCOMPLETE}"
+echo "  status csv : ${ARTIFACT_STATUS_CSV}"
 echo "  artifact tag: ${ARTIFACT_TAG}"
 echo "  artifact tasks: ${ARTIFACT_TASKS}"
 echo "  slider full: ${SLIDER_FULL_SPEAKERS}"
@@ -145,9 +148,25 @@ echo "Artifact pull complete."
 
 if [[ "${CHECK_ARTIFACTS}" == "1" ]]; then
   checker_cmd=("${PYTHON_BIN}" check_vast_artifacts.py --tasks "${ARTIFACT_TASKS}" --artifact-tag "${ARTIFACT_TAG}")
-  if [[ "${CHECK_FAIL_INCOMPLETE}" == "1" ]]; then
-    checker_cmd+=(--fail-incomplete)
+  if [[ -n "${ARTIFACT_STATUS_CSV}" ]]; then
+    checker_cmd+=(--csv "${ARTIFACT_STATUS_CSV}")
   fi
+  case "${CHECK_FAIL_INCOMPLETE}" in
+    1|true)
+      checker_cmd+=(--fail-incomplete)
+      ;;
+    0|false)
+      ;;
+    auto)
+      if [[ "${DRY_RUN}" != "1" && "${PRINT_ONLY}" != "1" ]]; then
+        checker_cmd+=(--fail-incomplete)
+      fi
+      ;;
+    *)
+      echo "Unknown CHECK_FAIL_INCOMPLETE='${CHECK_FAIL_INCOMPLETE}'. Use auto, 1, or 0." >&2
+      exit 2
+      ;;
+  esac
   printf "Artifact check:"
   printf " %q" "${checker_cmd[@]}"
   printf "\n"

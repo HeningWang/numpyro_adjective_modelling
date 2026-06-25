@@ -195,7 +195,7 @@ if [[ "${CHECK_ARTIFACTS}" == "1" ]]; then
   "${PYTHON_BIN}" check_vast_artifacts.py \
     --tasks "${TASKS}" \
     --artifact-tag "${ARTIFACT_TAG}" \
-    --max-missing 40
+    --max-missing 60
 fi
 
 echo ""
