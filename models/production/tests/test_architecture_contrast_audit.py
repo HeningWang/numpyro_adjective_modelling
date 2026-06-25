@@ -50,6 +50,12 @@ def test_parse_2x2_model_name_extracts_architecture_and_semantics():
     assert parsed["architecture"] == "global"
     assert parsed["semantics"] == "context_updating"
 
+    parsed = parse_2x2_model_name(
+        "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_rec_fixedeps"
+    )
+    assert parsed["architecture"] == "global"
+    assert parsed["semantics"] == "context_updating"
+
 
 def test_aggregate_category_proportions_preserves_condition_totals():
     rows = pd.DataFrame({

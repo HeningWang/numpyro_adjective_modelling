@@ -1,0 +1,5 @@
+,rank,elpd_loo,p_loo,elpd_diff,weight,se,dse,warning,scale
+principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_static_fixedeps,0,-5292.826969623566,52.16674613952637,0.0,0.9722114035990582,63.73853835431176,0.0,False,log
+principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_rec_fixedeps,1,-5294.2155084609985,51.60803699493408,1.3885388374328613,2.233822393553353e-15,63.72847356076224,0.2880924587700371,False,log
+principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_static_fixedeps,2,-5643.377087593079,6.329853534698486,350.55011796951294,0.027788596400939586,63.169055195520315,23.704591803179955,False,log
+principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_rec_fixedeps,3,-5643.615892410278,6.546998500823975,350.78892278671265,7.776778895331182e-17,63.43711810013747,23.728370997934476,True,log

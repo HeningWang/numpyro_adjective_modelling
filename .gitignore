@@ -72,6 +72,12 @@ models/production/results_*_pilot/stats/*.png
 models/production/results_*_pilot/stats/*_empirical.csv
 models/production/results_*_pilot/stats/*_predictions.csv
 models/production/results_*_pilot/summary.txt
+models/production/results_*_full*/diagnostics/
+models/production/results_*_full*/ppc/
+models/production/results_*_full*/stats/*.png
+models/production/results_*_full*/stats/*_empirical.csv
+models/production/results_*_full*/stats/*_predictions.csv
+models/production/results_*_full*/summary.txt
 models/production/results_final_2x2/diagnostics/
 models/production/results_final_2x2/ppc/
 models/production/results_final_2x2/**/*.log

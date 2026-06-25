@@ -105,7 +105,12 @@ def overinformativeness_class(label: str, relevant_property: str) -> str:
 
 def parse_2x2_model_name(model: str) -> dict[str, str]:
     """Extract architecture and semantic-regime labels from a 2x2 model name."""
+    tokens = str(model).split("_")
     for suffix, meta in MODEL_SUFFIX_META.items():
+        suffix_tokens = suffix.split("_")
+        for start in range(len(tokens) - len(suffix_tokens) + 1):
+            if tokens[start:start + len(suffix_tokens)] == suffix_tokens:
+                return dict(meta)
         if str(model).endswith(suffix):
             return dict(meta)
     raise ValueError(f"Cannot parse 2x2 model name: {model}")
@@ -715,7 +720,12 @@ def write_memo(
         "",
     ])
     for path in outputs:
-        lines.append(f"- `{path.relative_to(REPO_ROOT)}`")
+        output_path = path if path.is_absolute() else (REPO_ROOT / path)
+        try:
+            display_path = output_path.resolve().relative_to(REPO_ROOT)
+        except ValueError:
+            display_path = path
+        lines.append(f"- `{display_path}`")
 
     memo_path.parent.mkdir(parents=True, exist_ok=True)
     memo_path.write_text("\n".join(lines) + "\n")
