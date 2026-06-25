@@ -48,6 +48,10 @@ DEFAULT_TAG = "warmup{nw}_samples{ns}_chains{nc}"
 ALL_MODELS = {
     "incremental_recursive": "mcmc_results_incremental_speaker_hier_{tag}.nc",
     "incremental_static":    "mcmc_results_incremental_static_speaker_hier_{tag}.nc",
+    "incremental_free_color": "mcmc_results_incremental_speaker_hier_free_csv_{tag}.nc",
+    "incremental_static_free_color": (
+        "mcmc_results_incremental_static_speaker_hier_free_csv_{tag}.nc"
+    ),
     "global_recursive":      "mcmc_results_global_speaker_hier_{tag}.nc",
     "global_static":         "mcmc_results_global_static_speaker_hier_{tag}.nc",
     "planned_usefulness_order": "mcmc_results_planned_usefulness_order_speaker_hier_{tag}.nc",
@@ -78,6 +82,7 @@ POP_VAR_NAMES = [
     "usefulness_order_scale",
     "signed_order_scale",
     "planned_mixture_weight",
+    "color_semvalue",
     "sigma",
     "tau",
 ]

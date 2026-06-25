@@ -18,6 +18,8 @@ def args_for(tmp_path: Path) -> SimpleNamespace:
         slider_posterior_prefix="slider_eval",
         slider_heldout_stats_dir=tmp_path / "slider_heldout",
         slider_heldout_prefix="slider_heldout_eval",
+        slider_semantic_stats_dir=tmp_path / "slider_semantic",
+        slider_semantic_prefix="slider_semantic_eval",
         production_architecture_dir=tmp_path / "production_architecture",
         production_prefix="production_2x2",
         out_dir=tmp_path / "out",
@@ -38,6 +40,7 @@ def test_decision_summary_reports_pending_when_csvs_are_absent():
     statuses = dict(zip(stage_decisions["decision_stage"], stage_decisions["status"]))
     assert statuses["slider_posterior_ablation"] == "pending"
     assert statuses["slider_heldout_ablation"] == "pending"
+    assert statuses["slider_semantic_reliability_pilot"] == "pending"
     assert statuses["production_2x2"] == "pending"
     assert statuses["final_interpretable_2x2"] == "pending"
     assert not evidence.empty
@@ -86,6 +89,27 @@ def test_decision_summary_passes_when_all_gates_pass():
         write_csv(
             args.slider_heldout_stats_dir / "slider_heldout_eval_pareto_frontier.csv",
             [{"model": "planned_usefulness_mixture", "rank": 0, "total_heldout_elpd": -12.0}],
+        )
+        write_csv(
+            args.slider_semantic_stats_dir / "slider_semantic_eval_pairwise_decisions.csv",
+            [
+                {
+                    "pair": "free_color_vs_fixed_recursive",
+                    "candidate": "incremental_free_color",
+                    "baseline": "incremental_recursive",
+                    "candidate_diagnostics_ok": True,
+                    "baseline_diagnostics_ok": True,
+                    "recommended_for_full_run": True,
+                    "delta_elpd_candidate_minus_baseline": 3.0,
+                    "ppc_rmse_gain": 0.02,
+                    "ppc_success": True,
+                    "second_property_abs_residual_reduction": 0.05,
+                }
+            ],
+        )
+        write_csv(
+            args.slider_semantic_stats_dir / "slider_semantic_eval_pareto_frontier.csv",
+            [{"model": "incremental_free_color", "rank": 0, "elpd_loo": -11.0}],
         )
         write_csv(
             args.production_architecture_dir / "production_2x2_pareto_scores.csv",
@@ -144,6 +168,7 @@ def test_decision_summary_passes_when_all_gates_pass():
     statuses = dict(zip(stage_decisions["decision_stage"], stage_decisions["status"]))
     assert statuses["slider_posterior_ablation"] == "pass"
     assert statuses["slider_heldout_ablation"] == "pass"
+    assert statuses["slider_semantic_reliability_pilot"] == "pass"
     assert statuses["production_2x2"] == "pass"
     assert statuses["final_interpretable_2x2"] == "pass"
     final = stage_decisions.query("decision_stage == 'final_interpretable_2x2'").iloc[0]
@@ -152,6 +177,7 @@ def test_decision_summary_passes_when_all_gates_pass():
     assert set(candidate_scores["evidence_source"]) == {
         "slider_posterior_ablation",
         "slider_heldout_ablation",
+        "slider_semantic_reliability_pilot",
         "production_2x2",
     }
 

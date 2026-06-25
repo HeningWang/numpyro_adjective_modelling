@@ -15,6 +15,10 @@ slider_heldout_ablation,planned_usefulness_mixture_static,planned_usefulness_mix
 slider_heldout_ablation,planned_usefulness_signed_order,planned_usefulness_signed_order,context_updating,,,,0.0798888482059575,0.9788319937882424,139,,fail,1.01,1,False,False,,-2765.1373291015625,False
 slider_heldout_ablation,incremental_static,incremental,context_fixed,,,,0.0836170860059135,0.9602555777542032,138,,fail,1.01,1,False,False,,-2765.5162353515625,False
 slider_heldout_ablation,planned_usefulness_mixture,planned_usefulness_mixture,context_updating,,,,0.0800526133412031,0.9792690985720856,140,,warn,1.02,0,True,False,,-2765.5287475585938,False
+slider_semantic_reliability_pilot,incremental_recursive,incremental,context_updating,0.0,-2774.080696582794,0.0,0.0836053678858045,0.9601815218042624,4,64.80538558959961,pass,1.01,0,True,True,True,,
+slider_semantic_reliability_pilot,incremental_static,incremental,context_fixed,1.0,-2774.137773513794,-0.0570769309997558,0.0836170860059135,0.9602555777542032,4,65.12633895874023,pass,1.01,0,True,False,False,,
+slider_semantic_reliability_pilot,incremental_static_free_color,incremental,context_fixed,2.0,-2774.3116636276245,-0.2309670448303222,0.083960522448373,0.9645813793363368,5,65.73417806625366,pass,1.01,0,True,False,False,,
+slider_semantic_reliability_pilot,incremental_free_color,incremental,context_updating,3.0,-2774.9662475585938,-0.8855509757995605,0.0838682014646917,0.965816751021686,5,66.07903099060059,pass,1.01,0,True,False,False,,
 production_2x2,principled_salience_stop_regularized_2x2_inc_static,incremental,context_fixed,0.0,-6367.339756965637,0.0,0.0876481618876743,0.7276022165147812,6,49.00813102722168,pass,1.0,0,True,True,True,,
 production_2x2,principled_salience_stop_regularized_2x2_inc_rec,incremental,context_updating,1.0,-6369.320020675659,-1.9802637100219729,0.087825039220157,0.7262211063776227,6,48.55435085296631,pass,1.0,0,True,True,True,,
 production_2x2,principled_salience_stop_regularized_2x2_glob_rec,global,context_updating,2.0,-7730.713019371033,-1363.3732624053955,0.1079346702894038,0.5402891112800816,6,615.5122051239014,fail,1.53,0,False,False,False,,

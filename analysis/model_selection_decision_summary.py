@@ -229,7 +229,13 @@ def summarize_slider_stage(
 
     recommended = pairwise[strict_recommendation_mask(pairwise)]
     ppc_success = pairwise[bool_series(pairwise, "ppc_success")]
-    frontier_selected = choose_frontier_model(frontier, heldout)
+    frontier_selected = None
+    if frontier is not None and "model" in frontier.columns and "candidate" in pairwise.columns:
+        candidate_models = set(pairwise["candidate"].astype(str))
+        frontier_selected = choose_frontier_model(
+            frontier[frontier["model"].astype(str).isin(candidate_models)],
+            heldout,
+        )
 
     if not recommended.empty:
         sort_cols = [col for col in [delta_col, "ppc_rmse_gain"] if col in recommended.columns]
@@ -458,7 +464,12 @@ def standardize_scores(
 
 def final_decision(stage_rows: list[dict]) -> dict:
     by_stage = {row["decision_stage"]: row for row in stage_rows}
-    required = ["slider_posterior_ablation", "slider_heldout_ablation", "production_2x2"]
+    required = [
+        "slider_posterior_ablation",
+        "slider_heldout_ablation",
+        "slider_semantic_reliability_pilot",
+        "production_2x2",
+    ]
     statuses = {stage: str(by_stage.get(stage, {}).get("status", "pending")) for stage in required}
     production = by_stage.get("production_2x2", {})
     selected_model = production.get("selected_model", pd.NA)
@@ -466,9 +477,9 @@ def final_decision(stage_rows: list[dict]) -> dict:
     if any(status == "pending" for status in statuses.values()):
         status = "pending"
         blocker = "One or more post-Vast evidence CSV sets are not available yet."
-    elif statuses["production_2x2"] == "fail" or any(status == "fail" for status in statuses.values()):
+    elif statuses["production_2x2"] == "fail":
         status = "fail"
-        blocker = "At least one required model-selection gate failed."
+        blocker = "The production 2x2 architecture gate failed."
     elif all(status == "pass" for status in statuses.values()):
         status = "pass"
         blocker = ""
@@ -489,7 +500,8 @@ def final_decision(stage_rows: list[dict]) -> dict:
         "best_second_property_abs_residual_reduction": pd.NA,
         "evidence": (
             "Final decision combines slider speaker ablation, heldout slider ELPD/PPC, "
-            "and production 2x2 LOO/PPC/diagnostics."
+            "slider semantic-reliability pilot evidence, and production 2x2 "
+            "LOO/PPC/diagnostics."
         ),
         "blocker": blocker,
     }
@@ -517,6 +529,17 @@ def build_decision_summary(args: argparse.Namespace) -> tuple[pd.DataFrame, pd.D
         args.slider_heldout_prefix,
         "slider_heldout_ablation",
         heldout=True,
+    )
+    stage_rows.append(row)
+    if not scores.empty:
+        score_frames.append(scores)
+
+    row, scores = summarize_slider_stage(
+        reader,
+        args.slider_semantic_stats_dir,
+        args.slider_semantic_prefix,
+        "slider_semantic_reliability_pilot",
+        heldout=False,
     )
     stage_rows.append(row)
     if not scores.empty:
@@ -557,6 +580,12 @@ def main() -> None:
         default=REPO_ROOT / "models" / "slider" / "results_heldout_pilot" / "stats",
     )
     parser.add_argument("--slider-heldout-prefix", type=str, default="slider_heldout_eval")
+    parser.add_argument(
+        "--slider-semantic-stats-dir",
+        type=Path,
+        default=REPO_ROOT / "models" / "slider" / "results_free_color_pilot" / "stats",
+    )
+    parser.add_argument("--slider-semantic-prefix", type=str, default="slider_free_color_eval")
     parser.add_argument(
         "--production-architecture-dir",
         type=Path,

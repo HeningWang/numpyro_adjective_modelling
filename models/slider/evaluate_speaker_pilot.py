@@ -24,6 +24,8 @@ from analysis.model_pareto_frontier import build_frontier_from_csvs  # noqa: E40
 DEFAULT_STATS_DIR = Path(__file__).resolve().parent / "results_planned_usefulness_pilot" / "stats"
 
 PAIR_SPECS = (
+    ("incremental_free_color", "incremental_recursive", "free_color_vs_fixed_recursive"),
+    ("incremental_static_free_color", "incremental_static", "free_color_vs_fixed_static"),
     ("planned_usefulness_order", "incremental_recursive", "planned_vs_greedy_recursive"),
     ("planned_usefulness_order_static", "incremental_static", "planned_vs_greedy_static"),
     ("planned_usefulness_signed_order", "planned_usefulness_order", "signed_order_vs_planned_recursive"),
@@ -206,6 +208,7 @@ def pairwise_summary(
             and second_gain >= args.second_residual_gate
             and (not np.isfinite(worst_new_harm) or worst_new_harm <= args.max_new_residual_harm)
         )
+        elpd_success = bool(loo_reliable and loo_success)
         rows.append(
             {
                 "pair": label,
@@ -227,10 +230,9 @@ def pairwise_summary(
                 "ppc_success": ppc_success,
                 "recommended_for_full_run": bool(
                     cand["diagnostics_ok"]
-                    and (
-                        (loo_reliable and loo_success)
-                        or ((not loo_reliable) and ppc_success)
-                    )
+                    and base["diagnostics_ok"]
+                    and ppc_success
+                    and (elpd_success or not loo_reliable)
                 ),
                 "decision_basis": (
                     "elpd_and_ppc" if loo_reliable else "ppc_only_due_bad_pareto_k"

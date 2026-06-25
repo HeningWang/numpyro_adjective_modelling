@@ -1,0 +1,5 @@
+model,n_parameters,max_r_hat,n_r_hat_gt_1_01,n_r_hat_gt_1_05,min_ess_bulk,min_ess_tail,n_divergent,divergence_rate,diagnostic_status
+incremental_recursive,4,1.01,0,0,424.0,887.0,0,0.0,pass
+incremental_static,4,1.01,0,0,400.0,788.0,0,0.0,pass
+incremental_free_color,5,1.01,0,0,359.0,350.0,0,0.0,pass
+incremental_static_free_color,5,1.01,0,0,836.0,620.0,0,0.0,pass
