@@ -187,6 +187,10 @@ def test_model_labels_cover_signed_order_slider_variants():
         decisions.model_architecture("planned_usefulness_signed_order_static")
         == "planned_usefulness_signed_order"
     )
+    assert (
+        decisions.model_architecture("planned_usefulness_mixture_anchored_static")
+        == "planned_usefulness_mixture_anchored"
+    )
     assert decisions.model_semantics("planned_usefulness_order") == "context_updating"
     assert decisions.model_semantics("planned_usefulness_signed_order_static") == "context_fixed"
 

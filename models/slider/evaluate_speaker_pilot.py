@@ -40,6 +40,16 @@ PAIR_SPECS = (
         "planned_usefulness_order_static",
         "mixture_vs_planned_static",
     ),
+    (
+        "planned_usefulness_mixture_anchored",
+        "planned_usefulness_mixture",
+        "anchored_mixture_vs_mixture_recursive",
+    ),
+    (
+        "planned_usefulness_mixture_anchored_static",
+        "planned_usefulness_mixture_static",
+        "anchored_mixture_vs_mixture_static",
+    ),
     ("planned_usefulness_signed_order", "incremental_recursive", "signed_order_vs_greedy_recursive"),
     (
         "planned_usefulness_signed_order_static",
@@ -51,6 +61,16 @@ PAIR_SPECS = (
         "planned_usefulness_mixture_static",
         "incremental_static",
         "mixture_vs_greedy_static",
+    ),
+    (
+        "planned_usefulness_mixture_anchored",
+        "incremental_recursive",
+        "anchored_mixture_vs_greedy_recursive",
+    ),
+    (
+        "planned_usefulness_mixture_anchored_static",
+        "incremental_static",
+        "anchored_mixture_vs_greedy_static",
     ),
 )
 

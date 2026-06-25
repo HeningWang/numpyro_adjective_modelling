@@ -36,9 +36,11 @@ from modelSpecification import (
     likelihood_planned_usefulness_order_speaker,
     likelihood_planned_signed_usefulness_order_speaker,
     likelihood_planned_usefulness_mixture_speaker,
+    likelihood_planned_usefulness_mixture_anchored_speaker,
     likelihood_planned_usefulness_order_speaker_static,
     likelihood_planned_signed_usefulness_order_speaker_static,
     likelihood_planned_usefulness_mixture_speaker_static,
+    likelihood_planned_usefulness_mixture_anchored_speaker_static,
     likelihood_gb_speaker_static,
     likelihood_inc_speaker_frozen,
     likelihood_gb_speaker_hier,
@@ -46,9 +48,11 @@ from modelSpecification import (
     likelihood_planned_usefulness_order_speaker_hier,
     likelihood_planned_signed_usefulness_order_speaker_hier,
     likelihood_planned_usefulness_mixture_speaker_hier,
+    likelihood_planned_usefulness_mixture_anchored_speaker_hier,
     likelihood_planned_usefulness_order_speaker_static_hier,
     likelihood_planned_signed_usefulness_order_speaker_static_hier,
     likelihood_planned_usefulness_mixture_speaker_static_hier,
+    likelihood_planned_usefulness_mixture_anchored_speaker_static_hier,
     likelihood_gb_speaker_static_hier,
     likelihood_inc_speaker_frozen_hier,
     likelihood_inc_speaker_hier_free_csv,
@@ -62,6 +66,7 @@ RECURSIVE_LISTENER_SPEAKERS = {
     "planned_usefulness_order",
     "planned_usefulness_signed_order",
     "planned_usefulness_mixture",
+    "planned_usefulness_mixture_anchored",
 }
 
 SPEAKER_CHOICES = [
@@ -76,6 +81,8 @@ SPEAKER_CHOICES = [
     "planned_usefulness_signed_order_static",
     "planned_usefulness_mixture",
     "planned_usefulness_mixture_static",
+    "planned_usefulness_mixture_anchored",
+    "planned_usefulness_mixture_anchored_static",
 ]
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -187,6 +194,8 @@ def get_hier_model(canonical_speaker_type: str, free_color_semvalue: bool = Fals
         return likelihood_planned_signed_usefulness_order_speaker_hier
     if canonical_speaker_type == "planned_usefulness_mixture":
         return likelihood_planned_usefulness_mixture_speaker_hier
+    if canonical_speaker_type == "planned_usefulness_mixture_anchored":
+        return likelihood_planned_usefulness_mixture_anchored_speaker_hier
     if canonical_speaker_type == "global_static":
         return likelihood_gb_speaker_static_hier
     if canonical_speaker_type == "incremental_static":
@@ -197,6 +206,8 @@ def get_hier_model(canonical_speaker_type: str, free_color_semvalue: bool = Fals
         return likelihood_planned_signed_usefulness_order_speaker_static_hier
     if canonical_speaker_type == "planned_usefulness_mixture_static":
         return likelihood_planned_usefulness_mixture_speaker_static_hier
+    if canonical_speaker_type == "planned_usefulness_mixture_anchored_static":
+        return likelihood_planned_usefulness_mixture_anchored_speaker_static_hier
     raise ValueError(
         "Invalid speaker type. Choose 'global', 'incremental', "
         "planned usefulness variants, 'global_static', "
@@ -247,6 +258,8 @@ def run_inference(
         model = likelihood_planned_signed_usefulness_order_speaker
     elif canonical_speaker_type == "planned_usefulness_mixture":
         model = likelihood_planned_usefulness_mixture_speaker
+    elif canonical_speaker_type == "planned_usefulness_mixture_anchored":
+        model = likelihood_planned_usefulness_mixture_anchored_speaker
     elif canonical_speaker_type == "global_static":
         model = likelihood_gb_speaker_static
     elif canonical_speaker_type == "incremental_static":
@@ -257,6 +270,8 @@ def run_inference(
         model = likelihood_planned_signed_usefulness_order_speaker_static
     elif canonical_speaker_type == "planned_usefulness_mixture_static":
         model = likelihood_planned_usefulness_mixture_speaker_static
+    elif canonical_speaker_type == "planned_usefulness_mixture_anchored_static":
+        model = likelihood_planned_usefulness_mixture_anchored_speaker_static
     else:
         raise ValueError(
             "Invalid speaker type. Choose 'global', 'incremental', "

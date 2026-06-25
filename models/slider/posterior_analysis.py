@@ -70,6 +70,12 @@ ALL_MODELS = {
     "planned_usefulness_mixture_static": (
         "mcmc_results_planned_usefulness_mixture_static_speaker_hier_{tag}.nc"
     ),
+    "planned_usefulness_mixture_anchored": (
+        "mcmc_results_planned_usefulness_mixture_anchored_speaker_hier_{tag}.nc"
+    ),
+    "planned_usefulness_mixture_anchored_static": (
+        "mcmc_results_planned_usefulness_mixture_anchored_static_speaker_hier_{tag}.nc"
+    ),
 }
 
 GROUP_COLS = ["relevant_property", "sharpness"]

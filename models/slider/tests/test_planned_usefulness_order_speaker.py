@@ -11,7 +11,10 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT / "models" / "slider"))
 
 import jax.numpy as jnp  # noqa: E402
+from jax import random  # noqa: E402
+from numpyro import handlers  # noqa: E402
 import modelSpecification as ms  # noqa: E402
+import run_inference  # noqa: E402
 
 
 def make_listener_arrays(size=0.25, color=0.75, dc=0.55, cd=0.55):
@@ -115,6 +118,41 @@ def test_planned_usefulness_mixture_respects_endpoints():
     assert np.isclose(float(pred_planned), float(planned))
 
 
+def test_anchored_mixture_cli_registration():
+    assert "planned_usefulness_mixture_anchored" in run_inference.SPEAKER_CHOICES
+    assert "planned_usefulness_mixture_anchored_static" in run_inference.SPEAKER_CHOICES
+    assert (
+        run_inference.get_hier_model("planned_usefulness_mixture_anchored")
+        is ms.likelihood_planned_usefulness_mixture_anchored_speaker_hier
+    )
+    assert (
+        run_inference.get_hier_model("planned_usefulness_mixture_anchored_static")
+        is ms.likelihood_planned_usefulness_mixture_anchored_speaker_static_hier
+    )
+
+
+def test_anchored_mixture_hier_smoke_trace():
+    l1, l2 = make_listener_arrays()
+    model = handlers.seed(
+        ms.likelihood_planned_usefulness_mixture_anchored_speaker_hier,
+        random.PRNGKey(0),
+    )
+    trace = handlers.trace(model).get_trace(
+        states=None,
+        data=jnp.array([0.4, 0.6]),
+        pi0=0.01,
+        pi1=0.01,
+        participant_idx=jnp.array([0, 1]),
+        n_participants=2,
+        L1_all=jnp.stack([l1, l1]),
+        L2_all=jnp.stack([l2, l2]),
+    )
+
+    assert "usefulness_order_scale" in trace
+    assert "planned_mixture_weight" in trace
+    assert "obs" in trace
+
+
 if __name__ == "__main__":
     test_usefulness_adjusted_order_bias_drops_for_color_advantage()
     test_planned_usefulness_order_returns_valid_probability()
@@ -122,4 +160,6 @@ if __name__ == "__main__":
     test_signed_usefulness_adjusted_order_bias_can_reward_color_initial()
     test_planned_signed_usefulness_order_returns_valid_probability()
     test_planned_usefulness_mixture_respects_endpoints()
+    test_anchored_mixture_cli_registration()
+    test_anchored_mixture_hier_smoke_trace()
     print("PASS planned usefulness-order speaker tests")

@@ -42,6 +42,8 @@ def test_free_color_pair_is_registered():
 
     assert ("incremental_free_color", "incremental_recursive") in pairs
     assert ("incremental_static_free_color", "incremental_static") in pairs
+    assert ("planned_usefulness_mixture_anchored", "incremental_recursive") in pairs
+    assert ("planned_usefulness_mixture_anchored", "planned_usefulness_mixture") in pairs
 
 
 def test_recommendation_requires_ppc_success_even_when_elpd_reliable():

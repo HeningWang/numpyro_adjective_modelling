@@ -74,6 +74,11 @@ def test_heldout_speaker_ablation_specs_cover_signed_order_variants():
     ) in pairs
     assert ("planned_usefulness_signed_order", "incremental_recursive") in pairs
     assert ("planned_usefulness_signed_order_static", "incremental_static") in pairs
+    assert ("planned_usefulness_mixture_anchored", "incremental_recursive") in pairs
+    assert (
+        "planned_usefulness_mixture_anchored_static",
+        "incremental_static",
+    ) in pairs
 
 
 def test_full_run_recommendation_requires_ppc_success():

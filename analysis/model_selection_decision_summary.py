@@ -34,6 +34,8 @@ def model_architecture(model: str) -> str:
         return "incremental"
     if "_glob_" in text or "global" in text:
         return "global"
+    if "planned_usefulness_mixture_anchored" in text:
+        return "planned_usefulness_mixture_anchored"
     if "planned_usefulness_mixture" in text:
         return "planned_usefulness_mixture"
     if "planned_usefulness_signed_order" in text:

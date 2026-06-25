@@ -1050,6 +1050,35 @@ def likelihood_planned_usefulness_mixture_speaker(
             data = jnp.clip(data, 0.0, 1.0)
         numpyro.sample("obs", ZOIB(model_prob, sigma, pi0, pi1), obs=data)
 
+
+def _sample_anchored_mixture_parameters():
+    alpha = numpyro.sample("alpha", dist.LogNormal(0.0, 0.5))
+    bias = numpyro.sample("bias", dist.LogNormal(0.0, 0.25))
+    usefulness_order_scale = numpyro.sample(
+        "usefulness_order_scale",
+        dist.LogNormal(float(np.log(6.0)), 0.35),
+    )
+    planned_mixture_weight = numpyro.sample("planned_mixture_weight", dist.Beta(6.0, 6.0))
+    return alpha, bias, usefulness_order_scale, planned_mixture_weight
+
+
+def likelihood_planned_usefulness_mixture_anchored_speaker(
+    states=None, data=None, pi0=0.01, pi1=0.01, L1_all=None, L2_all=None
+):
+    """Planned mixture with priors anchored near the forward-grid PPC optimum."""
+    alpha, bias, usefulness_order_scale, planned_mixture_weight = (
+        _sample_anchored_mixture_parameters()
+    )
+    sigma = numpyro.sample("sigma", dist.HalfNormal(0.3))
+    with numpyro.plate("data", L1_all.shape[0]):
+        model_prob = jitted_planned_usefulness_mixture_speaker_fast(
+            L1_all, L2_all, alpha, bias, usefulness_order_scale, planned_mixture_weight
+        )
+        model_prob = jnp.clip(model_prob, 1e-6, 1 - 1e-6)
+        if data is not None:
+            data = jnp.clip(data, 0.0, 1.0)
+        numpyro.sample("obs", ZOIB(model_prob, sigma, pi0, pi1), obs=data)
+
 # ── Static-semantics pooled likelihood functions ──
 
 def likelihood_gb_speaker_static(states=None, data=None, pi0=0.01, pi1=0.01, L1_all=None, L2_all=None):
@@ -1111,6 +1140,20 @@ def likelihood_planned_usefulness_mixture_speaker_static(
 ):
     """Mixture planned usefulness-order speaker with static size semantics."""
     return likelihood_planned_usefulness_mixture_speaker(
+        states=states,
+        data=data,
+        pi0=pi0,
+        pi1=pi1,
+        L1_all=L1_all,
+        L2_all=L2_all,
+    )
+
+
+def likelihood_planned_usefulness_mixture_anchored_speaker_static(
+    states=None, data=None, pi0=0.01, pi1=0.01, L1_all=None, L2_all=None
+):
+    """Static-semantics anchored planned usefulness mixture speaker."""
+    return likelihood_planned_usefulness_mixture_anchored_speaker(
         states=states,
         data=data,
         pi0=pi0,
@@ -1325,6 +1368,32 @@ def likelihood_planned_usefulness_mixture_speaker_hier(
         numpyro.sample("obs", ZOIB(model_prob, sigma, pi0, pi1), obs=data)
 
 
+def likelihood_planned_usefulness_mixture_anchored_speaker_hier(
+    states=None, data=None,
+    pi0: float = 0.01, pi1: float = 0.01,
+    participant_idx=None, n_participants: int = 1,
+    L1_all=None, L2_all=None,
+):
+    """Anchored-prior planned mixture with per-participant additive intercepts."""
+    alpha, bias, usefulness_order_scale, planned_mixture_weight = (
+        _sample_anchored_mixture_parameters()
+    )
+    sigma = numpyro.sample("sigma", dist.HalfNormal(0.3))
+    tau = numpyro.sample("tau", dist.HalfNormal(0.2))
+
+    with numpyro.plate("participants", n_participants):
+        delta = numpyro.sample("delta", dist.Normal(0.0, tau))
+
+    with numpyro.plate("data", L1_all.shape[0]):
+        rsa_prob = jitted_planned_usefulness_mixture_speaker_fast(
+            L1_all, L2_all, alpha, bias, usefulness_order_scale, planned_mixture_weight
+        )
+        model_prob = jnp.clip(rsa_prob + delta[participant_idx], 1e-6, 1 - 1e-6)
+        if data is not None:
+            data = jnp.clip(data, 0.0, 1.0)
+        numpyro.sample("obs", ZOIB(model_prob, sigma, pi0, pi1), obs=data)
+
+
 # ── Static-semantics hierarchical likelihood functions ──
 
 def likelihood_gb_speaker_static_hier(
@@ -1419,6 +1488,25 @@ def likelihood_planned_usefulness_mixture_speaker_static_hier(
 ):
     """Static-semantics greedy/planned usefulness mixture speaker."""
     return likelihood_planned_usefulness_mixture_speaker_hier(
+        states=states,
+        data=data,
+        pi0=pi0,
+        pi1=pi1,
+        participant_idx=participant_idx,
+        n_participants=n_participants,
+        L1_all=L1_all,
+        L2_all=L2_all,
+    )
+
+
+def likelihood_planned_usefulness_mixture_anchored_speaker_static_hier(
+    states=None, data=None,
+    pi0: float = 0.01, pi1: float = 0.01,
+    participant_idx=None, n_participants: int = 1,
+    L1_all=None, L2_all=None,
+):
+    """Static-semantics anchored planned usefulness mixture speaker."""
+    return likelihood_planned_usefulness_mixture_anchored_speaker_hier(
         states=states,
         data=data,
         pi0=pi0,
