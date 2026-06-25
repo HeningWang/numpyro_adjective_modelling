@@ -73,6 +73,7 @@ FLAT_TO_CAT = {
 POP_VAR_NAMES = ["alpha", "alpha_D", "alpha_C", "alpha_F",
                  "log_beta", "log_beta_order", "lambda_frontload",
                  "lambda_salience", "rho_salience_stop",
+                 "planning_scale",
                  "gamma_uncertainty_len", "gamma", "epsilon",
                  "mu_C", "mu_F", "tau"]
 
@@ -97,6 +98,8 @@ SIMPLIFIED_MODELS = {
     "principled_salience_stop_regularized_2x2_glob_static_fixedeps": "mcmc_results_principled_salience_stop_regularized_2x2_glob_static_fixedeps_speaker_hier{subset}_{tag}.nc",
     "principled_salience_stop_regularized_tmcc_2x2_inc_rec": "mcmc_results_principled_salience_stop_regularized_tmcc_2x2_inc_rec_speaker_hier{subset}_{tag}.nc",
     "principled_salience_stop_regularized_tmcc_2x2_inc_static": "mcmc_results_principled_salience_stop_regularized_tmcc_2x2_inc_static_speaker_hier{subset}_{tag}.nc",
+    "principled_salience_stop_regularized_plannedprefix_2x2_inc_rec": "mcmc_results_principled_salience_stop_regularized_plannedprefix_2x2_inc_rec_speaker_hier{subset}_{tag}.nc",
+    "principled_salience_stop_regularized_plannedprefix_2x2_inc_static": "mcmc_results_principled_salience_stop_regularized_plannedprefix_2x2_inc_static_speaker_hier{subset}_{tag}.nc",
     "principled_salience_stop_regularized_tmcc_2x2_glob_rec": "mcmc_results_principled_salience_stop_regularized_tmcc_2x2_glob_rec_speaker_hier{subset}_{tag}.nc",
     "principled_salience_stop_regularized_tmcc_2x2_glob_static": "mcmc_results_principled_salience_stop_regularized_tmcc_2x2_glob_static_speaker_hier{subset}_{tag}.nc",
     "principled_salience_stop_regularized_tmcc_2x2_glob_rec_fixedeps": "mcmc_results_principled_salience_stop_regularized_tmcc_2x2_glob_rec_fixedeps_speaker_hier{subset}_{tag}.nc",

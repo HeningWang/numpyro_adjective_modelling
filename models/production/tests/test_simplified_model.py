@@ -138,6 +138,32 @@ def test_principled_salience_stop_favors_single_salient_adjective():
     assert with_stop[[6, 7, 8, 9]].sum() < no_stop[[6, 7, 8, 9]].sum()
 
 
+def test_principled_planned_prefix_zero_scale_recovers_base_and_can_shift_output():
+    base_kw = {
+        **PRINCIPLED_KW,
+        "gamma_uncertainty_len": jnp.float32(0.0),
+        "rho_salience_stop": jnp.float32(0.5),
+    }
+    base = np.asarray(ms.incremental_speaker_principled(COLOR_SALIENT_STATES, **base_kw))
+    planned_zero = np.asarray(
+        ms.incremental_speaker_principled_planned_prefix(
+            COLOR_SALIENT_STATES,
+            **{**base_kw, "planning_scale": jnp.float32(0.0)},
+        )
+    )
+    planned = np.asarray(
+        ms.incremental_speaker_principled_planned_prefix(
+            COLOR_SALIENT_STATES,
+            **{**base_kw, "planning_scale": jnp.float32(1.0)},
+        )
+    )
+
+    assert np.all(planned >= 0.0)
+    assert np.allclose(planned.sum(), 1.0, atol=1e-4)
+    assert np.allclose(base, planned_zero, atol=1e-5)
+    assert not np.allclose(base, planned, atol=1e-4)
+
+
 def test_principled_base_salience_constants_are_fixed_sweep_inputs():
     default = np.asarray(ms.incremental_speaker_principled(STATES, **PRINCIPLED_KW))
     higher_color = np.asarray(
@@ -193,6 +219,8 @@ def test_principled_models_register_for_hierarchical_inference():
         "principled_salience_stop_strong_regularized",
         "principled_salience_stop_regularized_2x2_inc_rec",
         "principled_salience_stop_regularized_2x2_inc_static",
+        "principled_salience_stop_regularized_plannedprefix_2x2_inc_rec",
+        "principled_salience_stop_regularized_plannedprefix_2x2_inc_static",
         "principled_salience_stop_regularized_2x2_glob_rec",
         "principled_salience_stop_regularized_2x2_glob_static",
         "principled_salience_stop_regularized_2x2_glob_rec_fixedeps",
@@ -206,6 +234,7 @@ if __name__ == "__main__":
     test_simplified_models_register_for_hierarchical_inference()
     test_principled_speaker_is_simplex_and_uses_soft_features()
     test_principled_salience_stop_favors_single_salient_adjective()
+    test_principled_planned_prefix_zero_scale_recovers_base_and_can_shift_output()
     test_principled_base_salience_constants_are_fixed_sweep_inputs()
     test_principled_2x2_architectures_are_simplex_and_distinct()
     test_principled_models_register_for_hierarchical_inference()

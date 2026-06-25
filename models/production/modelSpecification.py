@@ -709,6 +709,32 @@ FULL_PRESENT_15 = jnp.asarray(np.stack([
     for d in range(VOCAB_SIZE)
 ], axis=1))  # (n_utt, 3)
 
+# COMPLETION_MASK[t, u, a, v] = True iff terminal utterance v is reachable
+# after extending utterance u's prefix at position t with adjective a.
+# This supports a planned-prefix incremental variant while preserving the
+# original 15 terminal utterance inventory.
+completion_mask_np = np.zeros((T, n_utt, VOCAB_SIZE, n_utt), dtype=bool)
+utterance_list_np = np.asarray(utterance_list)
+
+for t in range(T):
+    for u in range(n_utt):
+        for a in range(VOCAB_SIZE):
+            if not cand_mask_np[t, u, a]:
+                continue
+            prefix = prefix_utts_np[t, u, a]
+            prefix_valid = prefix[prefix >= 0]
+            prefix_len = len(prefix_valid)
+            for v in range(n_utt):
+                terminal = utterance_list_np[v]
+                terminal_valid = terminal[terminal >= 0]
+                if len(terminal_valid) < prefix_len:
+                    continue
+                completion_mask_np[t, u, a, v] = bool(
+                    np.array_equal(terminal_valid[:prefix_len], prefix_valid)
+                )
+
+COMPLETION_MASK = jnp.asarray(completion_mask_np)
+
 # ── levers ───────────────────────────────────────────────────────────
 # (2) Non-canonical-order mask: 1 if BOTH colour (1) and form (2) appear AND
 #     form precedes colour (F-before-C). These are exactly {DFC, FDC, FC, FCD}
@@ -2314,6 +2340,227 @@ def incremental_speaker_principled(
     return (1.0 - epsilon) * model_probs + epsilon / n_utt
 
 
+def _principled_terminal_log_ref(
+    states: jnp.ndarray,
+    color_semval: float,
+    form_semval: float,
+    k: float,
+    wf: float,
+    recursive: bool,
+    size_context_mode: str,
+) -> jnp.ndarray:
+    if size_context_mode == "comparison_class" and recursive:
+        listener_fn = incremental_semantics_jax_comparison_class
+    else:
+        listener_fn = incremental_semantics_jax if recursive else incremental_semantics_jax_frozen
+    listener = listener_fn(
+        states=states,
+        color_sem=color_semval,
+        form_sem=form_semval,
+        k=k,
+        wf=wf,
+    )
+    return jnp.log(jnp.clip(listener[:, 0], 1e-8))
+
+
+def incremental_speaker_principled_planned_prefix(
+    states:                jnp.ndarray,
+    sufficient_dim:        int,
+    has_one_word_solution: float,
+    is_sharp:              float,
+    alpha:                 float = 3.0,
+    beta_order:            float = 1.0,
+    lambda_salience:       float = 0.0,
+    rho_salience_stop:     float = 0.0,
+    planning_scale:        float = 0.0,
+    gamma_uncertainty_len: float = 0.0,
+    color_semval:          float = 0.59,
+    form_semval:           float = 0.50,
+    k:                     float = 0.50,
+    wf:                    float = 0.6856,
+    epsilon:               float = 0.01,
+    order_scores:          jnp.ndarray = LOG_LM_ORDER_ONLY_15,
+    base_visual_salience:  jnp.ndarray = BASE_VISUAL_SALIENCE,
+    recursive:             bool = True,
+    size_context_mode:     str = "posterior",
+) -> jnp.ndarray:
+    """Principled incremental speaker with lookahead over reachable utterances.
+
+    Local adjective choices retain the current greedy informativeness term, but
+    candidate prefixes also receive a soft option value over complete
+    utterances reachable from that prefix.  Setting ``planning_scale`` to zero
+    recovers the original principled incremental speaker.
+    """
+
+    if size_context_mode not in ("posterior", "comparison_class"):
+        raise ValueError(
+            f"Unknown size_context_mode {size_context_mode!r}; "
+            "expected 'posterior' or 'comparison_class'."
+        )
+
+    eps = 1e-8
+    referent_index = 0
+    n_obj = states.shape[0]
+
+    del sufficient_dim, has_one_word_solution
+
+    sizes = states[:, 0]
+    size_sort_idx = jnp.argsort(sizes)
+    sizes_sorted = sizes[size_sort_idx]
+
+    log_order_prior = beta_order * order_scores
+    salience_vec = _visual_salience_scores(states, is_sharp, base_visual_salience)
+
+    colors = states[:, 1]
+    forms = states[:, 2]
+    log_color_sem = jnp.log(
+        jnp.where(colors == 1, color_semval, 1.0 - color_semval) + eps
+    )
+    log_form_sem = jnp.log(
+        jnp.where(forms == 1, form_semval, 1.0 - form_semval) + eps
+    )
+
+    uniform = jnp.ones(n_obj) / n_obj
+    init_scores = jnp.zeros(n_utt)
+    init_posts = jnp.broadcast_to(uniform, (n_utt, n_obj))
+
+    def size_log_sem_for_utt(post):
+        sv = compute_size_semantics_fast_presorted(
+            sizes,
+            size_sort_idx,
+            sizes_sorted,
+            post,
+            k,
+            wf,
+        )
+        return jnp.log(jnp.clip(sv, eps))
+
+    size_log_sems_static = jax.vmap(size_log_sem_for_utt)(init_posts)
+    terminal_log_ref = _principled_terminal_log_ref(
+        states,
+        color_semval,
+        form_semval,
+        k,
+        wf,
+        recursive,
+        size_context_mode,
+    )
+    size_uncertainty = _size_uncertainty_excess(states, is_sharp, k, wf)
+    length_bonus = gamma_uncertainty_len * size_uncertainty * jnp.maximum(N_WORDS - 1.0, 0.0)
+    salience_stop_cost = rho_salience_stop * _salience_continuation_load(salience_vec)
+    terminal_utility = (
+        alpha * terminal_log_ref
+        + log_order_prior
+        + length_bonus
+        - salience_stop_cost
+    )
+
+    def step(carry, t):
+        log_scores, per_utt_posts = carry
+
+        cand_mask_t = CANDIDATE_MASK[t]
+        active_t = ACTIVE_POS[t]
+
+        if size_context_mode == "comparison_class" and recursive:
+            candidate_seqs = jnp.reshape(PREFIX_UTTS[t], (n_utt * VOCAB_SIZE, T))
+            candidate_posts = jnp.reshape(
+                literal_listener_comparison_class_batch(
+                    states,
+                    candidate_seqs,
+                    color_semval,
+                    form_semval,
+                    k,
+                    wf,
+                ),
+                (n_utt, VOCAB_SIZE, n_obj),
+            )
+            log_L_ref = jnp.log(jnp.clip(candidate_posts[:, :, referent_index], eps))
+        else:
+            size_log_sems_recursive = jax.vmap(size_log_sem_for_utt)(per_utt_posts)
+            size_log_sems = size_log_sems_recursive if recursive else size_log_sems_static
+
+            log_sem_static = jnp.stack([log_color_sem, log_form_sem], axis=0)
+            log_sem_table = jnp.concatenate([
+                size_log_sems[:, None, :],
+                jnp.broadcast_to(log_sem_static[None, :, :], (n_utt, 2, n_obj)),
+            ], axis=1)
+
+            token_pres_t = TOKEN_PRESENT[t]
+            log_prod_sem = jnp.einsum(
+                "uav, uvo -> uao",
+                token_pres_t,
+                log_sem_table,
+            )
+
+            log_per_utt_posts = jnp.log(jnp.clip(per_utt_posts, eps))
+            log_updated = log_per_utt_posts[:, None, :] + log_prod_sem
+            log_Z = jax.scipy.special.logsumexp(log_updated, axis=-1)
+            log_norm = log_updated - log_Z[:, :, None]
+            log_L_ref = log_norm[:, :, referent_index]
+
+        completion_values = jax.scipy.special.logsumexp(
+            jnp.where(
+                COMPLETION_MASK[t],
+                terminal_utility[None, None, :],
+                -1e9,
+            ),
+            axis=-1,
+        )
+        salience_boost = lambda_salience * salience_vec
+        logits = jnp.where(
+            cand_mask_t,
+            alpha * log_L_ref
+            + salience_boost[None, :]
+            + planning_scale * completion_values,
+            -1e9,
+        )
+        local_probs = jax.nn.softmax(logits, axis=-1)
+
+        chosen = jnp.sum(local_probs * ACTUAL_TOK_ONEHOT[t], axis=-1)
+        chosen = jnp.where(active_t, chosen, 1.0)
+        log_chosen = jnp.where(active_t, jnp.log(jnp.clip(chosen, eps)), 0.0)
+
+        if size_context_mode == "comparison_class" and recursive:
+            actual_idx = ACTUAL_TOK[t][:, None, None]
+            selected_posts = jnp.take_along_axis(
+                candidate_posts,
+                jnp.broadcast_to(actual_idx, (n_utt, 1, n_obj)),
+                axis=1,
+            )[:, 0, :]
+            new_per_utt_posts = jnp.where(
+                active_t[:, None],
+                selected_posts,
+                per_utt_posts,
+            )
+        else:
+            selected_log_sem = jnp.einsum(
+                "uv, uvo -> uo",
+                ACTUAL_TOK_ONEHOT[t],
+                log_sem_table,
+            )
+            log_updated_post = log_per_utt_posts + jnp.where(
+                active_t[:, None],
+                selected_log_sem,
+                0.0,
+            )
+            log_Z_post = jax.scipy.special.logsumexp(
+                log_updated_post, axis=-1, keepdims=True
+            )
+            new_per_utt_posts = jnp.exp(log_updated_post - log_Z_post)
+
+        return (log_scores + log_chosen, new_per_utt_posts), None
+
+    (log_final_scores, _), _ = lax.scan(
+        step,
+        (init_scores, init_posts),
+        jnp.arange(T),
+    )
+
+    log_unnorm = log_order_prior + log_final_scores + length_bonus - salience_stop_cost
+    model_probs = jax.nn.softmax(log_unnorm)
+    return (1.0 - epsilon) * model_probs + epsilon / n_utt
+
+
 def global_speaker_principled(
     states:                jnp.ndarray,
     sufficient_dim:        int,
@@ -2653,6 +2900,30 @@ vectorized_incremental_speaker_principled_hier = jax.vmap(
              ),
 )
 
+vectorized_incremental_speaker_principled_planned_hier = jax.vmap(
+    incremental_speaker_principled_planned_prefix,
+    in_axes=(0,    # states
+             0,    # sufficient_dim
+             0,    # has_one_word_solution
+             0,    # is_sharp
+             0,    # alpha
+             None, # beta_order
+             None, # lambda_salience
+             None, # rho_salience_stop
+             None, # planning_scale
+             None, # gamma_uncertainty_len
+             None, # color_semval
+             None, # form_semval
+             None, # k
+             None, # wf
+             None, # epsilon
+             None, # order_scores
+             None, # base_visual_salience
+             None, # recursive
+             None, # size_context_mode
+             ),
+)
+
 @partial(jax.jit, static_argnames=("recursive", "size_context_mode"))
 def jitted_speaker_principled_hier(
     states, sufficient_dim, has_one_word_solution, is_sharp,
@@ -2666,6 +2937,23 @@ def jitted_speaker_principled_hier(
         alpha_per_trial, beta_order, lambda_salience, rho_salience_stop,
         gamma_uncertainty_len, color_semval, form_semval, k, wf, epsilon,
         order_scores, base_visual_salience, recursive, size_context_mode,
+    )
+
+
+@partial(jax.jit, static_argnames=("recursive", "size_context_mode"))
+def jitted_speaker_principled_planned_hier(
+    states, sufficient_dim, has_one_word_solution, is_sharp,
+    alpha_per_trial, beta_order, lambda_salience, rho_salience_stop,
+    planning_scale, gamma_uncertainty_len,
+    color_semval, form_semval, k, wf, epsilon, order_scores,
+    base_visual_salience, recursive=True, size_context_mode="posterior",
+):
+    return vectorized_incremental_speaker_principled_planned_hier(
+        states, sufficient_dim, has_one_word_solution, is_sharp,
+        alpha_per_trial, beta_order, lambda_salience, rho_salience_stop,
+        planning_scale, gamma_uncertainty_len, color_semval, form_semval, k,
+        wf, epsilon, order_scores, base_visual_salience, recursive,
+        size_context_mode,
     )
 
 
@@ -3198,6 +3486,7 @@ PRINCIPLED_PRIOR_PROFILES = {
         "log_beta_order_sd": 0.5,
         "lambda_salience_scale": 2.0,
         "rho_salience_stop_scale": 2.0,
+        "planning_scale": 1.0,
         "gamma_uncertainty_len_scale": 2.0,
         "tau_scale": 0.2,
     },
@@ -3206,6 +3495,7 @@ PRINCIPLED_PRIOR_PROFILES = {
         "log_beta_order_sd": 0.35,
         "lambda_salience_scale": 1.0,
         "rho_salience_stop_scale": 0.75,
+        "planning_scale": 0.75,
         "gamma_uncertainty_len_scale": 1.0,
         "tau_scale": 0.15,
     },
@@ -3214,6 +3504,7 @@ PRINCIPLED_PRIOR_PROFILES = {
         "log_beta_order_sd": 0.25,
         "lambda_salience_scale": 0.75,
         "rho_salience_stop_scale": 0.5,
+        "planning_scale": 0.5,
         "gamma_uncertainty_len_scale": 0.75,
         "tau_scale": 0.10,
     },
@@ -3223,6 +3514,7 @@ PRINCIPLED_PRIOR_PROFILES = {
 def _make_principled_model(
     drop: tuple = (),
     salience_stop: bool = False,
+    planned_prefix: bool = False,
     prior_profile: str = "default",
     cell: str = "inc_rec",
     fixed_epsilon: float | None = None,
@@ -3246,6 +3538,8 @@ def _make_principled_model(
     if cell not in _valid_cells:
         raise ValueError(f"Unsupported principled 2x2 cell {cell!r}; "
                          f"supported: {sorted(_valid_cells)}")
+    if planned_prefix and cell in ("glob_rec", "glob_static"):
+        raise ValueError("planned_prefix is defined for incremental 2x2 cells.")
     _valid_size_context_modes = {"posterior", "comparison_class"}
     if size_context_mode not in _valid_size_context_modes:
         raise ValueError(
@@ -3255,11 +3549,14 @@ def _make_principled_model(
 
     priors = PRINCIPLED_PRIOR_PROFILES[prior_profile]
     order_scores = jnp.zeros_like(LOG_LM_ORDER_ONLY_15) if "order" in drop else LOG_LM_ORDER_ONLY_15
-    speaker_fn = (
-        jitted_global_speaker_principled_hier
-        if cell in ("glob_rec", "glob_static")
-        else jitted_speaker_principled_hier
-    )
+    if planned_prefix:
+        speaker_fn = jitted_speaker_principled_planned_hier
+    else:
+        speaker_fn = (
+            jitted_global_speaker_principled_hier
+            if cell in ("glob_rec", "glob_static")
+            else jitted_speaker_principled_hier
+        )
     recursive = cell in ("inc_rec", "glob_rec")
 
     def model(states=None, empirical=None,
@@ -3288,6 +3585,13 @@ def _make_principled_model(
             )
             if salience_stop else 0.0
         )
+        planning_scale = (
+            numpyro.sample(
+                "planning_scale",
+                dist.HalfNormal(priors["planning_scale"]),
+            )
+            if planned_prefix else 0.0
+        )
         gamma_uncertainty_len = (
             0.0 if "uncertainty_len" in drop
             else numpyro.sample(
@@ -3308,14 +3612,24 @@ def _make_principled_model(
         alpha_per_trial = jnp.maximum(alpha + delta[participant_idx], 0.0)
 
         with numpyro.plate("data", len(states)):
-            probs = speaker_fn(
-                states, sufficient_dim, has_one_word_solution, is_sharp,
-                alpha_per_trial, beta_order, lambda_salience, rho_salience_stop,
-                gamma_uncertainty_len, 0.59, 0.50, 0.50, 0.6856,
-                epsilon, order_scores, BASE_VISUAL_SALIENCE,
-                recursive=recursive,
-                size_context_mode=size_context_mode,
-            )
+            if planned_prefix:
+                probs = speaker_fn(
+                    states, sufficient_dim, has_one_word_solution, is_sharp,
+                    alpha_per_trial, beta_order, lambda_salience,
+                    rho_salience_stop, planning_scale, gamma_uncertainty_len,
+                    0.59, 0.50, 0.50, 0.6856, epsilon, order_scores,
+                    BASE_VISUAL_SALIENCE, recursive=recursive,
+                    size_context_mode=size_context_mode,
+                )
+            else:
+                probs = speaker_fn(
+                    states, sufficient_dim, has_one_word_solution, is_sharp,
+                    alpha_per_trial, beta_order, lambda_salience, rho_salience_stop,
+                    gamma_uncertainty_len, 0.59, 0.50, 0.50, 0.6856,
+                    epsilon, order_scores, BASE_VISUAL_SALIENCE,
+                    recursive=recursive,
+                    size_context_mode=size_context_mode,
+                )
             if empirical is None:
                 numpyro.sample("obs", dist.Categorical(probs=probs))
             else:
@@ -3389,6 +3703,20 @@ likelihood_function_principled_salience_stop_regularized_tmcc_2x2_inc_static_hie
     prior_profile="regularized",
     cell="inc_static",
     size_context_mode="comparison_class",
+)
+likelihood_function_principled_salience_stop_regularized_plannedprefix_2x2_inc_rec_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    planned_prefix=True,
+    prior_profile="regularized",
+    cell="inc_rec",
+)
+likelihood_function_principled_salience_stop_regularized_plannedprefix_2x2_inc_static_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    planned_prefix=True,
+    prior_profile="regularized",
+    cell="inc_static",
 )
 likelihood_function_principled_salience_stop_regularized_tmcc_2x2_glob_rec_hier = _make_principled_model(
     drop=("uncertainty_len",),
