@@ -1,0 +1,5 @@
+model,n_parameters,max_r_hat,n_r_hat_gt_1_01,n_r_hat_gt_1_05,min_ess_bulk,min_ess_tail,n_divergent,divergence_rate,diagnostic_status
+production_anchor_sizesharp_2x2_inc_rec,5,1.42,2,1,8.0,18.0,0,0.0,fail
+production_anchor_sizesharp_2x2_inc_static,5,1.64,1,1,7.0,12.0,0,0.0,fail
+production_anchor_sizesharp_2x2_glob_rec,5,1.41,1,1,10.0,12.0,0,0.0,fail
+production_anchor_sizesharp_2x2_glob_static,5,1.27,1,1,14.0,12.0,0,0.0,fail

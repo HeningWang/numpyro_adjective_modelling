@@ -103,7 +103,6 @@ POP_VAR_NAMES = [
     "signed_order_scale",
     "planned_mixture_weight",
     "color_semvalue",
-    "epsilon",
     "sigma",
     "tau",
 ]

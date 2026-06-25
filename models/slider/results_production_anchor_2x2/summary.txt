@@ -1,0 +1,56 @@
+Dataset: 3485 observations
+
+=== production_anchor_sizesharp_2x2_inc_rec ===
+                  mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
+alpha            1.088  0.292   0.579    1.638      0.018    0.009     254.0     281.0   1.01
+log_beta_order  -0.975  0.196  -1.324   -0.607      0.014    0.011     196.0     152.0   1.02
+lambda_salience  0.479  0.170   0.172    0.813      0.012    0.007     204.0     155.0   1.01
+sigma            0.793  0.011   0.775    0.815      0.000    0.000     524.0     742.0   1.00
+tau              0.214  0.138   0.008    0.446      0.045    0.016       8.0      18.0   1.42
+
+
+  Participant intercepts (production_anchor_sizesharp_2x2_inc_rec): n=134, mean(δ)=0.0003, sd(δ)=0.0495, τ=0.2138
+
+=== production_anchor_sizesharp_2x2_inc_static ===
+                  mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
+alpha            1.076  0.291   0.503    1.555      0.011    0.008     719.0     884.0   1.00
+log_beta_order  -0.962  0.187  -1.295   -0.609      0.007    0.005     723.0     934.0   1.00
+lambda_salience  0.491  0.169   0.198    0.822      0.006    0.005     719.0     871.0   1.00
+sigma            0.794  0.011   0.774    0.813      0.000    0.000    1170.0     998.0   1.01
+tau              0.228  0.140   0.005    0.449      0.052    0.022       7.0      12.0   1.64
+
+
+  Participant intercepts (production_anchor_sizesharp_2x2_inc_static): n=134, mean(δ)=0.0001, sd(δ)=0.0541, τ=0.2284
+
+=== production_anchor_sizesharp_2x2_glob_rec ===
+                  mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
+alpha            2.232  1.690   0.008    5.203      0.052    0.042     775.0     696.0   1.00
+log_beta_order  -1.306  0.053  -1.411   -1.219      0.002    0.001     801.0     772.0   1.00
+lambda_salience  0.803  0.589   0.002    1.888      0.017    0.012     947.0     823.0   1.00
+sigma            0.818  0.011   0.798    0.838      0.000    0.000     599.0     606.0   1.01
+tau              0.131  0.097   0.009    0.312      0.029    0.012      10.0      12.0   1.41
+
+
+  Participant intercepts (production_anchor_sizesharp_2x2_glob_rec): n=134, mean(δ)=0.0006, sd(δ)=0.0032, τ=0.1315
+
+=== production_anchor_sizesharp_2x2_glob_static ===
+                  mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
+alpha            2.473  1.761   0.028    5.766      0.044    0.039    1117.0     787.0   1.00
+log_beta_order  -1.309  0.052  -1.406   -1.213      0.002    0.001     860.0    1017.0   1.01
+lambda_salience  0.801  0.583   0.009    1.875      0.018    0.012     734.0     649.0   1.00
+sigma            0.819  0.011   0.798    0.837      0.000    0.000     526.0    1171.0   1.01
+tau              0.136  0.090   0.006    0.304      0.018    0.014      14.0      12.0   1.27
+
+
+  Participant intercepts (production_anchor_sizesharp_2x2_glob_static): n=134, mean(δ)=0.0003, sd(δ)=0.0037, τ=0.1361
+
+LOO Model Comparison:
+                                             rank     elpd_loo     p_loo  elpd_diff        weight         se        dse  warning scale
+production_anchor_sizesharp_2x2_inc_static      0 -2939.482431  5.309236   0.000000  1.000000e+00  40.414268   0.000000     True   log
+production_anchor_sizesharp_2x2_inc_rec         1 -2939.659411  5.085257   0.176980  1.110223e-16  40.421990   0.107691     True   log
+production_anchor_sizesharp_2x2_glob_static     2 -2996.433114  1.523868  56.950683  3.330669e-16  39.651444  10.060411     True   log
+production_anchor_sizesharp_2x2_glob_rec        3 -2996.520525  1.546226  57.038094  0.000000e+00  39.674896  10.075847     True   log
+
+Best: production_anchor_sizesharp_2x2_inc_static vs production_anchor_sizesharp_2x2_inc_rec: Δelpd=0.18, dse=0.11, |Δ|/dse=1.64
+
+  Correlation (Slider: production_anchor_sizesharp_2x2_inc_static): r=0.9579, r²=0.9175, p=2.63e-03

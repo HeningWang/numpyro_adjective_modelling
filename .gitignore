@@ -61,6 +61,12 @@ models/slider/results_*_pilot/stats/*.png
 models/slider/results_*_pilot/stats/*_empirical.csv
 models/slider/results_*_pilot/stats/*_predictions.csv
 models/slider/results_*_pilot/summary.txt
+models/slider/results_*/diagnostics/
+models/slider/results_*/ppc/
+models/slider/results_*/stats/*.pdf
+models/slider/results_*/stats/*.png
+models/slider/results_*/stats/*_empirical.csv
+models/slider/results_*/stats/*_predictions.csv
 models/slider/results_heldout_pilot/diagnostics/
 models/slider/results_heldout_pilot/ppc/
 models/slider/results_heldout_pilot/stats/*.png
