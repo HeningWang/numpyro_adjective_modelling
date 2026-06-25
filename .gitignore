@@ -76,3 +76,4 @@ meeting-agenda-*.md
 # kept ignored in case they reappear under paper/)
 paper/Masterarbeit_*/
 paper/literatures/
+AGENTS.md

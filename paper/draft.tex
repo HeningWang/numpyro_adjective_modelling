@@ -45,7 +45,7 @@ Subjectivity, Discriminatory Strength, and Incremental Pragmatics}
 
 \abstract{Adjective ordering preferences are robust across languages, yet speakers also adapt adjective order to the referential context.
 This paper asks how stable ordering expectations, context-dependent informativeness, and incremental choice jointly shape adjective order in referential communication.
-We develop a Rational Speech Act model that crosses speaker architecture (global vs.\ incremental) with semantic regime (context-fixed vs.\ context-updating), and test it against two German referential experiments: a slider-rating study and a constrained-production study.
+We develop a Rational Speech Act model that crosses speaker architecture (global vs.\ incremental) with semantic regime (context-fixed vs.\ context-updating), and evaluate the same model space against two German referential experiments: a slider-rating study and a constrained-production study.
 Across both tasks, order preferences vary systematically with the discriminatory value of the adjectives in the current scene while showing a baseline size-first tendency.
 Bayesian model comparison shows a clear architecture effect: incremental speakers outperform global speakers in both tasks.
 By contrast, semantic regime plays a limited role in the fitted models: context-updating and context-fixed semantics are indistinguishable for slider judgments, and context-fixed semantics is slightly favored in production.
@@ -89,6 +89,7 @@ To implement this comparison, we develop a Rational Speech Act (RSA) model \cite
 The global speaker evaluates complete utterances; the incremental speaker chooses one modifier at a time.
 Under context-updating semantics, the interpretation of an outer adjective such as ``big'' depends on the comparison class established by the material it composes with, so that ``big blue'' and ``blue big'' need not be equivalent; under context-fixed semantics, the size threshold is determined once from the scene.
 All four model variants are fitted to data from two complementary referential experiments in German --- a slider-rating study measuring graded ordering preferences and a constrained production study measuring actual utterance choice --- in a shared paradigm that varies discriminatory strength across scenes.
+Using the same formal model space across the two datasets allows the comparison to function as a cross-task test of the proposed mechanisms: the same model variants are evaluated against both explicit order ratings and categorical production choices.
 Model comparison uses Bayesian leave-one-out cross-validation \citep[PSIS-LOO;][]{vehtari2017practical}, which quantifies how much predictive accuracy each mechanism adds.
 A simulation study applies the same $2 \times 2$ crossing outside the fitted empirical models, asking which ordering effects each mechanism can generate on its own and in combination.
 
@@ -355,14 +356,14 @@ Responses were recorded on a 0--100 scale and centred for analysis so that posit
 
 \subsubsection{Results}
 
-\Cref{fig:slider-empirical} shows that size-first orderings were preferred across all three referential contexts, including colour-sufficient displays where size did not identify the target by itself, but the strength of this preference varied across contexts and size-discriminability groups.
+\Cref{fig:slider-empirical} shows that size-first orderings were preferred across all three referential contexts, including colour-sufficient displays where size did not identify the target by itself, but the strength of this preference varied across contexts and size-discriminability levels.
 We analysed centred slider ratings with linear mixed-effects models fit in R using \texttt{lme4::lmer} \citep{bates2014fitting}.
 The full model included referential context, size discriminability, and their interaction as fixed effects, with random intercepts for participant and item; effects were evaluated by likelihood-ratio comparisons between nested models.
 
 The interaction between referential context and size discriminability was significant, $\chi^2(2) = 11.7$, $p = .003$.
 Breaking down this interaction, higher size discriminability slightly increased the size-first preference in size-sufficient contexts (low: $0.30$, high: $0.34$) but slightly reduced it in both-necessary ($0.25$ vs.\ $0.20$) and colour-sufficient contexts ($0.06$ vs.\ $0.04$).
 However, Bonferroni-corrected pairwise comparisons showed that none of the high--low size-discriminability contrasts was significant within an individual referential context (all $p \ge .23$).
-We therefore interpret the interaction as a weak crossover pattern.
+We therefore interpret the interaction as a weak crossover.
 In size-sufficient displays, high size discriminability slightly strengthened the already strong size-first preference, whereas in colour-sufficient displays it slightly reduced size-first ratings, matching the direction made salient by referential context in each case.
 This pattern suggests that high size discriminability may amplify the cue already supported by the referential context.
 In both-necessary displays, the contrast went in the direction predicted by P3, with lower size discriminability associated with a stronger size-first preference, but this difference was not significant after correction.
@@ -374,7 +375,7 @@ Even colour-sufficient contexts did not produce a qualitative reversal: mean cen
 Together, these patterns indicate two effects in the slider data.
 First, participants retained a size-first bias even when colour was sufficient for identifying the target, supporting P1.
 Second, this bias was graded by referential usefulness: it was strongest when size alone identified the target and weakest when colour alone did, supporting P2.
-The display-level proxy prediction for P3 receives limited support at most.
+The display-level proxy prediction for P3 receives limited support.
 The both-necessary contrast points in the predicted direction, but the contrast is not significant, and the one-property-sufficient contexts suggest weak salience-linked amplification of the contextually useful property.
 Size discriminability therefore showed only a small context-linked modulation of size-first ratings, not a robust monotonic effect of lower visual size reliability.
 
@@ -392,7 +393,7 @@ Size discriminability therefore showed only a small context-linked modulation of
 
 Participants ($N = 113$ after exclusions; 60 in the \textsc{low} size discriminability group, 53 in the \textsc{high} size discriminability group) were recruited online via Prolific; anyone who had completed the slider study was excluded.
 Further exclusion criteria were: completion times more than two standard deviations from the mean, more than 80\% identical responses, or more than 10\% missing or unannotatable responses.
-The broad preprocessed critical table contained 9{,}639 rows across the three adjective-pair families.
+The full preprocessed data contained 9{,}639 responses across the three adjective-pair families.
 The size--colour production model reported in \Cref{sec:model:extended} used 3{,}196 annotated observations; exclusion and coding details are summarized in \Cref{sec:appendix:methods-transparency}.
 Mean completion time was 32.4 minutes.
 Compensation followed the same Prolific rate as Experiment~1.
@@ -400,17 +401,52 @@ Compensation followed the same Prolific rate as Experiment~1.
 \subsubsection{Procedure}
 
 Experiment~2 used the shared referential design in a constrained production format.
-Participants saw the framed target together with a sentence prompt and typed the adjective material needed before the noun \textit{Aufkleber}.
+Participants saw the framed target together with the fixed sentence frame \emph{den \_\_\_ Aufkleber} and typed the adjective material needed before the noun \textit{Aufkleber}.
 Restricting the response to the adjective slot rather than eliciting a full sentence reduced off-task variability and provided a controlled basis for coding.
 The practice materials additionally introduced the relevant colour and form vocabulary before the critical trials began.
-Each participant completed 135 main trials: 81 critical trials and 54 filler or control trials from one of six counterbalanced lists.\footnote{The number of filler and control trials was reduced in Experiment~2 because typed production responses were slower and more effortful than slider judgments.}
+Each participant completed 135 main trials: 81 critical trials and 54 filler or control trials from one of six counterbalanced lists.\footnote{The number of filler and control trials was reduced in Experiment~2 to keep the total number of trials manageable because typed production responses were slower and more effortful than slider judgments.}
 
-Responses were coded into 15 utterance categories corresponding to all one-, two-, and three-adjective strings built from size, colour, and form terms (3 one-adjective, 6 two-adjective, 6 three-adjective).
+Responses were coded into 15 utterance categories corresponding to all ordered combinations of \adj{S} (size), \adj{C} (colour), and \adj{F} (form): 3 one-adjective, 6 two-adjective, and 6 three-adjective strings.
 Misspellings and transparent lexical alternatives were normalised when their semantic class was unambiguous; spatial descriptions, comparative or ordinal size expressions, and other unclassifiable responses were excluded.
 The dependent variable for the Bayesian model comparison is the categorical utterance label $y_i \in \{1, \ldots, 15\}$ for each trial $i$.
 For descriptive statistics and targeted mixed-effects analyses, we also tracked two derived binary outcomes: whether an utterance was size-initial and whether it was over-informative (i.e., a three-adjective response in both-necessary contexts, or a multi-adjective response in size-sufficient or colour-sufficient contexts).
+For the mixed-effects logistic regressions, trials satisfying the coded outcome were coded as $1$ and all other annotated trials were coded as $0$.
 
 \subsubsection{Results}
+
+\Cref{fig:production-empirical} shows that constrained production separates two patterns that the slider task could not distinguish: which adjective material speakers selected and, when more than one adjective was produced, which adjective came first.
+Size-sufficient displays mostly elicited size-initial descriptions, whereas colour-sufficient displays mostly elicited colour-only descriptions, leaving little multi-adjective material on which a colour-first ordering preference could be expressed.
+Both-necessary displays fell between these extremes and elicited more multi-adjective strings.
+This response structure motivates two complementary analyses: a size-initial model for first-adjective choice and an over-informativeness model for whether speakers selected redundant adjective material.
+We analysed two derived binary outcomes with mixed-effects logistic regressions fit in R using \texttt{lme4::glmer} \citep{bates2014fitting}.
+The first model coded whether the response was size-initial; the second coded whether the response was over-informative.
+Both models included referential context, size discriminability, and their interaction as fixed effects, with random intercepts for participant and item; effects were evaluated by likelihood-ratio comparisons between nested models.
+
+For size-initial responses, the interaction between referential context and size discriminability was significant, $\chi^2(2) = 31.4$, $p < .001$.
+Bonferroni-corrected simple contrasts within each referential context showed significant high--low size-discriminability differences in all three contexts (all $p < .001$).
+Higher size discriminability slightly reduced size-initial responses in size-sufficient contexts (low: $0.80$, high: $0.77$) and colour-sufficient contexts ($0.04$ vs.\ $0.01$), but increased size-initial responses in both-necessary contexts ($0.49$ vs.\ $0.65$).
+This pattern differs from the slider interaction.
+In production, sharper size contrasts promoted size-initial responses only when both size and colour were needed; when one property was sufficient, speakers could often resolve the task by selecting less adjective material, so size discriminability affected adjective selection and utterance length in addition to ordering.
+This motivates the over-informativity analysis below.
+Further analysis revealed a strong main effect of referential context, $\chi^2(2) = 1859.7$, $p < .001$, but no significant main effect of size discriminability, $\chi^2(1) = 0.79$, $p = .37$.
+Size-initial responses were most frequent when size alone identified the target, least frequent when colour alone did, and intermediate when both properties were needed.
+This follows the same contextual ordering as the slider data, but the production responses were more categorical: colour-sufficient displays mostly elicited colour-only descriptions, not weak size-first preferences.
+
+A complementary analysis of over-informativity tested the adjective-selection side of the production data.
+The interaction between referential context and size discriminability was significant, $\chi^2(2) = 63.8$, $p < .001$.
+The interaction was driven mainly by size-sufficient displays: low size-discriminability displays elicited more over-informative responses than high size-discriminability displays (low: $0.90$, high: $0.63$).
+Bonferroni-corrected simple contrasts showed that this low--high difference was significant in size-sufficient contexts ($p < .001$).
+The corresponding descriptive contrasts were smaller in both-necessary contexts ($0.40$ vs.\ $0.38$) and colour-sufficient contexts ($0.33$ vs.\ $0.26$).
+Further analysis revealed a strong main effect of referential context, $\chi^2(2) = 725.7$, $p < .001$, and a main effect of size discriminability, $\chi^2(1) = 10.3$, $p = .001$.
+
+Together, these patterns indicate four effects in the production data.
+First, adjective selection and ordering were strongly graded by referential usefulness: size-initial responses increased when size was useful and decreased when colour was sufficient, supporting P2.
+Second, P1 receives a task-qualified interpretation in production: colour-sufficient displays did not mainly reveal a competing colour-first order over size, because speakers usually selected a single colour adjective.
+The production task therefore shows how adjective selection can bypass the size-first baseline, which is why over-informativeness is informative in this response format.
+Third, the display-level proxy prediction for P3 is not supported.
+The size-initial interaction is asymmetric, and lower visual size reliability does not monotonically promote size-first ordering.
+Fourth, P4 is supported: the richer production response space reveals a graded over-informativity pattern across one-, two-, and three-adjective strings, consistent with work showing that redundant modifiers can support efficient reference when facing increased uncertainty about contexts \citep{rubio2016redundant,rubio2019overinformative,degen2020redundancy}.
+In the present data, low size-discriminability displays elicited more redundant strings overall.
 
 \begin{figure}[!ht]
   \centering
@@ -419,34 +455,24 @@ For descriptive statistics and targeted mixed-effects analyses, we also tracked 
   \label{fig:production-empirical}
 \end{figure}
 
-Production showed a more categorical context pattern than the slider ratings.
-As \Cref{fig:production-empirical} illustrates, size-first utterances dominated in size-sufficient contexts, colour-first utterances dominated in colour-sufficient contexts, and both-necessary contexts fell between the two extremes.
-A mixed-effects logistic regression on size-initial responses yielded a strong main effect of referential context, $\chi^2(2) = 1859.7$, $p < .001$, no significant main effect of size discriminability, $\chi^2(1) = 0.79$, $p = .37$, and a significant interaction, $\chi^2(2) = 31.4$, $p < .001$.
-The interaction was again asymmetric, although its cellwise direction differed from the slider task: higher size discriminability reduced the size-first advantage in size-sufficient contexts but increased it in both-necessary contexts.
-
-A complementary analysis of over-informativity reveals a related efficiency pressure.
-Over-informative utterances were most frequent in size-sufficient contexts and least frequent in colour-sufficient contexts, producing a strong main effect of referential context, $\chi^2(2) = 725.7$, $p < .001$.
-Unlike size-initiality, over-informativity also showed a main effect of size discriminability, $\chi^2(1) = 10.3$, $p = .001$, with more multi-adjective responses in low than in high size-discriminability displays.
-This effect interacted with referential context, $\chi^2(2) = 63.8$, $p < .001$, driven primarily by size-sufficient contexts.
-The pattern aligns with the broader communicative-efficiency literature on redundancy: speakers produce additional material when it helps resolve reference, even if it is not strictly necessary for uniqueness.
-The production data support P2 strongly.
-They also show why P1 should be treated as a baseline pressure rather than as a categorical prediction: size-first utterances dominate when size is useful, but colour-first utterances dominate when colour alone identifies the referent.
-The display-level proxy prediction for P3 is again not supported.
-The interaction on size-initial responses is asymmetric, with higher size discriminability reducing size-first only in size-sufficient contexts and increasing it in both-necessary contexts, so lower visual size reliability does not monotonically promote size-first ordering.
-P4 is supported: the richer response space reveals a graded over-informativity gradient across one-, two-, and three-adjective strings, and low size-discriminability displays elicit more redundant strings overall.
-
 \subsection{Interim Summary}
 
-Across both experiments, three empirical regularities emerge.
-First, there is a baseline size-first pressure that is clearest in the slider judgments and is overridden in production when colour is the only discriminating property.
-Second, ordering is modulated by referential context: size-first responses increase when size is informative and decrease when colour is more useful, consistent with a discriminatory-efficiency account.
-Third, size discriminability does not produce significant main effects, and the direction of its interaction with referential context varies across contexts: in the slider task, higher size discriminability raised size-first ratings in size-sufficient displays but lowered them in both-necessary and colour-sufficient displays, while in production the directions were reversed for size-sufficient and both-necessary displays.
-The data therefore weigh against the proxy prediction that lower visual size reliability yields a uniformly stronger size-first preference.
-The production data sharpen the first two patterns relative to the slider data: typed production yields more categorical context effects and additionally reveals an over-informativity gradient that is sensitive to size discriminability, with low size-discriminability displays eliciting longer, more redundant strings.
-The failure of this proxy prediction should be interpreted narrowly.
-The high- versus low-size-discriminability manipulation changes the visual reliability of size in a scene; it is not a direct manipulation of lexical subjectivity itself.
-Thus the data weigh against a monotonic effect of visual size reliability on ordering, while leaving intact the broader claim that subjectivity-aligned expectations contribute to the stable size-first baseline.
-Together, these results motivate a formal model that can capture both the stable ordering bias and its context-dependent modulation, while accommodating the richer response space of constrained production.
+Experiment~1 shows that adjective-order judgments retain a size-first baseline even when size is not necessary for reference.
+That baseline is context-sensitive: ratings were strongest when size identified the target and weakest when colour did.
+Size discriminability did not add a robust simple effect; it produced a weak crossover without significant high--low contrasts within individual contexts.
+
+Experiment~2 extends this pattern to constrained production, where participants selected the adjective directly for the target description.
+Speakers tended to use size-initial descriptions when size was useful, but colour-sufficient displays often elicited a single colour adjective.
+Reversed colour-before-size orders were rarely produced; when colour alone identified the target, speakers more often resolved the task through adjective selection before an ordering contrast between size and colour arose.
+The production data also exposed an utterance-length effect: lower size discriminability elicited more redundant adjectives, especially in size-sufficient displays.
+
+The two tasks locate context sensitivity at two related levels.
+Slider judgments show how referential context grades an explicit ordering preference.
+Production shows that the same referential context can first determine which adjectives are selected, and only then which order is used.
+This link helps interpret the apparent mismatch in the size-discriminability interactions: visual size reliability did not monotonically shift responses toward size-first ordering, but it did affect whether speakers added extra adjectives.
+
+The formal modelling task is to account for these patterns within a shared representational framework.
+A successful model should preserve the size-first baseline, allow adjective choice and ordering to vary with referential usefulness, and represent the richer production response space over one-, two-, and three-adjective strings.
 
 % =============================================================================
 \section{Computational Model}
@@ -933,6 +959,7 @@ The present paper asked how stable adjective-ordering expectations are combined 
 The empirical results show that both pressures are visible.
 Across tasks, participants retained a size-first baseline, especially in slider judgments, and shifted their responses with the property that best identified the target in the current display.
 Production made this context sensitivity more categorical and revealed an additional length effect: speakers used more redundant adjective material when size was harder to discriminate.
+This length effect is consistent with work on communicative efficiency and redundant modification, where additional material can support reference by helping listeners resolve the target efficiently \citep{rubio2016redundant,rubio2019overinformative,degen2020redundancy}.
 
 The model comparison localizes the strongest predictive gain in speaker architecture.
 Incremental speakers outperformed global speakers in both response formats, indicating that much of the context sensitivity in the observed data is captured by word-by-word pragmatic choice.
