@@ -53,6 +53,12 @@ models/slider/results/
 models/production/results/
 models/slider/logs/
 models/production/logs/
+models/slider/results_*_pilot/diagnostics/
+models/slider/results_*_pilot/ppc/
+models/slider/results_*_pilot/stats/*.png
+models/slider/results_*_pilot/stats/*_empirical.csv
+models/slider/results_*_pilot/stats/*_predictions.csv
+models/slider/results_*_pilot/summary.txt
 
 # Forward-audit detail dumps (large, regenerable from compact audit scripts)
 models/*/results_semantic_variant_forward_audit/stats/*_listener_by_display.csv

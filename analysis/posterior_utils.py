@@ -365,6 +365,25 @@ def compute_loo_comparison(
     return comparison, loo_results
 
 
+def summarize_loo_pareto_k(loo_results: Dict[str, az.ELPDData]) -> pd.DataFrame:
+    """Summarize pointwise Pareto-k diagnostics for each LOO result."""
+    records = []
+    for model_name, loo in loo_results.items():
+        k = np.asarray(loo.pareto_k.values, dtype=float)
+        records.append({
+            "model": model_name,
+            "n_observations": int(k.size),
+            "max_pareto_k": float(np.nanmax(k)) if k.size else np.nan,
+            "mean_pareto_k": float(np.nanmean(k)) if k.size else np.nan,
+            "n_pareto_k_gt_0_5": int(np.sum(k > 0.5)),
+            "n_pareto_k_gt_0_7": int(np.sum(k > 0.7)),
+            "n_pareto_k_gt_1_0": int(np.sum(k > 1.0)),
+            "frac_pareto_k_gt_0_7": float(np.mean(k > 0.7)) if k.size else np.nan,
+            "loo_warning": bool(getattr(loo, "warning", False)),
+        })
+    return pd.DataFrame.from_records(records)
+
+
 def plot_loo_comparison(
     comparison: pd.DataFrame,
     loo_results: Dict[str, az.ELPDData],

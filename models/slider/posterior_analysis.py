@@ -34,6 +34,7 @@ from analysis.posterior_utils import (
     extract_pp_samples,
     save_summary_text,
     summarize_mcmc_diagnostics,
+    summarize_loo_pareto_k,
     compute_ppc_correlation_metrics,
 )
 from modelSpecification import import_dataset
@@ -60,6 +61,11 @@ BEST_MODEL = "incremental_recursive"
 
 # Population-level parameters to diagnose per model
 POP_VAR_NAMES = ["alpha", "bias", "usefulness_order_scale", "sigma", "tau"]
+
+
+def available_posterior_vars(idata, var_names):
+    """Return requested variables present in this model's posterior."""
+    return [v for v in var_names if v in idata.posterior.data_vars]
 
 
 # ── Dataset-specific: PPC for continuous slider ─────────────────────────────
@@ -264,7 +270,8 @@ def main():
     # ── 3. MCMC diagnostics ──
     print("Running MCMC diagnostics...")
     for model_name, idata in idata_dict.items():
-        s = run_mcmc_diagnostics(idata, model_name, var_names=POP_VAR_NAMES,
+        model_var_names = available_posterior_vars(idata, POP_VAR_NAMES)
+        s = run_mcmc_diagnostics(idata, model_name, var_names=model_var_names,
                                  out_dir=diag_dir, fmt=fmt)
         summary_blocks.append(s)
 
@@ -303,6 +310,10 @@ def main():
     # Save LOO CSV
     comparison.to_csv(os.path.join(stats_dir, "slider_loo_comparison.csv"))
     print(f"  [csv] slider_loo_comparison.csv")
+    loo_pareto = summarize_loo_pareto_k(loo_results)
+    loo_pareto.to_csv(os.path.join(stats_dir, "slider_loo_pareto_diagnostics.csv"),
+                      index=False)
+    print(f"  [csv] slider_loo_pareto_diagnostics.csv")
 
     # ── 6. Correlation scatter (best model) ──
     best = comparison.index[0]

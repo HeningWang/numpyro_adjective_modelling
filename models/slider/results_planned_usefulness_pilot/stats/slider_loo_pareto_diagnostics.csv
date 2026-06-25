@@ -1,0 +1,5 @@
+model,n_observations,max_pareto_k,mean_pareto_k,n_pareto_k_gt_0_5,n_pareto_k_gt_0_7,n_pareto_k_gt_1_0,frac_pareto_k_gt_0_7,loo_warning
+incremental_recursive,3485,inf,inf,1617,1617,1617,0.46398852223816356,True
+incremental_static,3485,inf,inf,1619,1617,1617,0.46398852223816356,True
+planned_usefulness_order,3485,inf,inf,1624,1617,1617,0.46398852223816356,True
+planned_usefulness_order_static,3485,inf,inf,1618,1617,1617,0.46398852223816356,True
