@@ -76,8 +76,33 @@ def test_heldout_speaker_ablation_specs_cover_signed_order_variants():
     assert ("planned_usefulness_signed_order_static", "incremental_static") in pairs
 
 
+def test_full_run_recommendation_requires_ppc_success():
+    assert not heldout.recommend_full_run(
+        candidate_diagnostics_ok=True,
+        baseline_diagnostics_ok=True,
+        heldout_success=True,
+        ppc_success=False,
+        candidate_on_frontier=True,
+    )
+    assert heldout.recommend_full_run(
+        candidate_diagnostics_ok=True,
+        baseline_diagnostics_ok=True,
+        heldout_success=True,
+        ppc_success=True,
+        candidate_on_frontier=False,
+    )
+    assert heldout.recommend_full_run(
+        candidate_diagnostics_ok=True,
+        baseline_diagnostics_ok=True,
+        heldout_success=False,
+        ppc_success=True,
+        candidate_on_frontier=True,
+    )
+
+
 if __name__ == "__main__":
     test_balanced_fold_ids_are_deterministic_and_condition_balanced()
     test_balanced_fold_ids_do_not_depend_on_dataframe_index()
     test_heldout_speaker_ablation_specs_cover_signed_order_variants()
+    test_full_run_recommendation_requires_ppc_success()
     print("PASS slider heldout fold tests")

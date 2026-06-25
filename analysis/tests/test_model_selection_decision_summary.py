@@ -156,7 +156,50 @@ def test_decision_summary_passes_when_all_gates_pass():
     }
 
 
+def test_model_labels_cover_signed_order_slider_variants():
+    assert (
+        decisions.model_architecture("planned_usefulness_signed_order_static")
+        == "planned_usefulness_signed_order"
+    )
+    assert decisions.model_semantics("planned_usefulness_order") == "context_updating"
+    assert decisions.model_semantics("planned_usefulness_signed_order_static") == "context_fixed"
+
+
+def test_decision_summary_rejects_elpd_only_recommendation():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        args = args_for(tmp_path)
+
+        write_csv(
+            args.slider_heldout_stats_dir / "slider_heldout_eval_pairwise_decisions.csv",
+            [
+                {
+                    "pair": "planned_vs_greedy_recursive",
+                    "candidate": "planned_usefulness_order",
+                    "baseline": "incremental_recursive",
+                    "candidate_diagnostics_ok": True,
+                    "baseline_diagnostics_ok": True,
+                    "recommended_for_full_run": True,
+                    "delta_heldout_elpd_candidate_minus_baseline": 2.0,
+                    "heldout_elpd_success": True,
+                    "ppc_rmse_gain": 0.01,
+                    "ppc_success": False,
+                    "second_property_abs_residual_reduction": 0.01,
+                }
+            ],
+        )
+
+        _, stage_decisions, _ = decisions.build_decision_summary(args)
+
+    heldout = stage_decisions.query("decision_stage == 'slider_heldout_ablation'").iloc[0]
+    assert heldout["status"] == "fail"
+    assert pd.isna(heldout["selected_model"])
+    assert "No candidate passed" in heldout["evidence"]
+
+
 if __name__ == "__main__":
     test_decision_summary_reports_pending_when_csvs_are_absent()
     test_decision_summary_passes_when_all_gates_pass()
+    test_model_labels_cover_signed_order_slider_variants()
+    test_decision_summary_rejects_elpd_only_recommendation()
     print("PASS model selection decision summary tests")

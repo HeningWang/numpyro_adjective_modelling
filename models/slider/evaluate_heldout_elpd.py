@@ -401,6 +401,21 @@ def mark_heldout_frontier(scores: pd.DataFrame) -> pd.DataFrame:
     )
 
 
+def recommend_full_run(
+    candidate_diagnostics_ok: bool,
+    baseline_diagnostics_ok: bool,
+    heldout_success: bool,
+    ppc_success: bool,
+    candidate_on_frontier: bool,
+) -> bool:
+    return bool(
+        candidate_diagnostics_ok
+        and baseline_diagnostics_ok
+        and ppc_success
+        and (heldout_success or candidate_on_frontier)
+    )
+
+
 def decision_outputs(
     total_summary: pd.DataFrame,
     ppc: pd.DataFrame,
@@ -409,6 +424,7 @@ def decision_outputs(
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     model_scores = total_summary.merge(ppc, on="model", how="left")
     frontier = mark_heldout_frontier(model_scores)
+    frontier_by_model = frontier.set_index("model")
     indexed = model_scores.set_index("model")
     rows = []
     residual_frames = []
@@ -444,6 +460,9 @@ def decision_outputs(
             and second_gain >= args.second_residual_gate
             and (not np.isfinite(worst_new_harm) or worst_new_harm <= args.max_new_residual_harm)
         )
+        candidate_on_frontier = bool(
+            frontier_by_model.loc[candidate, "heldout_pareto_frontier"]
+        ) if candidate in frontier_by_model.index else False
         rows.append(
             {
                 "pair": pair,
@@ -462,13 +481,13 @@ def decision_outputs(
                 "second_property_abs_residual_reduction": second_gain,
                 "worst_first_or_both_abs_residual_harm": worst_new_harm,
                 "ppc_success": ppc_success,
-                "candidate_on_heldout_frontier": bool(
-                    frontier.set_index("model").loc[candidate, "heldout_pareto_frontier"]
-                ) if candidate in set(frontier["model"]) else False,
-                "recommended_for_full_run": bool(
-                    cand["diagnostics_ok"]
-                    and base["diagnostics_ok"]
-                    and (heldout_success or ppc_success)
+                "candidate_on_heldout_frontier": candidate_on_frontier,
+                "recommended_for_full_run": recommend_full_run(
+                    bool(cand["diagnostics_ok"]),
+                    bool(base["diagnostics_ok"]),
+                    bool(heldout_success),
+                    bool(ppc_success),
+                    bool(candidate_on_frontier),
                 ),
                 "decision_basis": "heldout_elpd_and_ppc",
             }

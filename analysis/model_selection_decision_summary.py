@@ -29,23 +29,27 @@ def parse_bool(value, default: bool = False) -> bool:
 
 
 def model_architecture(model: str) -> str:
-    text = str(model)
+    text = str(model).lower()
     if "_inc_" in text or "incremental" in text:
         return "incremental"
     if "_glob_" in text or "global" in text:
         return "global"
     if "planned_usefulness_mixture" in text:
         return "planned_usefulness_mixture"
+    if "planned_usefulness_signed_order" in text:
+        return "planned_usefulness_signed_order"
     if "planned_usefulness_order" in text:
         return "planned_usefulness_order"
     return "unknown"
 
 
 def model_semantics(model: str) -> str:
-    text = str(model)
+    text = str(model).lower()
     if "static" in text:
         return "context_fixed"
     if "_rec" in text or "recursive" in text:
+        return "context_updating"
+    if "planned_usefulness" in text or "incremental" in text:
         return "context_updating"
     return "unspecified"
 
@@ -63,6 +67,36 @@ def bool_series(df: pd.DataFrame, column: str, default: bool = False) -> pd.Seri
     if column not in df.columns:
         return pd.Series(default, index=df.index)
     return df[column].map(lambda value: parse_bool(value, default=default))
+
+
+def strict_recommendation_mask(pairwise: pd.DataFrame) -> pd.Series:
+    mask = bool_series(pairwise, "recommended_for_full_run")
+    for column in ["ppc_success", "candidate_diagnostics_ok", "baseline_diagnostics_ok"]:
+        if column in pairwise.columns:
+            mask &= bool_series(pairwise, column)
+    return mask
+
+
+def choose_frontier_model(frontier: pd.DataFrame | None, heldout: bool) -> str | None:
+    if frontier is None or frontier.empty or "model" not in frontier.columns:
+        return None
+
+    work = frontier.copy()
+    sort_spec = (
+        [("rank", True), ("total_heldout_elpd", False), ("ppc_rmse", True)]
+        if heldout else
+        [("rank", True), ("elpd_loo", False), ("ppc_rmse", True)]
+    )
+    sort_cols = []
+    ascending = []
+    for col, asc in sort_spec:
+        if col in work.columns:
+            work[col] = pd.to_numeric(work[col], errors="coerce")
+            sort_cols.append(col)
+            ascending.append(asc)
+    if sort_cols:
+        work = work.sort_values(sort_cols, ascending=ascending, na_position="last")
+    return str(work.iloc[0]["model"])
 
 
 class EvidenceReader:
@@ -193,11 +227,9 @@ def summarize_slider_stage(
             pairwise["second_property_abs_residual_reduction"].max()
         )
 
-    recommended = pairwise[bool_series(pairwise, "recommended_for_full_run")]
+    recommended = pairwise[strict_recommendation_mask(pairwise)]
     ppc_success = pairwise[bool_series(pairwise, "ppc_success")]
-    frontier_candidates: set[str] = set()
-    if frontier is not None and "model" in frontier.columns:
-        frontier_candidates = set(frontier["model"].astype(str))
+    frontier_selected = choose_frontier_model(frontier, heldout)
 
     if not recommended.empty:
         sort_cols = [col for col in [delta_col, "ppc_rmse_gain"] if col in recommended.columns]
@@ -216,8 +248,8 @@ def summarize_slider_stage(
                 f"{best.get('baseline', 'baseline')}."
             ),
         )
-    elif frontier_candidates:
-        selected_model = sorted(frontier_candidates)[0]
+    elif frontier_selected is not None:
+        selected_model = frontier_selected
         decision.update(
             status="mixed",
             selected_model=selected_model,
