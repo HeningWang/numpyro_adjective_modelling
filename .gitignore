@@ -66,6 +66,12 @@ models/slider/results_heldout_pilot/ppc/
 models/slider/results_heldout_pilot/stats/*.png
 models/slider/results_heldout_pilot/stats/*_pointwise.csv
 models/slider/results_heldout_pilot/summary.txt
+models/production/results_*_pilot/diagnostics/
+models/production/results_*_pilot/ppc/
+models/production/results_*_pilot/stats/*.png
+models/production/results_*_pilot/stats/*_empirical.csv
+models/production/results_*_pilot/stats/*_predictions.csv
+models/production/results_*_pilot/summary.txt
 models/production/results_final_2x2/diagnostics/
 models/production/results_final_2x2/ppc/
 models/production/results_final_2x2/**/*.log
