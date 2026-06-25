@@ -483,7 +483,7 @@ This section turns the modelling framework introduced in \Cref{sec:framework} in
 The formalization separates components shared across model variants from components that instantiate the two tested contrasts: speaker architecture and semantic regime.
 The section specifies the representational primitives, literal-listener semantics, global and incremental speakers, context-fixed and context-updating regimes, and inference setup for the $2 \times 2$ model comparison.
 The experiments were broader than the fitted comparison: the full paradigm included size--form and colour--form trials, but the analyses reported here focus on size--colour scenes, where the contrast between a gradable adjective and a determinate feature adjective is clearest.
-Form remains part of the representational vocabulary and production response space, but it is not the primary mechanistic contrast in the current fit.
+The fitted analyses therefore use colour as the determinate feature in the main gradable--determinate contrast.
 
 \subsection{Representational Primitives}
 \label{sec:model:primitives}
@@ -513,7 +513,8 @@ A threshold is computed from the current comparison class $\mathcal{C}$:
     - k \,\bigl(x_\text{max}(\mathcal{C}) - x_\text{min}(\mathcal{C})\bigr),
   \label{eq:threshold}
 \end{equation}
-where $x_\text{min}(\mathcal{C})$ and $x_\text{max}(\mathcal{C})$ are the lower and upper bounds of the mid-range of the contextual size distribution and $k \in [0,1]$ controls how permissively ``big'' is applied.
+where $x_\text{min}(\mathcal{C})$ and $x_\text{max}(\mathcal{C})$ are the lower and upper bounds of the mid-range of the contextual size distribution, and $k \in [0,1]$ controls the strictness of the threshold.
+Smaller values set a higher, more selective standard for ``big''; larger values make the adjective apply more broadly.
 The resulting semantic value $\llbracket\text{S}\rrbracket(o, \mathcal{C}) \in [0,1]$ is graded rather than binary: an object's size is compared to the threshold via a normal slack function scaled by a perceptual-blur parameter $w_f$, consistent with scalar variability in the Approximate Number System \citep{feigenson2004core}.
 This context dependence is what makes the context-fixed vs.\ context-updating distinction possible: because $\theta_k$ depends on $\mathcal{C}$, changing which objects are in the comparison class changes what counts as big.
 
@@ -594,6 +595,9 @@ Under the context-fixed regime, the size threshold is computed once from the sce
 The listener's beliefs still update incrementally via \Cref{eq:comp}, but this update no longer feeds back into the meaning function.
 For deterministic adjectives such as colour and form, both regimes are identical because their semantics does not depend on the comparison class.
 The context-fixed regime therefore isolates the contribution of incremental belief updating from the additional effect of posterior-dependent meaning.
+The fitted models below test this specific form of posterior-dependent thresholding.
+They leave open stronger formulations of context dependence, such as treating a preceding colour adjective as a hard restriction on the comparison class or using a narrower size-membership function.
+This point matters for interpreting the semantic-regime comparison: if the colour update only weakly changes the size threshold, context-updating semantics has little room to improve predictive fit.
 
 \subsection{Utterance Prior and Speaker Models}
 \label{sec:model:speakers}
@@ -837,6 +841,7 @@ The context-fixed model is the best-fitting production model (ELPD$_{\text{LOO}}
 The difference is small relative to the architecture effect but precise at the scale of the incremental-pair comparison, and it is in the direction of the simpler semantic regime.
 The fitted production comparison therefore provides no evidence for an additional predictive benefit from context-updating semantics.
 The incremental advantage is robust, but posterior-dependent size meanings do not improve out-of-sample prediction once the final production model includes the order-only prior, display-sensitive salience, salience-sensitive stopping, and lapse mixture.
+The semantic-scale audit in \Cref{sec:appendix:model-development} clarifies this interpretation: the implemented update only weakly changes target probabilities in the realized displays, so the comparison is most informative about this specific threshold-updating formulation.
 The same conclusion holds in a robustness check in which the global lapse rate is fixed at the incremental posterior value, eliminating the unstable lapse--rationality trade-off in the global models; the difference-in-differences remains negative ($-2.30$ ELPD), and no model has problematic Pareto-$k$ values.
 
 The posterior parameters of the incremental, context-fixed model are reported in full in \Cref{tab:param-inventory}.
@@ -1173,6 +1178,12 @@ Production $w_f$ & $0.69$ & Previous free-$w_f$ diagnostic median from productio
 \end{tabularx}
 \end{table}
 The archived constant name for the production blur weight is \texttt{WF\_FIXED\_ITER11\_MEDIAN}.
+
+We also audited the scale of the semantic-regime manipulation on the 162 unique size--colour displays.
+Under the production constants ($\nu_\text{colour}=0.59$, $k=0.50$, $w_f=0.69$), recomputing the size threshold after a colour update changed the target's graded size value by $< .001$ on average and changed the literal listener's target probability for \utter{SC} by $< .001$.
+Under the slider constants ($\nu=0.80$, $k=0.50$, $w_f=1.0$), the mean threshold shift was larger, but the corresponding listener-probability change also remained below $0.001$.
+The audit explains why the fitted semantic-regime contrast is conservative in these materials: the current mid-range threshold and ANS-style slack make posterior-dependent size meaning a weak perturbation unless the colour predicate is sharper and the size-membership function is less diffuse.
+A full-range max--min threshold did not strengthen the contrast in this stimulus set because the relevant colour-conditioned subsets usually preserved the same size extrema.
 
 \begin{table}[H]
 \centering

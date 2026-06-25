@@ -1,0 +1,7 @@
+conditions,relevant_property,sharpness,n,target_size_mean,gap_all_mean,n_target_colour_mean,gap_target_colour_mean,gap_target_colour_min,gap_target_colour_max
+brdc,both,blurred,27,9.62962962962963,0.0,3.0,5.296296296296297,3.0,8.0
+brdc,both,sharp,27,9.481481481481481,-0.3333333333333333,3.0,7.111111111111111,6.0,8.0
+erdc,first,blurred,27,9.592592592592593,4.148148148148148,5.0,4.185185185185185,3.0,6.0
+erdc,first,sharp,27,9.592592592592593,6.666666666666667,5.0,6.703703703703703,6.0,7.0
+zrdc,second,blurred,27,9.518518518518519,-0.4074074074074074,1.0,,,
+zrdc,second,sharp,27,9.481481481481481,-0.4444444444444444,1.0,,,
