@@ -1,0 +1,3 @@
+model,semantics,alpha,beta_order,lambda_salience,rho_salience_stop,lambda_sufficient_single,lambda_reliability_form,lambda_sufficient_form_pair,lambda_three_word_penalty,lambda_sharp_form_suppression,epsilon
+principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_static_fixedeps,context_fixed,1.724,1.8275933645319702,1.349,0.009,1.96,1.886,0.71,0.88,0.0,0.003
+principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_rec_fixedeps,context_updating,1.7,1.8312522088857732,1.35,0.009,1.964,1.881,0.71,0.88,0.0,0.003

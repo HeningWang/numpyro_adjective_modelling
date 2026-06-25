@@ -1,0 +1,5 @@
+stage,criterion,threshold,direction
+forward_audit,first_sharp_DF_abs_residual_reduction,0.05,>=
+forward_audit,first_sharp_D_abs_residual_reduction,0.04,>=
+forward_audit,second_sharp_CF_abs_residual_worsening,0.015,<=
+forward_audit,condition_rmse_delta,0.001,<=
