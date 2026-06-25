@@ -5,13 +5,16 @@ Usage:
         --num_warmup 500 --num_samples 500 --num_chains 4
 """
 import os
-# Default to CPU with 4 host devices, but honour env overrides so callers
-# can switch to GPU mode via `JAX_PLATFORMS='' XLA_FLAGS='' python ...`.
+# Default local runs to CPU with 4 host devices, but honour env overrides.
+# Server runs should set `JAX_PLATFORMS=cuda` before launching this script.
 os.environ.setdefault("JAX_PLATFORMS", "cpu")
-os.environ.setdefault("XLA_FLAGS", "--xla_force_host_platform_device_count=4")
 os.environ["JAX_TRACEBACK_FILTERING"] = "off"
+if os.environ.get("JAX_PLATFORMS", "").lower() == "cpu":
+    os.environ.setdefault("XLA_FLAGS", "--xla_force_host_platform_device_count=4")
 
 import argparse
+import string
+import subprocess
 import numpy as np
 import arviz as az
 import jax
@@ -187,17 +190,79 @@ HIER_MODELS = {
     "v5_global_static_full": (likelihood_function_v5_global_static_full_hier, 0.85, 5),
 }
 
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+
+def artifact_tag_suffix(artifact_tag: str = "") -> str:
+    """Return a safe filename suffix for optional artifact-provenance tags."""
+    if not artifact_tag:
+        return ""
+    allowed = set(string.ascii_letters + string.digits + "_.-")
+    if any(ch not in allowed for ch in artifact_tag):
+        raise ValueError("--artifact-tag may only contain letters, digits, '_', '.', or '-'.")
+    return f"_{artifact_tag}"
+
+
+def git_value(args: list[str]) -> str:
+    try:
+        return subprocess.check_output(
+            ["git", *args],
+            cwd=REPO_ROOT,
+            stderr=subprocess.DEVNULL,
+            text=True,
+        ).strip()
+    except Exception:
+        return "unknown"
+
+
+def git_dirty_state() -> str:
+    try:
+        unstaged = subprocess.run(
+            ["git", "diff", "--quiet"],
+            cwd=REPO_ROOT,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        ).returncode
+        staged = subprocess.run(
+            ["git", "diff", "--cached", "--quiet"],
+            cwd=REPO_ROOT,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        ).returncode
+        return "true" if unstaged or staged else "false"
+    except Exception:
+        return "unknown"
+
+
+def run_metadata(**fields) -> dict[str, str]:
+    metadata = {
+        "project_git_commit": git_value(["rev-parse", "--short", "HEAD"]),
+        "project_git_dirty": git_dirty_state(),
+        **fields,
+    }
+    return {key: "" if value is None else str(value) for key, value in metadata.items()}
+
+
+def attach_run_metadata(idata, metadata: dict[str, str]) -> None:
+    for group in ("posterior", "sample_stats", "prior", "posterior_predictive", "observed_data"):
+        dataset = getattr(idata, group, None)
+        if dataset is not None:
+            dataset.attrs.update(metadata)
+
+
 def run_inference(
     speaker_type: str = "global",
     num_warmup: int = 100,
     num_samples: int = 250,
     num_chains: int = 4,
+    artifact_tag: str = "",
 ):
     canonical_speaker_type = canonicalize_speaker_type(speaker_type)
 
+    run_tag = artifact_tag_suffix(artifact_tag)
     output_file_name = (
         f"./inference_data/mcmc_results_{canonical_speaker_type}_speaker"
-        f"_warmup{num_warmup}_samples{num_samples}_chains{num_chains}.nc"
+        f"{run_tag}_warmup{num_warmup}_samples{num_samples}_chains{num_chains}.nc"
     )
     if os.path.exists(output_file_name):
         os.remove(output_file_name)
@@ -243,6 +308,21 @@ def run_inference(
         coords={"item": np.arange(N)},
         dims={"obs": ["item"]},
     )
+    attach_run_metadata(
+        numpyro_data,
+        run_metadata(
+            dataset="production",
+            run_kind="flat",
+            speaker_type=speaker_type,
+            canonical_speaker_type=canonical_speaker_type,
+            num_warmup=num_warmup,
+            num_samples=num_samples,
+            num_chains=num_chains,
+            artifact_tag=artifact_tag,
+            artifact_file=os.path.basename(output_file_name),
+            n_observations=N,
+        ),
+    )
     numpyro_data.to_netcdf(output_file_name)
     print(f"Saved: {output_file_name}")
 
@@ -255,6 +335,7 @@ def run_inference_hier(
     min_proportion: float = 0.0,
     condition_subset: str = "",
     state_encoding: str = "target_match",
+    artifact_tag: str = "",
 ):
     """Run MCMC for the hierarchical (random participant alpha) speaker model.
 
@@ -274,9 +355,10 @@ def run_inference_hier(
         subset_codes = None
 
     tag = f"_top" if min_proportion > 0 else ""
+    run_tag = artifact_tag_suffix(artifact_tag)
     output_file_name = (
         f"./inference_data/mcmc_results_{canonical_speaker_type}_speaker_hier{tag}{subset_tag}"
-        f"_warmup{num_warmup}_samples{num_samples}_chains{num_chains}.nc"
+        f"{run_tag}_warmup{num_warmup}_samples{num_samples}_chains{num_chains}.nc"
     )
     if os.path.exists(output_file_name):
         os.remove(output_file_name)
@@ -521,6 +603,27 @@ def run_inference_hier(
         coords=coords,
         dims=dims,
     )
+    attach_run_metadata(
+        numpyro_data,
+        run_metadata(
+            dataset="production",
+            run_kind="hierarchical",
+            speaker_type=speaker_type,
+            canonical_speaker_type=canonical_speaker_type,
+            num_warmup=num_warmup,
+            num_samples=num_samples,
+            num_chains=num_chains,
+            artifact_tag=artifact_tag,
+            artifact_file=os.path.basename(output_file_name),
+            state_encoding=state_encoding,
+            condition_subset=condition_subset,
+            subset_tag=subset_tag,
+            min_proportion=min_proportion,
+            n_observations=N,
+            n_participants=n_participants,
+            n_conditions=n_conditions,
+        ),
+    )
     numpyro_data.to_netcdf(output_file_name)
     assert os.path.exists(output_file_name), f"Save failed: {output_file_name} not found"
     print(f"Saved: {output_file_name}")
@@ -606,6 +709,13 @@ if __name__ == "__main__":
         choices=["target_match", "canonical"],
         help="State encoding for colour/form features. Default target_match.",
     )
+    parser.add_argument(
+        "--artifact-tag", type=str, default="",
+        help=(
+            "Optional safe token appended to inference artifact filenames "
+            "before the warmup/sample/chains tag."
+        ),
+    )
 
     args = parser.parse_args()
 
@@ -621,6 +731,7 @@ if __name__ == "__main__":
             min_proportion=args.min_proportion,
             condition_subset=args.condition_subset,
             state_encoding=args.state_encoding,
+            artifact_tag=args.artifact_tag,
         )
     else:
         run_inference(
@@ -628,4 +739,5 @@ if __name__ == "__main__":
             num_samples=args.num_samples,
             num_warmup=args.num_warmup,
             num_chains=args.num_chains,
+            artifact_tag=args.artifact_tag,
         )

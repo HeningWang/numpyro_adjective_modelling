@@ -34,6 +34,8 @@ __pycache__/
 # MCMC inference data (large .nc files, regenerable).
 # The eight paper-reported cells are tracked via git-lfs; everything else is local.
 models/slider/inference_data/*.nc
+models/*/inference_data/*.nc.*
+models/*/inference_data/.*.nc.*
 !models/slider/inference_data/mcmc_results_incremental_speaker_hier_warmup500_samples500_chains4.nc
 !models/slider/inference_data/mcmc_results_incremental_static_speaker_hier_warmup500_samples500_chains4.nc
 !models/slider/inference_data/mcmc_results_global_speaker_hier_warmup500_samples500_chains4.nc
@@ -59,6 +61,17 @@ models/slider/results_*_pilot/stats/*.png
 models/slider/results_*_pilot/stats/*_empirical.csv
 models/slider/results_*_pilot/stats/*_predictions.csv
 models/slider/results_*_pilot/summary.txt
+models/slider/results_heldout_pilot/diagnostics/
+models/slider/results_heldout_pilot/ppc/
+models/slider/results_heldout_pilot/stats/*.png
+models/slider/results_heldout_pilot/stats/*_pointwise.csv
+models/slider/results_heldout_pilot/summary.txt
+models/production/results_final_2x2/diagnostics/
+models/production/results_final_2x2/ppc/
+models/production/results_final_2x2/**/*.log
+models/production/results_final_2x2/stats/*.png
+models/production/results_final_2x2/stats/production_predictions.csv
+models/production/results_final_2x2/summary.txt
 
 # Forward-audit detail dumps (large, regenerable from compact audit scripts)
 models/*/results_semantic_variant_forward_audit/stats/*_listener_by_display.csv

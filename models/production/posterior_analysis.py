@@ -344,6 +344,10 @@ def main():
     parser.add_argument("--warmup", type=int, default=500)
     parser.add_argument("--samples", type=int, default=500)
     parser.add_argument("--chains", type=int, default=4)
+    parser.add_argument(
+        "--artifact-tag", type=str, default="",
+        help="Optional artifact tag inserted before warmup/sample/chains in filenames.",
+    )
     parser.add_argument("--export-for-r", action="store_true",
                         help="Copy CSVs to paper/data/.")
     parser.add_argument("--out-dir", type=str, default="results",
@@ -363,6 +367,8 @@ def main():
         os.makedirs(d, exist_ok=True)
 
     tag = DEFAULT_TAG.format(nw=args.warmup, ns=args.samples, nc=args.chains)
+    if args.artifact_tag:
+        tag = f"{args.artifact_tag}_{tag}"
     subset = f"_{args.subset_tag}" if args.subset_tag else ""
     inference_dir = "./inference_data"
 

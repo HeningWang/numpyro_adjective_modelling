@@ -1,6 +1,7 @@
 import os
 import sys
 
+import numpy as np
 import pandas as pd
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -44,7 +45,7 @@ def test_compute_residual_tables_summarizes_worst_cells_by_condition():
     assert "signed_residual" in by_cell.columns
     first = summary.query("relevant_property == 'first' and sharpness == 'blurred'").iloc[0]
     assert first["worst_utterance_label"] == "D"
-    assert first["max_abs_residual"] == 0.15
+    assert np.isclose(first["max_abs_residual"], 0.15)
     assert len(worst) == 2
 
 

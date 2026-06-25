@@ -13,6 +13,8 @@ if os.environ.get("JAX_PLATFORMS", "").lower() == "cpu":
     os.environ.setdefault("XLA_FLAGS", "--xla_force_host_platform_device_count=4")
 
 import argparse
+import string
+import subprocess
 import numpy as np
 import arviz as az
 import jax
@@ -76,12 +78,139 @@ SPEAKER_CHOICES = [
     "planned_usefulness_mixture_static",
 ]
 
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+
+def artifact_tag_suffix(artifact_tag: str = "") -> str:
+    """Return a safe filename suffix for optional artifact-provenance tags."""
+    if not artifact_tag:
+        return ""
+    allowed = set(string.ascii_letters + string.digits + "_.-")
+    if any(ch not in allowed for ch in artifact_tag):
+        raise ValueError("--artifact_tag may only contain letters, digits, '_', '.', or '-'.")
+    return f"_{artifact_tag}"
+
+
+def git_value(args: list[str]) -> str:
+    try:
+        return subprocess.check_output(
+            ["git", *args],
+            cwd=REPO_ROOT,
+            stderr=subprocess.DEVNULL,
+            text=True,
+        ).strip()
+    except Exception:
+        return "unknown"
+
+
+def git_dirty_state() -> str:
+    try:
+        unstaged = subprocess.run(
+            ["git", "diff", "--quiet"],
+            cwd=REPO_ROOT,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        ).returncode
+        staged = subprocess.run(
+            ["git", "diff", "--cached", "--quiet"],
+            cwd=REPO_ROOT,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        ).returncode
+        return "true" if unstaged or staged else "false"
+    except Exception:
+        return "unknown"
+
+
+def run_metadata(**fields) -> dict[str, str]:
+    metadata = {
+        "project_git_commit": git_value(["rev-parse", "--short", "HEAD"]),
+        "project_git_dirty": git_dirty_state(),
+        **fields,
+    }
+    return {key: "" if value is None else str(value) for key, value in metadata.items()}
+
+
+def attach_run_metadata(idata, metadata: dict[str, str]) -> None:
+    for group in ("posterior", "sample_stats", "prior", "posterior_predictive", "observed_data"):
+        dataset = getattr(idata, group, None)
+        if dataset is not None:
+            dataset.attrs.update(metadata)
+
+
+def balanced_fold_ids(
+    df,
+    num_folds: int,
+    seed: int = 13,
+    group_cols=("relevant_property", "sharpness"),
+):
+    """Deterministic condition-balanced observation folds."""
+    if num_folds < 2:
+        raise ValueError("--num_folds must be at least 2.")
+    rng = np.random.default_rng(seed)
+    fold_ids = np.empty(len(df), dtype=np.int32)
+    grouped = df.reset_index(drop=True).groupby(list(group_cols), sort=True)
+    for idx in grouped.indices.values():
+        idx = np.asarray(idx, dtype=np.int32)
+        rng.shuffle(idx)
+        fold_ids[idx] = np.arange(len(idx), dtype=np.int32) % num_folds
+    return fold_ids
+
+
+def select_listener_precompute(canonical_speaker_type: str, states, color_semvalue=None):
+    if color_semvalue is not None:
+        if canonical_speaker_type in RECURSIVE_LISTENER_SPEAKERS:
+            return precompute_listeners_at_csv(states, color_semvalue)
+        return precompute_listeners_frozen_at_csv(states, color_semvalue)
+    if canonical_speaker_type in RECURSIVE_LISTENER_SPEAKERS:
+        return precompute_listeners(states)
+    return precompute_listeners_frozen(states)
+
+
+def get_hier_model(canonical_speaker_type: str, free_color_semvalue: bool = False):
+    if free_color_semvalue:
+        if canonical_speaker_type == "incremental":
+            return likelihood_inc_speaker_hier_free_csv
+        if canonical_speaker_type == "incremental_static":
+            return likelihood_inc_speaker_frozen_hier_free_csv
+        raise ValueError(
+            "--free_color_semvalue is only implemented for the incremental cells "
+            "(speaker_type=incremental or incremental_static)."
+        )
+    if canonical_speaker_type == "global":
+        return likelihood_gb_speaker_hier
+    if canonical_speaker_type == "incremental":
+        return likelihood_inc_speaker_hier
+    if canonical_speaker_type == "planned_usefulness_order":
+        return likelihood_planned_usefulness_order_speaker_hier
+    if canonical_speaker_type == "planned_usefulness_signed_order":
+        return likelihood_planned_signed_usefulness_order_speaker_hier
+    if canonical_speaker_type == "planned_usefulness_mixture":
+        return likelihood_planned_usefulness_mixture_speaker_hier
+    if canonical_speaker_type == "global_static":
+        return likelihood_gb_speaker_static_hier
+    if canonical_speaker_type == "incremental_static":
+        return likelihood_inc_speaker_frozen_hier
+    if canonical_speaker_type == "planned_usefulness_order_static":
+        return likelihood_planned_usefulness_order_speaker_static_hier
+    if canonical_speaker_type == "planned_usefulness_signed_order_static":
+        return likelihood_planned_signed_usefulness_order_speaker_static_hier
+    if canonical_speaker_type == "planned_usefulness_mixture_static":
+        return likelihood_planned_usefulness_mixture_speaker_static_hier
+    raise ValueError(
+        "Invalid speaker type. Choose 'global', 'incremental', "
+        "planned usefulness variants, 'global_static', "
+        "'incremental_static', or planned usefulness static variants "
+        "(legacy alias: 'incremental_frozen')."
+    )
+
 
 def run_inference(
     speaker_type: str = "global",
     num_samples: int = 1000,
     num_warmup: int = 1000,
     num_chains: int = 4,
+    artifact_tag: str = "",
 ):
     canonical_speaker_type = canonicalize_speaker_type(speaker_type)
     states_train, empirical_train, df = import_dataset()
@@ -92,15 +221,13 @@ def run_inference(
     if (pi0 + pi1) >= 0.95:
         raise ValueError(f"Boundary masses too large for ZOIB: pi0+pi1={pi0+pi1:.3f}")
 
-    if canonical_speaker_type in RECURSIVE_LISTENER_SPEAKERS:
-        L1_all, L2_all = precompute_listeners(states_train)
-    else:
-        L1_all, L2_all = precompute_listeners_frozen(states_train)
+    L1_all, L2_all = select_listener_precompute(canonical_speaker_type, states_train)
     print("Listeners precomputed.")
 
+    run_tag = artifact_tag_suffix(artifact_tag)
     output_file_name = (
         f"./inference_data/mcmc_results_{canonical_speaker_type}_speaker"
-        f"_warmup{num_warmup}_samples{num_samples}_chains{num_chains}.nc"
+        f"{run_tag}_warmup{num_warmup}_samples{num_samples}_chains{num_chains}.nc"
     )
     print(f"Output file: {output_file_name}")
     if os.path.exists(output_file_name):
@@ -160,6 +287,21 @@ def run_inference(
         coords={"states": np.arange(N)},
         dims={"obs": ["states"]},
     )
+    attach_run_metadata(
+        numpyro_data,
+        run_metadata(
+            dataset="slider",
+            run_kind="flat",
+            speaker_type=speaker_type,
+            canonical_speaker_type=canonical_speaker_type,
+            num_warmup=num_warmup,
+            num_samples=num_samples,
+            num_chains=num_chains,
+            artifact_tag=artifact_tag,
+            artifact_file=os.path.basename(output_file_name),
+            n_observations=N,
+        ),
+    )
     az.to_netcdf(numpyro_data, output_file_name)
     assert os.path.exists(output_file_name), f"Save failed: {output_file_name} not found"
     size_mb = os.path.getsize(output_file_name) / 1024 / 1024
@@ -173,6 +315,10 @@ def run_inference_hier(
     num_chains: int = 4,
     free_color_semvalue: bool = False,
     color_semvalue: float | None = None,
+    heldout_fold: int | None = None,
+    num_folds: int = 5,
+    fold_seed: int = 13,
+    artifact_tag: str = "",
 ):
     """Run MCMC for the hierarchical (random participant intercept) speaker model.
 
@@ -188,8 +334,30 @@ def run_inference_hier(
     is mutually exclusive with ``free_color_semvalue``.
     """
     canonical_speaker_type = canonicalize_speaker_type(speaker_type)
-    states_train, empirical_train, df, participant_idx, n_participants = import_dataset_hier()
-    print(f"Hierarchical model: {n_participants} participants, {len(states_train)} observations")
+    states_all, empirical_all, df, participant_idx_all, n_participants = import_dataset_hier()
+    print(f"Hierarchical model: {n_participants} participants, {len(states_all)} observations")
+
+    fold_tag = ""
+    if heldout_fold is not None:
+        if free_color_semvalue:
+            raise ValueError("--heldout_fold is not implemented with --free_color_semvalue.")
+        if heldout_fold < 0 or heldout_fold >= num_folds:
+            raise ValueError("--heldout_fold must be in [0, num_folds).")
+        fold_ids = balanced_fold_ids(df, num_folds=num_folds, seed=fold_seed)
+        train_mask = fold_ids != heldout_fold
+        heldout_mask = fold_ids == heldout_fold
+        states_train = states_all[train_mask]
+        empirical_train = empirical_all[train_mask]
+        participant_idx = participant_idx_all[train_mask]
+        fold_tag = f"_fold{heldout_fold}of{num_folds}"
+        print(
+            f"Heldout fold {heldout_fold}/{num_folds}: "
+            f"{int(train_mask.sum())} train, {int(heldout_mask.sum())} heldout"
+        )
+    else:
+        states_train = states_all
+        empirical_train = empirical_all
+        participant_idx = participant_idx_all
 
     empirical_train_np = np.asarray(empirical_train)
     pi0 = float(np.mean(np.isclose(empirical_train_np, 0.0)))
@@ -208,16 +376,15 @@ def run_inference_hier(
         )
 
     if color_semvalue is not None:
-        if canonical_speaker_type in RECURSIVE_LISTENER_SPEAKERS:
-            L1_all, L2_all = precompute_listeners_at_csv(states_train, color_semvalue)
-        else:
-            L1_all, L2_all = precompute_listeners_frozen_at_csv(states_train, color_semvalue)
+        L1_all, L2_all = select_listener_precompute(
+            canonical_speaker_type,
+            states_train,
+            color_semvalue=color_semvalue,
+        )
         print(f"Listeners precomputed at color_semvalue = {color_semvalue}.")
-    elif canonical_speaker_type in RECURSIVE_LISTENER_SPEAKERS:
-        L1_all, L2_all = precompute_listeners(states_train)
     else:
-        L1_all, L2_all = precompute_listeners_frozen(states_train)
-        print("Listeners precomputed.")
+        L1_all, L2_all = select_listener_precompute(canonical_speaker_type, states_train)
+    print("Listeners precomputed.")
 
     if free_color_semvalue:
         suffix = "_free_csv"
@@ -225,9 +392,10 @@ def run_inference_hier(
         suffix = f"_csv{int(round(color_semvalue * 100)):03d}"
     else:
         suffix = ""
+    run_tag = artifact_tag_suffix(artifact_tag)
     output_file_name = (
-        f"./inference_data/mcmc_results_{canonical_speaker_type}_speaker_hier{suffix}"
-        f"_warmup{num_warmup}_samples{num_samples}_chains{num_chains}.nc"
+        f"./inference_data/mcmc_results_{canonical_speaker_type}_speaker_hier{suffix}{fold_tag}"
+        f"{run_tag}_warmup{num_warmup}_samples{num_samples}_chains{num_chains}.nc"
     )
     print(f"Output file: {output_file_name}")
     if os.path.exists(output_file_name):
@@ -237,38 +405,7 @@ def run_inference_hier(
     rng_key = random.PRNGKey(11)
     rng_key, rng_key_ = random.split(rng_key)
 
-    if free_color_semvalue:
-        if canonical_speaker_type == "incremental":
-            model = likelihood_inc_speaker_hier_free_csv
-        else:
-            model = likelihood_inc_speaker_frozen_hier_free_csv
-    elif canonical_speaker_type == "global":
-        model = likelihood_gb_speaker_hier
-    elif canonical_speaker_type == "incremental":
-        model = likelihood_inc_speaker_hier
-    elif canonical_speaker_type == "planned_usefulness_order":
-        model = likelihood_planned_usefulness_order_speaker_hier
-    elif canonical_speaker_type == "planned_usefulness_signed_order":
-        model = likelihood_planned_signed_usefulness_order_speaker_hier
-    elif canonical_speaker_type == "planned_usefulness_mixture":
-        model = likelihood_planned_usefulness_mixture_speaker_hier
-    elif canonical_speaker_type == "global_static":
-        model = likelihood_gb_speaker_static_hier
-    elif canonical_speaker_type == "incremental_static":
-        model = likelihood_inc_speaker_frozen_hier
-    elif canonical_speaker_type == "planned_usefulness_order_static":
-        model = likelihood_planned_usefulness_order_speaker_static_hier
-    elif canonical_speaker_type == "planned_usefulness_signed_order_static":
-        model = likelihood_planned_signed_usefulness_order_speaker_static_hier
-    elif canonical_speaker_type == "planned_usefulness_mixture_static":
-        model = likelihood_planned_usefulness_mixture_speaker_static_hier
-    else:
-        raise ValueError(
-            "Invalid speaker type. Choose 'global', 'incremental', "
-            "planned usefulness variants, 'global_static', "
-            "'incremental_static', or planned usefulness static variants "
-            "(legacy alias: 'incremental_frozen')."
-        )
+    model = get_hier_model(canonical_speaker_type, free_color_semvalue=free_color_semvalue)
 
     kernel = NUTS(model, dense_mass=False, max_tree_depth=8, target_accept_prob=0.9)
     mcmc = MCMC(
@@ -305,6 +442,27 @@ def run_inference_hier(
         },
         dims={"obs": ["states"], "delta": ["participants"]},
     )
+    attach_run_metadata(
+        numpyro_data,
+        run_metadata(
+            dataset="slider",
+            run_kind="hierarchical",
+            speaker_type=speaker_type,
+            canonical_speaker_type=canonical_speaker_type,
+            num_warmup=num_warmup,
+            num_samples=num_samples,
+            num_chains=num_chains,
+            artifact_tag=artifact_tag,
+            artifact_file=os.path.basename(output_file_name),
+            free_color_semvalue=free_color_semvalue,
+            color_semvalue=color_semvalue,
+            heldout_fold=heldout_fold,
+            num_folds=num_folds,
+            fold_seed=fold_seed,
+            n_observations=N,
+            n_participants=n_participants,
+        ),
+    )
     az.to_netcdf(numpyro_data, output_file_name)
     assert os.path.exists(output_file_name), f"Save failed: {output_file_name} not found"
     size_mb = os.path.getsize(output_file_name) / 1024 / 1024
@@ -339,6 +497,19 @@ if __name__ == "__main__":
             "Mutually exclusive with --free_color_semvalue."
         ),
     )
+    parser.add_argument(
+        "--heldout_fold", type=int, default=None,
+        help="Fit all observations except this deterministic condition-balanced fold.",
+    )
+    parser.add_argument("--num_folds", type=int, default=5)
+    parser.add_argument("--fold_seed", type=int, default=13)
+    parser.add_argument(
+        "--artifact_tag", type=str, default="",
+        help=(
+            "Optional safe token appended to inference artifact filenames "
+            "before the warmup/sample/chains tag."
+        ),
+    )
 
     args = parser.parse_args()
 
@@ -354,8 +525,14 @@ if __name__ == "__main__":
             num_chains=args.num_chains,
             free_color_semvalue=args.free_color_semvalue,
             color_semvalue=args.color_semvalue,
+            heldout_fold=args.heldout_fold,
+            num_folds=args.num_folds,
+            fold_seed=args.fold_seed,
+            artifact_tag=args.artifact_tag,
         )
     else:
+        if args.heldout_fold is not None:
+            raise ValueError("--heldout_fold requires --hierarchical.")
         if args.free_color_semvalue:
             raise ValueError("--free_color_semvalue requires --hierarchical.")
         if args.color_semvalue is not None:
@@ -365,4 +542,5 @@ if __name__ == "__main__":
             num_samples=args.num_samples,
             num_warmup=args.num_warmup,
             num_chains=args.num_chains,
+            artifact_tag=args.artifact_tag,
         )
