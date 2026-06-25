@@ -1,0 +1,9 @@
+model,n_parameters,max_r_hat,n_r_hat_gt_1_01,n_r_hat_gt_1_05,min_ess_bulk,min_ess_tail,n_divergent,divergence_rate,diagnostic_status
+incremental_recursive,4,1.01,0,0,424.0,887.0,0,0.0,pass
+incremental_static,4,1.01,0,0,400.0,788.0,0,0.0,pass
+planned_usefulness_order,5,1.01,0,0,281.0,620.0,0,0.0,pass
+planned_usefulness_order_static,5,1.01,0,0,239.0,718.0,0,0.0,pass
+planned_usefulness_signed_order,5,1.01,0,0,471.0,723.0,1,0.0005,fail
+planned_usefulness_signed_order_static,5,1.01,0,0,357.0,438.0,1,0.0005,fail
+planned_usefulness_mixture,6,1.01,0,0,612.0,529.0,0,0.0,pass
+planned_usefulness_mixture_static,6,1.03,1,0,342.0,628.0,1,0.0005,fail

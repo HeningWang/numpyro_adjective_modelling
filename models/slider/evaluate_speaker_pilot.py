@@ -26,11 +26,29 @@ DEFAULT_STATS_DIR = Path(__file__).resolve().parent / "results_planned_usefulnes
 PAIR_SPECS = (
     ("planned_usefulness_order", "incremental_recursive", "planned_vs_greedy_recursive"),
     ("planned_usefulness_order_static", "incremental_static", "planned_vs_greedy_static"),
+    ("planned_usefulness_signed_order", "planned_usefulness_order", "signed_order_vs_planned_recursive"),
+    (
+        "planned_usefulness_signed_order_static",
+        "planned_usefulness_order_static",
+        "signed_order_vs_planned_static",
+    ),
     ("planned_usefulness_mixture", "planned_usefulness_order", "mixture_vs_planned_recursive"),
     (
         "planned_usefulness_mixture_static",
         "planned_usefulness_order_static",
         "mixture_vs_planned_static",
+    ),
+    ("planned_usefulness_signed_order", "incremental_recursive", "signed_order_vs_greedy_recursive"),
+    (
+        "planned_usefulness_signed_order_static",
+        "incremental_static",
+        "signed_order_vs_greedy_static",
+    ),
+    ("planned_usefulness_mixture", "incremental_recursive", "mixture_vs_greedy_recursive"),
+    (
+        "planned_usefulness_mixture_static",
+        "incremental_static",
+        "mixture_vs_greedy_static",
     ),
 )
 
