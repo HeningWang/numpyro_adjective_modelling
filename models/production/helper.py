@@ -50,7 +50,8 @@ def normalize(arr: jnp.ndarray, axis: int = 1) -> jnp.ndarray:
 
 
 def import_dataset(
-    file_path: Optional[Union[str, Path]] = None
+    file_path: Optional[Union[str, Path]] = None,
+    state_encoding: str = "target_match",
 ):
     """
     Load and preprocess the production dataset, returning encodings used by the
@@ -81,12 +82,30 @@ def import_dataset(
     sufficient_dim = jnp.array(sufficient_dim_np, dtype=jnp.int32)
     has_one_word_solution = jnp.array((sufficient_dim_np >= 0).astype(np.float32), dtype=jnp.float32)
 
-    # Encode states via vectorised slicing.
-    sizes = df.iloc[:, 6:12].to_numpy(dtype=float)  # (N, 6)
-    colors = (df.iloc[:, 12:18] == "blue").to_numpy(dtype=int)
-    forms = (df.iloc[:, 18:24] == "circle").to_numpy(dtype=int)
+    # Encode colour/form as target-relative features: 1 means the object
+    # matches the target on that dimension.
+    object_labels = list("ABCDEF")
+    size_cols = [f"size_{label}" for label in object_labels]
+    color_cols = [f"color_{label}" for label in object_labels]
+    form_cols = [f"form_{label}" for label in object_labels]
+
+    sizes = df[size_cols].to_numpy(dtype=float)  # (N, 6)
+    if state_encoding == "canonical":
+        colors = (df[color_cols] == "blue").to_numpy(dtype=int)
+        forms = (df[form_cols] == "circle").to_numpy(dtype=int)
+    elif state_encoding == "target_match":
+        target_colors = df["color_A"].astype(str).to_numpy()[:, None]
+        target_forms = df["form_A"].astype(str).to_numpy()[:, None]
+        colors = (df[color_cols].astype(str).to_numpy() == target_colors).astype(int)
+        forms = (df[form_cols].astype(str).to_numpy() == target_forms).astype(int)
+    else:
+        raise ValueError(
+            f"Unknown state_encoding '{state_encoding}'. "
+            "Expected 'canonical' or 'target_match'."
+        )
     states_np = np.stack([sizes, colors, forms], axis=2)  # (N, 6, 3)
     states_train = jnp.array(states_np, dtype=jnp.float32)
+    df["state_encoding"] = state_encoding
 
     # Encode utterances.
     df["annotation"] = df["annotation"].astype("category")
@@ -144,6 +163,7 @@ def import_dataset(
 def import_dataset_hier(
     file_path: Optional[Union[str, Path]] = None,
     min_proportion: float = 0.0,
+    state_encoding: str = "target_match",
 ):
     """Extends import_dataset() with participant indices for hierarchical models.
 
@@ -158,7 +178,7 @@ def import_dataset_hier(
         participant_idx : jnp.ndarray  shape (N,) int32  — 0-indexed participant ID
         n_participants  : int          — total number of unique participants
     """
-    base = import_dataset(file_path)
+    base = import_dataset(file_path, state_encoding=state_encoding)
 
     dataset_path = Path(file_path) if file_path is not None else DEFAULT_DATASET_PATH
     df_raw = pd.read_csv(dataset_path).dropna(subset=["annotation"])

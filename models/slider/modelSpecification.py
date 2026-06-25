@@ -582,16 +582,25 @@ vectorized_gb_speaker_static = jax.vmap(global_speaker_static, in_axes=(0, None,
 vectorized_inc_speaker_frozen = jax.vmap(speaker_recursive_frozen, in_axes=(None, 0, None, None, None, None, None, None))
 
 # Define a function to encode the states of the objects
-def encode_states(line):
+def encode_states(line, state_encoding: str = "target_match"):
       states = []
-      for i in range(6):
-        color = 1 if line.iloc[11 + i] == "blue" else 0
-        form = 1 if line.iloc[17 + i] == "circle" else 0
-        new_obj = (line.iloc[5 + i], color, form) # size, color, form
+      for label in ("A", "B", "C", "D", "E", "F"):
+        if state_encoding == "target_match":
+            color = 1 if line[f"color_{label}"] == line["color_A"] else 0
+            form = 1 if line[f"form_{label}"] == line["form_A"] else 0
+        elif state_encoding == "canonical":
+            color = 1 if line[f"color_{label}"] == "blue" else 0
+            form = 1 if line[f"form_{label}"] == "circle" else 0
+        else:
+            raise ValueError(
+                f"Unknown state_encoding '{state_encoding}'. "
+                "Expected 'target_match' or 'canonical'."
+            )
+        new_obj = (line[f"size_{label}"], color, form) # size, color, form
         states.append(new_obj)
       return jnp.array(states)
 
-def import_dataset(file_path = "../../data/01-slider-data-preprocessed.csv"):
+def import_dataset(file_path = "../../data/01-slider-data-preprocessed.csv", state_encoding: str = "target_match"):
    # Import the data
     df = pd.read_csv(file_path)
 
@@ -600,7 +609,7 @@ def import_dataset(file_path = "../../data/01-slider-data-preprocessed.csv"):
     df.reset_index(inplace=True, drop=True)
 
     # Mutate the dataset to include the states of the objects
-    df["states"] = df.apply(lambda row: encode_states(row), axis=1)
+    df["states"] = df.apply(lambda row: encode_states(row, state_encoding=state_encoding), axis=1)
 
     # Transform/rescale slider value from range 0 to 100 to 0 to 1
     df.prefer_first_1st = jnp.clip(df.prefer_first_1st.to_numpy(), 0, 100)
@@ -961,7 +970,7 @@ def likelihood_inc_speaker_fast(
             data = jnp.clip(data, 0.0, 1.0)
         numpyro.sample("obs", ZOIB(model_prob, sigma, pi0, pi1), obs=data)
 
-def import_dataset_hier(file_path="../../data/01-slider-data-preprocessed.csv"):
+def import_dataset_hier(file_path="../../data/01-slider-data-preprocessed.csv", state_encoding: str = "target_match"):
     """Extends import_dataset() with participant indices for hierarchical models.
 
     Returns
@@ -975,7 +984,7 @@ def import_dataset_hier(file_path="../../data/01-slider-data-preprocessed.csv"):
     df = pd.read_csv(file_path)
     df = df[df["combination"] == "dimension_color"]
     df.reset_index(inplace=True, drop=True)
-    df["states"] = df.apply(lambda row: encode_states(row), axis=1)
+    df["states"] = df.apply(lambda row: encode_states(row, state_encoding=state_encoding), axis=1)
     df.prefer_first_1st = jnp.clip(df.prefer_first_1st.to_numpy(), 0, 100)
     df.prefer_first_1st = df.prefer_first_1st / 100
     train = df
