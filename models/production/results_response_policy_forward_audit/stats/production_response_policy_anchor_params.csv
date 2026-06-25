@@ -1,0 +1,2 @@
+alpha,beta_order,lambda_salience,rho_salience_stop,gamma_uncertainty_len,epsilon,condition_subset,single_grid,form_grid,colour_penalty_grid
+1.441,1.8076000026120045,1.573,0.492,0.0,0.003,,"0,0.5,1,1.5,2,3","0,0.5,1,1.5,2,3","0,0.5,1,1.5,2,3"
