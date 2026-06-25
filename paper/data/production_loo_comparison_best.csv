@@ -1,5 +1,5 @@
 ,rank,elpd_loo,p_loo,elpd_diff,weight,se,dse,warning,scale
-principled_salience_stop_regularized_2x2_inc_static,0,-6367.339756965637,49.00813102722168,0.0,1.0,54.08138553184161,0.0,False,log
-principled_salience_stop_regularized_2x2_inc_rec,1,-6369.320020675659,48.55435085296631,1.9802637100219727,0.0,54.03640815371902,0.3707706226468999,False,log
-principled_salience_stop_regularized_2x2_glob_rec,2,-7730.713019371033,615.5122051239014,1363.3732624053955,0.0,34.07302599880571,33.34326748652855,True,log
-principled_salience_stop_regularized_2x2_glob_static,3,-7731.072658538818,615.7543048858643,1363.7329015731812,0.0,34.05294798961883,33.35678157675147,True,log
+principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_inc_static_fixedeps,0,-5186.92894077301,59.04718065261841,0.0,0.9559257588258623,64.38112918226538,0.0,False,log
+principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_inc_rec_fixedeps,1,-5187.360596656799,58.8288950920105,0.4316558837890625,0.0,64.37956934531016,0.22314727805064452,False,log
+principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_glob_static_fixedeps,2,-5547.627146720886,8.57539176940918,360.698205947876,0.04407424117413784,64.27390975120267,25.177225293786083,False,log
+principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_glob_rec_fixedeps,3,-5547.892329216003,8.879273414611816,360.96338844299316,0.0,64.33748829740813,25.188195039396923,False,log

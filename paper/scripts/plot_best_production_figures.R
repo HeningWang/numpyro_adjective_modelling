@@ -42,7 +42,7 @@ sharp_labels <- c(
   "blurred" = "Low"
 )
 rename_D_to_S <- function(x) gsub("D", "S", x)
-best_model_id <- "principled_salience_stop_regularized_2x2_inc_static"
+best_model_id <- "principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_inc_static_fixedeps"
 model_display <- "Incremental, context-fixed"
 
 # ── Load best-model data ─────────────────────────────────────────────────────
@@ -192,10 +192,10 @@ cat("[✓] production_correlation_best.pdf\n")
 #  ELPD comparison — principled parameter-matched 2x2
 # =============================================================================
 model_labels <- c(
-  "principled_salience_stop_regularized_2x2_inc_static"  = "Incremental, context-fixed",
-  "principled_salience_stop_regularized_2x2_inc_rec"     = "Incremental, context-updating",
-  "principled_salience_stop_regularized_2x2_glob_static" = "Global, context-fixed",
-  "principled_salience_stop_regularized_2x2_glob_rec"    = "Global, context-updating"
+  "principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_inc_static_fixedeps"  = "Incremental, context-fixed",
+  "principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_inc_rec_fixedeps"     = "Incremental, context-updating",
+  "principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_glob_static_fixedeps" = "Global, context-fixed",
+  "principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_glob_rec_fixedeps"    = "Global, context-updating"
 )
 
 df_prod_loo <- read_csv("data/production_loo_comparison_best.csv") %>%
@@ -234,9 +234,51 @@ ggsave(file.path(fig_dir, "production_model_comparison_best.pdf"), fig_loo,
 cat("[✓] production_model_comparison_best.pdf\n")
 
 # =============================================================================
-#  Slider PPC — empirical vs predicted mean slider rating by condition
-#  (slider analogue of the production PPC barplot)
+#  Slider heldout comparison and PPC
 # =============================================================================
+slider_model_labels <- c(
+  "planned_usefulness_signed_order_static" = "Planned usefulness, context-fixed",
+  "planned_usefulness_order_static" = "Planned usefulness, context-fixed (unconstrained)",
+  "planned_usefulness_order" = "Planned usefulness, context-updating",
+  "incremental_recursive" = "Greedy, context-updating",
+  "incremental_static" = "Greedy, context-fixed"
+)
+
+df_slider_heldout <- read_csv("data/slider_heldout_elpd_model_summary.csv") %>%
+  filter(model %in% names(slider_model_labels)) %>%
+  mutate(
+    delta_elpd = total_heldout_elpd -
+      total_heldout_elpd[model == "planned_usefulness_signed_order_static"],
+    model_label = factor(
+      slider_model_labels[model],
+      levels = rev(slider_model_labels[names(slider_model_labels) %in% model])
+    ),
+    diagnostics_ok = diagnostics_ok %in% TRUE
+  )
+
+fig_slider_heldout <- df_slider_heldout %>%
+  ggplot(aes(x = delta_elpd, y = model_label, colour = diagnostics_ok)) +
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "grey60") +
+  geom_point(size = 2.8) +
+  scale_colour_manual(
+    values = c("TRUE" = CSP_colors[3], "FALSE" = CSP_colors[1]),
+    labels = c("TRUE" = "Diagnostics pass/warn", "FALSE" = "Diagnostics fail"),
+    name = NULL
+  ) +
+  labs(
+    x = expression(Delta * " heldout ELPD relative to selected model"),
+    y = NULL
+  ) +
+  theme_model() +
+  theme(
+    axis.text.y = element_text(size = 13),
+    legend.position = "top"
+  )
+
+ggsave(file.path(fig_dir, "slider_model_comparison.pdf"), fig_slider_heldout,
+       width = 7.5, height = 3.5, dpi = 300)
+cat("[✓] slider_model_comparison.pdf\n")
+
 df_sl_emp <- read_csv("data/slider_empirical.csv") %>%
   group_by(relevant_property, sharpness) %>%
   summarise(
@@ -250,10 +292,10 @@ df_sl_emp <- read_csv("data/slider_empirical.csv") %>%
 df_sl_pred <- read_csv("data/slider_condition_summary.csv") %>%
   transmute(
     relevant_property, sharpness,
-    mean = pred_mean_incremental_recursive,
-    lo = pred_lo_incremental_recursive,
-    hi = pred_hi_incremental_recursive,
-    source = "Incremental, context-updating"
+    mean = pred_mean_planned_usefulness_signed_order_static,
+    lo = pred_lo_planned_usefulness_signed_order_static,
+    hi = pred_hi_planned_usefulness_signed_order_static,
+    source = "Planned usefulness, context-fixed"
   )
 
 df_sl_ppc <- bind_rows(df_sl_emp, df_sl_pred) %>%
@@ -263,7 +305,7 @@ df_sl_ppc <- bind_rows(df_sl_emp, df_sl_pred) %>%
     sharpness = factor(sharpness, levels = names(sharp_labels),
                        labels = sharp_labels),
     source = factor(source,
-                    levels = c("Empirical", "Incremental, context-updating"))
+                    levels = c("Empirical", "Planned usefulness, context-fixed"))
   )
 
 sharp_facet_labels <- c(
@@ -295,3 +337,48 @@ fig_sl_ppc <- df_sl_ppc %>%
 ggsave(file.path(fig_dir, "slider_ppc_best.pdf"), fig_sl_ppc,
        width = 7.5, height = 5.5, dpi = 300)
 cat("[✓] slider_ppc_best.pdf\n")
+
+df_sl_corr <- read_csv("data/slider_condition_summary.csv") %>%
+  transmute(
+    relevant_property, sharpness,
+    human_mean = emp_mean,
+    model_mean = pred_mean_planned_usefulness_signed_order_static,
+    model_lo = pred_lo_planned_usefulness_signed_order_static,
+    model_hi = pred_hi_planned_usefulness_signed_order_static
+  ) %>%
+  mutate(
+    relevant_property = factor(relevant_property, levels = names(rp_labels),
+                               labels = rp_labels),
+    sharpness = factor(sharpness, levels = names(sharp_labels),
+                       labels = sharp_labels),
+    condition = paste(relevant_property, sharpness, sep = " / ")
+  )
+
+r_sq_slider <- cor(df_sl_corr$human_mean, df_sl_corr$model_mean)^2
+
+fig_sl_corr <- df_sl_corr %>%
+  ggplot(aes(x = human_mean, y = model_mean)) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", colour = "grey50") +
+  geom_errorbar(
+    aes(ymin = model_lo, ymax = model_hi),
+    width = 0.005, linewidth = 0.4, colour = "grey60"
+  ) +
+  geom_point(aes(colour = condition), size = 2.8, alpha = 0.9) +
+  scale_colour_manual(values = CSP_colors[1:6], name = "Condition") +
+  annotate(
+    "text", x = min(df_sl_corr$human_mean), y = max(df_sl_corr$model_hi, na.rm = TRUE),
+    label = paste0("italic(R)^2 == ",
+                   formatC(r_sq_slider, format = "f", digits = 3)),
+    parse = TRUE, hjust = 0, vjust = 1, size = 5, colour = "grey30"
+  ) +
+  labs(
+    x = "Empirical mean rating",
+    y = "Predicted mean rating"
+  ) +
+  coord_fixed(xlim = c(0.55, 0.9), ylim = c(0.55, 0.9)) +
+  theme_model() +
+  theme(legend.position = "right")
+
+ggsave(file.path(fig_dir, "slider_correlation_inc_hier.pdf"), fig_sl_corr,
+       width = 6.5, height = 5.2, dpi = 300)
+cat("[✓] slider_correlation_inc_hier.pdf\n")
