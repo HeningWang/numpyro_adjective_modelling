@@ -54,13 +54,33 @@ ALL_MODELS = {
     "planned_usefulness_order_static": (
         "mcmc_results_planned_usefulness_order_static_speaker_hier_{tag}.nc"
     ),
+    "planned_usefulness_signed_order": (
+        "mcmc_results_planned_usefulness_signed_order_speaker_hier_{tag}.nc"
+    ),
+    "planned_usefulness_signed_order_static": (
+        "mcmc_results_planned_usefulness_signed_order_static_speaker_hier_{tag}.nc"
+    ),
+    "planned_usefulness_mixture": (
+        "mcmc_results_planned_usefulness_mixture_speaker_hier_{tag}.nc"
+    ),
+    "planned_usefulness_mixture_static": (
+        "mcmc_results_planned_usefulness_mixture_static_speaker_hier_{tag}.nc"
+    ),
 }
 
 GROUP_COLS = ["relevant_property", "sharpness"]
 BEST_MODEL = "incremental_recursive"
 
 # Population-level parameters to diagnose per model
-POP_VAR_NAMES = ["alpha", "bias", "usefulness_order_scale", "sigma", "tau"]
+POP_VAR_NAMES = [
+    "alpha",
+    "bias",
+    "usefulness_order_scale",
+    "signed_order_scale",
+    "planned_mixture_weight",
+    "sigma",
+    "tau",
+]
 
 
 def available_posterior_vars(idata, var_names):

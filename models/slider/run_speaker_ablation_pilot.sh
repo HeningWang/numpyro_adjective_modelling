@@ -8,6 +8,7 @@ NUM_SAMPLES="${NUM_SAMPLES:-500}"
 NUM_CHAINS="${NUM_CHAINS:-4}"
 OVERWRITE="${OVERWRITE:-0}"
 DRY_RUN="${DRY_RUN:-0}"
+SPEAKERS="${SPEAKERS:-planned_usefulness_mixture planned_usefulness_mixture_static}"
 
 : "${JAX_PLATFORMS:=cuda}"
 : "${XLA_FLAGS:=}"
@@ -20,16 +21,17 @@ export XLA_PYTHON_CLIENT_PREALLOCATE
 cd "$(dirname "$0")"
 mkdir -p inference_data logs
 
-echo "Slider planned-usefulness pilot"
-echo "  python      : ${PYTHON_BIN}"
-echo "  warmup      : ${NUM_WARMUP}"
-echo "  samples     : ${NUM_SAMPLES}"
-echo "  chains      : ${NUM_CHAINS}"
+echo "Slider speaker-ablation pilot"
+echo "  python       : ${PYTHON_BIN}"
+echo "  warmup       : ${NUM_WARMUP}"
+echo "  samples      : ${NUM_SAMPLES}"
+echo "  chains       : ${NUM_CHAINS}"
+echo "  speakers     : ${SPEAKERS}"
 echo "  JAX_PLATFORMS: ${JAX_PLATFORMS}"
-echo "  XLA_FLAGS   : ${XLA_FLAGS}"
-echo "  preallocate : ${XLA_PYTHON_CLIENT_PREALLOCATE}"
+echo "  XLA_FLAGS    : ${XLA_FLAGS}"
+echo "  preallocate  : ${XLA_PYTHON_CLIENT_PREALLOCATE}"
 if git rev-parse --short HEAD >/dev/null 2>&1; then
-  echo "  git commit  : $(git rev-parse --short HEAD)"
+  echo "  git commit   : $(git rev-parse --short HEAD)"
 fi
 
 if [[ "${DRY_RUN}" != "1" ]]; then
@@ -37,7 +39,7 @@ if [[ "${DRY_RUN}" != "1" ]]; then
 import jax
 
 devices = jax.devices()
-print(f"  jax devices : {devices}")
+print(f"  jax devices  : {devices}")
 if not any(getattr(device, "platform", "").lower() in {"gpu", "cuda"} for device in devices):
     raise SystemExit("CUDA/GPU device is not visible; aborting pilot before MCMC.")
 PY
@@ -80,9 +82,11 @@ run_cell() {
 }
 
 start_time=$(date +%s)
-run_cell planned_usefulness_order
-run_cell planned_usefulness_order_static
+read -r -a speaker_array <<< "${SPEAKERS}"
+for speaker in "${speaker_array[@]}"; do
+  run_cell "${speaker}"
+done
 end_time=$(date +%s)
 
 echo ""
-echo "Planned-usefulness pilot complete in $((end_time - start_time))s."
+echo "Speaker-ablation pilot complete in $((end_time - start_time))s."

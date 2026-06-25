@@ -5,11 +5,12 @@ Usage:
         --num_warmup 500 --num_samples 500 --num_chains 4
 """
 import os
-# Default to CPU with 4 host devices, but honour env overrides so callers
-# can switch to GPU mode via `JAX_PLATFORMS='' XLA_FLAGS='' python ...`.
+# Default local runs to CPU with 4 host devices, but honour env overrides.
+# Server pilots should set `JAX_PLATFORMS=cuda` before launching this script.
 os.environ.setdefault("JAX_PLATFORMS", "cpu")
 os.environ["JAX_TRACEBACK_FILTERING"] = "off"
-os.environ.setdefault("XLA_FLAGS", "--xla_force_host_platform_device_count=4")
+if os.environ.get("JAX_PLATFORMS", "").lower() == "cpu":
+    os.environ.setdefault("XLA_FLAGS", "--xla_force_host_platform_device_count=4")
 
 import argparse
 import numpy as np
@@ -31,19 +32,49 @@ from modelSpecification import (
     likelihood_gb_speaker,
     likelihood_inc_speaker,
     likelihood_planned_usefulness_order_speaker,
+    likelihood_planned_signed_usefulness_order_speaker,
+    likelihood_planned_usefulness_mixture_speaker,
     likelihood_planned_usefulness_order_speaker_static,
+    likelihood_planned_signed_usefulness_order_speaker_static,
+    likelihood_planned_usefulness_mixture_speaker_static,
     likelihood_gb_speaker_static,
     likelihood_inc_speaker_frozen,
     likelihood_gb_speaker_hier,
     likelihood_inc_speaker_hier,
     likelihood_planned_usefulness_order_speaker_hier,
+    likelihood_planned_signed_usefulness_order_speaker_hier,
+    likelihood_planned_usefulness_mixture_speaker_hier,
     likelihood_planned_usefulness_order_speaker_static_hier,
+    likelihood_planned_signed_usefulness_order_speaker_static_hier,
+    likelihood_planned_usefulness_mixture_speaker_static_hier,
     likelihood_gb_speaker_static_hier,
     likelihood_inc_speaker_frozen_hier,
     likelihood_inc_speaker_hier_free_csv,
     likelihood_inc_speaker_frozen_hier_free_csv,
     ZOIB,
 )
+
+RECURSIVE_LISTENER_SPEAKERS = {
+    "global",
+    "incremental",
+    "planned_usefulness_order",
+    "planned_usefulness_signed_order",
+    "planned_usefulness_mixture",
+}
+
+SPEAKER_CHOICES = [
+    "global",
+    "incremental",
+    "global_static",
+    "incremental_static",
+    "incremental_frozen",
+    "planned_usefulness_order",
+    "planned_usefulness_order_static",
+    "planned_usefulness_signed_order",
+    "planned_usefulness_signed_order_static",
+    "planned_usefulness_mixture",
+    "planned_usefulness_mixture_static",
+]
 
 
 def run_inference(
@@ -61,7 +92,7 @@ def run_inference(
     if (pi0 + pi1) >= 0.95:
         raise ValueError(f"Boundary masses too large for ZOIB: pi0+pi1={pi0+pi1:.3f}")
 
-    if canonical_speaker_type in ("global", "incremental", "planned_usefulness_order"):
+    if canonical_speaker_type in RECURSIVE_LISTENER_SPEAKERS:
         L1_all, L2_all = precompute_listeners(states_train)
     else:
         L1_all, L2_all = precompute_listeners_frozen(states_train)
@@ -85,17 +116,25 @@ def run_inference(
         model = likelihood_inc_speaker
     elif canonical_speaker_type == "planned_usefulness_order":
         model = likelihood_planned_usefulness_order_speaker
+    elif canonical_speaker_type == "planned_usefulness_signed_order":
+        model = likelihood_planned_signed_usefulness_order_speaker
+    elif canonical_speaker_type == "planned_usefulness_mixture":
+        model = likelihood_planned_usefulness_mixture_speaker
     elif canonical_speaker_type == "global_static":
         model = likelihood_gb_speaker_static
     elif canonical_speaker_type == "incremental_static":
         model = likelihood_inc_speaker_frozen
     elif canonical_speaker_type == "planned_usefulness_order_static":
         model = likelihood_planned_usefulness_order_speaker_static
+    elif canonical_speaker_type == "planned_usefulness_signed_order_static":
+        model = likelihood_planned_signed_usefulness_order_speaker_static
+    elif canonical_speaker_type == "planned_usefulness_mixture_static":
+        model = likelihood_planned_usefulness_mixture_speaker_static
     else:
         raise ValueError(
             "Invalid speaker type. Choose 'global', 'incremental', "
-            "'planned_usefulness_order', 'global_static', "
-            "'incremental_static', or 'planned_usefulness_order_static' "
+            "planned usefulness variants, 'global_static', "
+            "'incremental_static', or planned usefulness static variants "
             "(legacy alias: 'incremental_frozen')."
         )
 
@@ -169,12 +208,12 @@ def run_inference_hier(
         )
 
     if color_semvalue is not None:
-        if canonical_speaker_type in ("global", "incremental", "planned_usefulness_order"):
+        if canonical_speaker_type in RECURSIVE_LISTENER_SPEAKERS:
             L1_all, L2_all = precompute_listeners_at_csv(states_train, color_semvalue)
         else:
             L1_all, L2_all = precompute_listeners_frozen_at_csv(states_train, color_semvalue)
         print(f"Listeners precomputed at color_semvalue = {color_semvalue}.")
-    elif canonical_speaker_type in ("global", "incremental", "planned_usefulness_order"):
+    elif canonical_speaker_type in RECURSIVE_LISTENER_SPEAKERS:
         L1_all, L2_all = precompute_listeners(states_train)
     else:
         L1_all, L2_all = precompute_listeners_frozen(states_train)
@@ -209,17 +248,25 @@ def run_inference_hier(
         model = likelihood_inc_speaker_hier
     elif canonical_speaker_type == "planned_usefulness_order":
         model = likelihood_planned_usefulness_order_speaker_hier
+    elif canonical_speaker_type == "planned_usefulness_signed_order":
+        model = likelihood_planned_signed_usefulness_order_speaker_hier
+    elif canonical_speaker_type == "planned_usefulness_mixture":
+        model = likelihood_planned_usefulness_mixture_speaker_hier
     elif canonical_speaker_type == "global_static":
         model = likelihood_gb_speaker_static_hier
     elif canonical_speaker_type == "incremental_static":
         model = likelihood_inc_speaker_frozen_hier
     elif canonical_speaker_type == "planned_usefulness_order_static":
         model = likelihood_planned_usefulness_order_speaker_static_hier
+    elif canonical_speaker_type == "planned_usefulness_signed_order_static":
+        model = likelihood_planned_signed_usefulness_order_speaker_static_hier
+    elif canonical_speaker_type == "planned_usefulness_mixture_static":
+        model = likelihood_planned_usefulness_mixture_speaker_static_hier
     else:
         raise ValueError(
             "Invalid speaker type. Choose 'global', 'incremental', "
-            "'planned_usefulness_order', 'global_static', "
-            "'incremental_static', or 'planned_usefulness_order_static' "
+            "planned usefulness variants, 'global_static', "
+            "'incremental_static', or planned usefulness static variants "
             "(legacy alias: 'incremental_frozen')."
         )
 
@@ -266,13 +313,8 @@ def run_inference_hier(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run speaker inference with NumPyro.")
-    parser.add_argument("--speaker_type", type=str,
-                        choices=["global", "incremental", "global_static",
-                                 "incremental_static", "incremental_frozen",
-                                 "planned_usefulness_order",
-                                 "planned_usefulness_order_static"],
-                        default="global",
-                        help="Choose the speaker model type.")
+    parser.add_argument("--speaker_type", type=str, choices=SPEAKER_CHOICES,
+                        default="global", help="Choose the speaker model type.")
     parser.add_argument("--num_samples", type=int, default=500, help="Number of posterior samples.")
     parser.add_argument("--num_warmup", type=int, default=500, help="Number of warm-up iterations.")
     parser.add_argument("--num_chains", type=int, default=4, help="Number of MCMC chains.")
