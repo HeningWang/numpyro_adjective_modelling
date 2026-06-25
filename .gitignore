@@ -51,6 +51,8 @@ simulation/simulation_test*.csv
 # Posterior-analysis output (regenerable from .nc files)
 models/slider/results/
 models/production/results/
+models/slider/logs/
+models/production/logs/
 
 # Forward-audit detail dumps (large, regenerable from compact audit scripts)
 models/*/results_semantic_variant_forward_audit/stats/*_listener_by_display.csv
