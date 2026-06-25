@@ -4016,6 +4016,38 @@ likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_glob
     prior_profile="regularized",
     cell="glob_static",
 )
+likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_inc_rec_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    prior_profile="regularized",
+    cell="inc_rec",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_inc_static_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    prior_profile="regularized",
+    cell="inc_static",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_glob_rec_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    prior_profile="regularized",
+    cell="glob_rec",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_glob_static_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    prior_profile="regularized",
+    cell="glob_static",
+    fixed_epsilon=0.003,
+)
 likelihood_function_principled_salience_stop_regularized_tmcc_2x2_glob_rec_hier = _make_principled_model(
     drop=("uncertainty_len",),
     salience_stop=True,
