@@ -101,6 +101,8 @@ def test_size_sharp_models_register_for_hierarchical_inference():
     for key in (
         "principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_inc_rec_fixedeps",
         "principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_inc_static_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_glob_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_glob_static_fixedeps",
     ):
         assert key in ri.HIER_MODELS
         assert key in pa.SIMPLIFIED_MODELS

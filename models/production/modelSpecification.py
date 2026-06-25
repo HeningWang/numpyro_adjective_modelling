@@ -4293,6 +4293,26 @@ likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedf
     cell="inc_static",
     fixed_epsilon=0.003,
 )
+likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_glob_rec_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    bounded_form=True,
+    size_sharp_policy=True,
+    prior_profile="regularized",
+    cell="glob_rec",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_glob_static_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    bounded_form=True,
+    size_sharp_policy=True,
+    prior_profile="regularized",
+    cell="glob_static",
+    fixed_epsilon=0.003,
+)
 likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_rec_fixedeps_hier = _make_principled_model(
     drop=("uncertainty_len",),
     salience_stop=True,
