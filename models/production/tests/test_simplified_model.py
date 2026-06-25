@@ -217,6 +217,74 @@ def test_principled_response_policy_zero_recovers_base_and_shifts_output():
     assert reliability_form[f_present].sum() > base[f_present].sum()
 
 
+def test_global_principled_response_policy_zero_recovers_base_and_shifts_output():
+    base_kw = {
+        **PRINCIPLED_KW,
+        "has_one_word_solution": jnp.float32(1.0),
+        "gamma_uncertainty_len": jnp.float32(0.0),
+        "rho_salience_stop": jnp.float32(0.5),
+    }
+    base = np.asarray(ms.global_speaker_principled(COLOR_SALIENT_STATES, **base_kw))
+    response_zero = np.asarray(
+        ms.global_speaker_principled_response_policy(
+            COLOR_SALIENT_STATES,
+            **{
+                **base_kw,
+                "is_colour_sufficient": jnp.float32(1.0),
+                "lambda_sufficient_single": jnp.float32(0.0),
+                "lambda_reliability_form": jnp.float32(0.0),
+            },
+        )
+    )
+    sufficient_single = np.asarray(
+        ms.global_speaker_principled_response_policy(
+            COLOR_SALIENT_STATES,
+            **{
+                **base_kw,
+                "is_colour_sufficient": jnp.float32(1.0),
+                "lambda_sufficient_single": jnp.float32(1.5),
+                "lambda_reliability_form": jnp.float32(0.0),
+            },
+        )
+    )
+
+    assert np.all(response_zero >= 0.0)
+    assert np.allclose(response_zero.sum(), 1.0, atol=1e-4)
+    assert np.allclose(base, response_zero, atol=1e-5)
+    assert sufficient_single[5] > base[5]  # C is sufficient in base_kw.
+
+
+def test_global_principled_response_policy_jitted_batch_is_simplex():
+    probs = np.asarray(
+        ms.jitted_global_speaker_principled_response_policy_hier(
+            jnp.stack([COLOR_SALIENT_STATES, COLOR_SALIENT_STATES]),
+            jnp.asarray([1, 1], dtype=jnp.int32),
+            jnp.asarray([1.0, 1.0], dtype=jnp.float32),
+            jnp.asarray([0.0, 1.0], dtype=jnp.float32),
+            jnp.asarray([1.0, 0.0], dtype=jnp.float32),
+            jnp.asarray([3.0, 2.5], dtype=jnp.float32),
+            jnp.float32(1.0),
+            jnp.float32(0.8),
+            jnp.float32(0.5),
+            jnp.float32(1.5),
+            jnp.float32(1.5),
+            jnp.float32(0.0),
+            0.59,
+            0.50,
+            0.50,
+            0.6856,
+            0.01,
+            ms.LOG_LM_ORDER_ONLY_15,
+            ms.BASE_VISUAL_SALIENCE,
+            recursive=True,
+        )
+    )
+
+    assert probs.shape == (2, ms.n_utt)
+    assert np.all(probs >= 0.0)
+    assert np.allclose(probs.sum(axis=1), 1.0, atol=1e-4)
+
+
 def test_principled_base_salience_constants_are_fixed_sweep_inputs():
     default = np.asarray(ms.incremental_speaker_principled(STATES, **PRINCIPLED_KW))
     higher_color = np.asarray(
@@ -276,6 +344,8 @@ def test_principled_models_register_for_hierarchical_inference():
         "principled_salience_stop_regularized_plannedprefix_2x2_inc_static",
         "principled_salience_stop_regularized_responsepolicy_2x2_inc_rec",
         "principled_salience_stop_regularized_responsepolicy_2x2_inc_static",
+        "principled_salience_stop_regularized_responsepolicy_2x2_glob_rec",
+        "principled_salience_stop_regularized_responsepolicy_2x2_glob_static",
         "principled_salience_stop_regularized_2x2_glob_rec",
         "principled_salience_stop_regularized_2x2_glob_static",
         "principled_salience_stop_regularized_2x2_glob_rec_fixedeps",
@@ -291,6 +361,8 @@ if __name__ == "__main__":
     test_principled_salience_stop_favors_single_salient_adjective()
     test_principled_planned_prefix_zero_scale_recovers_base_and_can_shift_output()
     test_principled_response_policy_zero_recovers_base_and_shifts_output()
+    test_global_principled_response_policy_zero_recovers_base_and_shifts_output()
+    test_global_principled_response_policy_jitted_batch_is_simplex()
     test_principled_base_salience_constants_are_fixed_sweep_inputs()
     test_principled_2x2_architectures_are_simplex_and_distinct()
     test_principled_models_register_for_hierarchical_inference()

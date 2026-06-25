@@ -2712,6 +2712,60 @@ def global_speaker_principled(
     return (1.0 - epsilon) * model_probs + epsilon / n_utt
 
 
+def global_speaker_principled_response_policy(
+    states:                    jnp.ndarray,
+    sufficient_dim:            int,
+    has_one_word_solution:     float,
+    is_sharp:                  float,
+    is_colour_sufficient:      float,
+    alpha:                     float = 3.0,
+    beta_order:                float = 1.0,
+    lambda_salience:           float = 0.0,
+    rho_salience_stop:         float = 0.0,
+    lambda_sufficient_single:  float = 0.0,
+    lambda_reliability_form:   float = 0.0,
+    gamma_uncertainty_len:     float = 0.0,
+    color_semval:              float = 0.59,
+    form_semval:               float = 0.50,
+    k:                         float = 0.50,
+    wf:                        float = 0.6856,
+    epsilon:                   float = 0.01,
+    order_scores:              jnp.ndarray = LOG_LM_ORDER_ONLY_15,
+    base_visual_salience:      jnp.ndarray = BASE_VISUAL_SALIENCE,
+    recursive:                 bool = True,
+    size_context_mode:         str = "posterior",
+) -> jnp.ndarray:
+    """Principled global speaker plus the shared utterance-level policy."""
+    base_probs = global_speaker_principled(
+        states,
+        sufficient_dim,
+        has_one_word_solution,
+        is_sharp,
+        alpha,
+        beta_order,
+        lambda_salience,
+        rho_salience_stop,
+        gamma_uncertainty_len,
+        color_semval,
+        form_semval,
+        k,
+        wf,
+        epsilon,
+        order_scores,
+        base_visual_salience,
+        recursive=recursive,
+        size_context_mode=size_context_mode,
+    )
+    return _apply_principled_response_policy(
+        base_probs,
+        sufficient_dim,
+        has_one_word_solution,
+        is_colour_sufficient,
+        lambda_sufficient_single,
+        lambda_reliability_form,
+    )
+
+
 # ── Vectorise over trials ──────────────────────────────────────────────────────
 vectorized_incremental_speaker = jax.vmap(
     incremental_speaker,
@@ -3113,6 +3167,33 @@ vectorized_global_speaker_principled_hier = jax.vmap(
 )
 
 
+vectorized_global_speaker_principled_response_policy_hier = jax.vmap(
+    global_speaker_principled_response_policy,
+    in_axes=(0,    # states
+             0,    # sufficient_dim
+             0,    # has_one_word_solution
+             0,    # is_sharp
+             0,    # is_colour_sufficient
+             0,    # alpha
+             None, # beta_order
+             None, # lambda_salience
+             None, # rho_salience_stop
+             None, # lambda_sufficient_single
+             None, # lambda_reliability_form
+             None, # gamma_uncertainty_len
+             None, # color_semval
+             None, # form_semval
+             None, # k
+             None, # wf
+             None, # epsilon
+             None, # order_scores
+             None, # base_visual_salience
+             None, # recursive
+             None, # size_context_mode
+             ),
+)
+
+
 @partial(jax.jit, static_argnames=("recursive", "size_context_mode"))
 def jitted_global_speaker_principled_hier(
     states, sufficient_dim, has_one_word_solution, is_sharp,
@@ -3124,6 +3205,23 @@ def jitted_global_speaker_principled_hier(
     return vectorized_global_speaker_principled_hier(
         states, sufficient_dim, has_one_word_solution, is_sharp,
         alpha_per_trial, beta_order, lambda_salience, rho_salience_stop,
+        gamma_uncertainty_len, color_semval, form_semval, k, wf, epsilon,
+        order_scores, base_visual_salience, recursive, size_context_mode,
+    )
+
+
+@partial(jax.jit, static_argnames=("recursive", "size_context_mode"))
+def jitted_global_speaker_principled_response_policy_hier(
+    states, sufficient_dim, has_one_word_solution, is_sharp, is_colour_sufficient,
+    alpha_per_trial, beta_order, lambda_salience, rho_salience_stop,
+    lambda_sufficient_single, lambda_reliability_form, gamma_uncertainty_len,
+    color_semval, form_semval, k, wf, epsilon, order_scores,
+    base_visual_salience, recursive=True, size_context_mode="posterior",
+):
+    return vectorized_global_speaker_principled_response_policy_hier(
+        states, sufficient_dim, has_one_word_solution, is_sharp,
+        is_colour_sufficient, alpha_per_trial, beta_order, lambda_salience,
+        rho_salience_stop, lambda_sufficient_single, lambda_reliability_form,
         gamma_uncertainty_len, color_semval, form_semval, k, wf, epsilon,
         order_scores, base_visual_salience, recursive, size_context_mode,
     )
@@ -3679,8 +3777,6 @@ def _make_principled_model(
                          f"supported: {sorted(_valid_cells)}")
     if planned_prefix and cell in ("glob_rec", "glob_static"):
         raise ValueError("planned_prefix is defined for incremental 2x2 cells.")
-    if response_policy and cell in ("glob_rec", "glob_static"):
-        raise ValueError("response_policy is defined for incremental 2x2 cells.")
     if planned_prefix and response_policy:
         raise ValueError("planned_prefix and response_policy are separate variants.")
     _valid_size_context_modes = {"posterior", "comparison_class"}
@@ -3695,7 +3791,11 @@ def _make_principled_model(
     if planned_prefix:
         speaker_fn = jitted_speaker_principled_planned_hier
     elif response_policy:
-        speaker_fn = jitted_speaker_principled_response_policy_hier
+        speaker_fn = (
+            jitted_global_speaker_principled_response_policy_hier
+            if cell in ("glob_rec", "glob_static")
+            else jitted_speaker_principled_response_policy_hier
+        )
     else:
         speaker_fn = (
             jitted_global_speaker_principled_hier
@@ -3901,6 +4001,20 @@ likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_inc_
     response_policy=True,
     prior_profile="regularized",
     cell="inc_static",
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_glob_rec_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    prior_profile="regularized",
+    cell="glob_rec",
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_glob_static_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    prior_profile="regularized",
+    cell="glob_static",
 )
 likelihood_function_principled_salience_stop_regularized_tmcc_2x2_glob_rec_hier = _make_principled_model(
     drop=("uncertainty_len",),

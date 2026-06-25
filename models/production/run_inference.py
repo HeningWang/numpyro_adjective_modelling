@@ -59,6 +59,8 @@ from modelSpecification import (
     likelihood_function_principled_salience_stop_regularized_plannedprefix_2x2_inc_static_hier,
     likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_inc_rec_hier,
     likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_inc_static_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_glob_rec_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_glob_static_hier,
     likelihood_function_principled_salience_stop_regularized_tmcc_2x2_glob_rec_hier,
     likelihood_function_principled_salience_stop_regularized_tmcc_2x2_glob_static_hier,
     likelihood_function_principled_salience_stop_regularized_tmcc_2x2_glob_rec_fixedeps_hier,
@@ -158,6 +160,8 @@ HIER_MODELS = {
     "principled_salience_stop_regularized_plannedprefix_2x2_inc_static": (likelihood_function_principled_salience_stop_regularized_plannedprefix_2x2_inc_static_hier, 0.85, 5),
     "principled_salience_stop_regularized_responsepolicy_2x2_inc_rec": (likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_inc_rec_hier, 0.85, 5),
     "principled_salience_stop_regularized_responsepolicy_2x2_inc_static": (likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_inc_static_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_2x2_glob_rec": (likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_glob_rec_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_2x2_glob_static": (likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_glob_static_hier, 0.85, 5),
     "principled_salience_stop_regularized_tmcc_2x2_glob_rec": (likelihood_function_principled_salience_stop_regularized_tmcc_2x2_glob_rec_hier, 0.85, 5),
     "principled_salience_stop_regularized_tmcc_2x2_glob_static": (likelihood_function_principled_salience_stop_regularized_tmcc_2x2_glob_static_hier, 0.85, 5),
     "principled_salience_stop_regularized_tmcc_2x2_glob_rec_fixedeps": (likelihood_function_principled_salience_stop_regularized_tmcc_2x2_glob_rec_fixedeps_hier, 0.85, 5),
@@ -464,6 +468,8 @@ def run_inference_hier(
         "principled_salience_stop_regularized_plannedprefix_2x2_inc_static",
         "principled_salience_stop_regularized_responsepolicy_2x2_inc_rec",
         "principled_salience_stop_regularized_responsepolicy_2x2_inc_static",
+        "principled_salience_stop_regularized_responsepolicy_2x2_glob_rec",
+        "principled_salience_stop_regularized_responsepolicy_2x2_glob_static",
         "principled_salience_stop_regularized_tmcc_2x2_glob_rec",
         "principled_salience_stop_regularized_tmcc_2x2_glob_static",
         "principled_salience_stop_regularized_tmcc_2x2_glob_rec_fixedeps",
@@ -522,6 +528,8 @@ def run_inference_hier(
     RESPONSE_POLICY_FAMILY = {
         "principled_salience_stop_regularized_responsepolicy_2x2_inc_rec",
         "principled_salience_stop_regularized_responsepolicy_2x2_inc_static",
+        "principled_salience_stop_regularized_responsepolicy_2x2_glob_rec",
+        "principled_salience_stop_regularized_responsepolicy_2x2_glob_static",
     }
     is_response_policy = canonical_speaker_type in RESPONSE_POLICY_FAMILY
 
