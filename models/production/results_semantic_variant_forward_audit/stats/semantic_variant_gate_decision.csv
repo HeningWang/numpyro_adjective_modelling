@@ -1,0 +1,2 @@
+listener_metric,listener_value,listener_threshold,listener_gate_pass,speaker_metric,speaker_value,speaker_threshold,speaker_gate_pass,run_pilot_inference
+tmcc_DC_mean_abs_delta_target_listener,0.002724919514155682,0.01,False,tmcc_both_DC_CD_max_abs_condition_delta,0.003092944622039795,0.02,False,False

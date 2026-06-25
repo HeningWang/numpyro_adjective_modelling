@@ -1,0 +1,2 @@
+n_observations,n_unique_displays,alpha,bias,color_sem,k,wf,slider_prediction_gate,listener_contrast_gate,variants
+3485,162,1.0,2.0,0.8,0.5,1.0,0.02,0.05,"current_context_fixed,current_context_updating,target_match_context_fixed,target_match_context_updating,tmcc_context_updating"

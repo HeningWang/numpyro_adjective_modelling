@@ -52,6 +52,11 @@ simulation/simulation_test*.csv
 models/slider/results/
 models/production/results/
 
+# Forward-audit detail dumps (large, regenerable from compact audit scripts)
+models/*/results_semantic_variant_forward_audit/stats/*_listener_by_display.csv
+models/*/results_semantic_variant_forward_audit/stats/*_by_observation.csv
+models/*/results_speaker_variant_forward_audit/stats/*_predictions.csv
+
 # Local tooling config and working notes (per-project, never tracked).
 CLAUDE.md
 .mcp.json

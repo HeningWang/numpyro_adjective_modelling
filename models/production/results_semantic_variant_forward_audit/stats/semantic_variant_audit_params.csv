@@ -1,0 +1,2 @@
+n_unique_displays,conditions,display_keys,listener_utterances,gate_utterances,listener_gate,speaker_gate,alpha,beta_order,lambda_salience,rho_salience_stop,gamma_uncertainty_len,color_sem,form_sem,k,wf,epsilon
+162,"['erdc', 'zrdc', 'brdc']","['item', 'conditions', 'list']","['D', 'DC', 'CD']","['DC', 'CD']",0.01,0.02,3.0,1.0,0.8,0.75,0.0,0.59,0.5,0.5,0.6856,0.01

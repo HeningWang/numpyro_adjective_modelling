@@ -50,6 +50,12 @@ from modelSpecification import (
     likelihood_function_principled_salience_stop_regularized_2x2_glob_static_hier,
     likelihood_function_principled_salience_stop_regularized_2x2_glob_rec_fixedeps_hier,
     likelihood_function_principled_salience_stop_regularized_2x2_glob_static_fixedeps_hier,
+    likelihood_function_principled_salience_stop_regularized_tmcc_2x2_inc_rec_hier,
+    likelihood_function_principled_salience_stop_regularized_tmcc_2x2_inc_static_hier,
+    likelihood_function_principled_salience_stop_regularized_tmcc_2x2_glob_rec_hier,
+    likelihood_function_principled_salience_stop_regularized_tmcc_2x2_glob_static_hier,
+    likelihood_function_principled_salience_stop_regularized_tmcc_2x2_glob_rec_fixedeps_hier,
+    likelihood_function_principled_salience_stop_regularized_tmcc_2x2_glob_static_fixedeps_hier,
     likelihood_function_principled_salience_stop_strong_regularized_hier,
     likelihood_function_contextual_freewf_hier,
     likelihood_function_contextual_anchored_hier,
@@ -139,6 +145,12 @@ HIER_MODELS = {
     "principled_salience_stop_regularized_2x2_glob_static": (likelihood_function_principled_salience_stop_regularized_2x2_glob_static_hier, 0.85, 5),
     "principled_salience_stop_regularized_2x2_glob_rec_fixedeps": (likelihood_function_principled_salience_stop_regularized_2x2_glob_rec_fixedeps_hier, 0.85, 5),
     "principled_salience_stop_regularized_2x2_glob_static_fixedeps": (likelihood_function_principled_salience_stop_regularized_2x2_glob_static_fixedeps_hier, 0.85, 5),
+    "principled_salience_stop_regularized_tmcc_2x2_inc_rec": (likelihood_function_principled_salience_stop_regularized_tmcc_2x2_inc_rec_hier, 0.85, 5),
+    "principled_salience_stop_regularized_tmcc_2x2_inc_static": (likelihood_function_principled_salience_stop_regularized_tmcc_2x2_inc_static_hier, 0.85, 5),
+    "principled_salience_stop_regularized_tmcc_2x2_glob_rec": (likelihood_function_principled_salience_stop_regularized_tmcc_2x2_glob_rec_hier, 0.85, 5),
+    "principled_salience_stop_regularized_tmcc_2x2_glob_static": (likelihood_function_principled_salience_stop_regularized_tmcc_2x2_glob_static_hier, 0.85, 5),
+    "principled_salience_stop_regularized_tmcc_2x2_glob_rec_fixedeps": (likelihood_function_principled_salience_stop_regularized_tmcc_2x2_glob_rec_fixedeps_hier, 0.85, 5),
+    "principled_salience_stop_regularized_tmcc_2x2_glob_static_fixedeps": (likelihood_function_principled_salience_stop_regularized_tmcc_2x2_glob_static_fixedeps_hier, 0.85, 5),
     "principled_salience_stop_strong_regularized": (likelihood_function_principled_salience_stop_strong_regularized_hier, 0.85, 5),
     "contextual_freewf": (likelihood_function_contextual_freewf_hier, 0.85, 5),
     "contextual_anchored": (likelihood_function_contextual_anchored_hier, 0.85, 5),
@@ -174,7 +186,6 @@ HIER_MODELS = {
     "v5_global_full":        (likelihood_function_v5_global_full_hier,        0.85, 5),
     "v5_global_static_full": (likelihood_function_v5_global_static_full_hier, 0.85, 5),
 }
-
 
 def run_inference(
     speaker_type: str = "global",
@@ -243,6 +254,7 @@ def run_inference_hier(
     num_chains: int = 4,
     min_proportion: float = 0.0,
     condition_subset: str = "",
+    state_encoding: str = "target_match",
 ):
     """Run MCMC for the hierarchical (random participant alpha) speaker model.
 
@@ -270,7 +282,11 @@ def run_inference_hier(
         os.remove(output_file_name)
         print(f"Deleted existing file: {output_file_name}")
 
-    data = import_dataset_hier(min_proportion=min_proportion)
+    data = import_dataset_hier(
+        min_proportion=min_proportion,
+        state_encoding=state_encoding,
+    )
+    print(f"  [encoding] state_encoding={state_encoding}")
 
     if subset_codes is not None:
         df = data["df"]
@@ -350,6 +366,12 @@ def run_inference_hier(
         "principled_salience_stop_regularized_2x2_glob_static",
         "principled_salience_stop_regularized_2x2_glob_rec_fixedeps",
         "principled_salience_stop_regularized_2x2_glob_static_fixedeps",
+        "principled_salience_stop_regularized_tmcc_2x2_inc_rec",
+        "principled_salience_stop_regularized_tmcc_2x2_inc_static",
+        "principled_salience_stop_regularized_tmcc_2x2_glob_rec",
+        "principled_salience_stop_regularized_tmcc_2x2_glob_static",
+        "principled_salience_stop_regularized_tmcc_2x2_glob_rec_fixedeps",
+        "principled_salience_stop_regularized_tmcc_2x2_glob_static_fixedeps",
         "principled_salience_stop_strong_regularized",
         "contextual_freewf",
         "contextual_anchored",
@@ -528,6 +550,12 @@ if __name__ == "__main__":
                                  "principled_salience_stop_regularized_2x2_glob_static",
                                  "principled_salience_stop_regularized_2x2_glob_rec_fixedeps",
                                  "principled_salience_stop_regularized_2x2_glob_static_fixedeps",
+                                 "principled_salience_stop_regularized_tmcc_2x2_inc_rec",
+                                 "principled_salience_stop_regularized_tmcc_2x2_inc_static",
+                                 "principled_salience_stop_regularized_tmcc_2x2_glob_rec",
+                                 "principled_salience_stop_regularized_tmcc_2x2_glob_static",
+                                 "principled_salience_stop_regularized_tmcc_2x2_glob_rec_fixedeps",
+                                 "principled_salience_stop_regularized_tmcc_2x2_glob_static_fixedeps",
                                  "principled_salience_stop_strong_regularized",
                                  "contextual_freewf", "contextual_anchored",
                                  "contextual_freewf_anchored",
@@ -573,6 +601,11 @@ if __name__ == "__main__":
         "--condition-subset", type=str, default="",
         help="Comma-separated condition codes (e.g. 'erdc,zrdc,brdc') to filter trials. Empty = all 9.",
     )
+    parser.add_argument(
+        "--state-encoding", type=str, default="target_match",
+        choices=["target_match", "canonical"],
+        help="State encoding for colour/form features. Default target_match.",
+    )
 
     args = parser.parse_args()
 
@@ -587,6 +620,7 @@ if __name__ == "__main__":
             num_chains=args.num_chains,
             min_proportion=args.min_proportion,
             condition_subset=args.condition_subset,
+            state_encoding=args.state_encoding,
         )
     else:
         run_inference(
