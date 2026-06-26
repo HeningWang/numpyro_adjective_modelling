@@ -276,6 +276,8 @@ def run_inference(
     num_warmup: int = 1000,
     num_chains: int = 4,
     artifact_tag: str = "",
+    target_accept: float = 0.9,
+    max_tree_depth: int = 8,
 ):
     canonical_speaker_type = canonicalize_speaker_type(speaker_type)
     states_train, empirical_train, df = import_dataset()
@@ -355,7 +357,12 @@ def run_inference(
             "(legacy alias: 'incremental_frozen')."
         )
 
-    kernel = NUTS(model, dense_mass=True, max_tree_depth=8, target_accept_prob=0.9)
+    kernel = NUTS(
+        model,
+        dense_mass=True,
+        max_tree_depth=max_tree_depth,
+        target_accept_prob=target_accept,
+    )
     mcmc = MCMC(kernel, num_warmup=num_warmup, num_samples=num_samples,
                 num_chains=num_chains, chain_method="vectorized")
     if canonical_speaker_type in PRODUCTION_ANCHOR_SPEAKERS:
@@ -408,6 +415,8 @@ def run_inference(
             num_samples=num_samples,
             num_chains=num_chains,
             artifact_tag=artifact_tag,
+            target_accept=target_accept,
+            max_tree_depth=max_tree_depth,
             artifact_file=os.path.basename(output_file_name),
             n_observations=N,
         ),
@@ -429,6 +438,8 @@ def run_inference_hier(
     num_folds: int = 5,
     fold_seed: int = 13,
     artifact_tag: str = "",
+    target_accept: float = 0.9,
+    max_tree_depth: int = 8,
 ):
     """Run MCMC for the hierarchical (random participant intercept) speaker model.
 
@@ -520,7 +531,12 @@ def run_inference_hier(
 
     model = get_hier_model(canonical_speaker_type, free_color_semvalue=free_color_semvalue)
 
-    kernel = NUTS(model, dense_mass=False, max_tree_depth=8, target_accept_prob=0.9)
+    kernel = NUTS(
+        model,
+        dense_mass=False,
+        max_tree_depth=max_tree_depth,
+        target_accept_prob=target_accept,
+    )
     mcmc = MCMC(
         kernel,
         num_warmup=num_warmup,
@@ -585,6 +601,8 @@ def run_inference_hier(
             num_samples=num_samples,
             num_chains=num_chains,
             artifact_tag=artifact_tag,
+            target_accept=target_accept,
+            max_tree_depth=max_tree_depth,
             artifact_file=os.path.basename(output_file_name),
             free_color_semvalue=free_color_semvalue,
             color_semvalue=color_semvalue,
@@ -642,6 +660,14 @@ if __name__ == "__main__":
             "before the warmup/sample/chains tag."
         ),
     )
+    parser.add_argument(
+        "--target_accept", type=float, default=0.9,
+        help="NUTS target acceptance probability.",
+    )
+    parser.add_argument(
+        "--max_tree_depth", type=int, default=8,
+        help="Maximum NUTS tree depth.",
+    )
 
     args = parser.parse_args()
 
@@ -661,6 +687,8 @@ if __name__ == "__main__":
             num_folds=args.num_folds,
             fold_seed=args.fold_seed,
             artifact_tag=args.artifact_tag,
+            target_accept=args.target_accept,
+            max_tree_depth=args.max_tree_depth,
         )
     else:
         if args.heldout_fold is not None:
@@ -675,4 +703,6 @@ if __name__ == "__main__":
             num_warmup=args.num_warmup,
             num_chains=args.num_chains,
             artifact_tag=args.artifact_tag,
+            target_accept=args.target_accept,
+            max_tree_depth=args.max_tree_depth,
         )
