@@ -52,6 +52,10 @@ MODEL_TO_SPEAKER = {
     "production_anchor_sizesharp_2x2_inc_static": "production_anchor_sizesharp_2x2_inc_static",
     "production_anchor_sizesharp_2x2_glob_rec": "production_anchor_sizesharp_2x2_glob_rec",
     "production_anchor_sizesharp_2x2_glob_static": "production_anchor_sizesharp_2x2_glob_static",
+    "production_anchor_reliabilitybackup_2x2_inc_rec": "production_anchor_reliabilitybackup_2x2_inc_rec",
+    "production_anchor_reliabilitybackup_2x2_inc_static": "production_anchor_reliabilitybackup_2x2_inc_static",
+    "production_anchor_reliabilitybackup_2x2_glob_rec": "production_anchor_reliabilitybackup_2x2_glob_rec",
+    "production_anchor_reliabilitybackup_2x2_glob_static": "production_anchor_reliabilitybackup_2x2_glob_static",
 }
 
 PAIR_SPECS = (
@@ -121,6 +125,26 @@ PAIR_SPECS = (
         "production_anchor_sizesharp_2x2_glob_rec",
         "production_anchor_semantics_global",
     ),
+    (
+        "production_anchor_reliabilitybackup_2x2_inc_rec",
+        "production_anchor_reliabilitybackup_2x2_glob_rec",
+        "production_anchor_reliabilitybackup_architecture_recursive",
+    ),
+    (
+        "production_anchor_reliabilitybackup_2x2_inc_static",
+        "production_anchor_reliabilitybackup_2x2_glob_static",
+        "production_anchor_reliabilitybackup_architecture_static",
+    ),
+    (
+        "production_anchor_reliabilitybackup_2x2_inc_static",
+        "production_anchor_reliabilitybackup_2x2_inc_rec",
+        "production_anchor_reliabilitybackup_semantics_incremental",
+    ),
+    (
+        "production_anchor_reliabilitybackup_2x2_glob_static",
+        "production_anchor_reliabilitybackup_2x2_glob_rec",
+        "production_anchor_reliabilitybackup_semantics_global",
+    ),
 )
 
 PROPERTY_LABELS = {
@@ -128,6 +152,12 @@ PROPERTY_LABELS = {
     "first": "erdc_like_first_property",
     "both": "brdc_like_both_properties",
 }
+
+
+def is_production_anchor_speaker(speaker: str) -> bool:
+    return speaker.startswith("production_anchor_sizesharp_2x2_") or speaker.startswith(
+        "production_anchor_reliabilitybackup_2x2_"
+    )
 
 
 def posterior_samples_from_idata(idata: az.InferenceData) -> dict[str, np.ndarray]:
@@ -239,7 +269,7 @@ def score_fold(
     idata = az.from_netcdf(path)
     posterior_samples = posterior_samples_from_idata(idata)
     diagnostics = fold_diagnostics(idata, args.max_r_hat)
-    if speaker.startswith("production_anchor_sizesharp_2x2_"):
+    if is_production_anchor_speaker(speaker):
         ll = log_likelihood(
             model,
             posterior_samples,

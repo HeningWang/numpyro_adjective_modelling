@@ -75,6 +75,8 @@ RECURSIVE_LISTENER_SPEAKERS = {
     "planned_usefulness_mixture_anchored",
     "production_anchor_sizesharp_2x2_inc_rec",
     "production_anchor_sizesharp_2x2_glob_rec",
+    "production_anchor_reliabilitybackup_2x2_inc_rec",
+    "production_anchor_reliabilitybackup_2x2_glob_rec",
 }
 
 PRODUCTION_ANCHOR_SPEAKERS = {
@@ -82,6 +84,10 @@ PRODUCTION_ANCHOR_SPEAKERS = {
     "production_anchor_sizesharp_2x2_inc_static",
     "production_anchor_sizesharp_2x2_glob_rec",
     "production_anchor_sizesharp_2x2_glob_static",
+    "production_anchor_reliabilitybackup_2x2_inc_rec",
+    "production_anchor_reliabilitybackup_2x2_inc_static",
+    "production_anchor_reliabilitybackup_2x2_glob_rec",
+    "production_anchor_reliabilitybackup_2x2_glob_static",
 }
 
 SPEAKER_CHOICES = [
@@ -102,6 +108,10 @@ SPEAKER_CHOICES = [
     "production_anchor_sizesharp_2x2_inc_static",
     "production_anchor_sizesharp_2x2_glob_rec",
     "production_anchor_sizesharp_2x2_glob_static",
+    "production_anchor_reliabilitybackup_2x2_inc_rec",
+    "production_anchor_reliabilitybackup_2x2_inc_static",
+    "production_anchor_reliabilitybackup_2x2_glob_rec",
+    "production_anchor_reliabilitybackup_2x2_glob_static",
 ]
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -232,13 +242,25 @@ def get_hier_model(canonical_speaker_type: str, free_color_semvalue: bool = Fals
         return likelihood_planned_usefulness_mixture_speaker_static_hier
     if canonical_speaker_type == "planned_usefulness_mixture_anchored_static":
         return likelihood_planned_usefulness_mixture_anchored_speaker_static_hier
-    if canonical_speaker_type == "production_anchor_sizesharp_2x2_inc_rec":
+    if canonical_speaker_type in (
+        "production_anchor_sizesharp_2x2_inc_rec",
+        "production_anchor_reliabilitybackup_2x2_inc_rec",
+    ):
         return likelihood_production_anchor_inc_speaker_hier
-    if canonical_speaker_type == "production_anchor_sizesharp_2x2_inc_static":
+    if canonical_speaker_type in (
+        "production_anchor_sizesharp_2x2_inc_static",
+        "production_anchor_reliabilitybackup_2x2_inc_static",
+    ):
         return likelihood_production_anchor_inc_speaker_hier
-    if canonical_speaker_type == "production_anchor_sizesharp_2x2_glob_rec":
+    if canonical_speaker_type in (
+        "production_anchor_sizesharp_2x2_glob_rec",
+        "production_anchor_reliabilitybackup_2x2_glob_rec",
+    ):
         return likelihood_production_anchor_global_speaker_hier
-    if canonical_speaker_type == "production_anchor_sizesharp_2x2_glob_static":
+    if canonical_speaker_type in (
+        "production_anchor_sizesharp_2x2_glob_static",
+        "production_anchor_reliabilitybackup_2x2_glob_static",
+    ):
         return likelihood_production_anchor_global_speaker_hier
     raise ValueError(
         "Invalid speaker type. Choose 'global', 'incremental', "
@@ -305,13 +327,25 @@ def run_inference(
         model = likelihood_planned_usefulness_mixture_speaker_static
     elif canonical_speaker_type == "planned_usefulness_mixture_anchored_static":
         model = likelihood_planned_usefulness_mixture_anchored_speaker_static
-    elif canonical_speaker_type == "production_anchor_sizesharp_2x2_inc_rec":
+    elif canonical_speaker_type in (
+        "production_anchor_sizesharp_2x2_inc_rec",
+        "production_anchor_reliabilitybackup_2x2_inc_rec",
+    ):
         model = likelihood_production_anchor_inc_speaker
-    elif canonical_speaker_type == "production_anchor_sizesharp_2x2_inc_static":
+    elif canonical_speaker_type in (
+        "production_anchor_sizesharp_2x2_inc_static",
+        "production_anchor_reliabilitybackup_2x2_inc_static",
+    ):
         model = likelihood_production_anchor_inc_speaker
-    elif canonical_speaker_type == "production_anchor_sizesharp_2x2_glob_rec":
+    elif canonical_speaker_type in (
+        "production_anchor_sizesharp_2x2_glob_rec",
+        "production_anchor_reliabilitybackup_2x2_glob_rec",
+    ):
         model = likelihood_production_anchor_global_speaker
-    elif canonical_speaker_type == "production_anchor_sizesharp_2x2_glob_static":
+    elif canonical_speaker_type in (
+        "production_anchor_sizesharp_2x2_glob_static",
+        "production_anchor_reliabilitybackup_2x2_glob_static",
+    ):
         model = likelihood_production_anchor_global_speaker
     else:
         raise ValueError(

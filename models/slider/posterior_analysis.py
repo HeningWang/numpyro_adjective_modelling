@@ -88,6 +88,18 @@ ALL_MODELS = {
     "production_anchor_sizesharp_2x2_glob_static": (
         "mcmc_results_production_anchor_sizesharp_2x2_glob_static_speaker_hier_{tag}.nc"
     ),
+    "production_anchor_reliabilitybackup_2x2_inc_rec": (
+        "mcmc_results_production_anchor_reliabilitybackup_2x2_inc_rec_speaker_hier_{tag}.nc"
+    ),
+    "production_anchor_reliabilitybackup_2x2_inc_static": (
+        "mcmc_results_production_anchor_reliabilitybackup_2x2_inc_static_speaker_hier_{tag}.nc"
+    ),
+    "production_anchor_reliabilitybackup_2x2_glob_rec": (
+        "mcmc_results_production_anchor_reliabilitybackup_2x2_glob_rec_speaker_hier_{tag}.nc"
+    ),
+    "production_anchor_reliabilitybackup_2x2_glob_static": (
+        "mcmc_results_production_anchor_reliabilitybackup_2x2_glob_static_speaker_hier_{tag}.nc"
+    ),
 }
 
 GROUP_COLS = ["relevant_property", "sharpness"]
@@ -99,6 +111,7 @@ POP_VAR_NAMES = [
     "bias",
     "log_beta_order",
     "lambda_salience",
+    "rho_salience_stop",
     "usefulness_order_scale",
     "signed_order_scale",
     "planned_mixture_weight",

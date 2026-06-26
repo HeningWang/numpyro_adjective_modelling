@@ -159,6 +159,10 @@ def test_production_anchor_cli_registration():
         "production_anchor_sizesharp_2x2_inc_static",
         "production_anchor_sizesharp_2x2_glob_rec",
         "production_anchor_sizesharp_2x2_glob_static",
+        "production_anchor_reliabilitybackup_2x2_inc_rec",
+        "production_anchor_reliabilitybackup_2x2_inc_static",
+        "production_anchor_reliabilitybackup_2x2_glob_rec",
+        "production_anchor_reliabilitybackup_2x2_glob_static",
     }
 
     assert expected.issubset(set(run_inference.SPEAKER_CHOICES))
@@ -176,6 +180,14 @@ def test_production_anchor_cli_registration():
     )
     assert (
         run_inference.get_hier_model("production_anchor_sizesharp_2x2_glob_static")
+        is ms.likelihood_production_anchor_global_speaker_hier
+    )
+    assert (
+        run_inference.get_hier_model("production_anchor_reliabilitybackup_2x2_inc_rec")
+        is ms.likelihood_production_anchor_inc_speaker_hier
+    )
+    assert (
+        run_inference.get_hier_model("production_anchor_reliabilitybackup_2x2_glob_static")
         is ms.likelihood_production_anchor_global_speaker_hier
     )
 
@@ -200,6 +212,7 @@ def test_production_anchor_speakers_return_valid_probabilities():
         jnp.array([2.0], dtype=jnp.float32),
         1.0,
         0.5,
+        0.1,
         ms.PRODUCTION_ANCHOR_EPSILON,
     )
     glob = ms.jitted_production_anchor_global_speaker_fast(
@@ -254,6 +267,9 @@ def test_production_anchor_hier_smoke_trace():
 
     assert "log_beta_order" in trace
     assert "lambda_salience" in trace
+    assert "rho_salience_stop" in trace
+    assert "delta_raw" in trace
+    assert "delta" in trace
     assert "epsilon" in trace
     assert "obs" in trace
 
