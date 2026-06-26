@@ -108,6 +108,18 @@ def test_size_sharp_models_register_for_hierarchical_inference():
         assert key in pa.SIMPLIFIED_MODELS
 
 
+def test_reliability_backup_models_register_for_hierarchical_inference():
+    import posterior_analysis as pa
+    import run_inference as ri
+
+    for key in (
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_static_fixedeps",
+    ):
+        assert key in ri.HIER_MODELS
+        assert key in pa.SIMPLIFIED_MODELS
+
+
 def test_principled_speaker_is_simplex_and_uses_soft_features():
     base = np.asarray(ms.incremental_speaker_principled(STATES, **PRINCIPLED_KW))
     no_salience = np.asarray(
@@ -409,6 +421,109 @@ def test_principled_response_policy_size_sharp_targets_d_not_all_form():
     assert np.isclose(size_sharp[8] / baseline[8], size_sharp[2] / baseline[2], rtol=1e-5)
 
 
+def test_principled_reliability_policy_merges_size_backup_tradeoff():
+    base_kw = {
+        **PRINCIPLED_KW,
+        "sufficient_dim": jnp.int32(0),
+        "has_one_word_solution": jnp.float32(1.0),
+        "is_sharp": jnp.float32(1.0),
+        "gamma_uncertainty_len": jnp.float32(0.0),
+        "rho_salience_stop": jnp.float32(0.5),
+        "is_colour_sufficient": jnp.float32(0.0),
+        "lambda_sufficient_single": jnp.float32(1.0),
+        "lambda_reliability_form": jnp.float32(1.0),
+        "lambda_three_word_penalty": jnp.float32(0.0),
+    }
+    baseline = np.asarray(
+        ms.incremental_speaker_principled_response_policy(
+            COLOR_SALIENT_STATES,
+            **{
+                **base_kw,
+                "lambda_sufficient_form_pair": jnp.float32(0.0),
+                "lambda_sharp_form_suppression": jnp.float32(0.0),
+                "lambda_size_sharp_single_bonus": jnp.float32(0.0),
+                "lambda_size_sharp_form_pair_penalty": jnp.float32(0.0),
+            },
+        )
+    )
+    reliability_zero = np.asarray(
+        ms.incremental_speaker_principled_reliability_response_policy(
+            COLOR_SALIENT_STATES,
+            **{
+                **base_kw,
+                "lambda_size_reliability_single_bonus": jnp.float32(0.0),
+                "lambda_size_reliability_form_pair_tradeoff": jnp.float32(0.0),
+            },
+        )
+    )
+    sharp_reliability = np.asarray(
+        ms.incremental_speaker_principled_reliability_response_policy(
+            COLOR_SALIENT_STATES,
+            **{
+                **base_kw,
+                "lambda_size_reliability_single_bonus": jnp.float32(1.5),
+                "lambda_size_reliability_form_pair_tradeoff": jnp.float32(1.5),
+            },
+        )
+    )
+    blurred_reliability = np.asarray(
+        ms.incremental_speaker_principled_reliability_response_policy(
+            COLOR_SALIENT_STATES,
+            **{
+                **base_kw,
+                "is_sharp": jnp.float32(0.0),
+                "lambda_size_reliability_single_bonus": jnp.float32(1.5),
+                "lambda_size_reliability_form_pair_tradeoff": jnp.float32(1.5),
+            },
+        )
+    )
+    blurred_base = np.asarray(
+        ms.incremental_speaker_principled_reliability_response_policy(
+            COLOR_SALIENT_STATES,
+            **{
+                **base_kw,
+                "is_sharp": jnp.float32(0.0),
+                "lambda_size_reliability_single_bonus": jnp.float32(0.0),
+                "lambda_size_reliability_form_pair_tradeoff": jnp.float32(0.0),
+            },
+        )
+    )
+    colour_base_kw = {
+        **base_kw,
+        "sufficient_dim": jnp.int32(1),
+        "is_colour_sufficient": jnp.float32(1.0),
+    }
+    colour_reliability = np.asarray(
+        ms.incremental_speaker_principled_reliability_response_policy(
+            COLOR_SALIENT_STATES,
+            **{
+                **colour_base_kw,
+                "lambda_size_reliability_single_bonus": jnp.float32(1.5),
+                "lambda_size_reliability_form_pair_tradeoff": jnp.float32(1.5),
+            },
+        )
+    )
+    colour_base = np.asarray(
+        ms.incremental_speaker_principled_reliability_response_policy(
+            COLOR_SALIENT_STATES,
+            **{
+                **colour_base_kw,
+                "lambda_size_reliability_single_bonus": jnp.float32(0.0),
+                "lambda_size_reliability_form_pair_tradeoff": jnp.float32(0.0),
+            },
+        )
+    )
+
+    assert np.allclose(reliability_zero, baseline, atol=1e-5)
+    assert np.allclose(sharp_reliability.sum(), 1.0, atol=1e-4)
+    assert sharp_reliability[0] > reliability_zero[0]  # D
+    assert sharp_reliability[3] < reliability_zero[3]  # DF
+    assert sharp_reliability[11] < reliability_zero[11]  # FD
+    assert blurred_reliability[3] > blurred_base[3]  # DF
+    assert blurred_reliability[11] > blurred_base[11]  # FD
+    assert np.allclose(colour_reliability, colour_base, atol=1e-5)
+
+
 def test_global_principled_response_policy_zero_recovers_base_and_shifts_output():
     base_kw = {
         **PRINCIPLED_KW,
@@ -555,6 +670,8 @@ def test_principled_models_register_for_hierarchical_inference():
         "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_static_fixedeps",
         "principled_salience_stop_regularized_responsepolicy_boundedform_sharpform_2x2_inc_rec_fixedeps",
         "principled_salience_stop_regularized_responsepolicy_boundedform_sharpform_2x2_inc_static_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_static_fixedeps",
         "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_rec_fixedeps",
         "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_static_fixedeps",
         "principled_salience_stop_regularized_2x2_glob_rec",
@@ -569,12 +686,14 @@ if __name__ == "__main__":
     test_simplified_speaker_is_simplex_and_mechanisms_change_output()
     test_simplified_models_register_for_hierarchical_inference()
     test_size_sharp_models_register_for_hierarchical_inference()
+    test_reliability_backup_models_register_for_hierarchical_inference()
     test_principled_speaker_is_simplex_and_uses_soft_features()
     test_principled_salience_stop_favors_single_salient_adjective()
     test_principled_planned_prefix_zero_scale_recovers_base_and_can_shift_output()
     test_principled_response_policy_zero_recovers_base_and_shifts_output()
     test_principled_response_policy_can_suppress_sharp_one_word_form()
     test_principled_response_policy_size_sharp_targets_d_not_all_form()
+    test_principled_reliability_policy_merges_size_backup_tradeoff()
     test_global_principled_response_policy_zero_recovers_base_and_shifts_output()
     test_global_principled_response_policy_jitted_batch_is_simplex()
     test_principled_base_salience_constants_are_fixed_sweep_inputs()

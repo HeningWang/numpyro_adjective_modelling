@@ -79,6 +79,8 @@ POP_VAR_NAMES = ["alpha", "alpha_D", "alpha_C", "alpha_F",
                  "lambda_sharp_form_suppression",
                  "lambda_size_sharp_single_bonus",
                  "lambda_size_sharp_form_pair_penalty",
+                 "lambda_size_reliability_single_bonus",
+                 "lambda_size_reliability_form_pair_tradeoff",
                  "gamma_uncertainty_len", "gamma", "epsilon",
                  "mu_C", "mu_F", "tau"]
 
@@ -125,6 +127,8 @@ SIMPLIFIED_MODELS = {
     "principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_inc_static_fixedeps": "mcmc_results_principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_inc_static_fixedeps_speaker_hier{subset}_{tag}.nc",
     "principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_glob_rec_fixedeps": "mcmc_results_principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_glob_rec_fixedeps_speaker_hier{subset}_{tag}.nc",
     "principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_glob_static_fixedeps": "mcmc_results_principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_glob_static_fixedeps_speaker_hier{subset}_{tag}.nc",
+    "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_rec_fixedeps": "mcmc_results_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_rec_fixedeps_speaker_hier{subset}_{tag}.nc",
+    "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_static_fixedeps": "mcmc_results_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_static_fixedeps_speaker_hier{subset}_{tag}.nc",
     "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_rec_fixedeps": "mcmc_results_principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_rec_fixedeps_speaker_hier{subset}_{tag}.nc",
     "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_static_fixedeps": "mcmc_results_principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_static_fixedeps_speaker_hier{subset}_{tag}.nc",
     "principled_salience_stop_regularized_tmcc_2x2_glob_rec": "mcmc_results_principled_salience_stop_regularized_tmcc_2x2_glob_rec_speaker_hier{subset}_{tag}.nc",

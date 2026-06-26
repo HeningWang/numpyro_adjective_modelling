@@ -2642,6 +2642,81 @@ def _apply_principled_response_policy(
     return jax.nn.softmax(logits)
 
 
+def _apply_principled_reliability_response_policy(
+    probs: jnp.ndarray,
+    sufficient_dim: int,
+    has_one_word_solution: float,
+    is_sharp: float,
+    is_colour_sufficient: float,
+    lambda_sufficient_single: float,
+    lambda_reliability_form: float,
+    lambda_three_word_penalty: float = 0.0,
+    lambda_size_reliability_single_bonus: float = 0.0,
+    lambda_size_reliability_form_pair_tradeoff: float = 0.0,
+) -> jnp.ndarray:
+    dim_count = jnp.sum(FULL_PRESENT_15, axis=1)
+    single_dim = (dim_count == 1.0).astype(jnp.float32)
+    two_dim = (dim_count == 2.0).astype(jnp.float32)
+    dim_id = jnp.argmax(FULL_PRESENT_15, axis=1)
+    sufficient_match = (
+        (sufficient_dim >= 0)
+        & (dim_id == sufficient_dim)
+        & (N_WORDS == 1.0)
+    ).astype(jnp.float32)
+    sufficient_single_bonus = (
+        lambda_sufficient_single
+        * has_one_word_solution
+        * single_dim
+        * sufficient_match
+    )
+    reliability_form_bonus = (
+        lambda_reliability_form
+        * (1.0 - is_colour_sufficient)
+        * F_PRESENT_15
+    )
+    safe_sufficient_dim = jnp.maximum(sufficient_dim, 0)
+    sufficient_present = FULL_PRESENT_15[:, safe_sufficient_dim]
+    exact_sufficient_form_pair = (
+        has_one_word_solution
+        * (sufficient_dim >= 0)
+        * (sufficient_dim != 2)
+        * two_dim
+        * sufficient_present
+        * F_PRESENT_15
+    )
+    size_reliability_gate = (
+        has_one_word_solution
+        * (sufficient_dim == 0)
+        * is_sharp
+    )
+    size_unreliability_gate = (
+        has_one_word_solution
+        * (sufficient_dim == 0)
+        * (1.0 - is_sharp)
+    )
+    size_reliability_single_bonus = (
+        lambda_size_reliability_single_bonus
+        * size_reliability_gate
+        * single_dim
+        * sufficient_match
+    )
+    size_form_pair_tradeoff = (
+        lambda_size_reliability_form_pair_tradeoff
+        * (size_unreliability_gate - size_reliability_gate)
+        * exact_sufficient_form_pair
+    )
+    three_word_penalty = lambda_three_word_penalty * (N_WORDS == 3.0)
+    logits = (
+        jnp.log(jnp.clip(probs, 1e-12))
+        + sufficient_single_bonus
+        + reliability_form_bonus
+        + size_reliability_single_bonus
+        + size_form_pair_tradeoff
+        - three_word_penalty
+    )
+    return jax.nn.softmax(logits)
+
+
 def incremental_speaker_principled_response_policy(
     states:                    jnp.ndarray,
     sufficient_dim:            int,
@@ -2704,6 +2779,67 @@ def incremental_speaker_principled_response_policy(
         lambda_sharp_form_suppression,
         lambda_size_sharp_single_bonus,
         lambda_size_sharp_form_pair_penalty,
+    )
+
+
+def incremental_speaker_principled_reliability_response_policy(
+    states:                    jnp.ndarray,
+    sufficient_dim:            int,
+    has_one_word_solution:     float,
+    is_sharp:                  float,
+    is_colour_sufficient:      float,
+    alpha:                     float = 3.0,
+    beta_order:                float = 1.0,
+    lambda_salience:           float = 0.0,
+    rho_salience_stop:         float = 0.0,
+    lambda_sufficient_single:  float = 0.0,
+    lambda_reliability_form:   float = 0.0,
+    lambda_three_word_penalty: float = 0.0,
+    lambda_size_reliability_single_bonus: float = 0.0,
+    lambda_size_reliability_form_pair_tradeoff: float = 0.0,
+    gamma_uncertainty_len:     float = 0.0,
+    color_semval:              float = 0.59,
+    form_semval:               float = 0.50,
+    k:                         float = 0.50,
+    wf:                        float = 0.6856,
+    epsilon:                   float = 0.01,
+    order_scores:              jnp.ndarray = LOG_LM_ORDER_ONLY_15,
+    base_visual_salience:      jnp.ndarray = BASE_VISUAL_SALIENCE,
+    recursive:                 bool = True,
+    size_context_mode:         str = "posterior",
+) -> jnp.ndarray:
+    """Response policy with size-reliability-gated backup form marking."""
+    base_probs = incremental_speaker_principled(
+        states,
+        sufficient_dim,
+        has_one_word_solution,
+        is_sharp,
+        alpha,
+        beta_order,
+        lambda_salience,
+        rho_salience_stop,
+        gamma_uncertainty_len,
+        color_semval,
+        form_semval,
+        k,
+        wf,
+        epsilon,
+        order_scores,
+        base_visual_salience,
+        recursive=recursive,
+        size_context_mode=size_context_mode,
+    )
+    return _apply_principled_reliability_response_policy(
+        base_probs,
+        sufficient_dim,
+        has_one_word_solution,
+        is_sharp,
+        is_colour_sufficient,
+        lambda_sufficient_single,
+        lambda_reliability_form,
+        lambda_three_word_penalty,
+        lambda_size_reliability_single_bonus,
+        lambda_size_reliability_form_pair_tradeoff,
     )
 
 
@@ -2831,6 +2967,67 @@ def global_speaker_principled_response_policy(
         lambda_sharp_form_suppression,
         lambda_size_sharp_single_bonus,
         lambda_size_sharp_form_pair_penalty,
+    )
+
+
+def global_speaker_principled_reliability_response_policy(
+    states:                    jnp.ndarray,
+    sufficient_dim:            int,
+    has_one_word_solution:     float,
+    is_sharp:                  float,
+    is_colour_sufficient:      float,
+    alpha:                     float = 3.0,
+    beta_order:                float = 1.0,
+    lambda_salience:           float = 0.0,
+    rho_salience_stop:         float = 0.0,
+    lambda_sufficient_single:  float = 0.0,
+    lambda_reliability_form:   float = 0.0,
+    lambda_three_word_penalty: float = 0.0,
+    lambda_size_reliability_single_bonus: float = 0.0,
+    lambda_size_reliability_form_pair_tradeoff: float = 0.0,
+    gamma_uncertainty_len:     float = 0.0,
+    color_semval:              float = 0.59,
+    form_semval:               float = 0.50,
+    k:                         float = 0.50,
+    wf:                        float = 0.6856,
+    epsilon:                   float = 0.01,
+    order_scores:              jnp.ndarray = LOG_LM_ORDER_ONLY_15,
+    base_visual_salience:      jnp.ndarray = BASE_VISUAL_SALIENCE,
+    recursive:                 bool = True,
+    size_context_mode:         str = "posterior",
+) -> jnp.ndarray:
+    """Global speaker with the reliability-gated utterance-level policy."""
+    base_probs = global_speaker_principled(
+        states,
+        sufficient_dim,
+        has_one_word_solution,
+        is_sharp,
+        alpha,
+        beta_order,
+        lambda_salience,
+        rho_salience_stop,
+        gamma_uncertainty_len,
+        color_semval,
+        form_semval,
+        k,
+        wf,
+        epsilon,
+        order_scores,
+        base_visual_salience,
+        recursive=recursive,
+        size_context_mode=size_context_mode,
+    )
+    return _apply_principled_reliability_response_policy(
+        base_probs,
+        sufficient_dim,
+        has_one_word_solution,
+        is_sharp,
+        is_colour_sufficient,
+        lambda_sufficient_single,
+        lambda_reliability_form,
+        lambda_three_word_penalty,
+        lambda_size_reliability_single_bonus,
+        lambda_size_reliability_form_pair_tradeoff,
     )
 
 
@@ -3166,6 +3363,35 @@ vectorized_incremental_speaker_principled_response_policy_hier = jax.vmap(
              ),
 )
 
+vectorized_incremental_speaker_principled_reliability_response_policy_hier = jax.vmap(
+    incremental_speaker_principled_reliability_response_policy,
+    in_axes=(0,    # states
+             0,    # sufficient_dim
+             0,    # has_one_word_solution
+             0,    # is_sharp
+             0,    # is_colour_sufficient
+             0,    # alpha
+             None, # beta_order
+             None, # lambda_salience
+             None, # rho_salience_stop
+             None, # lambda_sufficient_single
+             None, # lambda_reliability_form
+             None, # lambda_three_word_penalty
+             None, # lambda_size_reliability_single_bonus
+             None, # lambda_size_reliability_form_pair_tradeoff
+             None, # gamma_uncertainty_len
+             None, # color_semval
+             None, # form_semval
+             None, # k
+             None, # wf
+             None, # epsilon
+             None, # order_scores
+             None, # base_visual_salience
+             None, # recursive
+             None, # size_context_mode
+             ),
+)
+
 @partial(jax.jit, static_argnames=("recursive", "size_context_mode"))
 def jitted_speaker_principled_hier(
     states, sufficient_dim, has_one_word_solution, is_sharp,
@@ -3218,6 +3444,28 @@ def jitted_speaker_principled_response_policy_hier(
         lambda_sufficient_form_pair, lambda_three_word_penalty,
         lambda_sharp_form_suppression, lambda_size_sharp_single_bonus,
         lambda_size_sharp_form_pair_penalty,
+        gamma_uncertainty_len, color_semval, form_semval, k, wf, epsilon,
+        order_scores, base_visual_salience, recursive, size_context_mode,
+    )
+
+
+@partial(jax.jit, static_argnames=("recursive", "size_context_mode"))
+def jitted_speaker_principled_reliability_response_policy_hier(
+    states, sufficient_dim, has_one_word_solution, is_sharp, is_colour_sufficient,
+    alpha_per_trial, beta_order, lambda_salience, rho_salience_stop,
+    lambda_sufficient_single, lambda_reliability_form,
+    lambda_three_word_penalty, lambda_size_reliability_single_bonus,
+    lambda_size_reliability_form_pair_tradeoff,
+    gamma_uncertainty_len,
+    color_semval, form_semval, k, wf, epsilon, order_scores,
+    base_visual_salience, recursive=True, size_context_mode="posterior",
+):
+    return vectorized_incremental_speaker_principled_reliability_response_policy_hier(
+        states, sufficient_dim, has_one_word_solution, is_sharp,
+        is_colour_sufficient, alpha_per_trial, beta_order, lambda_salience,
+        rho_salience_stop, lambda_sufficient_single, lambda_reliability_form,
+        lambda_three_word_penalty, lambda_size_reliability_single_bonus,
+        lambda_size_reliability_form_pair_tradeoff,
         gamma_uncertainty_len, color_semval, form_semval, k, wf, epsilon,
         order_scores, base_visual_salience, recursive, size_context_mode,
     )
@@ -3278,6 +3526,35 @@ vectorized_global_speaker_principled_response_policy_hier = jax.vmap(
              ),
 )
 
+vectorized_global_speaker_principled_reliability_response_policy_hier = jax.vmap(
+    global_speaker_principled_reliability_response_policy,
+    in_axes=(0,    # states
+             0,    # sufficient_dim
+             0,    # has_one_word_solution
+             0,    # is_sharp
+             0,    # is_colour_sufficient
+             0,    # alpha
+             None, # beta_order
+             None, # lambda_salience
+             None, # rho_salience_stop
+             None, # lambda_sufficient_single
+             None, # lambda_reliability_form
+             None, # lambda_three_word_penalty
+             None, # lambda_size_reliability_single_bonus
+             None, # lambda_size_reliability_form_pair_tradeoff
+             None, # gamma_uncertainty_len
+             None, # color_semval
+             None, # form_semval
+             None, # k
+             None, # wf
+             None, # epsilon
+             None, # order_scores
+             None, # base_visual_salience
+             None, # recursive
+             None, # size_context_mode
+             ),
+)
+
 
 @partial(jax.jit, static_argnames=("recursive", "size_context_mode"))
 def jitted_global_speaker_principled_hier(
@@ -3314,6 +3591,28 @@ def jitted_global_speaker_principled_response_policy_hier(
         lambda_sufficient_form_pair, lambda_three_word_penalty,
         lambda_sharp_form_suppression, lambda_size_sharp_single_bonus,
         lambda_size_sharp_form_pair_penalty,
+        gamma_uncertainty_len, color_semval, form_semval, k, wf, epsilon,
+        order_scores, base_visual_salience, recursive, size_context_mode,
+    )
+
+
+@partial(jax.jit, static_argnames=("recursive", "size_context_mode"))
+def jitted_global_speaker_principled_reliability_response_policy_hier(
+    states, sufficient_dim, has_one_word_solution, is_sharp, is_colour_sufficient,
+    alpha_per_trial, beta_order, lambda_salience, rho_salience_stop,
+    lambda_sufficient_single, lambda_reliability_form,
+    lambda_three_word_penalty, lambda_size_reliability_single_bonus,
+    lambda_size_reliability_form_pair_tradeoff,
+    gamma_uncertainty_len,
+    color_semval, form_semval, k, wf, epsilon, order_scores,
+    base_visual_salience, recursive=True, size_context_mode="posterior",
+):
+    return vectorized_global_speaker_principled_reliability_response_policy_hier(
+        states, sufficient_dim, has_one_word_solution, is_sharp,
+        is_colour_sufficient, alpha_per_trial, beta_order, lambda_salience,
+        rho_salience_stop, lambda_sufficient_single, lambda_reliability_form,
+        lambda_three_word_penalty, lambda_size_reliability_single_bonus,
+        lambda_size_reliability_form_pair_tradeoff,
         gamma_uncertainty_len, color_semval, form_semval, k, wf, epsilon,
         order_scores, base_visual_salience, recursive, size_context_mode,
     )
@@ -3816,6 +4115,8 @@ PRINCIPLED_PRIOR_PROFILES = {
         "lambda_sharp_form_suppression_scale": 1.5,
         "lambda_size_sharp_single_bonus_scale": 1.5,
         "lambda_size_sharp_form_pair_penalty_scale": 1.5,
+        "lambda_size_reliability_single_bonus_scale": 1.5,
+        "lambda_size_reliability_form_pair_tradeoff_scale": 1.5,
         "gamma_uncertainty_len_scale": 2.0,
         "tau_scale": 0.2,
     },
@@ -3832,6 +4133,8 @@ PRINCIPLED_PRIOR_PROFILES = {
         "lambda_sharp_form_suppression_scale": 1.0,
         "lambda_size_sharp_single_bonus_scale": 1.0,
         "lambda_size_sharp_form_pair_penalty_scale": 1.0,
+        "lambda_size_reliability_single_bonus_scale": 1.0,
+        "lambda_size_reliability_form_pair_tradeoff_scale": 1.0,
         "gamma_uncertainty_len_scale": 1.0,
         "tau_scale": 0.15,
     },
@@ -3848,6 +4151,8 @@ PRINCIPLED_PRIOR_PROFILES = {
         "lambda_sharp_form_suppression_scale": 0.75,
         "lambda_size_sharp_single_bonus_scale": 0.75,
         "lambda_size_sharp_form_pair_penalty_scale": 0.75,
+        "lambda_size_reliability_single_bonus_scale": 0.75,
+        "lambda_size_reliability_form_pair_tradeoff_scale": 0.75,
         "gamma_uncertainty_len_scale": 0.75,
         "tau_scale": 0.10,
     },
@@ -3862,6 +4167,7 @@ def _make_principled_model(
     bounded_form: bool = False,
     sharp_form_suppression: bool = False,
     size_sharp_policy: bool = False,
+    reliability_policy: bool = False,
     prior_profile: str = "default",
     cell: str = "inc_rec",
     fixed_epsilon: float | None = None,
@@ -3895,6 +4201,12 @@ def _make_principled_model(
         raise ValueError("sharp_form_suppression requires response_policy.")
     if size_sharp_policy and not response_policy:
         raise ValueError("size_sharp_policy requires response_policy.")
+    if reliability_policy and not response_policy:
+        raise ValueError("reliability_policy requires response_policy.")
+    if reliability_policy and (bounded_form or sharp_form_suppression or size_sharp_policy):
+        raise ValueError(
+            "reliability_policy is an alternative to bounded/sharp-form policy terms."
+        )
     _valid_size_context_modes = {"posterior", "comparison_class"}
     if size_context_mode not in _valid_size_context_modes:
         raise ValueError(
@@ -3906,6 +4218,12 @@ def _make_principled_model(
     order_scores = jnp.zeros_like(LOG_LM_ORDER_ONLY_15) if "order" in drop else LOG_LM_ORDER_ONLY_15
     if planned_prefix:
         speaker_fn = jitted_speaker_principled_planned_hier
+    elif reliability_policy:
+        speaker_fn = (
+            jitted_global_speaker_principled_reliability_response_policy_hier
+            if cell in ("glob_rec", "glob_static")
+            else jitted_speaker_principled_reliability_response_policy_hier
+        )
     elif response_policy:
         speaker_fn = (
             jitted_global_speaker_principled_response_policy_hier
@@ -3980,7 +4298,7 @@ def _make_principled_model(
                 "lambda_three_word_penalty",
                 dist.HalfNormal(priors["lambda_three_word_penalty_scale"]),
             )
-            if bounded_form else 0.0
+            if (bounded_form or reliability_policy) else 0.0
         )
         lambda_sharp_form_suppression = (
             numpyro.sample(
@@ -4002,6 +4320,22 @@ def _make_principled_model(
                 dist.HalfNormal(priors["lambda_size_sharp_form_pair_penalty_scale"]),
             )
             if size_sharp_policy else 0.0
+        )
+        lambda_size_reliability_single_bonus = (
+            numpyro.sample(
+                "lambda_size_reliability_single_bonus",
+                dist.HalfNormal(priors["lambda_size_reliability_single_bonus_scale"]),
+            )
+            if reliability_policy else 0.0
+        )
+        lambda_size_reliability_form_pair_tradeoff = (
+            numpyro.sample(
+                "lambda_size_reliability_form_pair_tradeoff",
+                dist.HalfNormal(
+                    priors["lambda_size_reliability_form_pair_tradeoff_scale"]
+                ),
+            )
+            if reliability_policy else 0.0
         )
         gamma_uncertainty_len = (
             0.0 if "uncertainty_len" in drop
@@ -4029,6 +4363,19 @@ def _make_principled_model(
                     alpha_per_trial, beta_order, lambda_salience,
                     rho_salience_stop, planning_scale, gamma_uncertainty_len,
                     0.59, 0.50, 0.50, 0.6856, epsilon, order_scores,
+                    BASE_VISUAL_SALIENCE, recursive=recursive,
+                    size_context_mode=size_context_mode,
+                )
+            elif reliability_policy:
+                probs = speaker_fn(
+                    states, sufficient_dim, has_one_word_solution, is_sharp,
+                    is_colour_sufficient, alpha_per_trial, beta_order,
+                    lambda_salience, rho_salience_stop, lambda_sufficient_single,
+                    lambda_reliability_form, lambda_three_word_penalty,
+                    lambda_size_reliability_single_bonus,
+                    lambda_size_reliability_form_pair_tradeoff,
+                    gamma_uncertainty_len, 0.59, 0.50, 0.50, 0.6856,
+                    epsilon, order_scores,
                     BASE_VISUAL_SALIENCE, recursive=recursive,
                     size_context_mode=size_context_mode,
                 )
@@ -4311,6 +4658,24 @@ likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedf
     size_sharp_policy=True,
     prior_profile="regularized",
     cell="glob_static",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_rec_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    reliability_policy=True,
+    prior_profile="regularized",
+    cell="inc_rec",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_static_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    reliability_policy=True,
+    prior_profile="regularized",
+    cell="inc_static",
     fixed_epsilon=0.003,
 )
 likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_rec_fixedeps_hier = _make_principled_model(
