@@ -1751,6 +1751,28 @@ def _sample_production_anchor_hierarchy(n_participants):
     return delta
 
 
+def _sample_production_anchor_logalpha_population():
+    log_alpha = numpyro.sample("log_alpha", dist.Normal(jnp.log(1.5), 0.75))
+    alpha = numpyro.deterministic("alpha", jnp.exp(log_alpha))
+    log_beta_order = numpyro.sample("log_beta_order", dist.Normal(0.0, 0.35))
+    beta_order = jnp.exp(log_beta_order)
+    lambda_salience = numpyro.sample("lambda_salience", dist.HalfNormal(1.0))
+    rho_salience_stop = numpyro.sample("rho_salience_stop", dist.HalfNormal(0.75))
+    numpyro.deterministic("epsilon", jnp.asarray(PRODUCTION_ANCHOR_EPSILON))
+    return alpha, log_alpha, beta_order, lambda_salience, rho_salience_stop
+
+
+def _sample_production_anchor_logalpha_hierarchy(log_alpha, n_participants):
+    alpha_tau = numpyro.sample("alpha_tau", dist.HalfNormal(0.75))
+    with numpyro.plate("participants", n_participants):
+        alpha_offset_raw = numpyro.sample("alpha_offset_raw", dist.Normal(0.0, 1.0))
+        alpha_participant = numpyro.deterministic(
+            "alpha_participant",
+            jnp.exp(log_alpha + alpha_tau * alpha_offset_raw),
+        )
+    return alpha_participant
+
+
 def likelihood_production_anchor_inc_speaker(
     states=None, data=None, pi0=0.01, pi1=0.01, L1_all=None, L2_all=None, is_sharp_all=None
 ):
@@ -1831,6 +1853,65 @@ def likelihood_production_anchor_global_speaker_hier(
     sigma = numpyro.sample("sigma", dist.HalfNormal(0.3))
     delta = _sample_production_anchor_hierarchy(n_participants)
     alpha_per_trial = jnp.maximum(alpha + delta[participant_idx], 0.0)
+    with numpyro.plate("data", L2_all.shape[0]):
+        model_prob = jitted_production_anchor_global_speaker_fast(
+            L2_all, alpha_per_trial, beta_order, PRODUCTION_ANCHOR_EPSILON
+        )
+        model_prob = jnp.clip(model_prob, 1e-6, 1 - 1e-6)
+        if data is not None:
+            data = jnp.clip(data, 0.0, 1.0)
+        numpyro.sample("obs", ZOIB(model_prob, sigma, pi0, pi1), obs=data)
+
+
+def likelihood_production_anchor_inc_speaker_logalpha_hier(
+    states=None, data=None,
+    pi0: float = 0.01, pi1: float = 0.01,
+    participant_idx=None, n_participants: int = 1,
+    L1_all=None, L2_all=None, is_sharp_all=None,
+):
+    """Production-anchor incremental slider cell with log-scale alpha variation."""
+    _alpha, log_alpha, beta_order, lambda_salience, rho_salience_stop = (
+        _sample_production_anchor_logalpha_population()
+    )
+    sigma = numpyro.sample("sigma", dist.HalfNormal(0.3))
+    alpha_participant = _sample_production_anchor_logalpha_hierarchy(
+        log_alpha,
+        n_participants,
+    )
+    is_sharp_all = (
+        jnp.ones(L1_all.shape[0], dtype=jnp.float32)
+        if is_sharp_all is None else is_sharp_all
+    )
+    alpha_per_trial = alpha_participant[participant_idx]
+    with numpyro.plate("data", L1_all.shape[0]):
+        model_prob = jitted_production_anchor_inc_speaker_fast(
+            L1_all, L2_all, states, is_sharp_all,
+            alpha_per_trial, beta_order, lambda_salience, rho_salience_stop,
+            PRODUCTION_ANCHOR_EPSILON,
+        )
+        model_prob = jnp.clip(model_prob, 1e-6, 1 - 1e-6)
+        if data is not None:
+            data = jnp.clip(data, 0.0, 1.0)
+        numpyro.sample("obs", ZOIB(model_prob, sigma, pi0, pi1), obs=data)
+
+
+def likelihood_production_anchor_global_speaker_logalpha_hier(
+    states=None, data=None,
+    pi0: float = 0.01, pi1: float = 0.01,
+    participant_idx=None, n_participants: int = 1,
+    L1_all=None, L2_all=None, is_sharp_all=None,
+):
+    """Production-anchor global slider cell with log-scale alpha variation."""
+    del states, L1_all, is_sharp_all
+    _alpha, log_alpha, beta_order, _lambda_salience, _rho_salience_stop = (
+        _sample_production_anchor_logalpha_population()
+    )
+    sigma = numpyro.sample("sigma", dist.HalfNormal(0.3))
+    alpha_participant = _sample_production_anchor_logalpha_hierarchy(
+        log_alpha,
+        n_participants,
+    )
+    alpha_per_trial = alpha_participant[participant_idx]
     with numpyro.plate("data", L2_all.shape[0]):
         model_prob = jitted_production_anchor_global_speaker_fast(
             L2_all, alpha_per_trial, beta_order, PRODUCTION_ANCHOR_EPSILON

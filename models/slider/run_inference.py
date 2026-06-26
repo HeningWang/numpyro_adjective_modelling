@@ -59,6 +59,8 @@ from modelSpecification import (
     likelihood_planned_usefulness_mixture_anchored_speaker_static_hier,
     likelihood_production_anchor_inc_speaker_hier,
     likelihood_production_anchor_global_speaker_hier,
+    likelihood_production_anchor_inc_speaker_logalpha_hier,
+    likelihood_production_anchor_global_speaker_logalpha_hier,
     likelihood_gb_speaker_static_hier,
     likelihood_inc_speaker_frozen_hier,
     likelihood_inc_speaker_hier_free_csv,
@@ -77,6 +79,8 @@ RECURSIVE_LISTENER_SPEAKERS = {
     "production_anchor_sizesharp_2x2_glob_rec",
     "production_anchor_reliabilitybackup_2x2_inc_rec",
     "production_anchor_reliabilitybackup_2x2_glob_rec",
+    "production_anchor_reliabilitybackup_logalpha_2x2_inc_rec",
+    "production_anchor_reliabilitybackup_logalpha_2x2_glob_rec",
 }
 
 PRODUCTION_ANCHOR_SPEAKERS = {
@@ -88,6 +92,10 @@ PRODUCTION_ANCHOR_SPEAKERS = {
     "production_anchor_reliabilitybackup_2x2_inc_static",
     "production_anchor_reliabilitybackup_2x2_glob_rec",
     "production_anchor_reliabilitybackup_2x2_glob_static",
+    "production_anchor_reliabilitybackup_logalpha_2x2_inc_rec",
+    "production_anchor_reliabilitybackup_logalpha_2x2_inc_static",
+    "production_anchor_reliabilitybackup_logalpha_2x2_glob_rec",
+    "production_anchor_reliabilitybackup_logalpha_2x2_glob_static",
 }
 
 SPEAKER_CHOICES = [
@@ -112,6 +120,10 @@ SPEAKER_CHOICES = [
     "production_anchor_reliabilitybackup_2x2_inc_static",
     "production_anchor_reliabilitybackup_2x2_glob_rec",
     "production_anchor_reliabilitybackup_2x2_glob_static",
+    "production_anchor_reliabilitybackup_logalpha_2x2_inc_rec",
+    "production_anchor_reliabilitybackup_logalpha_2x2_inc_static",
+    "production_anchor_reliabilitybackup_logalpha_2x2_glob_rec",
+    "production_anchor_reliabilitybackup_logalpha_2x2_glob_static",
 ]
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -262,6 +274,16 @@ def get_hier_model(canonical_speaker_type: str, free_color_semvalue: bool = Fals
         "production_anchor_reliabilitybackup_2x2_glob_static",
     ):
         return likelihood_production_anchor_global_speaker_hier
+    if canonical_speaker_type in (
+        "production_anchor_reliabilitybackup_logalpha_2x2_inc_rec",
+        "production_anchor_reliabilitybackup_logalpha_2x2_inc_static",
+    ):
+        return likelihood_production_anchor_inc_speaker_logalpha_hier
+    if canonical_speaker_type in (
+        "production_anchor_reliabilitybackup_logalpha_2x2_glob_rec",
+        "production_anchor_reliabilitybackup_logalpha_2x2_glob_static",
+    ):
+        return likelihood_production_anchor_global_speaker_logalpha_hier
     raise ValueError(
         "Invalid speaker type. Choose 'global', 'incremental', "
         "planned usefulness variants, 'global_static', "
@@ -332,21 +354,25 @@ def run_inference(
     elif canonical_speaker_type in (
         "production_anchor_sizesharp_2x2_inc_rec",
         "production_anchor_reliabilitybackup_2x2_inc_rec",
+        "production_anchor_reliabilitybackup_logalpha_2x2_inc_rec",
     ):
         model = likelihood_production_anchor_inc_speaker
     elif canonical_speaker_type in (
         "production_anchor_sizesharp_2x2_inc_static",
         "production_anchor_reliabilitybackup_2x2_inc_static",
+        "production_anchor_reliabilitybackup_logalpha_2x2_inc_static",
     ):
         model = likelihood_production_anchor_inc_speaker
     elif canonical_speaker_type in (
         "production_anchor_sizesharp_2x2_glob_rec",
         "production_anchor_reliabilitybackup_2x2_glob_rec",
+        "production_anchor_reliabilitybackup_logalpha_2x2_glob_rec",
     ):
         model = likelihood_production_anchor_global_speaker
     elif canonical_speaker_type in (
         "production_anchor_sizesharp_2x2_glob_static",
         "production_anchor_reliabilitybackup_2x2_glob_static",
+        "production_anchor_reliabilitybackup_logalpha_2x2_glob_static",
     ):
         model = likelihood_production_anchor_global_speaker
     else:
@@ -588,7 +614,13 @@ def run_inference_hier(
             "states": np.arange(N),
             "participants": np.arange(n_participants),
         },
-        dims={"obs": ["states"], "delta": ["participants"]},
+        dims={
+            "obs": ["states"],
+            "delta": ["participants"],
+            "delta_raw": ["participants"],
+            "alpha_offset_raw": ["participants"],
+            "alpha_participant": ["participants"],
+        },
     )
     attach_run_metadata(
         numpyro_data,

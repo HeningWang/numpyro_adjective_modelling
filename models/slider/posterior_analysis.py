@@ -100,6 +100,18 @@ ALL_MODELS = {
     "production_anchor_reliabilitybackup_2x2_glob_static": (
         "mcmc_results_production_anchor_reliabilitybackup_2x2_glob_static_speaker_hier_{tag}.nc"
     ),
+    "production_anchor_reliabilitybackup_logalpha_2x2_inc_rec": (
+        "mcmc_results_production_anchor_reliabilitybackup_logalpha_2x2_inc_rec_speaker_hier_{tag}.nc"
+    ),
+    "production_anchor_reliabilitybackup_logalpha_2x2_inc_static": (
+        "mcmc_results_production_anchor_reliabilitybackup_logalpha_2x2_inc_static_speaker_hier_{tag}.nc"
+    ),
+    "production_anchor_reliabilitybackup_logalpha_2x2_glob_rec": (
+        "mcmc_results_production_anchor_reliabilitybackup_logalpha_2x2_glob_rec_speaker_hier_{tag}.nc"
+    ),
+    "production_anchor_reliabilitybackup_logalpha_2x2_glob_static": (
+        "mcmc_results_production_anchor_reliabilitybackup_logalpha_2x2_glob_static_speaker_hier_{tag}.nc"
+    ),
 }
 
 GROUP_COLS = ["relevant_property", "sharpness"]
@@ -108,6 +120,7 @@ BEST_MODEL = "incremental_recursive"
 # Population-level parameters to diagnose per model
 POP_VAR_NAMES = [
     "alpha",
+    "log_alpha",
     "bias",
     "log_beta_order",
     "lambda_salience",
@@ -118,6 +131,7 @@ POP_VAR_NAMES = [
     "color_semvalue",
     "sigma",
     "tau",
+    "alpha_tau",
 ]
 
 

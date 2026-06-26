@@ -163,6 +163,10 @@ def test_production_anchor_cli_registration():
         "production_anchor_reliabilitybackup_2x2_inc_static",
         "production_anchor_reliabilitybackup_2x2_glob_rec",
         "production_anchor_reliabilitybackup_2x2_glob_static",
+        "production_anchor_reliabilitybackup_logalpha_2x2_inc_rec",
+        "production_anchor_reliabilitybackup_logalpha_2x2_inc_static",
+        "production_anchor_reliabilitybackup_logalpha_2x2_glob_rec",
+        "production_anchor_reliabilitybackup_logalpha_2x2_glob_static",
     }
 
     assert expected.issubset(set(run_inference.SPEAKER_CHOICES))
@@ -189,6 +193,14 @@ def test_production_anchor_cli_registration():
     assert (
         run_inference.get_hier_model("production_anchor_reliabilitybackup_2x2_glob_static")
         is ms.likelihood_production_anchor_global_speaker_hier
+    )
+    assert (
+        run_inference.get_hier_model("production_anchor_reliabilitybackup_logalpha_2x2_inc_rec")
+        is ms.likelihood_production_anchor_inc_speaker_logalpha_hier
+    )
+    assert (
+        run_inference.get_hier_model("production_anchor_reliabilitybackup_logalpha_2x2_glob_static")
+        is ms.likelihood_production_anchor_global_speaker_logalpha_hier
     )
 
 
@@ -274,6 +286,53 @@ def test_production_anchor_hier_smoke_trace():
     assert "obs" in trace
 
 
+def test_production_anchor_logalpha_hier_smoke_trace():
+    l1, l2 = make_listener_arrays()
+    model = handlers.seed(
+        ms.likelihood_production_anchor_inc_speaker_logalpha_hier,
+        random.PRNGKey(0),
+    )
+    trace = handlers.trace(model).get_trace(
+        states=jnp.stack([
+            jnp.array(
+                [
+                    [10.0, 1.0, 1.0],
+                    [8.0, 1.0, 0.0],
+                    [3.0, 0.0, 1.0],
+                ],
+                dtype=jnp.float32,
+            ),
+            jnp.array(
+                [
+                    [9.0, 1.0, 1.0],
+                    [8.0, 0.0, 0.0],
+                    [4.0, 0.0, 1.0],
+                ],
+                dtype=jnp.float32,
+            ),
+        ]),
+        data=jnp.array([0.4, 0.6]),
+        pi0=0.01,
+        pi1=0.01,
+        participant_idx=jnp.array([0, 1]),
+        n_participants=2,
+        L1_all=jnp.stack([l1, l1]),
+        L2_all=jnp.stack([l2, l2]),
+        is_sharp_all=jnp.array([1.0, 0.0], dtype=jnp.float32),
+    )
+
+    assert "log_alpha" in trace
+    assert "alpha" in trace
+    assert "alpha_tau" in trace
+    assert "alpha_offset_raw" in trace
+    assert "alpha_participant" in trace
+    assert "delta" not in trace
+    alpha_participant = np.asarray(trace["alpha_participant"]["value"])
+    assert np.all(np.isfinite(alpha_participant))
+    assert np.all(alpha_participant > 0.0)
+    assert "obs" in trace
+
+
 if __name__ == "__main__":
     test_usefulness_adjusted_order_bias_drops_for_color_advantage()
     test_planned_usefulness_order_returns_valid_probability()
@@ -286,4 +345,5 @@ if __name__ == "__main__":
     test_production_anchor_cli_registration()
     test_production_anchor_speakers_return_valid_probabilities()
     test_production_anchor_hier_smoke_trace()
+    test_production_anchor_logalpha_hier_smoke_trace()
     print("PASS planned usefulness-order speaker tests")
