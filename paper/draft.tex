@@ -791,12 +791,12 @@ This captures the tendency for highly salient sufficient colour to appear in sho
 Third, a single rationality parameter $\alpha$ controls pragmatic sensitivity to the listener's posterior.
 The participant hierarchy allows individual differences in pragmatic strength through a shared scale $\tau$.
 Fourth, a response-policy layer captures theoretically motivated choices about when enough has been said.
-It rewards sufficient one-word responses, penalizes unreliable bare form responses, penalizes unnecessary three-word responses, and allows a sharp-size display with a sufficient size adjective to stop at bare size rather than prefer a redundant size--form pair.
-This last term targets the empirical tendency for sharp size-sufficient displays to elicit bare size responses without penalizing colour--form responses or form-containing utterances in other contexts.
+It rewards sufficient one-word responses, treats form as a reliability backup when colour is not already sufficient, penalizes unnecessary three-word responses, and lets size--form pairs trade off backup value against the visual reliability of size.
+When size is visually sharp, a sufficient bare size adjective receives additional support; when size is visually blurred, a size--form pair can receive additional support as a redundant backup.
 
 The determinate feature semantics are held fixed at $\nu_\text{colour}=0.59$ and $\nu_\text{form}=0.50$, with $k=0.50$ and $w_f=0.69$ for size.
 These values are used uniformly across the production comparison.
-The resulting model has ten learned speaker-level weights plus the participant-hierarchy scale $\tau$; the lapse rate is fixed at $\epsilon=.003$ for the final comparison.
+The resulting model has nine learned population-level speaker parameters plus the participant-hierarchy scale $\tau$; the lapse rate is fixed at $\epsilon=.003$ for the final comparison.
 The uncertainty-based length term considered during model development is not part of the final production model; the final fit is driven by the order-only prior, soft salience, pragmatic informativeness, salience-sensitive stopping, and the response-policy layer.
 \Cref{sec:appendix:model-development} summarizes the model-development checks that led to this inventory.
 
@@ -828,24 +828,24 @@ It captures the qualitative production pattern well: across the 90 condition $\t
 \end{figure}
 
 The largest predictive difference is between speaker architectures.
-Both incremental models outperform both global models by about 361 ELPD in the matched comparison, and the global models show weaker condition-level correlations ($r \approx 0.93$) and weak convergence diagnostics.
+Both incremental models outperform both global models by about 506 ELPD in the matched comparison, and the global models show weaker condition-level correlations ($r \approx 0.91$).
 The production comparison therefore supports word-by-word speaker choice over complete-utterance choice as a source of predictive accuracy.
 This conclusion is about predictive fit; the global models are retained as poor-fitting baselines rather than as sources of substantively interpretable parameter estimates.
 
 Within the incremental pair, the context-fixed model is favoured by PSIS-LOO.
-The context-fixed model is the best-fitting production model (ELPD$_{\text{LOO}}=-5{,}186.93$, $p_{\text{LOO}}=59.05$), followed almost exactly by the context-updating model (ELPD$_{\text{LOO}}=-5{,}187.36$, $\Delta\text{ELPD}=0.43$, dse $=0.22$).
+The context-fixed model is the best-fitting production model (ELPD$_{\text{LOO}}=-5{,}218.57$, $p_{\text{LOO}}=65.29$), followed almost exactly by the context-updating model (ELPD$_{\text{LOO}}=-5{,}219.42$, $\Delta\text{ELPD}=0.84$, dse $=0.31$).
 The difference is tiny relative to the architecture effect but still in the direction of the simpler semantic regime.
 The fitted production comparison therefore provides no evidence for an additional predictive benefit from context-updating semantics.
 The incremental advantage is robust, but posterior-dependent size meanings do not improve out-of-sample prediction once the final production model includes the order-only prior, display-sensitive salience, salience-sensitive stopping, response-policy terms, and fixed lapse.
 The semantic-scale audit in \Cref{sec:appendix:model-development} clarifies this interpretation: the implemented update only weakly changes target probabilities in the realized displays, so the comparison is most informative about this specific threshold-updating formulation.
-The global models in the final full comparison have no divergent transitions or PSIS warnings, but their split-$\hat R$ and effective sample sizes are poor enough that they should be treated only as predictive baselines.
+The global models in the final full comparison have no divergent transitions, no PSIS warnings, and acceptable split-$\hat R$ values, but their predictive fit remains much weaker.
 
 The posterior parameters of the incremental, context-fixed model are reported in full in \Cref{tab:param-inventory}.
-The posterior for the order-prior weight is clearly positive ($\log\beta \approx 0.66$), but it does not account for the fit by itself.
-Pragmatic rationality is positive ($\alpha \approx 2.03$), the visual-salience weight is clearly identified ($\lambda_\text{salience} \approx 1.42$), and salience-sensitive continuation costs are small in the final model ($\rho_\text{stop} \approx 0.02$).
-The response-policy terms are also clearly positive, including the sharp-size bare-size bonus ($\approx 1.22$) and the sharp-size size--form pair penalty ($\approx 1.07$).
-These terms nearly eliminate the targeted first/sharp bare-size and size--form residuals (absolute residuals below $0.002$), while the largest remaining qualitative miss is under-prediction of size--colour responses in both-necessary sharp displays.
-The participant-level spread is substantial but well behaved ($\tau \approx 0.94$), indicating stable individual variation in pragmatic strength.
+The posterior for the order-prior weight is clearly positive ($\log\beta \approx 0.65$), but it does not account for the fit by itself.
+Pragmatic rationality is positive ($\alpha \approx 2.57$), the visual-salience weight is clearly identified ($\lambda_\text{salience} \approx 1.50$), and salience-sensitive continuation costs are small in the final model ($\rho_\text{stop} \approx 0.01$).
+The response-policy terms are also positive, including the sufficient one-word bonus ($\approx 1.21$), the form-backup term ($\approx 2.52$), the sharp-size bare-size bonus ($\approx 1.76$), and the size-reliability size--form tradeoff ($\approx 0.23$).
+The largest remaining residuals are under-prediction of some multi-adjective responses in both-necessary displays and under-prediction of colour--form responses in colour-sufficient displays.
+The participant-level spread is substantial but well behaved ($\tau \approx 1.03$), indicating stable individual variation in pragmatic strength.
 
 \FloatBarrier
 
@@ -1101,18 +1101,17 @@ The fixed constants are $\nu_\text{colour}=0.59$, $\nu_\text{form}=0.50$, $k=0.5
 \hline
 Parameter & Role & Prior & Posterior \\
 \hline
-$\alpha$ & pragmatic rationality & HalfNormal$(3)$ & $2.03\;[1.63,\,2.41]$ \\
-$\log\beta$ & order-only LM-prior weight & Normal$(0,0.35)$ & $0.66\;[0.59,\,0.72]$ \\
-$\lambda_\text{salience}$ & local boost for visually salient features & HalfNormal$(1)$ & $1.42\;[1.34,\,1.50]$ \\
-$\rho_\text{stop}$ & cost for continuing after a salient feature & HalfNormal$(0.75)$ & $0.02\;[0.00,\,0.05]$ \\
-$\lambda_\text{suff-1}$ & sufficient one-word bonus & HalfNormal$(1.5)$ & $1.72\;[1.53,\,1.92]$ \\
-$\lambda_\text{form-rel}$ & form reliability penalty & HalfNormal$(1.5)$ & $2.32\;[2.15,\,2.50]$ \\
-$\lambda_\text{suff-form}$ & sufficient size--form pair bonus & HalfNormal$(1.0)$ & $0.74\;[0.55,\,0.91]$ \\
-$\lambda_\text{3word}$ & three-word penalty & HalfNormal$(1.0)$ & $1.16\;[1.00,\,1.31]$ \\
-$\lambda_\text{sharp-D}$ & sharp-size bare-size bonus & HalfNormal$(1.0)$ & $1.22\;[0.95,\,1.52]$ \\
-$\lambda_\text{sharp-DF}$ & sharp-size size--form pair penalty & HalfNormal$(1.0)$ & $1.07\;[0.80,\,1.31]$ \\
+$\alpha$ & pragmatic rationality & HalfNormal$(3)$ & $2.57\;[2.22,\,2.90]$ \\
+$\log\beta$ & order-only LM-prior weight & Normal$(0,0.35)$ & $0.65\;[0.58,\,0.71]$ \\
+$\lambda_\text{salience}$ & local boost for visually salient features & HalfNormal$(1)$ & $1.50\;[1.43,\,1.58]$ \\
+$\rho_\text{stop}$ & cost for continuing after a salient feature & HalfNormal$(0.75)$ & $0.01\;[0.00,\,0.04]$ \\
+$\lambda_\text{suff-1}$ & sufficient one-word bonus & HalfNormal$(1.5)$ & $1.21\;[1.07,\,1.34]$ \\
+$\lambda_\text{form-backup}$ & form reliability backup & HalfNormal$(1.5)$ & $2.52\;[2.37,\,2.67]$ \\
+$\lambda_\text{3word}$ & three-word penalty & HalfNormal$(1.0)$ & $1.40\;[1.30,\,1.51]$ \\
+$\lambda_\text{size-rel-1}$ & sharp-size bare-size bonus & HalfNormal$(1.0)$ & $1.76\;[1.49,\,2.03]$ \\
+$\lambda_\text{size-rel-SF}$ & size-reliability size--form tradeoff & HalfNormal$(1.0)$ & $0.23\;[0.10,\,0.35]$ \\
 $\epsilon$ & fixed lapse / uniform-noise rate & fixed & $0.003$ \\
-$\tau$ & SD of participant rationality offsets & HalfNormal$(0.15)$ & $0.94\;[0.77,\,1.09]$ \\
+$\tau$ & SD of participant rationality offsets & HalfNormal$(0.15)$ & $1.03\;[0.88,\,1.18]$ \\
 \hline
 \end{tabular}
 \end{table}
@@ -1123,7 +1122,7 @@ $\tau$ & SD of participant rationality offsets & HalfNormal$(0.15)$ & $0.94\;[0.
 
 \Cref{tab:model-diagnostics} summarizes the available diagnostics for the main $2 \times 2$ comparisons.
 For the slider models, manuscript-facing summaries contain PSIS-LOO warnings and maximum split-$\hat R$, but they do not archive Pareto-$k$ counts or ESS/divergence summaries.
-For the production models, the incremental models have clean MCMC diagnostics and no problematic Pareto-$k$ observations; the global models fit much worse and have weak convergence, so their parameters are not interpreted substantively.
+For the production models, all four cells have clean MCMC diagnostics and no problematic Pareto-$k$ observations; the global models fit much worse, so their parameters are not interpreted substantively.
 
 \begin{table}[H]
 \centering
@@ -1139,18 +1138,18 @@ Model & Predictive summary & Diagnostics & Interpretation \\
 \textbf{Slider}: planned-usefulness, fixed & Heldout ELPD $-2764.4$; $\Delta=0.0$ vs numerical best & max $\hat R=1.01$; divergences $1$ & Numerical best but diagnostic fail. \\
 \textbf{Slider}: signed planned-usefulness, fixed & Heldout ELPD $-2764.4$; $\Delta=-0.01$ vs numerical best & max $\hat R=1.01$; divergences $0$ & Selected diagnostic-passing slider reference. \\
 \textbf{Slider}: greedy incremental, updating & Heldout ELPD $-2765.7$; $\Delta=-1.34$ vs numerical best & max $\hat R=1.01$; divergences $0$ & Greedy baseline; lower PPC fit. \\
-\textbf{Production}: incremental, fixed & ELPD $-5186.9$; $p_\text{LOO}=59.0$; $\Delta=0.0$; dse -- & PSIS warning no; max $\hat R=1.00$; divergences $0$ & Best production model; main inferential reference. \\
-\textbf{Production}: incremental, updating & ELPD $-5187.4$; $p_\text{LOO}=58.8$; $\Delta=0.43$; dse $0.22$ & PSIS warning no; max $\hat R=1.01$; divergences $0$ & Clean diagnostics; effectively tied with fixed semantics. \\
-\textbf{Production}: global, fixed & ELPD $-5547.6$; $p_\text{LOO}=8.6$; $\Delta=360.7$; dse $25.2$ & PSIS warning no; max $\hat R=1.46$; divergences $0$ & Poor predictive baseline with weak convergence. \\
-\textbf{Production}: global, updating & ELPD $-5547.9$; $p_\text{LOO}=8.9$; $\Delta=361.0$; dse $25.2$ & PSIS warning no; max $\hat R=1.26$; divergences $0$ & Poor predictive baseline with weak convergence. \\
+\textbf{Production}: incremental, fixed & ELPD $-5218.6$; $p_\text{LOO}=65.3$; $\Delta=0.0$; dse -- & PSIS warning no; max $\hat R=1.00$; divergences $0$ & Best production model; main inferential reference. \\
+\textbf{Production}: incremental, updating & ELPD $-5219.4$; $p_\text{LOO}=65.0$; $\Delta=0.84$; dse $0.31$ & PSIS warning no; max $\hat R=1.00$; divergences $0$ & Clean diagnostics; effectively tied with fixed semantics. \\
+\textbf{Production}: global, fixed & ELPD $-5724.8$; $p_\text{LOO}=27.9$; $\Delta=506.2$; dse $30.2$ & PSIS warning no; max $\hat R=1.00$; divergences $0$ & Poor predictive baseline. \\
+\textbf{Production}: global, updating & ELPD $-5725.1$; $p_\text{LOO}=27.9$; $\Delta=506.5$; dse $30.2$ & PSIS warning no; max $\hat R=1.01$; divergences $0$ & Poor predictive baseline. \\
 \hline
 \end{tabularx}
 \end{table}
 
-The main production comparison uses PSIS-LOO on the matched size-sharp response-policy $2 \times 2$.
-The two incremental models have clean diagnostics (maximum split-$\hat R \le 1.01$ and no divergences).
+The main production comparison uses PSIS-LOO on the matched reliability-backup response-policy $2 \times 2$.
+All four production models have clean diagnostics (maximum split-$\hat R \le 1.01$ and no divergences).
 The global models are much worse fitting.
-They also have weak convergence in the full comparison despite the fixed lapse rate, so the substantive interpretation is restricted to their predictive failure rather than their parameter estimates.
+The substantive interpretation is therefore restricted to their predictive failure rather than their parameter estimates.
 
 \section{Production Model Development and Fixed-Constant Provenance}
 \label{sec:appendix:model-development}
@@ -1196,6 +1195,7 @@ Component & Form & Provenance or check & Claim status \\
 Order-only LM prior & Residual score $\Omega(u)$ & German GPT-2 surprisal residualized within unordered content sets; weight $\beta$ inferred in every final model. & Retained; cannot explain length or content choice by construction. \\
 Soft visual salience & Centered display score $z_a$ & Fixed base vector plus display adjustment; no referential-context dummy; $\lambda_\text{salience}$ inferred. & Retained as non-pragmatic feature prominence. \\
 Salience-sensitive stopping & Continuation cost after salient words & Production model-development check on size--colour data; improves PSIS-LOO over the no-length variant by $52.57$ ELPD (dse $=10.07$). & Retained as short-description pressure. \\
+Reliability-backup response policy & Sufficient one-word support, form backup, and size-reliability tradeoff & The final comparison uses a single policy inventory across all four cells; posterior terms are positive in the advocated model. & Retained as a theoretically interpretable policy for utterance length and redundant form use. \\
 Uncertainty-gated length term & Removed & Exploratory production check on size--colour data showed no clear benefit over the model without the term ($\Delta$ELPD $=0.49$, dse $=0.88$), and the posterior included zero. & Not part of the final production model. \\
 Regularized hierarchy & Participant offsets with conservative prior & Model-development check; slightly lower ELPD than the unregularized salience-stop fit ($\Delta$ELPD $\approx 2.16$, dse $=1.15$) while reducing $p_\text{LOO}$. & Used for final matched comparison. \\
 \hline
@@ -1204,13 +1204,14 @@ Regularized hierarchy & Participant offsets with conservative prior & Model-deve
 
 \Cref{tab:model-development} summarizes the main production-model development checks.
 These checks were used to keep the final production model tied to independently motivated components while avoiding condition-specific residual parameters.
-The final $2 \times 2$ comparison uses the regularized salience-stop model because it retains the qualitative fit of the best exploratory variant while reducing effective complexity.
+The final $2 \times 2$ comparison uses the regularized salience-stop response-policy model as the common speaker inventory for the architecture and semantic-regime contrast.
 
 \begin{table}[H]
 \centering
-\caption{Production-model development checks motivating the final six-parameter inventory.}
+\caption{Production-model development checks motivating the final production inventory.}
 \label{tab:model-development}
-\footnotesize
+\scriptsize
+\setlength{\tabcolsep}{3pt}
 \begin{tabularx}{\textwidth}{p{3.1cm}p{4.4cm}p{4.1cm}X}
 \hline
 Component or choice & Motivation & Check & Decision \\
@@ -1218,6 +1219,7 @@ Component or choice & Motivation & Check & Decision \\
 Order-only LM prior & Stable order expectations without allowing the LM prior to explain content choice or utterance length. & LM scores residualized within unordered content sets, so the prior distinguishes \utter{SC} from \utter{CS} but not short from long descriptions. & Retained as $\Omega(u)$ with inferred weight $\beta$. \\
 Soft visual salience & Feature prominence is independent of pragmatic information gain and should vary with the display. & Salience is context-dependent and centered within trial; no referential-context dummy is used. & Retained as local first-word boost $\lambda_\text{salience} z_a$. \\
 Salience-sensitive stopping & Highly salient sufficient features should support short descriptions. & Adding the stopping term improves PSIS-LOO over the salience-only/no-length variant ($\Delta$ELPD $=52.57$, dse $=10.07$). & Retained as the continuation cost in \Cref{eq:salience-stop}. \\
+Reliability-backup response policy & Redundant form can act as a backup when the primary sufficient property is visually less secure, while sharp sufficient size can license stopping at bare size. & The same response-policy terms are included in all four cells of the final $2 \times 2$, so they do not define the architecture or semantic-regime contrast. & Retained as the final production response policy. \\
 Uncertainty-gated length term & Blurry size could in principle motivate longer descriptions. & Initial comparison showed no clear benefit over the model without the term ($\Delta$ELPD $=0.49$, dse $=0.88$), and the posterior included zero. & Removed from the final model. \\
 Regularized participant hierarchy & Participant variation is required, but the final architecture comparison should be conservative about effective complexity. & Regularization slightly lowers ELPD relative to the unregularized salience-stop fit ($\Delta$ELPD $\approx 2.16$, dse $=1.15$) while reducing $p_\text{LOO}$ from about 56.4 to 48.9. & Used for the final $2 \times 2$ comparison. \\
 \hline

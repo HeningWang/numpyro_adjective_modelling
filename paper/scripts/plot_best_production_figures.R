@@ -42,7 +42,7 @@ sharp_labels <- c(
   "blurred" = "Low"
 )
 rename_D_to_S <- function(x) gsub("D", "S", x)
-best_model_id <- "principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_inc_static_fixedeps"
+best_model_id <- "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_static_fixedeps"
 model_display <- "Incremental, context-fixed"
 
 # ── Load best-model data ─────────────────────────────────────────────────────
@@ -192,10 +192,10 @@ cat("[✓] production_correlation_best.pdf\n")
 #  ELPD comparison — principled parameter-matched 2x2
 # =============================================================================
 model_labels <- c(
-  "principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_inc_static_fixedeps"  = "Incremental, context-fixed",
-  "principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_inc_rec_fixedeps"     = "Incremental, context-updating",
-  "principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_glob_static_fixedeps" = "Global, context-fixed",
-  "principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_glob_rec_fixedeps"    = "Global, context-updating"
+  "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_static_fixedeps"  = "Incremental, context-fixed",
+  "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_rec_fixedeps"     = "Incremental, context-updating",
+  "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_glob_static_fixedeps" = "Global, context-fixed",
+  "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_glob_rec_fixedeps"    = "Global, context-updating"
 )
 
 df_prod_loo <- read_csv("data/production_loo_comparison_best.csv") %>%

@@ -1,0 +1,5 @@
+model,n_parameters,max_r_hat,n_r_hat_gt_1_01,n_r_hat_gt_1_05,min_ess_bulk,min_ess_tail,n_divergent,divergence_rate,diagnostic_status
+principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_rec_fixedeps,11,1.0,0,0,3608.0,3684.0,0,0.0,pass
+principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_static_fixedeps,11,1.0,0,0,3607.0,4395.0,0,0.0,pass
+principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_glob_rec_fixedeps,11,1.01,0,0,489.0,465.0,0,0.0,pass
+principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_glob_static_fixedeps,11,1.0,0,0,680.0,944.0,0,0.0,pass
