@@ -115,6 +115,8 @@ def test_reliability_backup_models_register_for_hierarchical_inference():
     for key in (
         "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_rec_fixedeps",
         "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_static_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_glob_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_glob_static_fixedeps",
     ):
         assert key in ri.HIER_MODELS
         assert key in pa.SIMPLIFIED_MODELS
@@ -672,6 +674,8 @@ def test_principled_models_register_for_hierarchical_inference():
         "principled_salience_stop_regularized_responsepolicy_boundedform_sharpform_2x2_inc_static_fixedeps",
         "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_rec_fixedeps",
         "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_static_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_glob_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_glob_static_fixedeps",
         "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_rec_fixedeps",
         "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_static_fixedeps",
         "principled_salience_stop_regularized_2x2_glob_rec",
