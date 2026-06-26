@@ -1,0 +1,5 @@
+model,speaker_type,total_heldout_elpd,mean_fold_elpd,se_fold_elpd,n_heldout,n_folds,n_parameters,max_r_hat,n_r_hat_gt_1_01,n_r_hat_gt_1_05,min_ess_bulk,min_ess_tail,n_divergent,n_draws,divergence_rate,diagnostic_status,diagnostics_ok
+production_anchor_reliabilitybackup_2x2_inc_static,production_anchor_reliabilitybackup_2x2_inc_static,-2915.2264404296875,-583.0452880859375,8.151918244875619,3485,5,275,1.37,705,580,9.0,12.0,2403,40000,0.060075,fail,False
+production_anchor_reliabilitybackup_2x2_inc_rec,production_anchor_reliabilitybackup_2x2_inc_rec,-2919.8133544921875,-583.9626708984375,7.625362525753528,3485,5,275,1.37,504,287,9.0,35.0,252,40000,0.0063,fail,False
+production_anchor_reliabilitybackup_2x2_glob_static,production_anchor_reliabilitybackup_2x2_glob_static,-3002.614013671875,-600.522802734375,9.533727837557183,3485,5,275,1.0,0,0,6388.0,2961.0,0,40000,0.0,pass,True
+production_anchor_reliabilitybackup_2x2_glob_rec,production_anchor_reliabilitybackup_2x2_glob_rec,-3002.6516723632812,-600.5303344726562,9.533503734289797,3485,5,275,1.0,0,0,6127.0,2886.0,0,40000,0.0,pass,True

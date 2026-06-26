@@ -1,0 +1,5 @@
+model,n_parameters,max_r_hat,n_r_hat_gt_1_01,n_r_hat_gt_1_05,min_ess_bulk,min_ess_tail,n_divergent,divergence_rate,diagnostic_status
+production_anchor_reliabilitybackup_2x2_inc_rec,6,1.0,0,0,3687.0,4012.0,0,0.0,pass
+production_anchor_reliabilitybackup_2x2_inc_static,6,1.0,0,0,3955.0,4248.0,0,0.0,pass
+production_anchor_reliabilitybackup_2x2_glob_rec,6,1.0,0,0,6667.0,3080.0,0,0.0,pass
+production_anchor_reliabilitybackup_2x2_glob_static,6,1.0,0,0,5874.0,2935.0,0,0.0,pass
