@@ -18,6 +18,7 @@ import subprocess
 import numpy as np
 import arviz as az
 import jax
+import jax.numpy as jnp
 from jax import random
 from jax.random import PRNGKey
 import numpyro
@@ -59,8 +60,10 @@ from modelSpecification import (
     likelihood_planned_usefulness_mixture_anchored_speaker_static_hier,
     likelihood_production_anchor_inc_speaker_hier,
     likelihood_production_anchor_global_speaker_hier,
+    likelihood_production_anchor_orderplan_inc_speaker_hier,
     likelihood_production_anchor_inc_speaker_logalpha_hier,
     likelihood_production_anchor_global_speaker_logalpha_hier,
+    likelihood_production_anchor_orderplan_inc_speaker_logalpha_hier,
     likelihood_gb_speaker_static_hier,
     likelihood_inc_speaker_frozen_hier,
     likelihood_inc_speaker_hier_free_csv,
@@ -81,6 +84,8 @@ RECURSIVE_LISTENER_SPEAKERS = {
     "production_anchor_reliabilitybackup_2x2_glob_rec",
     "production_anchor_reliabilitybackup_logalpha_2x2_inc_rec",
     "production_anchor_reliabilitybackup_logalpha_2x2_glob_rec",
+    "production_anchor_reliabilitybackup_orderplan_2x2_inc_rec",
+    "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_rec",
 }
 
 PRODUCTION_ANCHOR_SPEAKERS = {
@@ -96,6 +101,17 @@ PRODUCTION_ANCHOR_SPEAKERS = {
     "production_anchor_reliabilitybackup_logalpha_2x2_inc_static",
     "production_anchor_reliabilitybackup_logalpha_2x2_glob_rec",
     "production_anchor_reliabilitybackup_logalpha_2x2_glob_static",
+    "production_anchor_reliabilitybackup_orderplan_2x2_inc_rec",
+    "production_anchor_reliabilitybackup_orderplan_2x2_inc_static",
+    "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_rec",
+    "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_static",
+}
+
+PRODUCTION_ANCHOR_ORDERPLAN_SPEAKERS = {
+    "production_anchor_reliabilitybackup_orderplan_2x2_inc_rec",
+    "production_anchor_reliabilitybackup_orderplan_2x2_inc_static",
+    "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_rec",
+    "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_static",
 }
 
 SPEAKER_CHOICES = [
@@ -124,6 +140,10 @@ SPEAKER_CHOICES = [
     "production_anchor_reliabilitybackup_logalpha_2x2_inc_static",
     "production_anchor_reliabilitybackup_logalpha_2x2_glob_rec",
     "production_anchor_reliabilitybackup_logalpha_2x2_glob_static",
+    "production_anchor_reliabilitybackup_orderplan_2x2_inc_rec",
+    "production_anchor_reliabilitybackup_orderplan_2x2_inc_static",
+    "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_rec",
+    "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_static",
 ]
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -205,6 +225,21 @@ def balanced_fold_ids(
     return fold_ids
 
 
+def slider_sufficiency_vectors(df):
+    """Production-style sufficiency covariates for slider order planning."""
+    relevant = df["relevant_property"].astype(str)
+    sufficient_dim = np.full(len(df), -1, dtype=np.int32)
+    sufficient_dim[relevant.eq("first").to_numpy()] = 0
+    sufficient_dim[relevant.eq("second").to_numpy()] = 1
+    has_one_word_solution = relevant.isin(["first", "second"]).to_numpy(dtype=np.float32)
+    is_colour_sufficient = relevant.eq("second").to_numpy(dtype=np.float32)
+    return (
+        jnp.asarray(sufficient_dim, dtype=jnp.int32),
+        jnp.asarray(has_one_word_solution, dtype=jnp.float32),
+        jnp.asarray(is_colour_sufficient, dtype=jnp.float32),
+    )
+
+
 def select_listener_precompute(canonical_speaker_type: str, states, color_semvalue=None):
     if canonical_speaker_type in PRODUCTION_ANCHOR_SPEAKERS:
         return precompute_listeners_production_anchor(
@@ -279,6 +314,16 @@ def get_hier_model(canonical_speaker_type: str, free_color_semvalue: bool = Fals
         "production_anchor_reliabilitybackup_logalpha_2x2_inc_static",
     ):
         return likelihood_production_anchor_inc_speaker_logalpha_hier
+    if canonical_speaker_type in (
+        "production_anchor_reliabilitybackup_orderplan_2x2_inc_rec",
+        "production_anchor_reliabilitybackup_orderplan_2x2_inc_static",
+    ):
+        return likelihood_production_anchor_orderplan_inc_speaker_hier
+    if canonical_speaker_type in (
+        "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_rec",
+        "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_static",
+    ):
+        return likelihood_production_anchor_orderplan_inc_speaker_logalpha_hier
     if canonical_speaker_type in (
         "production_anchor_reliabilitybackup_logalpha_2x2_glob_rec",
         "production_anchor_reliabilitybackup_logalpha_2x2_glob_static",
@@ -535,6 +580,17 @@ def run_inference_hier(
     print("Listeners precomputed.")
     is_sharp_all = slider_is_sharp_vector(df)
     is_sharp_train = is_sharp_all if train_mask is None else is_sharp_all[train_mask]
+    sufficient_dim_all, has_one_word_solution_all, is_colour_sufficient_all = (
+        slider_sufficiency_vectors(df)
+    )
+    if train_mask is None:
+        sufficient_dim_train = sufficient_dim_all
+        has_one_word_solution_train = has_one_word_solution_all
+        is_colour_sufficient_train = is_colour_sufficient_all
+    else:
+        sufficient_dim_train = sufficient_dim_all[train_mask]
+        has_one_word_solution_train = has_one_word_solution_all[train_mask]
+        is_colour_sufficient_train = is_colour_sufficient_all[train_mask]
 
     if free_color_semvalue:
         suffix = "_free_csv"
@@ -570,7 +626,14 @@ def run_inference_hier(
         num_chains=num_chains,
         chain_method="vectorized",
     )
-    if canonical_speaker_type in PRODUCTION_ANCHOR_SPEAKERS:
+    if canonical_speaker_type in PRODUCTION_ANCHOR_ORDERPLAN_SPEAKERS:
+        mcmc.run(
+            rng_key_, states_train, empirical_train,
+            pi0, pi1, participant_idx, n_participants, L1_all, L2_all,
+            is_sharp_train, sufficient_dim_train, has_one_word_solution_train,
+            is_colour_sufficient_train,
+        )
+    elif canonical_speaker_type in PRODUCTION_ANCHOR_SPEAKERS:
         mcmc.run(
             rng_key_, states_train, empirical_train,
             pi0, pi1, participant_idx, n_participants, L1_all, L2_all,
@@ -584,7 +647,20 @@ def run_inference_hier(
     mcmc.print_summary(exclude_deterministic=False)
 
     posterior_samples = mcmc.get_samples()
-    if canonical_speaker_type in PRODUCTION_ANCHOR_SPEAKERS:
+    if canonical_speaker_type in PRODUCTION_ANCHOR_ORDERPLAN_SPEAKERS:
+        posterior_predictive = Predictive(model, posterior_samples)(
+            PRNGKey(1), states_train, None,
+            pi0, pi1, participant_idx, n_participants, L1_all, L2_all,
+            is_sharp_train, sufficient_dim_train, has_one_word_solution_train,
+            is_colour_sufficient_train,
+        )
+        prior = Predictive(model, num_samples=1000)(
+            PRNGKey(2), states_train, None,
+            pi0, pi1, participant_idx, n_participants, L1_all, L2_all,
+            is_sharp_train, sufficient_dim_train, has_one_word_solution_train,
+            is_colour_sufficient_train,
+        )
+    elif canonical_speaker_type in PRODUCTION_ANCHOR_SPEAKERS:
         posterior_predictive = Predictive(model, posterior_samples)(
             PRNGKey(1), states_train, None,
             pi0, pi1, participant_idx, n_participants, L1_all, L2_all,

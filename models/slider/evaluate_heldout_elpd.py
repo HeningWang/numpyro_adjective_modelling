@@ -33,7 +33,9 @@ from run_inference import (  # noqa: E402
     balanced_fold_ids,
     canonicalize_speaker_type,
     get_hier_model,
+    PRODUCTION_ANCHOR_ORDERPLAN_SPEAKERS,
     select_listener_precompute,
+    slider_sufficiency_vectors,
 )
 
 
@@ -60,6 +62,10 @@ MODEL_TO_SPEAKER = {
     "production_anchor_reliabilitybackup_logalpha_2x2_inc_static": "production_anchor_reliabilitybackup_logalpha_2x2_inc_static",
     "production_anchor_reliabilitybackup_logalpha_2x2_glob_rec": "production_anchor_reliabilitybackup_logalpha_2x2_glob_rec",
     "production_anchor_reliabilitybackup_logalpha_2x2_glob_static": "production_anchor_reliabilitybackup_logalpha_2x2_glob_static",
+    "production_anchor_reliabilitybackup_orderplan_2x2_inc_rec": "production_anchor_reliabilitybackup_orderplan_2x2_inc_rec",
+    "production_anchor_reliabilitybackup_orderplan_2x2_inc_static": "production_anchor_reliabilitybackup_orderplan_2x2_inc_static",
+    "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_rec": "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_rec",
+    "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_static": "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_static",
 }
 
 PAIR_SPECS = (
@@ -169,6 +175,21 @@ PAIR_SPECS = (
         "production_anchor_reliabilitybackup_logalpha_2x2_glob_rec",
         "production_anchor_reliabilitybackup_logalpha_semantics_global",
     ),
+    (
+        "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_rec",
+        "production_anchor_reliabilitybackup_logalpha_2x2_inc_rec",
+        "production_anchor_reliabilitybackup_orderplan_logalpha_vs_anchor_recursive",
+    ),
+    (
+        "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_static",
+        "production_anchor_reliabilitybackup_logalpha_2x2_inc_static",
+        "production_anchor_reliabilitybackup_orderplan_logalpha_vs_anchor_static",
+    ),
+    (
+        "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_static",
+        "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_rec",
+        "production_anchor_reliabilitybackup_orderplan_logalpha_semantics_incremental",
+    ),
 )
 
 PROPERTY_LABELS = {
@@ -181,7 +202,9 @@ PROPERTY_LABELS = {
 def is_production_anchor_speaker(speaker: str) -> bool:
     return speaker.startswith("production_anchor_sizesharp_2x2_") or speaker.startswith(
         "production_anchor_reliabilitybackup_2x2_"
-    ) or speaker.startswith("production_anchor_reliabilitybackup_logalpha_2x2_")
+    ) or speaker.startswith("production_anchor_reliabilitybackup_logalpha_2x2_") or speaker.startswith(
+        "production_anchor_reliabilitybackup_orderplan_"
+    )
 
 
 def posterior_samples_from_idata(idata: az.InferenceData) -> dict[str, np.ndarray]:
@@ -257,6 +280,9 @@ def heldout_fold_data(fold: int, num_folds: int, fold_seed: int):
     train_empirical = np.asarray(empirical_all[train_mask])
     pi0 = float(np.mean(np.isclose(train_empirical, 0.0)))
     pi1 = float(np.mean(np.isclose(train_empirical, 1.0)))
+    sufficient_dim_all, has_one_word_solution_all, is_colour_sufficient_all = (
+        slider_sufficiency_vectors(df)
+    )
     return {
         "states": states_all[heldout_mask],
         "data": empirical_all[heldout_mask],
@@ -266,6 +292,9 @@ def heldout_fold_data(fold: int, num_folds: int, fold_seed: int):
         "pi1": pi1,
         "df": df.loc[heldout_mask].copy(),
         "is_sharp": jnp.asarray(np.asarray(slider_is_sharp_vector(df))[heldout_mask]),
+        "sufficient_dim": sufficient_dim_all[heldout_mask],
+        "has_one_word_solution": has_one_word_solution_all[heldout_mask],
+        "is_colour_sufficient": is_colour_sufficient_all[heldout_mask],
     }
 
 
@@ -293,7 +322,25 @@ def score_fold(
     idata = az.from_netcdf(path)
     posterior_samples = posterior_samples_from_idata(idata)
     diagnostics = fold_diagnostics(idata, args.max_r_hat)
-    if is_production_anchor_speaker(speaker):
+    if speaker in PRODUCTION_ANCHOR_ORDERPLAN_SPEAKERS:
+        ll = log_likelihood(
+            model,
+            posterior_samples,
+            heldout["states"],
+            heldout["data"],
+            heldout["pi0"],
+            heldout["pi1"],
+            heldout["participant_idx"],
+            heldout["n_participants"],
+            L1_all,
+            L2_all,
+            heldout["is_sharp"],
+            heldout["sufficient_dim"],
+            heldout["has_one_word_solution"],
+            heldout["is_colour_sufficient"],
+            parallel=False,
+        )["obs"]
+    elif is_production_anchor_speaker(speaker):
         ll = log_likelihood(
             model,
             posterior_samples,
