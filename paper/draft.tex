@@ -95,7 +95,7 @@ A simulation study applies the same $2 \times 2$ crossing outside the fitted emp
 
 Taken together, the experiments, model comparison, and simulation support three conclusions.
 Across the two experiments, ordering preferences vary systematically with discriminatory strength: speakers tend to place the more informative adjective earlier, while the canonical size-first preference remains visible as a defeasible baseline.
-The model comparison shows that predictive fit is driven mainly by speaker architecture: incremental speakers outperform global speakers in both tasks, whereas the semantic-regime contrast is small or absent within the best-fitting incremental models.
+The model comparison shows that predictive fit is driven mainly by speaker architecture: incremental speakers outperform global speakers in both tasks, and the semantic-regime contrast is small or absent within the best-fitting incremental models.
 However, the simulation shows that context-updating composition can still generate a size-first advantage without incremental speaker choice; under context-fixed semantics, a global speaker has no corresponding ordering advantage.
 \Cref{fig:overview} provides a schematic overview of the modelling framework, experiments, and key findings.
 
@@ -141,7 +141,7 @@ Assuming a hierarchical prenominal structure, the adjective closest to the noun 
 The outer, more subjective adjective is therefore evaluated against a comparison class that has already been narrowed by the inner, less subjective adjective.
 In such a restricted comparison class, placing the less subjective adjective closer to the noun is advantageous because its interpretation provides a more stable basis for subsequent gradable modification.
 \citet{franke2019subjectivity} make the same intuition explicit in simulation, showing that subjectivity-aligned orders increase average communicative success under sequential composition with noisy meanings.
-For the present question, this explanation locates the ordering pressure in the compositional system rather than in a word-by-word production policy.
+For the present question, this explanation locates the ordering pressure in the compositional system.
 
 \citet{scontras2020incremental} develop this idea as \emph{incremental semantic restriction}.
 If nominal structure supports sequential narrowing of the comparison class, then subjectivity-based ordering pressures should arise even without an incremental speaker in the usual process-model sense.
@@ -152,7 +152,8 @@ This identifies a plausible compositional source for canonical ordering in the p
 
 A second source of ordering pressure comes from referential efficiency.
 A separate line of work has shown that adjective use is sensitive to the demands of the immediate communicative context, including whether a modifier helps the listener identify the referent efficiently \citep{rubio2016redundant,rubio2019overinformative,degen2020redundancy}.
-This literature treats adjective choice and adjective order as part of a broader problem of reference generation rather than as the expression of a static lexical hierarchy; a related commitment appears in Van Gompel and colleagues' conceptualization model, which derives property choice from the contrast set available to the speaker \citep{fukumura2010use,van2019conceptualization}.
+This literature treats adjective choice and adjective order as part of a broader problem of reference generation.
+A related commitment appears in Van Gompel and colleagues' conceptualization model, which derives property choice from the contrast set available to the speaker \citep{fukumura2010use,van2019conceptualization}.
 
 \citet{fukumura2018ordering} provide a direct empirical precedent for the present experiments.
 In their production studies, speakers were more likely to place the more discriminating adjective first, consistent with a \emph{discriminatory efficiency hypothesis}: order should reflect which property best distinguishes the target in the current scene.
@@ -209,11 +210,13 @@ Because objects differ along three properties, the same referent can be describe
 \subsection{Two Mechanisms for Order Sensitivity}
 \label{sec:framework:mechanisms}
 
-Determinate properties such as colour and form are treated as nearly categorical, whereas size is gradable.
+Determinate properties such as colour and form are treated as nearly categorical.
+Size is gradable.
 Whether an object counts as ``big'' depends on the comparison class it is evaluated against, so the size term is informative only relative to the objects currently under consideration.
 Against this background, the framework isolates two ways in which adjective order can come to matter.
 The first is the \emph{speaker architecture}.
-A global speaker evaluates complete adjective strings and chooses among them as wholes, whereas an incremental speaker chooses one adjective at a time, weighing how the next word would reshape the listener's beliefs at each step.
+A global speaker evaluates complete adjective strings and chooses among them as wholes.
+An incremental speaker chooses one adjective at a time, weighing how the next word would reshape the listener's beliefs at each step.
 For an incremental speaker, a modifier is evaluated at the moment it is produced, according to the belief update it would cause before later words are heard.
 The second is the \emph{semantic regime}.
 Under context-fixed semantics, the size threshold is computed once from the scene and held constant, so reordering the adjectives cannot change what ``big'' means.
@@ -224,8 +227,15 @@ This non-commutativity connects to \citeauthor{teodorescu2006}'s (\citeyear{teod
 Crossing these two binary distinctions yields a $2 \times 2$ space of models --- speaker architecture (global vs.\ incremental) by semantic regime (context-fixed vs.\ context-updating).
 The global context-fixed model is the baseline and the closest to the vanilla RSA model: meanings are fixed and the speaker evaluates complete strings, so any order preference comes from the shared order prior.
 The global context-updating model adds posterior-dependent meanings, the incremental context-fixed model adds word-by-word speaker choice, and the incremental context-updating model combines both sources.
-All four models include the same basic ingredients needed to connect the model to the experimental task: a prior over adjective orders and a utility term based on referential informativeness.
-The production models additionally include visual salience and stopping components because the production task allows one-, two-, and three-adjective strings; these components are held constant across models so that the $2 \times 2$ comparison isolates the contribution of semantic regime and speaker architecture.
+All four models include the same core ingredients needed to connect the model to the experimental task: a prior over adjective orders and a utility term based on referential informativeness.
+The final paper-facing comparison uses a richer production-anchor speaker around this core.
+This speaker includes four additional pressures that are shared across the four cells.
+First, visually salient properties can be easier starting points for a referring expression.
+Second, speakers can stop after a sufficiently informative adjective, especially when that adjective is perceptually strong.
+Third, speakers can add backup information when the main sufficient property is visually less secure.
+Fourth, order planning redistributes probability among alternative orders once the relevant adjective content has been considered.
+These pressures define the common speaker inventory.
+The $2 \times 2$ comparison then asks which source adds predictive accuracy: incremental production, context-updating semantics, or their combination.
 
 \subsection{Qualitative Predictions}
 \label{sec:framework:predictions}
@@ -235,7 +245,9 @@ A stable, subjectivity-aligned ordering prior yields a baseline size-first prefe
 The pragmatic component is sensitive to which property discriminates the referent in the current scene, so the size-first preference should weaken as colour becomes the more useful property (P2).
 The size-discriminability manipulation provides a proxy-based diagnostic extension of this logic: if lower visual reliability behaves like a display-level analogue of subjectivity, then low size-discriminability contrasts should strengthen the size-first preference (P3).
 This prediction extrapolates from the compositional logic in \citet{franke2019subjectivity,scontras2020incremental}: if lower size discriminability makes size interpretation noisier, placing colour closer to the noun restricts the comparison class before size is evaluated, which corresponds to a size-first order preference in the German prenominal sequence.
-Finally, because production allows the full inventory of one-, two-, and three-adjective strings, the framework predicts a graded over-informativity gradient that the binary slider task cannot reveal; if low size discriminability makes size less reliable for reference, displays in the low size-discriminability condition should elicit longer, more redundant strings (P4).
+Finally, because production allows the full inventory of one-, two-, and three-adjective strings, the framework predicts a graded over-informativity gradient that the binary slider task cannot reveal.
+If low size discriminability makes size less reliable for reference, displays in the low size-discriminability condition should elicit longer, more redundant strings (P4).
+This prediction motivates the reliability-backup part of the production-anchor speaker: redundant material is treated as a possible response to perceptual uncertainty, not as a free condition label.
 
 \begin{table}[H]
   \caption{Qualitative predictions of the modelling framework and where each is tested.}
@@ -269,7 +281,8 @@ Finally, because production allows the full inventory of one-, two-, and three-a
 % =============================================================================
 
 We tested the qualitative predictions of the modelling framework (\Cref{tab:predictions}) with two complementary online referential tasks in German.
-Experiment~1 measured explicit order preferences in a slider-rating task, whereas Experiment~2 measured adjective selection and ordering in constrained production.
+Experiment~1 measured explicit order preferences in a slider-rating task.
+Experiment~2 measured adjective selection and ordering in constrained production.
 Comparing the two tasks lets us ask whether the same context manipulations affect both direct judgments between competing orders and speakers' own adjective choices.
 
 \subsection{Shared Method}
@@ -285,7 +298,8 @@ These conditions remain part of the experimental design, but the present analysi
 The exact size values, target--competitor gap construction, and list assignment are reported in \Cref{sec:appendix:methods-transparency}.}
 Within that subset, referential context varied within participants and had three levels: size-sufficient, colour-sufficient, and both-necessary.
 A second, between-participant factor, size discriminability, varied the size gap between the target and its size competitors.
-High size-discriminability displays used larger target--competitor gaps, making the size contrast visually pronounced, whereas low size-discriminability displays used smaller gaps, making size a less reliable cue.
+High size-discriminability displays used larger target--competitor gaps, making the size contrast visually pronounced.
+Low size-discriminability displays used smaller gaps, making size a less reliable cue.
 This factor was manipulated between participants so that each participant experienced a consistent level of visual size contrast throughout the task (\Cref{tab:design}).
 
 \begin{table}[h]
@@ -312,7 +326,8 @@ In addition to list counterbalancing, the critical scenes were realised through 
 These permutations were applied to 27 critical scene templates, each specifying an abstract six-object configuration with a target, competitors, and distractors.
 Critical vocabularies were fixed across the study, with six colour terms and six form terms reused throughout the scene set; the modified noun was always \textit{Aufkleber} (`sticker').\footnote{The form values were presented with German adjectival forms, such as \emph{runden} for round/circle and \emph{quadratischen} for square, so that form could occupy the same prenominal adjective position as colour and size.}
 For the computational model, each display was represented as a $6 \times 3$ matrix, with one row per object and three columns for size ($s$), colour ($c$), and form ($f$).
-The referent was stored at index 0, but participants saw the displays as ordinary visual arrays rather than as explicit feature lists.
+The referent was stored at index 0.
+Participants saw the displays as ordinary visual arrays, not as explicit feature lists.
 
 \begin{figure}[ht]
   \centering
@@ -356,7 +371,8 @@ Responses were recorded on a 0--100 scale and centred for analysis so that posit
 
 \subsubsection{Results}
 
-\Cref{fig:slider-empirical} shows that size-first orderings were preferred across all three referential contexts, including colour-sufficient displays where size did not identify the target by itself, but the strength of this preference varied across contexts and size-discriminability levels.
+\Cref{fig:slider-empirical} shows that size-first orderings were preferred across all three referential contexts, including colour-sufficient displays where size did not identify the target by itself.
+The strength of this preference varied across contexts and size-discriminability levels.
 We analysed centred slider ratings with linear mixed-effects models fit in R using \texttt{lme4::lmer} \citep{bates2014fitting}.
 The full model included referential context, size discriminability, and their interaction as fixed effects, with random intercepts for participant and item; effects were evaluated by likelihood-ratio comparisons between nested models.
 
@@ -364,7 +380,8 @@ The interaction between referential context and size discriminability was signif
 Breaking down this interaction, higher size discriminability slightly increased the size-first preference in size-sufficient contexts (low: $0.30$, high: $0.34$) but slightly reduced it in both-necessary ($0.25$ vs.\ $0.20$) and colour-sufficient contexts ($0.06$ vs.\ $0.04$).
 However, Bonferroni-corrected pairwise comparisons showed that none of the high--low size-discriminability contrasts was significant within an individual referential context (all $p \ge .23$).
 We therefore interpret the interaction as a weak crossover.
-In size-sufficient displays, high size discriminability slightly strengthened the already strong size-first preference, whereas in colour-sufficient displays it slightly reduced size-first ratings, matching the direction made salient by referential context in each case.
+In size-sufficient displays, high size discriminability slightly strengthened the already strong size-first preference.
+In colour-sufficient displays, high size discriminability slightly reduced size-first ratings, matching the direction made salient by referential context in each case.
 This pattern suggests that high size discriminability may amplify the cue already supported by the referential context.
 In both-necessary displays, the contrast went in the direction predicted by P3, with lower size discriminability associated with a stronger size-first preference, but this difference was not significant after correction.
 
@@ -402,7 +419,7 @@ Compensation followed the same Prolific rate as Experiment~1.
 
 Experiment~2 used the shared referential design in a constrained production format.
 Participants saw the framed target together with the fixed sentence frame \emph{den \_\_\_ Aufkleber} and typed the adjective material needed before the noun \textit{Aufkleber}.
-Restricting the response to the adjective slot rather than eliciting a full sentence reduced off-task variability and provided a controlled basis for coding.
+Restricting the response to the adjective slot reduced off-task variability and provided a controlled basis for coding.
 The practice materials additionally introduced the relevant colour and form vocabulary before the critical trials began.
 Each participant completed 135 main trials: 81 critical trials and 54 filler or control trials from one of six counterbalanced lists.\footnote{The number of filler and control trials was reduced in Experiment~2 to keep the total number of trials manageable because typed production responses were slower and more effortful than slider judgments.}
 
@@ -415,7 +432,8 @@ For the mixed-effects logistic regressions, trials satisfying the coded outcome 
 \subsubsection{Results}
 
 \Cref{fig:production-empirical} shows that constrained production separates two patterns that the slider task could not distinguish: which adjective material speakers selected and, when more than one adjective was produced, which adjective came first.
-Size-sufficient displays mostly elicited size-initial descriptions, whereas colour-sufficient displays mostly elicited colour-only descriptions, leaving little multi-adjective material on which a colour-first ordering preference could be expressed.
+Size-sufficient displays mostly elicited size-initial descriptions.
+Colour-sufficient displays mostly elicited colour-only descriptions, leaving little multi-adjective material on which a colour-first ordering preference could be expressed.
 Both-necessary displays fell between these extremes and elicited more multi-adjective strings.
 This response structure motivates two complementary analyses: a size-initial model for first-adjective choice and an over-informativeness model for whether speakers selected redundant adjective material.
 We analysed two derived binary outcomes with mixed-effects logistic regressions fit in R using \texttt{lme4::glmer} \citep{bates2014fitting}.
@@ -469,7 +487,9 @@ The production data also exposed an utterance-length effect: lower size discrimi
 The two tasks locate context sensitivity at two related levels.
 Slider judgments show how referential context grades an explicit ordering preference.
 Production shows that the same referential context can first determine which adjectives are selected, and only then which order is used.
-This link helps interpret the apparent mismatch in the size-discriminability interactions: visual size reliability did not monotonically shift responses toward size-first ordering, but it did affect whether speakers added extra adjectives.
+This link helps interpret the apparent mismatch in the size-discriminability interactions.
+Visual size reliability did not monotonically shift responses toward size-first ordering.
+It did affect whether speakers added extra adjectives.
 
 The formal modelling task is to account for these patterns within a shared representational framework.
 A successful model should preserve the size-first baseline, allow adjective choice and ordering to vary with referential usefulness, and represent the richer production response space over one-, two-, and three-adjective strings.
@@ -479,9 +499,12 @@ A successful model should preserve the size-first baseline, allow adjective choi
 \label{sec:model}
 % =============================================================================
 
-This section turns the modelling framework introduced in \Cref{sec:framework} into a formal RSA model.
-The formalization separates components shared across model variants from components that instantiate the two tested contrasts: speaker architecture and semantic regime.
-The section specifies the representational primitives, literal-listener semantics, global and incremental speakers, context-fixed and context-updating regimes, and inference setup for the $2 \times 2$ model comparison.
+This section turns the modelling framework introduced in \Cref{sec:framework} into the production-anchor RSA family used for the fitted comparisons.
+The formalization separates two layers.
+The first layer is the shared RSA core: objects, utterances, literal-listener semantics, the order prior, and global or incremental pragmatic choice.
+The second layer contains task-level production pressures that are needed once the response space includes short, long, and redundant descriptions.
+These pressures implement visual salience, stopping, reliability backup, and order planning, and they are held constant across the four cells of the architecture-by-semantics comparison.
+The fitted contrasts ask how predictive accuracy changes when the shared speaker family uses global or incremental choice, and context-fixed or context-updating meanings.
 The experiments were broader than the fitted comparison: the full paradigm included size--form and colour--form trials, but the analyses reported here focus on size--colour scenes, where the contrast between a gradable adjective and a determinate feature adjective is clearest.
 The fitted analyses therefore use colour as the determinate feature in the main gradable--determinate contrast.
 
@@ -515,14 +538,16 @@ A threshold is computed from the current comparison class $\mathcal{C}$:
 \end{equation}
 where $x_\text{min}(\mathcal{C})$ and $x_\text{max}(\mathcal{C})$ are the lower and upper bounds of the mid-range of the contextual size distribution, and $k \in [0,1]$ controls the strictness of the threshold.
 Smaller values set a higher, more selective standard for ``big''; larger values make the adjective apply more broadly.
-The resulting semantic value $\llbracket\text{S}\rrbracket(o, \mathcal{C}) \in [0,1]$ is graded rather than binary: an object's size is compared to the threshold via a normal slack function scaled by a perceptual-blur parameter $w_f$, consistent with scalar variability in the Approximate Number System \citep{feigenson2004core}.
+The resulting semantic value $\llbracket\text{S}\rrbracket(o, \mathcal{C}) \in [0,1]$ is graded.
+An object's size is compared to the threshold via a normal slack function scaled by a perceptual-blur parameter $w_f$, consistent with scalar variability in the Approximate Number System \citep{feigenson2004core}.
 This context dependence is what makes the context-fixed vs.\ context-updating distinction possible: because $\theta_k$ depends on $\mathcal{C}$, changing which objects are in the comparison class changes what counts as big.
 
 \paragraph{Colour and form semantics.}
 Colour and form are in principle determinate: an object either matches the feature or it does not.
 We follow the relaxed-semantics approach of \citet{degen2020redundancy} and \citet{waldon2021modeling} by softening these denotations with $\nu \in (0,1)$, which can be interpreted as the probability that a feature-matching object is correctly described by the adjective.
 This relaxation allows even determinate properties to carry graded information, which is needed for modelling redundant modification.
-In the reported model fits, colour is the primary determinate comparison case because inference is carried out on size--colour scenes, whereas form is retained as a general determinate feature term and as a possible redundant modifier in production.
+In the reported model fits, colour is the primary determinate comparison case because inference is carried out on size--colour scenes.
+Form is retained as a general determinate feature term and as a possible redundant modifier in production.
 In the slider models, colour and form share a single $\nu$ parameter.
 In the production models, they receive separate fixed values, $\nu_\text{colour}$ and $\nu_\text{form}$, whose provenance and sensitivity checks are summarized in \Cref{sec:appendix:model-development}; the values are held constant across all final model variants.
 
@@ -605,12 +630,16 @@ This point matters for interpreting the semantic-regime comparison: if the colou
 The model incorporates a prior over utterance forms that is separate from the pragmatic component.
 This prior captures stable ordering tendencies --- such as the well-documented subjectivity-driven size-first preference --- that the speaker brings to the task before any scene-specific pragmatic reasoning.
 
-In the slider-rating models, the prior is minimal: a single inferred bias parameter $b \geq 0$ that penalizes the reverse (colour-first) order relative to the canonical (size-first) order.
-Because $b$ is estimated from data rather than fixed, the posterior indicates how much residual ordering preference remains after the RSA mechanism has been applied; if the pragmatic model were sufficient on its own, the posterior for $b$ would concentrate near zero.
+In the paper-facing slider-rating models, the production order prior is reduced to a two-order score over \utter{SC} and \utter{CS}.
+This score is scaled by an inferred weight $\beta_\text{order}$.
+It preserves the role of the production order-only prior in the binary slider response space.
+Earlier minimal slider checks used a single inferred bias parameter $b$.
+The reported comparison uses the production-anchor reduction.
 
 In the production models, the prior is derived from a language-model distribution over the 15 utterance forms, estimated from German GPT-2 surprisal values averaged across the experimental adjective--noun combinations.
 To keep this prior from explaining away utterance length or adjective content, we use only its residual order preference within each unordered content set.
-For example, the prior can distinguish \utter{SC} from \utter{CS}, but it cannot by itself prefer two-adjective over one-adjective descriptions, or colour descriptions over size descriptions.
+For example, the prior can distinguish \utter{SC} from \utter{CS}.
+By construction, it has no independent preference for two-adjective over one-adjective descriptions, or for colour descriptions over size descriptions.
 The contribution of this order-only prior is scaled by an inferred parameter $\beta$.
 Like $b$ in the slider model, it encodes stable word-order tendencies from language experience, which the pragmatic speaker then modulates in light of the current scene.
 Against this shared listener and prior, the two speaker architectures differ in when pragmatic utility is evaluated.
@@ -629,13 +658,13 @@ For the shared production core, utility is
   \label{eq:global_utility}
 \end{equation}
 where $\alpha$ is the RSA rationality parameter and $\Omega(u)$ is the order-only language-model score.
-The production model adds the salience, stopping, and lapse terms described in \Cref{sec:model:extended} to this core utility.
-In the slider-rating models, the utility simplifies to
+The production-anchor model then applies the task-level salience, stopping, reliability-backup, order-planning, and lapse terms described below.
+In the paper-facing slider-rating models, the utility simplifies to a two-order version of the same production-anchor score:
 \begin{equation}
-  U(o,u) = \alpha\bigl(\log L(o \mid u) - b_u\bigr),
+  U(o,u) = \alpha \log L(o \mid u) + \beta_\text{order}\,\omega_u,
   \label{eq:slider_utility}
 \end{equation}
-where $b_u = 0$ for the size-first order and $b_u = b$ for the reverse order.
+where $\omega_u$ is the production-anchor order score for \utter{SC} or \utter{CS}.
 
 \paragraph{Incremental speaker.}
 The incremental speaker chooses one token at a time. For an intended referent $o^\ast$,
@@ -667,11 +696,24 @@ where
   \label{eq:inc_normaliser}
 \end{equation}
 ensures local normalization.
-In the slider-rating models, the LM prior is replaced by the bias term: $S_{\mathrm{inc}}(u \mid o^\ast) \propto \exp(-b_u) \cdot \prod_t S_t(w_t \mid u_{<t}, o^\ast)$.
-The theoretical contrast is that the global speaker applies pragmatic reasoning once over complete utterances, whereas the incremental speaker applies it at each token position.
+In the slider-rating models, the LM prior is replaced by the two-order score: $S_{\mathrm{inc}}(u \mid o^\ast) \propto \exp(\beta_\text{order}\omega_u) \cdot \prod_t S_t(w_t \mid u_{<t}, o^\ast)$.
+The theoretical contrast concerns the timing of pragmatic choice.
+The global speaker reasons once over complete utterances.
+The incremental speaker reasons at each token position.
 When semantics is context-dependent, these two model variants are not equivalent.
-The equations in this subsection define the shared pragmatic core.
-The constrained-production fits then apply the same production extensions --- order-only prior, visual-salience terms, salience-sensitive stopping cost, and lapse mixture --- in every model of the production $2 \times 2$.
+The equations in this subsection define the shared pragmatic core, before task-level production pressures are applied.
+
+\paragraph{Production-anchor response policy.}
+The final fitted family adds a response-policy layer to the pragmatic core.
+This layer turns listener-oriented informativeness into a distribution over the utterance forms available in the production task.
+It rewards exact one-word descriptions when a single property is sufficient, it treats form as backup information when colour is not sufficient, and it penalizes unnecessary three-word descriptions.
+It also lets size reliability affect the choice between bare size and size--form descriptions.
+Sharp sufficient size supports stopping at \utter{S}.
+Blurry sufficient size can make \utter{SF} or \utter{FS} more attractive.
+The order-planning term is separate from this length-and-content policy.
+It shifts probability among alternative orders with the same content, such as \utter{SC} versus \utter{CS}, according to which dimension should be planned earlier in the current display.
+In the slider task, the same production-anchor family is reduced to the available \utter{SC}/\utter{CS} contrast; utterance-length and redundant-form terms are absent because those responses are not available.
+In the production task, all four cells use the full response policy over the 15 utterance forms.
 
 % =============================================================================
 \section{Bayesian Model Comparison}
@@ -680,21 +722,27 @@ The constrained-production fits then apply the same production extensions --- or
 % =============================================================================
 
 The model comparison tests the two mechanisms introduced in \Cref{sec:framework:mechanisms}: speaker architecture (global vs.\ incremental) and semantic regime (context-fixed vs.\ context-updating).
-The constrained-production study provides the main parameter-matched $2 \times 2$ architecture-by-semantics comparison.
-The slider-rating study uses the same mechanistic baseline but, after the speaker-policy exploration reported below, is summarized with heldout model selection among incremental speaker-policy variants.
-Fit differences are therefore interpreted with different emphases across tasks: slider ratings diagnose whether a planned-usefulness response policy improves the graded order preference, whereas constrained production diagnoses the architecture-by-semantics contrast in the richer categorical response space.
-The production $2 \times 2$ comparison is diagnostic in three ways.
+Both datasets are summarized with the same architecture-by-semantics $2 \times 2$ and the same production-anchor speaker family.
+The constrained-production models use the full categorical response space, including one-word, two-word, and three-word utterances.
+The slider-rating models use the same family reduced to the two available order responses.
+The slider response format removes utterance-length and redundant-form terms from the model.
+Fit differences are therefore interpreted as the same formal contrast across tasks, with the caveat that slider ratings compress the response space to a binary order preference.
+The paper-facing claim is therefore a shared speaker family with task-specific response spaces.
+Each task exposes the parts of the speaker that its response format can identify.
+The $2 \times 2$ comparison is diagnostic in three ways.
 A consistent advantage for incremental over global speakers would indicate that word-by-word choice contributes predictive accuracy beyond utterance-level choice.
 A consistent advantage for context-updating over context-fixed semantics would indicate that recomputing gradable meanings from the compositionally updated comparison class contributes predictive accuracy beyond incremental belief updating alone.
 A positive difference-in-differences would indicate that the value of context-updating semantics depends on whether production itself is incremental.
-We use Pareto-smoothed importance-sampling leave-one-out cross-validation \citep[PSIS-LOO;][]{vehtari2017practical}.
+For constrained production, we use Pareto-smoothed importance-sampling leave-one-out cross-validation \citep[PSIS-LOO;][]{vehtari2017practical}.
 For PSIS-LOO comparisons, we report differences in expected log pointwise predictive density ($\Delta$ELPD) relative to the best-fitting model together with the difference standard error (dse).
 A ratio $|\Delta\text{ELPD}|/\text{dse}$ substantially greater than 1 is treated as evidence for a clear difference in out-of-sample predictive accuracy.
+For slider ratings, full-sample PSIS-LOO is diagnostic only because the zero-one-inflated beta likelihood produces unstable Pareto diagnostics; the primary slider comparison is five-fold heldout ELPD.
 All models were implemented in NumPyro \citep{phan2019composable} and estimated with four MCMC chains using the NUTS sampler \citep{hoffman2014no}.
 All models reported in the main text use hierarchical participant-level pooling, implemented as participant-level offsets on the rationality parameter.
-The incremental production models that drive the main comparison converged cleanly; diagnostics for the global robustness check are reported in \Cref{sec:appendix:production-robustness}.
-The inferential focus is the comparison among incremental models, because these models both fit the data well and have acceptable MCMC diagnostics.
-Global models are retained as structurally informative baselines, but when they combine very poor predictive fit with weak diagnostics, their parameter estimates should not be interpreted substantively.
+The slider hierarchy is parameterized on log rationality to keep participant variation while avoiding the boundary geometry seen in earlier slider fits.
+The inferential focus is the predictive comparison among models.
+Global models are retained as structurally informative baselines.
+When they fit poorly, their parameter estimates are not interpreted substantively.
 \Cref{sec:appendix:model-diagnostics} reports the available PSIS-LOO warnings, convergence summaries, and production Pareto-$k$ counts for the main comparisons.
 Dataset-specific parameter inventories, likelihoods, heldout summaries, and sampler settings are introduced with each subsection below.
 
@@ -703,7 +751,7 @@ Dataset-specific parameter inventories, likelihoods, heldout summaries, and samp
 \begin{figure}[!ht]
   \centering
   \includegraphics[width=0.65\textwidth]{slider_model_comparison.pdf}
-  \caption{Slider-rating model comparison: heldout ELPD relative to the selected diagnostic-passing planned-usefulness model.}
+  \caption{Slider-rating model comparison: five-fold heldout ELPD relative to the best model for the production-anchor $2 \times 2$.}
   \label{fig:slider-model}
 \end{figure}
 
@@ -719,40 +767,48 @@ Dataset-specific parameter inventories, likelihoods, heldout summaries, and samp
     \includegraphics[width=\linewidth]{slider_correlation_inc_hier.pdf}\\[2pt]
     {\small (b) Condition-level correlation}
   \end{minipage}
-  \caption{Posterior-predictive fit of the selected planned-usefulness slider model.
+  \caption{Posterior-predictive fit of the heldout-best incremental context-fixed slider model.
   (a) Observed mean slider ratings and posterior-predictive model means by referential context $\times$ size discriminability; dashed line marks $0.5$ (no preference), error bars are $95\%$ confidence and posterior-predictive intervals.
   (b) Observed vs.\ predicted condition means; dashed line is identity.}
   \label{fig:slider-results}
 \end{figure}
 The slider models use a Zero-One-Inflated Beta likelihood because responses cluster at the boundaries (0 and 1).
-The greedy baseline speaker has a rationality parameter and participant-level offsets, and the planned-usefulness variants add a response policy that evaluates the expected usefulness of producing the order as a planned sequence.
-The semantic constants are held fixed at $k = 0.5$, $w_f = 1.0$, and $\nu = 0.80$ for the paper-facing slider comparison.
-Each full-sample chain drew 500 warmup and 500 post-warmup samples (target acceptance probability $= 0.90$, maximum tree depth $= 8$), and the heldout comparison used five folds.
+The paper-facing slider models are reduced versions of the production-anchor speaker.
+They preserve the same architecture-by-semantics contrast, the production semantic constants ($\nu=0.59$, $k=0.50$, $w_f=0.6856$), the fixed lapse rate ($\epsilon=.003$), the order prior, display-sensitive visual salience, and order-planning pressure.
+Terms specific to utterance length and redundant form are absent because the slider task only contrasts the two size--colour orders.
+Each full-sample chain drew 2{,}000 warmup and 2{,}000 post-warmup samples, and the heldout comparison used five condition-balanced folds.
+The default target acceptance probability was $0.90$ with maximum tree depth $8$; the few cells with divergent transitions were rerun at target acceptance probability $0.99$ and maximum tree depth $10$.
 
-\Cref{fig:slider-model} shows the heldout comparison for the slider data after the speaker-policy exploration.
-Because full-sample PSIS-LOO for the richer slider variants produced unstable Pareto diagnostics, we use five-fold heldout ELPD as the model-selection summary.
-The numerical best model is the context-fixed planned-usefulness speaker, but that fit has one divergent transition.
-We therefore use the essentially tied diagnostic-passing signed-order planned-usefulness model as the slider reference model (heldout ELPD $=-2764.41$, only $0.01$ below the numerical best).
-The selected planned-usefulness model improves over the greedy incremental context-updating baseline by about $1.33$ heldout ELPD and over the greedy context-fixed baseline by about $1.11$ heldout ELPD.
-The PPC gain is clearer than the ELPD gain: condition-level RMSE drops from about $0.084$ for the greedy incremental baselines to about $0.080$ for the selected planned-usefulness model, and the correlation rises from about $0.96$ to $0.98$.
-Posterior-predictive checks show that the selected planned-usefulness model preserves the empirical ordering across all six referential context $\times$ size-discriminability combinations with $r = 0.98$ (squared Pearson $\approx 0.96$; \Cref{fig:slider-results}).
-The remaining error is range compression: the model still under-predicts the strongest size-first conditions and over-predicts the weakest colour-sufficient conditions.
-The slider data therefore support a speaker policy that evaluates the planned usefulness of the order, but they do not by themselves provide strong evidence that context-updating size semantics improves prediction.
+\Cref{fig:slider-model} shows the heldout comparison for the slider data.
+All four slider cells have clean MCMC diagnostics (maximum split-$\hat R=1.00$ and no divergent transitions).
+The heldout-best model is the incremental context-fixed variant (heldout ELPD $=-2846.45$).
+The incremental context-updating variant is essentially tied (heldout ELPD $=-2846.49$, only $0.05$ ELPD lower).
+The global models fit much worse: incremental speakers outperform matched global speakers by about $96.8$ heldout ELPD.
+The semantic-regime contrast is negligible within both architectures.
+Posterior-predictive checks show the same pattern.
+The incremental models achieve condition-level RMSE $\approx .076$ and $r \approx .95$ across the six condition means.
+The global models also correlate highly with the six condition means.
+Their heldout ELPD is much worse, and their condition-level RMSE is slightly worse.
+The remaining error is range compression: the heldout-best incremental model still under-predicts the strongest size-first conditions and over-predicts the weakest colour-sufficient conditions.
+The slider data support the architecture contrast also seen in production.
+They provide no evidence that context-updating size semantics improves prediction.
 
 \subsection{Constrained-Production Study}
 \label{sec:model:extended}
 
-Constrained production is a fifteen-way choice over one-, two-, and three-adjective strings, so the production speaker requires more than the binary policy used for slider ratings.
-At the same time, the production model must not encode each empirical regularity with a separate condition-specific parameter.
-We therefore use a parsimonious speaker with shared population-level mechanisms rather than condition-specific response parameters.
-These components instantiate the division of labor introduced in \Cref{sec:framework:mechanisms}: stable order expectations, non-pragmatic visual prominence, and listener-oriented utility are represented separately and held constant across all four models of the architecture $\times$ semantics comparison.
+Constrained production is a fifteen-way choice over one-, two-, and three-adjective strings, so the production speaker needs a richer policy than the binary slider model.
+The production model also needs to avoid condition-specific response parameters.
+We use a parsimonious speaker with shared population-level mechanisms and no condition-specific response parameters.
+These components instantiate the division of labor introduced in \Cref{sec:framework:mechanisms} and \Cref{sec:model:speakers}: stable order expectations, non-pragmatic visual prominence, listener-oriented utility, reliability backup, and order planning are represented separately and held constant across all four models of the architecture $\times$ semantics comparison.
 No component directly encodes referential context as a condition label; size discriminability enters through display-derived quantities such as target--competitor size contrast and the sharpness adjustment in the salience term.
 
 \paragraph{Principled production components.}
+The following details make the production-anchor response policy explicit.
 First, stable ordering preferences enter through the order-only language-model score $\Omega(u)$ introduced above.
 Because $\Omega(u)$ is residualized within unordered content sets, it contributes a baseline ordering preference without carrying independent information about content choice or utterance length.
 Second, each adjective receives a soft visual-salience score.
-The base salience order is colour $>$ form $>$ size, reflecting the salience and consistency of colour in referring-expression production relative to size \citep{tarenskeen2015overspecification}, but the score is adjusted by the current display.
+The base salience order is colour $>$ form $>$ size, reflecting the salience and consistency of colour in referring-expression production relative to size \citep{tarenskeen2015overspecification}.
+The score is then adjusted by the current display.
 Let $\eta=(0,1,0.25)$ be the fixed base salience vector for size, colour, and form.
 For each trial, we compute a context adjustment
 \begin{equation}
@@ -790,14 +846,15 @@ In both architectures, salience also imposes a stopping pressure when a salient 
 This captures the tendency for highly salient sufficient colour to appear in short colour-only responses without hard-coding the colour-sufficient condition.
 Third, a single rationality parameter $\alpha$ controls pragmatic sensitivity to the listener's posterior.
 The participant hierarchy allows individual differences in pragmatic strength through a shared scale $\tau$.
-Fourth, a response-policy layer captures theoretically motivated choices about when enough has been said.
+Fourth, the response-policy layer captures theoretically motivated choices about when enough has been said.
 It rewards sufficient one-word responses, treats form as a reliability backup when colour is not already sufficient, penalizes unnecessary three-word responses, and lets size--form pairs trade off backup value against the visual reliability of size.
 When size is visually sharp, a sufficient bare size adjective receives additional support; when size is visually blurred, a size--form pair can receive additional support as a redundant backup.
+Fifth, the order-planning term shifts probability between alternative orders within the same content set, allowing the speaker to plan the ordering consequences of multi-adjective alternatives without changing the total probability assigned to that content.
 
 The determinate feature semantics are held fixed at $\nu_\text{colour}=0.59$ and $\nu_\text{form}=0.50$, with $k=0.50$ and $w_f=0.69$ for size.
 These values are used uniformly across the production comparison.
-The resulting model has nine learned population-level speaker parameters plus the participant-hierarchy scale $\tau$; the lapse rate is fixed at $\epsilon=.003$ for the final comparison.
-The uncertainty-based length term considered during model development is not part of the final production model; the final fit is driven by the order-only prior, soft salience, pragmatic informativeness, salience-sensitive stopping, and the response-policy layer.
+The resulting model has ten learned population-level speaker parameters plus the participant-hierarchy scale $\tau$; the lapse rate is fixed at $\epsilon=.003$ for the final comparison.
+The uncertainty-based length term considered during model development is not part of the final production model; the final fit is driven by the order-only prior, soft salience, pragmatic informativeness, salience-sensitive stopping, reliability backup, and order planning.
 \Cref{sec:appendix:model-development} summarizes the model-development checks that led to this inventory.
 
 \begin{figure}[ht]
@@ -808,7 +865,7 @@ The uncertainty-based length term considered during model development is not par
 \end{figure}
 
 The four production models are parameter-matched on this inventory: identical population-level mechanisms, identical participant hierarchy, and identical constants.
-Predictive differences are therefore interpreted as reflecting architecture and semantic regime rather than expressive flexibility.
+Predictive differences are therefore interpreted as effects of architecture and semantic regime.
 Production responses are categorical over the fifteen utterance types; each chain drew 4{,}000 warmup and 2{,}000 post-warmup samples (target acceptance probability $= 0.85$, maximum tree depth $= 7$).
 The best-fitting production model is the incremental, context-fixed variant.
 It captures the qualitative production pattern well: across the 90 condition $\times$ utterance combinations, observed and posterior-predictive proportions correlate at $r = 0.97$ ($R^2 = 0.94$; \Cref{fig:production-results-bars} shows the by-condition fit and \Cref{fig:production-results-corr} the condition-level correlation).
@@ -828,37 +885,48 @@ It captures the qualitative production pattern well: across the 90 condition $\t
 \end{figure}
 
 The largest predictive difference is between speaker architectures.
-Both incremental models outperform both global models by about 506 ELPD in the matched comparison, and the global models show weaker condition-level correlations ($r \approx 0.91$).
+Both incremental models outperform both global models by about 409 ELPD in the matched comparison, and the global models show weaker condition-level correlations ($r \approx 0.92$).
 The production comparison therefore supports word-by-word speaker choice over complete-utterance choice as a source of predictive accuracy.
-This conclusion is about predictive fit; the global models are retained as poor-fitting baselines rather than as sources of substantively interpretable parameter estimates.
+This conclusion is about predictive fit.
+The global models serve as poor-fitting baselines, and their parameter estimates are not interpreted substantively.
 
 Within the incremental pair, the context-fixed model is favoured by PSIS-LOO.
-The context-fixed model is the best-fitting production model (ELPD$_{\text{LOO}}=-5{,}218.57$, $p_{\text{LOO}}=65.29$), followed almost exactly by the context-updating model (ELPD$_{\text{LOO}}=-5{,}219.42$, $\Delta\text{ELPD}=0.84$, dse $=0.31$).
-The difference is tiny relative to the architecture effect but still in the direction of the simpler semantic regime.
+The context-fixed model is the best-fitting production model (ELPD$_{\text{LOO}}=-5{,}219.62$, $p_{\text{LOO}}=65.56$), followed closely by the context-updating model (ELPD$_{\text{LOO}}=-5{,}220.36$, $\Delta\text{ELPD}=0.73$, dse $=0.31$).
+The difference is tiny relative to the architecture effect.
+It points toward the simpler semantic regime.
 The fitted production comparison therefore provides no evidence for an additional predictive benefit from context-updating semantics.
-The incremental advantage is robust, but posterior-dependent size meanings do not improve out-of-sample prediction once the final production model includes the order-only prior, display-sensitive salience, salience-sensitive stopping, response-policy terms, and fixed lapse.
+The incremental advantage is robust.
+Posterior-dependent size meanings do not improve out-of-sample prediction once the final production model includes the order-only prior, display-sensitive salience, salience-sensitive stopping, reliability backup, order planning, and fixed lapse.
 The semantic-scale audit in \Cref{sec:appendix:model-development} clarifies this interpretation: the implemented update only weakly changes target probabilities in the realized displays, so the comparison is most informative about this specific threshold-updating formulation.
-The global models in the final full comparison have no divergent transitions, no PSIS warnings, and acceptable split-$\hat R$ values, but their predictive fit remains much weaker.
+The global models in the final full comparison have no divergent transitions, no PSIS warnings, and acceptable split-$\hat R$ values.
+Their predictive fit remains much weaker.
 
 The posterior parameters of the incremental, context-fixed model are reported in full in \Cref{tab:param-inventory}.
-The posterior for the order-prior weight is clearly positive ($\log\beta \approx 0.65$), but it does not account for the fit by itself.
+The posterior for the order-prior weight is clearly positive ($\log\beta \approx 0.65$).
+The fit also depends on pragmatic choice and the production-anchor response policy.
 Pragmatic rationality is positive ($\alpha \approx 2.57$), the visual-salience weight is clearly identified ($\lambda_\text{salience} \approx 1.50$), and salience-sensitive continuation costs are small in the final model ($\rho_\text{stop} \approx 0.01$).
 The response-policy terms are also positive, including the sufficient one-word bonus ($\approx 1.21$), the form-backup term ($\approx 2.52$), the sharp-size bare-size bonus ($\approx 1.76$), and the size-reliability size--form tradeoff ($\approx 0.23$).
+The production order-planning term is small ($\lambda_\text{order-plan} \approx 0.10$), consistent with the cross-dataset scorecard: order planning improves the slider reduction while preserving production fit.
 The largest remaining residuals are under-prediction of some multi-adjective responses in both-necessary displays and under-prediction of colour--form responses in colour-sufficient displays.
-The participant-level spread is substantial but well behaved ($\tau \approx 1.03$), indicating stable individual variation in pragmatic strength.
+The participant-level spread is substantial and well behaved ($\tau \approx 1.03$), indicating stable individual variation in pragmatic strength.
 
 \FloatBarrier
 
 \subsection{Discussion}
 
-Comparing the two datasets yields a consistent lesson about the speaker policy, but not a consistent positive effect of context-updating semantics.
-The slider data favour a planned-usefulness policy over the greedy incremental baseline, with clearer gains in PPC than in heldout ELPD.
-The production data provide the sharper architecture result: the two incremental models strongly outperform the two global models, while the incremental context-fixed and context-updating variants have very similar predictive performance.
+Comparing the two datasets yields a consistent lesson about the speaker policy.
+The evidence for context-updating semantics is weak in the fitted comparisons.
+The slider data show the same architecture pattern in a reduced order-choice response space.
+The two incremental models outperform the two global models.
+The incremental context-fixed and context-updating variants have very similar predictive performance.
+The production data provide the sharper version of the same result in the richer utterance-choice response space.
 Thus the empirical comparison does not support the expected additional benefit of context-updating semantics in either task.
-Context-updating composition still has a defined role in the mechanism space: the simulation asks what it can generate on its own, and it supplies order sensitivity for a global speaker without an order prior.
-In the fitted production comparison, that role does not translate into best predictive performance once the model includes an order-only prior, visual salience, response-policy terms, and incremental choice.
-The response-space asymmetry is instead reflected in what each task identifies.
-The binary slider response space is informative about order-level response policy but compresses the empirical range; the production response space exposes a richer pattern of one-, two-, and three-adjective choices, making the incremental production process more diagnostic.
+Context-updating composition still has a defined role in the mechanism space.
+The simulation asks what it can generate on its own, and it supplies order sensitivity for a global speaker through composition alone.
+In the fitted production comparison, that role adds little predictive accuracy once the model includes an order-only prior, visual salience, response-policy terms, and incremental choice.
+The two response formats identify different parts of the speaker.
+The binary slider response space is informative about order-level architecture and compresses the empirical range.
+The production response space exposes a richer pattern of one-, two-, and three-adjective choices, making the incremental production process more diagnostic.
 
 % =============================================================================
 \section{Simulation Study}
@@ -867,11 +935,15 @@ The binary slider response space is informative about order-level response polic
 
 \subsection{Goals and Design}
 
-The fitted model comparison identifies which mechanisms add predictive accuracy, but it does not by itself determine what each mechanism can generate.
+The fitted model comparison identifies which mechanisms add predictive accuracy.
+It also leaves open what each mechanism can generate on its own.
 This leaves an interpretive question for context-updating semantics.
 In the fitted comparisons, context-updating semantics adds little or no predictive accuracy within the best incremental models.
 The same mechanism may still be sufficient to produce a baseline size-first asymmetry in a generative model.
 The simulation addresses this question by applying the same $2 \times 2$ crossing outside the fitted empirical models.
+It deliberately strips away the production-anchor response policy, visual-salience calibration, reliability backup, and fitted order prior.
+The simulation is therefore a mechanism check for semantic composition and speaker architecture.
+It is separate from the posterior-predictive checks of the final fitted model.
 
 We ask three questions.
 First, can the crossed models \emph{generate} a size-first ordering preference across a broad range of contexts without being fit to observed responses?
@@ -882,7 +954,9 @@ To answer these questions, we ran a parameter-grid simulation over the values li
 Under context-updating semantics, the size threshold adapts to the literal listener's running posterior at each composition step; under context-fixed semantics, the threshold is computed once from the uniform prior and held fixed.
 For each parameter combination, 1{,}000 random contexts were sampled at the specified context size, yielding 12{,}000{,}000 simulated trials in total.
 On each trial, the simulation computed the pragmatic listener's posterior probability of the target referent after the size-first utterance ``big blue'' and after the colour-first utterance ``blue big''.
-Speaker architecture enters through this pragmatic listener: $L_1$ is obtained by Bayesian inversion of either a global or an incremental speaker, so the simulation measures the communicative success of fixed utterances under different speaker architectures rather than fitted utterance frequencies.
+Speaker architecture enters through this pragmatic listener: $L_1$ is obtained by Bayesian inversion of either a global or an incremental speaker.
+The simulation measures the communicative success of fixed utterances under different speaker architectures.
+It does not model fitted utterance frequencies.
 The simulation estimand is the size-first advantage:
 \[
   \Delta_\text{SF}
@@ -917,11 +991,13 @@ The plotted values are averages of this quantity over sampled contexts and param
   \end{tabularx}
 \end{table}
 
-The parameter $\sigma_\text{spread}$ controls the spread of the size distribution in the sampled context: low values produce low size-discriminability contexts in which size is weakly informative, whereas high values produce high size-discriminability contexts in which size strongly separates the target from its competitors.
+The parameter $\sigma_\text{spread}$ controls the spread of the size distribution in the sampled context.
+Low values produce low size-discriminability contexts in which size is weakly informative.
+High values produce high size-discriminability contexts in which size strongly separates the target from its competitors.
 The remaining parameters ($k$, $w_f$, $\nu$) instantiate the semantic space explored in the simulation.
 Because the goal is to test the qualitative consequences of semantic regime, the $\nu$ grid focuses on high-reliability determinate predicates, matching the theoretical regime in which colour and form are nearly categorical.
-The production model, by contrast, uses the empirically calibrated softer colour value $\nu_\text{colour}=0.59$ for predictive fitting.
-The simulation is therefore a theoretical parameter-grid study rather than a posterior-predictive simulation of the fitted production model.
+The fitted production model uses the empirically calibrated softer colour value $\nu_\text{colour}=0.59$.
+The simulation is a theoretical parameter-grid study, separated from the posterior-predictive analysis of the fitted production model.
 The individual effects of the semantic grid parameters are reported in \Cref{sec:appendix:sim-params}.
 
 \subsection{Results}
@@ -944,12 +1020,15 @@ This result is consistent with the subjectivity literature: once semantic values
 Second, context-fixed semantics removes this global speaker advantage.
 Under context-fixed semantics, the global speaker produced $\Delta = 0.000$ across the parameter grid.
 When the size threshold does not update during composition, the literal listener assigns identical posteriors to both orderings, making them informationally equivalent.
-The global speaker's baseline advantage therefore comes from order-sensitive threshold adaptation rather than from utterance-level choice.
+The global speaker's baseline advantage comes from order-sensitive threshold adaptation.
 
 Third, incremental choice changes the shape of the ordering pattern.
 The incremental speaker strengthens the size-first advantage under context-updating semantics in much of the parameter space, and it also produces colour-first preferences in low size-discriminability, low-cardinality contexts.
 Under context-fixed semantics, the incremental speaker defaults slightly to colour-first ($\Delta = -0.009$), driven by the chain-rule asymmetry that favours ``blue'' as the opening token when size is insufficiently diagnostic.
-The simulation therefore separates two sources of order sensitivity: context-updating composition can provide a baseline asymmetry, and incremental choice determines how adjective order responds to the relative informativeness of each adjective at the point where it is selected.
+The simulation separates two sources of order sensitivity in the stripped-down mechanism space.
+Context-updating composition can provide a baseline asymmetry.
+Incremental choice determines how adjective order responds to the relative informativeness of each adjective at the point where it is selected.
+The fitted models then show how this mechanism-level possibility fares once stable order expectations, salience, reliability backup, order planning, and participant variation are included.
 
 % =============================================================================
 \section{General Discussion}
@@ -965,7 +1044,7 @@ This length effect is consistent with work on communicative efficiency and redun
 The model comparison localizes the strongest predictive gain in speaker architecture.
 Incremental speakers outperformed global speakers in both response formats, indicating that much of the context sensitivity in the observed data is captured by word-by-word pragmatic choice.
 The semantic-regime contrast was weaker in the fitted models.
-Context-updating and context-fixed semantics were indistinguishable in the slider task, and the context-fixed model was slightly favoured in production once the order prior, display-sensitive salience, stopping pressure, and lapse mixture were included.
+Context-updating and context-fixed semantics were indistinguishable in the slider task, and the context-fixed model was slightly favoured in production once the order prior, display-sensitive salience, stopping pressure, reliability backup, order planning, and lapse mixture were included.
 
 The simulation clarifies how to interpret this result.
 Context-updating composition can generate a size-first advantage without incremental choice because the comparison class changes over the course of semantic composition.
@@ -1071,7 +1150,8 @@ Three adjectives & \texttt{DCF}, \texttt{DFC}, \texttt{CDF}, \texttt{CFD}, \text
 \end{table}
 
 The descriptive analyses and the Bayesian model comparisons address different inferential questions.
-The descriptive regressions test the qualitative empirical patterns in the observed responses, whereas the Bayesian models compare predictive mechanisms under response-appropriate likelihoods.
+The descriptive regressions test the qualitative empirical patterns in the observed responses.
+The Bayesian models compare predictive mechanisms under response-appropriate likelihoods.
 For the reported size--colour slider analysis, the descriptive model was a linear mixed-effects model of centred slider rating with fixed effects of referential context, size discriminability, and their interaction, plus random intercepts for participant and item:
 \[
   y_{\text{slider}} \sim \text{context} \times \text{size discriminability} + (1 \mid \text{participant}) + (1 \mid \text{item}).
@@ -1110,6 +1190,7 @@ $\lambda_\text{form-backup}$ & form reliability backup & HalfNormal$(1.5)$ & $2.
 $\lambda_\text{3word}$ & three-word penalty & HalfNormal$(1.0)$ & $1.40\;[1.30,\,1.51]$ \\
 $\lambda_\text{size-rel-1}$ & sharp-size bare-size bonus & HalfNormal$(1.0)$ & $1.76\;[1.49,\,2.03]$ \\
 $\lambda_\text{size-rel-SF}$ & size-reliability size--form tradeoff & HalfNormal$(1.0)$ & $0.23\;[0.10,\,0.35]$ \\
+$\lambda_\text{order-plan}$ & order-planning pressure & HalfNormal$(1.0)$ & $0.10\;[0.00,\,0.26]$ \\
 $\epsilon$ & fixed lapse / uniform-noise rate & fixed & $0.003$ \\
 $\tau$ & SD of participant rationality offsets & HalfNormal$(0.15)$ & $1.03\;[0.88,\,1.18]$ \\
 \hline
@@ -1121,7 +1202,7 @@ $\tau$ & SD of participant rationality offsets & HalfNormal$(0.15)$ & $1.03\;[0.
 \label{sec:appendix:production-robustness}
 
 \Cref{tab:model-diagnostics} summarizes the available diagnostics for the main $2 \times 2$ comparisons.
-For the slider models, manuscript-facing summaries contain PSIS-LOO warnings and maximum split-$\hat R$, but they do not archive Pareto-$k$ counts or ESS/divergence summaries.
+For the slider models, PSIS-LOO is retained as a diagnostic check only because all four cells have unstable Pareto diagnostics; the reported selection summary is five-fold heldout ELPD.
 For the production models, all four cells have clean MCMC diagnostics and no problematic Pareto-$k$ observations; the global models fit much worse, so their parameters are not interpreted substantively.
 
 \begin{table}[H]
@@ -1135,21 +1216,49 @@ For the production models, all four cells have clean MCMC diagnostics and no pro
 \hline
 Model & Predictive summary & Diagnostics & Interpretation \\
 \hline
-\textbf{Slider}: planned-usefulness, fixed & Heldout ELPD $-2764.4$; $\Delta=0.0$ vs numerical best & max $\hat R=1.01$; divergences $1$ & Numerical best but diagnostic fail. \\
-\textbf{Slider}: signed planned-usefulness, fixed & Heldout ELPD $-2764.4$; $\Delta=-0.01$ vs numerical best & max $\hat R=1.01$; divergences $0$ & Selected diagnostic-passing slider reference. \\
-\textbf{Slider}: greedy incremental, updating & Heldout ELPD $-2765.7$; $\Delta=-1.34$ vs numerical best & max $\hat R=1.01$; divergences $0$ & Greedy baseline; lower PPC fit. \\
-\textbf{Production}: incremental, fixed & ELPD $-5218.6$; $p_\text{LOO}=65.3$; $\Delta=0.0$; dse -- & PSIS warning no; max $\hat R=1.00$; divergences $0$ & Best production model; main inferential reference. \\
-\textbf{Production}: incremental, updating & ELPD $-5219.4$; $p_\text{LOO}=65.0$; $\Delta=0.84$; dse $0.31$ & PSIS warning no; max $\hat R=1.00$; divergences $0$ & Clean diagnostics; effectively tied with fixed semantics. \\
-\textbf{Production}: global, fixed & ELPD $-5724.8$; $p_\text{LOO}=27.9$; $\Delta=506.2$; dse $30.2$ & PSIS warning no; max $\hat R=1.00$; divergences $0$ & Poor predictive baseline. \\
-\textbf{Production}: global, updating & ELPD $-5725.1$; $p_\text{LOO}=27.9$; $\Delta=506.5$; dse $30.2$ & PSIS warning no; max $\hat R=1.01$; divergences $0$ & Poor predictive baseline. \\
+\textbf{Slider}: incremental, fixed & Heldout ELPD $-2846.4$; best heldout model & PSIS warning yes; max $\hat R=1.00$; divergences $0$ & Best slider cell; very similar predictive performance to updating semantics. \\
+\textbf{Slider}: incremental, updating & Heldout ELPD $-2846.5$; $0.05$ below best & PSIS warning yes; max $\hat R=1.00$; divergences $0$ & Essentially tied with fixed semantics. \\
+\textbf{Slider}: global, updating & Heldout ELPD $-2943.3$; $96.8$ below best & PSIS warning yes; max $\hat R=1.00$; divergences $0$ & Poor predictive baseline. \\
+\textbf{Slider}: global, fixed & Heldout ELPD $-2943.3$; $96.8$ below best & PSIS warning yes; max $\hat R=1.00$; divergences $0$ & Poor predictive baseline. \\
+\textbf{Production}: incremental, fixed & ELPD $-5219.6$; $p_\text{LOO}=65.6$; $\Delta=0.0$; dse -- & PSIS warning no; max $\hat R=1.00$; divergences $0$ & Best production model; main inferential reference. \\
+\textbf{Production}: incremental, updating & ELPD $-5220.4$; $p_\text{LOO}=65.2$; $\Delta=0.73$; dse $0.31$ & PSIS warning no; max $\hat R=1.00$; divergences $0$ & Clean diagnostics; effectively tied with fixed semantics. \\
+\textbf{Production}: global, fixed & ELPD $-5628.6$; $p_\text{LOO}=39.3$; $\Delta=408.9$; dse $25.4$ & PSIS warning no; max $\hat R=1.00$; divergences $0$ & Poor predictive baseline. \\
+\textbf{Production}: global, updating & ELPD $-5628.6$; $p_\text{LOO}=39.2$; $\Delta=409.0$; dse $25.4$ & PSIS warning no; max $\hat R=1.00$; divergences $0$ & Poor predictive baseline. \\
 \hline
 \end{tabularx}
 \end{table}
 
-The main production comparison uses PSIS-LOO on the matched reliability-backup response-policy $2 \times 2$.
+The main production comparison uses PSIS-LOO on the matched reliability-backup order-planning response-policy $2 \times 2$.
 All four production models have clean diagnostics (maximum split-$\hat R \le 1.01$ and no divergences).
 The global models are much worse fitting.
-The substantive interpretation is therefore restricted to their predictive failure rather than their parameter estimates.
+The substantive interpretation is restricted to their predictive failure.
+Their parameter estimates are not interpreted.
+
+For cross-dataset model-family selection, we also exported a fitted-model inventory and a one-model scorecard before updating the paper-facing model.
+The one-model score weights primary predictive accuracy by .35, posterior-predictive fit by .35, and theoretical alignment across datasets by .30, with penalties for missing dataset counterparts, slider models without heldout ELPD, and loose bridges that cannot be described as the same model family.
+\Cref{tab:one-model-scorecard} summarizes the resulting decision.
+The reliability-backup order-planning family is the best ready strict candidate.
+Production uses the full utterance response space.
+The slider model uses the same family reduced to the \utter{SC}/\utter{CS} order contrast.
+
+\begin{table}[H]
+\centering
+\caption{Cross-dataset one-model scorecard. Scores combine primary predictive fit, posterior-predictive fit, and cross-dataset alignment.}
+\label{tab:one-model-scorecard}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabularx}{\textwidth}{p{3.2cm}p{1.55cm}p{2.2cm}p{2.2cm}X}
+\hline
+Candidate family & Score & Production fit & Slider fit & Decision \\
+\hline
+Reliability-backup order-planning & $.795$ & LOO ELPD $-5219.6$; $R^2=.939$ & Heldout ELPD $-2846.4$; $R^2=.910$ & Best ready strict one-model candidate. \\
+Reliability-backup & $.774$ & LOO ELPD $-5218.6$; $R^2=.939$ & Heldout ELPD $-2858.9$; $R^2=.771$ & Stronger alignment but weaker slider fit. \\
+Order-planning bridge & $.612$ & LOO ELPD $-5219.6$; $R^2=.939$ & Heldout ELPD $-2764.4$; $R^2=.959$ & Useful development evidence, but not a strict one-model claim. \\
+Greedy baseline & $.323$ & LOO ELPD $-5653.9$; $R^2=.824$ & Heldout ELPD $-2765.7$; $R^2=.922$ & Reference baseline only. \\
+\hline
+\end{tabularx}
+\end{table}
 
 \section{Production Model Development and Fixed-Constant Provenance}
 \label{sec:appendix:model-development}
@@ -1167,7 +1276,7 @@ They therefore define the common production speaker against which the architectu
 \hline
 Constant & Value & Provenance or check & Claim status \\
 \hline
-Slider $\nu$ & $0.80$ & Minimal slider-speaker specification for the size--colour slider data; free-$\nu$ audit reported in \Cref{sec:appendix:slider-nu}. & Architecture conclusion unchanged; bias estimate is conditional on this fixed value. \\
+Slider production-anchor constants & $\nu=0.59$, $k=0.50$, $w_f=0.6856$, $\epsilon=.003$ & Reduced version of the final production speaker for the size--colour slider order contrast; older fixed-$\nu$ sensitivity check reported in \Cref{sec:appendix:slider-nu}. & Main slider comparison is aligned with the production-anchor $2 \times 2$. \\
 Production $\nu_\text{colour}$ & $0.59$ & Free-colour-semantic-value diagnostic on the size--colour production data; value re-fixed for cleaner matched fits. & Defines common production semantics; not itself a $2 \times 2$ contrast. \\
 Production $\nu_\text{form}$ & $0.50$ & Fixed soft determinate-feature constant used to retain form as a possible redundant modifier. & Form is retained for response-space coverage, not as the main mechanistic contrast. \\
 Production $k$ & $0.50$ & Mid-range threshold default; simulation sweeps $k$ in \Cref{sec:appendix:sim-params}. & Held fixed so models differ only in architecture and semantic regime. \\
@@ -1179,7 +1288,7 @@ The archived constant name for the production blur weight is \texttt{WF\_FIXED\_
 
 We also audited the scale of the semantic-regime manipulation on the 162 unique size--colour displays.
 Under the production constants ($\nu_\text{colour}=0.59$, $k=0.50$, $w_f=0.69$), recomputing the size threshold after a colour update changed the target's graded size value by $< .001$ on average and changed the literal listener's target probability for \utter{SC} by $< .001$.
-Under the slider constants ($\nu=0.80$, $k=0.50$, $w_f=1.0$), the mean threshold shift was larger, but the corresponding listener-probability change also remained below $0.001$.
+Under the earlier minimal slider constants ($\nu=0.80$, $k=0.50$, $w_f=1.0$), the mean threshold shift was larger, but the corresponding listener-probability change also remained below $0.001$.
 The audit explains why the fitted semantic-regime contrast is conservative in these materials: the current mid-range threshold and ANS-style slack make posterior-dependent size meaning a weak perturbation unless the colour predicate is sharper and the size-membership function is less diffuse.
 A full-range max--min threshold did not strengthen the contrast in this stimulus set because the relevant colour-conditioned subsets usually preserved the same size extrema.
 
@@ -1193,6 +1302,7 @@ A full-range max--min threshold did not strengthen the contrast in this stimulus
 Component & Form & Provenance or check & Claim status \\
 \hline
 Order-only LM prior & Residual score $\Omega(u)$ & German GPT-2 surprisal residualized within unordered content sets; weight $\beta$ inferred in every final model. & Retained; cannot explain length or content choice by construction. \\
+Order-planning pressure & Order-sensitive planning term over multi-adjective alternatives & Shared across the four final cells and reduced to the DC/CD order contrast in the slider models. & Retained as part of the shared production-anchor speaker family. \\
 Soft visual salience & Centered display score $z_a$ & Fixed base vector plus display adjustment; no referential-context dummy; $\lambda_\text{salience}$ inferred. & Retained as non-pragmatic feature prominence. \\
 Salience-sensitive stopping & Continuation cost after salient words & Production model-development check on size--colour data; improves PSIS-LOO over the no-length variant by $52.57$ ELPD (dse $=10.07$). & Retained as short-description pressure. \\
 Reliability-backup response policy & Sufficient one-word support, form backup, and size-reliability tradeoff & The final comparison uses a single policy inventory across all four cells; posterior terms are positive in the advocated model. & Retained as a theoretically interpretable policy for utterance length and redundant form use. \\
@@ -1204,7 +1314,7 @@ Regularized hierarchy & Participant offsets with conservative prior & Model-deve
 
 \Cref{tab:model-development} summarizes the main production-model development checks.
 These checks were used to keep the final production model tied to independently motivated components while avoiding condition-specific residual parameters.
-The final $2 \times 2$ comparison uses the regularized salience-stop response-policy model as the common speaker inventory for the architecture and semantic-regime contrast.
+The final $2 \times 2$ comparison uses the regularized salience-stop reliability-backup order-planning model as the common speaker inventory for the architecture and semantic-regime contrast.
 
 \begin{table}[H]
 \centering
@@ -1217,6 +1327,7 @@ The final $2 \times 2$ comparison uses the regularized salience-stop response-po
 Component or choice & Motivation & Check & Decision \\
 \hline
 Order-only LM prior & Stable order expectations without allowing the LM prior to explain content choice or utterance length. & LM scores residualized within unordered content sets, so the prior distinguishes \utter{SC} from \utter{CS} but not short from long descriptions. & Retained as $\Omega(u)$ with inferred weight $\beta$. \\
+Order-planning pressure & Speakers can plan over the ordering consequences of multi-word alternatives, beyond local informativeness. & The order-planning family improves the cross-dataset scorecard by increasing slider heldout ELPD while preserving production fit. & Retained in the paper-facing shared speaker family. \\
 Soft visual salience & Feature prominence is independent of pragmatic information gain and should vary with the display. & Salience is context-dependent and centered within trial; no referential-context dummy is used. & Retained as local first-word boost $\lambda_\text{salience} z_a$. \\
 Salience-sensitive stopping & Highly salient sufficient features should support short descriptions. & Adding the stopping term improves PSIS-LOO over the salience-only/no-length variant ($\Delta$ELPD $=52.57$, dse $=10.07$). & Retained as the continuation cost in \Cref{eq:salience-stop}. \\
 Reliability-backup response policy & Redundant form can act as a backup when the primary sufficient property is visually less secure, while sharp sufficient size can license stopping at bare size. & The same response-policy terms are included in all four cells of the final $2 \times 2$, so they do not define the architecture or semantic-regime contrast. & Retained as the final production response policy. \\
@@ -1257,8 +1368,9 @@ Regularized participant hierarchy & Participant variation is required, but the f
 \section{Slider Colour-Reliability Audit}
 \label{sec:appendix:slider-nu}
 
-The slider-rating model fixes the colour and form reliability $\nu$ at $0.80$ (\Cref{sec:model:variants}).
-Production uses the softer colour value $\nu_\text{colour}=0.59$ in the final principled speaker (\Cref{sec:model:extended}); for parity we apply the same kind of sensitivity audit to the slider's incremental models.
+Before aligning the slider comparison with the final production-anchor constants, we audited the colour-reliability constant in the earlier minimal slider speaker.
+That earlier slider specification fixed the colour and form reliability $\nu$ at $0.80$.
+Production uses the softer colour value $\nu_\text{colour}=0.59$ in the final principled speaker (\Cref{sec:model:extended}); for parity, the audit asked whether the slider data strongly preferred the sharper fixed value.
 The audit samples $\nu \sim \mathrm{Uniform}(0.5, 0.999)$ within the model and recomputes the literal listeners at each MCMC step, while keeping every other component of the incremental hierarchical speaker unchanged.
 \Cref{tab:slider-nu-audit} reports the resulting posteriors alongside the originally fixed-$\nu$ fits.
 
@@ -1283,7 +1395,7 @@ Three points stand out.
 First, $\nu$ is weakly identified in the slider data: the posterior places substantial mass near the lower prior boundary at $0.5$ and only just excludes the fixed value at the upper end, in contrast to the tight production posterior $0.59\;[0.56, 0.62]$.
 Second, the four models are statistically indistinguishable in PSIS-LOO ($|\Delta\text{ELPD}|/\text{dse} < 1$ throughout), so out-of-sample fit cannot decide between sharper and softer colour predicates in this response space.
 Third, under the freed posterior the rationality parameter $\alpha$ moves to roughly $1.5$ (from $0.69$) and the bias intercept $b$ moves below $0.5$ (from $0.58$), because $\nu$ and the other parameters trade off: a softer colour predicate forces a stronger rationality term and reduces the residual size-first bias absorbed by $b$.
-We therefore retain the fixed $\nu = 0.80$ for the slider model in the main text and treat $\alpha$ and $b$ at that specification as the reported quantities, while flagging the conditional status of the $b > 0.5$ finding (\Cref{sec:modelcomparison}, Slider-Rating Study).
-The cross-dataset asymmetry --- production requires a softer colour predicate in the final principled speaker, while the slider data do not strongly identify $\nu$ --- is itself diagnostic of the response-space sensitivity argued for in the Cross-Dataset Summary.
+The audit supports the conservative choice made in the main text: the paper-facing slider comparison now uses the production-anchor constants, and $\nu=0.80$ is kept as an earlier sensitivity value.
+The broader conclusion is unchanged: the slider response space weakly identifies semantic scale parameters, so the fitted architecture contrast is more informative than the fitted semantic-constant contrast.
 
 \end{document}

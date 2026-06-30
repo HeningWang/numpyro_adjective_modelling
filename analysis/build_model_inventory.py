@@ -20,24 +20,25 @@ DEFAULT_OUT_DIR = ROOT / "models" / "model_inventory" / "stats"
 SCORING_RULE = (
     {
         "component": "fit_score",
-        "weight": 0.40,
+        "weight": 0.35,
         "definition": (
-            "Percentile rank of the selected diagnostic-passing model within its "
-            "dataset and primary metric. Slider heldout ELPD is preferred when "
-            "available; production uses LOO ELPD."
+            "Mean percentile rank of the selected diagnostic-passing production "
+            "and slider models on the primary predictive metric. Slider heldout "
+            "ELPD is preferred when available; production uses LOO ELPD."
         ),
     },
     {
         "component": "ppc_score",
         "weight": 0.35,
         "definition": (
-            "Average of the normalized PPC RMSE score and PPC R2 percentile rank "
-            "within diagnostic-passing rows for the dataset; higher is better."
+            "Mean posterior-predictive score across datasets, where each dataset "
+            "score averages normalized PPC RMSE and PPC R2 percentile ranks among "
+            "diagnostic-passing rows; higher is better."
         ),
     },
     {
         "component": "alignment_score",
-        "weight": 0.25,
+        "weight": 0.30,
         "definition": (
             "Manual theoretical-alignment score for how much the candidate can be "
             "described as one model family across datasets, allowing only "
@@ -46,8 +47,8 @@ SCORING_RULE = (
     },
     {
         "component": "missing_dataset_penalty",
-        "weight": -0.20,
-        "definition": "Applied per missing dataset counterpart.",
+        "weight": -0.25,
+        "definition": "Applied per missing production or slider counterpart.",
     },
     {
         "component": "slider_nonheldout_penalty",
@@ -55,6 +56,14 @@ SCORING_RULE = (
         "definition": (
             "Applied when a slider candidate is available only through full-sample "
             "LOO rather than heldout ELPD."
+        ),
+    },
+    {
+        "component": "loose_claim_penalty",
+        "weight": -0.20,
+        "definition": (
+            "Applied when the candidate is useful as a theoretical bridge but is "
+            "not a strict one-model-across-datasets claim."
         ),
     },
 )
@@ -149,14 +158,14 @@ ONE_MODEL_CANDIDATES = {
         },
     },
     "strict_order_planning": {
-        "claim_strength": "strict_shared_family_missing_slider",
+        "claim_strength": "strict_shared_family",
         "same_model_claim_ok": True,
         "description": (
             "Reliability-backup plus order-planning as the same shared speaker family."
         ),
         "differentiation_notes": (
-            "Production order-planning has been fitted; no strict slider counterpart "
-            "with the same family label is summarized yet."
+            "Production uses the full utterance response space; slider uses the same "
+            "order-planning family reduced to the DC/CD order contrast."
         ),
         "alignment_score": 0.95,
         "dataset_families": {
@@ -428,7 +437,13 @@ def load_result_dir(dataset: str, result_dir: Path) -> pd.DataFrame | None:
 
     ppc_path = first_existing(stats_dir, files["ppc"])
     if ppc_path is not None:
-        metric = metric.merge(normalize_ppc(pd.read_csv(ppc_path)), on="model", how="left")
+        try:
+            ppc = normalize_ppc(pd.read_csv(ppc_path))
+        except ValueError as exc:
+            if "model column" not in str(exc):
+                raise
+        else:
+            metric = metric.merge(ppc, on="model", how="left")
 
     diag_path = first_existing(stats_dir, files["diagnostics"])
     if diag_path is not None:
@@ -697,14 +712,9 @@ def select_candidate_row(
         0,
         1,
     )
-    subset["combined_dataset_score"] = (
-        0.55 * subset["fit_score"].fillna(0.0)
-        + 0.45 * subset["ppc_score"].fillna(0.0)
-        - subset["slider_metric_penalty"].fillna(0.0)
-    )
     subset = subset.sort_values(
-        ["metric_preference", "combined_dataset_score", "primary_metric", "ppc_rmse"],
-        ascending=[True, False, False, True],
+        ["metric_preference", "primary_metric", "ppc_rmse", "ppc_r2"],
+        ascending=[True, False, True, False],
     )
     return subset.iloc[0]
 
@@ -1115,9 +1125,9 @@ def build_decision_summary(
                 ),
                 "sweet_spot_score": top_ready["one_model_score"],
                 "next_action": (
-                    "Use as the current paper-facing shared model unless a strict "
-                    "order-planning slider counterpart is fitted and improves the "
-                    "same one-model score."
+                    "Use as the current paper-facing shared model unless a new "
+                    "strict shared-family candidate improves the same one-model "
+                    "score with diagnostic-passing production and heldout slider fits."
                 ),
             }
         )
@@ -1127,15 +1137,18 @@ def build_decision_summary(
     order_loose = one_model_scorecard[
         one_model_scorecard["candidate_family"].eq("loose_order_planning_bridge")
     ]
-    order_evidence = (
-        "Strict order-planning missing."
-        if order_strict.empty
-        else (
-            f"Strict order-planning missing_datasets="
-            f"{order_strict.iloc[0]['missing_datasets']}; "
-            f"score={order_strict.iloc[0]['one_model_score']}."
+    if order_strict.empty:
+        order_evidence = "Strict order-planning missing."
+        order_ready = False
+        order_score = np.nan
+    else:
+        order_ready = bool(order_strict.iloc[0]["ready_for_one_model_claim"])
+        order_score = float(order_strict.iloc[0]["one_model_score"])
+        order_evidence = (
+            f"Strict order-planning ready_for_one_model_claim={order_ready}; "
+            f"missing_datasets={order_strict.iloc[0]['missing_datasets']}; "
+            f"score={order_score}."
         )
-    )
     if not order_loose.empty:
         order_evidence += (
             f" Loose bridge score={order_loose.iloc[0]['one_model_score']}; "
@@ -1146,9 +1159,13 @@ def build_decision_summary(
             "decision_item": "reliability_order_planning",
             "candidate_family": "strict_order_planning",
             "status": (
-                "pilot_complete_but_missing_strict_slider_counterpart"
-                if order_status.get("recommended_for_gpu_pilot")
-                else "needs_forward_audit"
+                "strict_counterpart_complete_and_scored"
+                if order_ready
+                else (
+                    "pilot_complete_but_missing_strict_counterpart"
+                    if order_status.get("recommended_for_gpu_pilot")
+                    else "needs_forward_audit"
+                )
             ),
             "evidence": (
                 f"Forward gate pass={order_status.get('forward_gate_pass')}; "
@@ -1158,10 +1175,17 @@ def build_decision_summary(
                 f"best_utterance_rmse_gain={order_status.get('best_utterance_rmse_gain')}. "
                 f"{order_evidence}"
             ),
-            "sweet_spot_score": np.nan,
+            "sweet_spot_score": order_score,
             "next_action": (
-                "Do not report the loose bridge as one model. If the order-planning "
-                "idea is kept, fit a strict slider counterpart and re-score."
+                "Report the strict order-planning candidate as the current shared "
+                "family if it remains the top ready one-model score; keep the loose "
+                "bridge only as model-development context."
+                if order_ready
+                else (
+                    "Do not report the loose bridge as one model. If the "
+                    "order-planning idea is kept, fit the missing strict counterpart "
+                    "and re-score."
+                )
             ),
         }
     )

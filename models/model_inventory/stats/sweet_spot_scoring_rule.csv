@@ -1,6 +1,7 @@
 component,weight,definition
-fit_score,0.4,Percentile rank of the selected diagnostic-passing model within its dataset and primary metric. Slider heldout ELPD is preferred when available; production uses LOO ELPD.
-ppc_score,0.35,Average of the normalized PPC RMSE score and PPC R2 percentile rank within diagnostic-passing rows for the dataset; higher is better.
-alignment_score,0.25,"Manual theoretical-alignment score for how much the candidate can be described as one model family across datasets, allowing only response-space reductions."
-missing_dataset_penalty,-0.2,Applied per missing dataset counterpart.
+fit_score,0.35,Mean percentile rank of the selected diagnostic-passing production and slider models on the primary predictive metric. Slider heldout ELPD is preferred when available; production uses LOO ELPD.
+ppc_score,0.35,"Mean posterior-predictive score across datasets, where each dataset score averages normalized PPC RMSE and PPC R2 percentile ranks among diagnostic-passing rows; higher is better."
+alignment_score,0.3,"Manual theoretical-alignment score for how much the candidate can be described as one model family across datasets, allowing only response-space reductions."
+missing_dataset_penalty,-0.25,Applied per missing production or slider counterpart.
 slider_nonheldout_penalty,-0.15,Applied when a slider candidate is available only through full-sample LOO rather than heldout ELPD.
+loose_claim_penalty,-0.2,Applied when the candidate is useful as a theoretical bridge but is not a strict one-model-across-datasets claim.

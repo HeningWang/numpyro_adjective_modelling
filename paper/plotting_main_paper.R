@@ -40,8 +40,7 @@ dir.create(fig_dir, showWarnings = FALSE)
 df_emp   <- read_csv("data/slider_empirical.csv")
 df_pred  <- read_csv("data/slider_predictions.csv")
 df_cond  <- read_csv("data/slider_condition_summary.csv")
-df_loo   <- read_csv("data/slider_loo_comparison.csv") %>%
-  rename(model = 1)
+df_loo   <- read_csv("data/slider_heldout_elpd_model_summary.csv")
 
 # ── Nicer labels ─────────────────────────────────────────────────────────────
 rp_labels <- c(
@@ -142,10 +141,10 @@ cat("[✓] slider_lmer_summary.txt\n")
 
 
 # =============================================================================
-#  FIGURE 2 — Correlation: inc_hier model predictions vs. empirical
+#  FIGURE 2 — Correlation: incremental context-fixed model predictions vs. empirical
 # =============================================================================
 
-# Condition-level data for the inc_hier model
+# Condition-level data for the heldout-best incremental context-fixed model
 df_corr <- df_cond %>%
   mutate(
     relevant_property = factor(relevant_property, levels = names(rp_labels),
@@ -156,25 +155,36 @@ df_corr <- df_cond %>%
   )
 
 # Compute R²
-r_sq <- cor(df_corr$emp_mean, df_corr$pred_mean_incremental_recursive)^2
+r_sq <- cor(
+  df_corr$emp_mean,
+  df_corr$pred_mean_production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_static
+)^2
 
 fig2 <- df_corr %>%
-  ggplot(aes(x = emp_mean, y = pred_mean_incremental_recursive)) +
+  ggplot(aes(
+    x = emp_mean,
+    y = pred_mean_production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_static
+  )) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed", colour = "grey50") +
   geom_errorbar(
-    aes(ymin = pred_lo_incremental_recursive, ymax = pred_hi_incremental_recursive),
+    aes(
+      ymin = pred_lo_production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_static,
+      ymax = pred_hi_production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_static
+    ),
     width = 0.005, linewidth = 0.5, colour = "grey60"
   ) +
   geom_point(aes(colour = cond_label), size = 4) +
   scale_colour_manual(values = CSP_colors[1:6], name = "Condition") +
   annotate(
-    "text", x = min(df_corr$emp_mean), y = max(df_corr$pred_hi_incremental_recursive),
+    "text",
+    x = min(df_corr$emp_mean),
+    y = max(df_corr$pred_hi_production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_static),
     label = paste0("italic(R)^2 == ", formatC(r_sq, format = "f", digits = 3)),
     parse = TRUE, hjust = 0, vjust = 1, size = 5, colour = "grey30"
   ) +
   labs(
     x = "Empirical mean slider rating",
-    y = "Predicted mean (inc. context-updating, 95% CI)"
+    y = "Predicted mean (incremental context-fixed, 95% CI)"
   ) +
   coord_fixed() +
   theme_model() +
@@ -186,38 +196,35 @@ cat("[✓] slider_correlation_inc_hier.pdf\n")
 
 
 # =============================================================================
-#  FIGURE 3 — Model comparison (LOO ELPD) — 2×2 speaker × semantics
+#  FIGURE 3 — Model comparison (heldout ELPD) — 2×2 speaker × semantics
 # =============================================================================
 
 model_labels <- c(
-  "incremental_recursive" = "Incremental, context-updating",
-  "incremental_static"    = "Incremental, context-fixed",
-  "global_recursive"      = "Global, context-updating",
-  "global_static"         = "Global, context-fixed"
+  "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_rec" = "Incremental, context-updating",
+  "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_static" = "Incremental, context-fixed",
+  "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_glob_rec" = "Global, context-updating",
+  "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_glob_static" = "Global, context-fixed"
 )
 
-# Best model in red, others in blue
 df_loo_plot <- df_loo %>%
+  filter(model %in% names(model_labels)) %>%
   mutate(
-    model_label = factor(model_labels[model],
-                         levels = rev(model_labels[order(match(names(model_labels), model))])),
-    is_best = rank == 0
+    delta_elpd = total_heldout_elpd - max(total_heldout_elpd),
+    model_label = factor(model_labels[model], levels = rev(model_labels)),
+    is_best = delta_elpd == 0
   )
 
 fig3 <- df_loo_plot %>%
-  ggplot(aes(x = -elpd_diff, y = model_label, colour = is_best)) +
+  ggplot(aes(x = delta_elpd, y = model_label, colour = is_best)) +
   geom_vline(xintercept = 0, linetype = "dashed", colour = "grey60") +
-  geom_pointrange(
-    aes(xmin = -elpd_diff - dse, xmax = -elpd_diff + dse),
-    size = 0.8, linewidth = 0.9
-  ) +
+  geom_point(size = 2.8) +
   scale_colour_manual(
     values = c("TRUE" = CSP_colors[3], "FALSE" = CSP_colors[1]),
     guide = "none"
   ) +
   scale_x_continuous(expand = expansion(mult = c(0.02, 0.05))) +
   labs(
-    x = expression(Delta * "ELPD (LOO) relative to best model"),
+    x = expression(Delta * " heldout ELPD relative to best model"),
     y = NULL
   ) +
   theme_model() +
@@ -242,7 +249,7 @@ df_prod_pred <- read_csv("data/production_predictions.csv")
 df_prod_corr <- read_csv("data/production_correlation.csv")
 df_prod_loo  <- read_csv("data/production_loo_comparison.csv") %>%
   rename(model = 1)
-best_production_model <- "principled_salience_stop_regularized_2x2_inc_static"
+best_production_model <- "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_inc_static_fixedeps"
 
 # ── Remap utterance labels: D → S ───────────────────────────────────────────
 rename_D_to_S <- function(x) gsub("D", "S", x)
@@ -455,10 +462,10 @@ cat("[✓] production_correlation_inc_hier.pdf\n")
 # =============================================================================
 
 production_model_labels <- c(
-  "principled_salience_stop_regularized_2x2_inc_static"  = "Incremental, context-fixed",
-  "principled_salience_stop_regularized_2x2_inc_rec"     = "Incremental, context-updating",
-  "principled_salience_stop_regularized_2x2_glob_static" = "Global, context-fixed",
-  "principled_salience_stop_regularized_2x2_glob_rec"    = "Global, context-updating"
+  "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_inc_static_fixedeps"  = "Incremental, context-fixed",
+  "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_inc_rec_fixedeps"     = "Incremental, context-updating",
+  "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_glob_static_fixedeps" = "Global, context-fixed",
+  "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_glob_rec_fixedeps"    = "Global, context-updating"
 )
 
 df_prod_loo_plot <- df_prod_loo %>%
