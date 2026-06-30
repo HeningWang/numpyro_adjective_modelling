@@ -115,11 +115,55 @@ def test_reliability_backup_models_register_for_hierarchical_inference():
     for key in (
         "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_rec_fixedeps",
         "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_static_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_inc_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_inc_static_fixedeps",
         "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_glob_rec_fixedeps",
         "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_glob_static_fixedeps",
     ):
         assert key in ri.HIER_MODELS
         assert key in pa.SIMPLIFIED_MODELS
+
+
+def test_reliability_order_planning_preserves_adjective_set_mass():
+    base_kwargs = dict(
+        sufficient_dim=jnp.int32(-1),
+        has_one_word_solution=jnp.float32(0.0),
+        is_sharp=jnp.float32(1.0),
+        is_colour_sufficient=jnp.float32(0.0),
+        alpha=jnp.float32(3.0),
+        beta_order=jnp.float32(1.0),
+        lambda_salience=jnp.float32(0.8),
+        rho_salience_stop=jnp.float32(0.1),
+        lambda_sufficient_single=jnp.float32(1.0),
+        lambda_reliability_form=jnp.float32(2.0),
+        lambda_three_word_penalty=jnp.float32(1.0),
+        lambda_size_reliability_single_bonus=jnp.float32(1.0),
+        lambda_size_reliability_form_pair_tradeoff=jnp.float32(0.2),
+        gamma_uncertainty_len=jnp.float32(0.0),
+        color_semval=0.59,
+        form_semval=0.50,
+        k=0.5,
+        wf=0.6856,
+        epsilon=0.003,
+    )
+    base = np.asarray(
+        ms.incremental_speaker_principled_reliability_response_policy(
+            STATES,
+            **{**base_kwargs, "lambda_order_planning": jnp.float32(0.0)},
+        )
+    )
+    planned = np.asarray(
+        ms.incremental_speaker_principled_reliability_response_policy(
+            STATES,
+            **{**base_kwargs, "lambda_order_planning": jnp.float32(2.0)},
+        )
+    )
+    set_mask = np.asarray(ms.ORDER_SET_MASK_15)
+
+    assert np.allclose(base.sum(), 1.0, atol=1e-4)
+    assert np.allclose(planned.sum(), 1.0, atol=1e-4)
+    assert np.allclose(set_mask @ base, set_mask @ planned, atol=1e-5)
+    assert not np.allclose(base, planned, atol=1e-4)
 
 
 def test_principled_speaker_is_simplex_and_uses_soft_features():
@@ -674,6 +718,8 @@ def test_principled_models_register_for_hierarchical_inference():
         "principled_salience_stop_regularized_responsepolicy_boundedform_sharpform_2x2_inc_static_fixedeps",
         "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_rec_fixedeps",
         "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_static_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_inc_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_inc_static_fixedeps",
         "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_glob_rec_fixedeps",
         "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_glob_static_fixedeps",
         "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_rec_fixedeps",

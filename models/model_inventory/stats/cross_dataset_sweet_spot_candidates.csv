@@ -1,0 +1,9 @@
+candidate_family,dataset,available,model_family,model,result_dir,primary_metric_name,primary_metric,delta_primary_from_dataset_best,ppc_r2,ppc_rmse,max_r_hat,n_divergent,diagnostics_ok
+shared_reliability_backup,production,True,reliability_backup_shared,principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_static_fixedeps,models/production/results_reliabilitybackup_2x2_full,loo_elpd,-5218.574770927429,-31.7061185836792,0.938831962566982,0.0315102439767805,1.0,0.0,True
+shared_reliability_backup,slider,True,reliability_backup_shared_logalpha_slider,production_anchor_reliabilitybackup_logalpha_2x2_inc_rec,models/slider/results_reliabilitybackup_logalpha_2x2_heldout,heldout_elpd,-2858.9310302734375,-94.52130126953125,0.7714285379360861,0.0832278899418186,1.0,0.0,True
+slider_planned_usefulness,production,False,,,,,,,,,,,
+slider_planned_usefulness,slider,True,planned_usefulness_anchored_mixture,planned_usefulness_mixture_anchored_static,models/slider/results_anchored_mixture_pilot,loo_elpd,-2764.3633728027344,0.0,0.9600130463513094,0.0787990586031285,1.01,0.0,True
+production_specific_policy,production,True,size_sharp,principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_inc_static_fixedeps,models/production/results_reliabilitybackup_pilot,loo_elpd,-5186.86865234375,0.0,0.9399554177225652,0.031240913809374,1.01,0.0,True
+production_specific_policy,slider,False,,,,,,,,,,,
+older_slider_greedy,production,False,,,,,,,,,,,
+older_slider_greedy,slider,True,slider_greedy_incremental,incremental_recursive,models/slider/results_anchored_heldout_pilot,heldout_elpd,-2765.744140625,-1.33441162109375,0.921948554814349,0.0836053678858045,1.01,0.0,True

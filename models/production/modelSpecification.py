@@ -773,6 +773,25 @@ for _u in range(n_utt):
     if any(toks[i] > toks[i + 1] for i in range(len(toks) - 1)):
         _noncanon[_u] = 1.0
 NONCANON_MASK = jnp.asarray(_noncanon)                  # (n_utt,)
+
+# Order-only planning utilities.  These preserve the total probability assigned
+# to each unordered adjective set and only reallocate among its surface orders.
+_order_set_mask_np = np.zeros((n_utt, n_utt), dtype=np.float32)
+_full_present_np = np.asarray(FULL_PRESENT_15)
+for _u in range(n_utt):
+    for _v in range(n_utt):
+        _order_set_mask_np[_u, _v] = float(
+            np.array_equal(_full_present_np[_u], _full_present_np[_v])
+        )
+ORDER_SET_MASK_15 = jnp.asarray(_order_set_mask_np)
+
+_order_position_weights_np = np.zeros((n_utt, VOCAB_SIZE), dtype=np.float32)
+_position_discount_np = np.array([1.0, 0.45, 0.20], dtype=np.float32)
+for _u, _utt in enumerate(np.asarray(utterance_list)):
+    for _pos, _tok in enumerate(_utt):
+        if _tok >= 0:
+            _order_position_weights_np[_u, int(_tok)] += _position_discount_np[_pos]
+ORDER_POSITION_WEIGHTS_15 = jnp.asarray(_order_position_weights_np)
 # Binary masks: which utterances start with C / F (D is reference)
 STARTS_C = (FIRST_WORD == 1).astype(jnp.float32)  # (n_utt,)
 STARTS_F = (FIRST_WORD == 2).astype(jnp.float32)  # (n_utt,)
@@ -2717,6 +2736,34 @@ def _apply_principled_reliability_response_policy(
     return jax.nn.softmax(logits)
 
 
+def _apply_order_only_planning_policy(
+    probs: jnp.ndarray,
+    sufficient_dim: int,
+    has_one_word_solution: float,
+    is_colour_sufficient: float,
+    lambda_order_planning: float = 0.0,
+) -> jnp.ndarray:
+    both_required = 1.0 - has_one_word_solution
+    size_weight = jnp.where(
+        has_one_word_solution > 0.5,
+        jnp.where(sufficient_dim == 0, 1.0, 0.0),
+        1.0,
+    )
+    colour_weight = jnp.where(
+        is_colour_sufficient > 0.5,
+        1.0,
+        jnp.where(both_required > 0.5, 0.75, 0.0),
+    )
+    form_weight = jnp.where(is_colour_sufficient > 0.5, 0.40, 0.30)
+    dim_weights = jnp.stack([size_weight, colour_weight, form_weight])
+    order_scores = ORDER_POSITION_WEIGHTS_15 @ dim_weights
+    adjusted = jnp.clip(probs, 1e-12) * jnp.exp(lambda_order_planning * order_scores)
+    set_totals = ORDER_SET_MASK_15 @ probs
+    adjusted_set_totals = ORDER_SET_MASK_15 @ adjusted
+    replanned = adjusted * set_totals / jnp.clip(adjusted_set_totals, 1e-12)
+    return replanned / jnp.sum(replanned)
+
+
 def incremental_speaker_principled_response_policy(
     states:                    jnp.ndarray,
     sufficient_dim:            int,
@@ -2797,6 +2844,7 @@ def incremental_speaker_principled_reliability_response_policy(
     lambda_three_word_penalty: float = 0.0,
     lambda_size_reliability_single_bonus: float = 0.0,
     lambda_size_reliability_form_pair_tradeoff: float = 0.0,
+    lambda_order_planning:    float = 0.0,
     gamma_uncertainty_len:     float = 0.0,
     color_semval:              float = 0.59,
     form_semval:               float = 0.50,
@@ -2829,7 +2877,7 @@ def incremental_speaker_principled_reliability_response_policy(
         recursive=recursive,
         size_context_mode=size_context_mode,
     )
-    return _apply_principled_reliability_response_policy(
+    policy_probs = _apply_principled_reliability_response_policy(
         base_probs,
         sufficient_dim,
         has_one_word_solution,
@@ -2840,6 +2888,13 @@ def incremental_speaker_principled_reliability_response_policy(
         lambda_three_word_penalty,
         lambda_size_reliability_single_bonus,
         lambda_size_reliability_form_pair_tradeoff,
+    )
+    return _apply_order_only_planning_policy(
+        policy_probs,
+        sufficient_dim,
+        has_one_word_solution,
+        is_colour_sufficient,
+        lambda_order_planning,
     )
 
 
@@ -3379,6 +3434,7 @@ vectorized_incremental_speaker_principled_reliability_response_policy_hier = jax
              None, # lambda_three_word_penalty
              None, # lambda_size_reliability_single_bonus
              None, # lambda_size_reliability_form_pair_tradeoff
+             None, # lambda_order_planning
              None, # gamma_uncertainty_len
              None, # color_semval
              None, # form_semval
@@ -3455,7 +3511,7 @@ def jitted_speaker_principled_reliability_response_policy_hier(
     alpha_per_trial, beta_order, lambda_salience, rho_salience_stop,
     lambda_sufficient_single, lambda_reliability_form,
     lambda_three_word_penalty, lambda_size_reliability_single_bonus,
-    lambda_size_reliability_form_pair_tradeoff,
+    lambda_size_reliability_form_pair_tradeoff, lambda_order_planning,
     gamma_uncertainty_len,
     color_semval, form_semval, k, wf, epsilon, order_scores,
     base_visual_salience, recursive=True, size_context_mode="posterior",
@@ -3465,7 +3521,7 @@ def jitted_speaker_principled_reliability_response_policy_hier(
         is_colour_sufficient, alpha_per_trial, beta_order, lambda_salience,
         rho_salience_stop, lambda_sufficient_single, lambda_reliability_form,
         lambda_three_word_penalty, lambda_size_reliability_single_bonus,
-        lambda_size_reliability_form_pair_tradeoff,
+        lambda_size_reliability_form_pair_tradeoff, lambda_order_planning,
         gamma_uncertainty_len, color_semval, form_semval, k, wf, epsilon,
         order_scores, base_visual_salience, recursive, size_context_mode,
     )
@@ -4168,6 +4224,7 @@ def _make_principled_model(
     sharp_form_suppression: bool = False,
     size_sharp_policy: bool = False,
     reliability_policy: bool = False,
+    order_only_planning: bool = False,
     prior_profile: str = "default",
     cell: str = "inc_rec",
     fixed_epsilon: float | None = None,
@@ -4207,6 +4264,10 @@ def _make_principled_model(
         raise ValueError(
             "reliability_policy is an alternative to bounded/sharp-form policy terms."
         )
+    if order_only_planning and not reliability_policy:
+        raise ValueError("order_only_planning requires reliability_policy.")
+    if order_only_planning and cell in ("glob_rec", "glob_static"):
+        raise ValueError("order_only_planning is defined for incremental pilot cells.")
     _valid_size_context_modes = {"posterior", "comparison_class"}
     if size_context_mode not in _valid_size_context_modes:
         raise ValueError(
@@ -4337,6 +4398,13 @@ def _make_principled_model(
             )
             if reliability_policy else 0.0
         )
+        lambda_order_planning = (
+            numpyro.sample(
+                "lambda_order_planning",
+                dist.HalfNormal(priors["planning_scale"]),
+            )
+            if order_only_planning else 0.0
+        )
         gamma_uncertainty_len = (
             0.0 if "uncertainty_len" in drop
             else numpyro.sample(
@@ -4374,6 +4442,7 @@ def _make_principled_model(
                     lambda_reliability_form, lambda_three_word_penalty,
                     lambda_size_reliability_single_bonus,
                     lambda_size_reliability_form_pair_tradeoff,
+                    lambda_order_planning,
                     gamma_uncertainty_len, 0.59, 0.50, 0.50, 0.6856,
                     epsilon, order_scores,
                     BASE_VISUAL_SALIENCE, recursive=recursive,
@@ -4674,6 +4743,26 @@ likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabil
     salience_stop=True,
     response_policy=True,
     reliability_policy=True,
+    prior_profile="regularized",
+    cell="inc_static",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_inc_rec_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    reliability_policy=True,
+    order_only_planning=True,
+    prior_profile="regularized",
+    cell="inc_rec",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_inc_static_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    reliability_policy=True,
+    order_only_planning=True,
     prior_profile="regularized",
     cell="inc_static",
     fixed_epsilon=0.003,

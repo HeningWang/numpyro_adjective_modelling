@@ -1,0 +1,2 @@
+order_rmse_gate,utterance_rmse_gate,non_order_harm_gate,target_reduction_gate,interpretation
+0.002,0.0005,1e-06,0.002,Run MCMC only if order-only planning improves order and utterance-cell RMSE while preserving non-order summaries.
