@@ -169,8 +169,12 @@ def test_production_anchor_cli_registration():
         "production_anchor_reliabilitybackup_logalpha_2x2_glob_static",
         "production_anchor_reliabilitybackup_orderplan_2x2_inc_rec",
         "production_anchor_reliabilitybackup_orderplan_2x2_inc_static",
+        "production_anchor_reliabilitybackup_orderplan_2x2_glob_rec",
+        "production_anchor_reliabilitybackup_orderplan_2x2_glob_static",
         "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_rec",
         "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_static",
+        "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_glob_rec",
+        "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_glob_static",
     }
 
     assert expected.issubset(set(run_inference.SPEAKER_CHOICES))
@@ -211,8 +215,16 @@ def test_production_anchor_cli_registration():
         is ms.likelihood_production_anchor_orderplan_inc_speaker_hier
     )
     assert (
+        run_inference.get_hier_model("production_anchor_reliabilitybackup_orderplan_2x2_glob_static")
+        is ms.likelihood_production_anchor_orderplan_global_speaker_hier
+    )
+    assert (
         run_inference.get_hier_model("production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_static")
         is ms.likelihood_production_anchor_orderplan_inc_speaker_logalpha_hier
+    )
+    assert (
+        run_inference.get_hier_model("production_anchor_reliabilitybackup_orderplan_logalpha_2x2_glob_rec")
+        is ms.likelihood_production_anchor_orderplan_global_speaker_logalpha_hier
     )
 
 

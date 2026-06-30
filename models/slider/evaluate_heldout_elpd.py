@@ -64,8 +64,12 @@ MODEL_TO_SPEAKER = {
     "production_anchor_reliabilitybackup_logalpha_2x2_glob_static": "production_anchor_reliabilitybackup_logalpha_2x2_glob_static",
     "production_anchor_reliabilitybackup_orderplan_2x2_inc_rec": "production_anchor_reliabilitybackup_orderplan_2x2_inc_rec",
     "production_anchor_reliabilitybackup_orderplan_2x2_inc_static": "production_anchor_reliabilitybackup_orderplan_2x2_inc_static",
+    "production_anchor_reliabilitybackup_orderplan_2x2_glob_rec": "production_anchor_reliabilitybackup_orderplan_2x2_glob_rec",
+    "production_anchor_reliabilitybackup_orderplan_2x2_glob_static": "production_anchor_reliabilitybackup_orderplan_2x2_glob_static",
     "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_rec": "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_rec",
     "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_static": "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_static",
+    "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_glob_rec": "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_glob_rec",
+    "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_glob_static": "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_glob_static",
 }
 
 PAIR_SPECS = (
@@ -189,6 +193,21 @@ PAIR_SPECS = (
         "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_static",
         "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_rec",
         "production_anchor_reliabilitybackup_orderplan_logalpha_semantics_incremental",
+    ),
+    (
+        "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_rec",
+        "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_glob_rec",
+        "production_anchor_reliabilitybackup_orderplan_logalpha_architecture_recursive",
+    ),
+    (
+        "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_static",
+        "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_glob_static",
+        "production_anchor_reliabilitybackup_orderplan_logalpha_architecture_static",
+    ),
+    (
+        "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_glob_static",
+        "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_glob_rec",
+        "production_anchor_reliabilitybackup_orderplan_logalpha_semantics_global",
     ),
 )
 

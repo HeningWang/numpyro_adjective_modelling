@@ -3040,6 +3040,7 @@ def global_speaker_principled_reliability_response_policy(
     lambda_three_word_penalty: float = 0.0,
     lambda_size_reliability_single_bonus: float = 0.0,
     lambda_size_reliability_form_pair_tradeoff: float = 0.0,
+    lambda_order_planning:    float = 0.0,
     gamma_uncertainty_len:     float = 0.0,
     color_semval:              float = 0.59,
     form_semval:               float = 0.50,
@@ -3072,7 +3073,7 @@ def global_speaker_principled_reliability_response_policy(
         recursive=recursive,
         size_context_mode=size_context_mode,
     )
-    return _apply_principled_reliability_response_policy(
+    policy_probs = _apply_principled_reliability_response_policy(
         base_probs,
         sufficient_dim,
         has_one_word_solution,
@@ -3083,6 +3084,13 @@ def global_speaker_principled_reliability_response_policy(
         lambda_three_word_penalty,
         lambda_size_reliability_single_bonus,
         lambda_size_reliability_form_pair_tradeoff,
+    )
+    return _apply_order_only_planning_policy(
+        policy_probs,
+        sufficient_dim,
+        has_one_word_solution,
+        is_colour_sufficient,
+        lambda_order_planning,
     )
 
 
@@ -3598,6 +3606,7 @@ vectorized_global_speaker_principled_reliability_response_policy_hier = jax.vmap
              None, # lambda_three_word_penalty
              None, # lambda_size_reliability_single_bonus
              None, # lambda_size_reliability_form_pair_tradeoff
+             None, # lambda_order_planning
              None, # gamma_uncertainty_len
              None, # color_semval
              None, # form_semval
@@ -3659,6 +3668,7 @@ def jitted_global_speaker_principled_reliability_response_policy_hier(
     lambda_sufficient_single, lambda_reliability_form,
     lambda_three_word_penalty, lambda_size_reliability_single_bonus,
     lambda_size_reliability_form_pair_tradeoff,
+    lambda_order_planning,
     gamma_uncertainty_len,
     color_semval, form_semval, k, wf, epsilon, order_scores,
     base_visual_salience, recursive=True, size_context_mode="posterior",
@@ -3668,7 +3678,7 @@ def jitted_global_speaker_principled_reliability_response_policy_hier(
         is_colour_sufficient, alpha_per_trial, beta_order, lambda_salience,
         rho_salience_stop, lambda_sufficient_single, lambda_reliability_form,
         lambda_three_word_penalty, lambda_size_reliability_single_bonus,
-        lambda_size_reliability_form_pair_tradeoff,
+        lambda_size_reliability_form_pair_tradeoff, lambda_order_planning,
         gamma_uncertainty_len, color_semval, form_semval, k, wf, epsilon,
         order_scores, base_visual_salience, recursive, size_context_mode,
     )
@@ -4266,8 +4276,6 @@ def _make_principled_model(
         )
     if order_only_planning and not reliability_policy:
         raise ValueError("order_only_planning requires reliability_policy.")
-    if order_only_planning and cell in ("glob_rec", "glob_static"):
-        raise ValueError("order_only_planning is defined for incremental pilot cells.")
     _valid_size_context_modes = {"posterior", "comparison_class"}
     if size_context_mode not in _valid_size_context_modes:
         raise ValueError(
@@ -4765,6 +4773,26 @@ likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabil
     order_only_planning=True,
     prior_profile="regularized",
     cell="inc_static",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_glob_rec_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    reliability_policy=True,
+    order_only_planning=True,
+    prior_profile="regularized",
+    cell="glob_rec",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_glob_static_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    reliability_policy=True,
+    order_only_planning=True,
+    prior_profile="regularized",
+    cell="glob_static",
     fixed_epsilon=0.003,
 )
 likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_glob_rec_fixedeps_hier = _make_principled_model(

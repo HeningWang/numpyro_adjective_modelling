@@ -117,6 +117,8 @@ def test_reliability_backup_models_register_for_hierarchical_inference():
         "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_static_fixedeps",
         "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_inc_rec_fixedeps",
         "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_inc_static_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_glob_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_glob_static_fixedeps",
         "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_glob_rec_fixedeps",
         "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_glob_static_fixedeps",
     ):
@@ -720,6 +722,8 @@ def test_principled_models_register_for_hierarchical_inference():
         "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_static_fixedeps",
         "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_inc_rec_fixedeps",
         "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_inc_static_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_glob_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_glob_static_fixedeps",
         "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_glob_rec_fixedeps",
         "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_glob_static_fixedeps",
         "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_rec_fixedeps",

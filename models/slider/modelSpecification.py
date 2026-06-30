@@ -1785,6 +1785,31 @@ def _production_anchor_orderplan_inc_from_listeners(
     )
 
 
+def _production_anchor_orderplan_global_from_listeners(
+    L2,
+    sufficient_dim,
+    has_one_word_solution,
+    is_colour_sufficient,
+    alpha,
+    beta_order,
+    lambda_order_planning,
+    epsilon=PRODUCTION_ANCHOR_EPSILON,
+):
+    base_prob = _production_anchor_global_from_listeners(
+        L2,
+        alpha,
+        beta_order,
+        epsilon,
+    )
+    return _production_anchor_order_planning_prob(
+        base_prob,
+        sufficient_dim,
+        has_one_word_solution,
+        is_colour_sufficient,
+        lambda_order_planning,
+    )
+
+
 jitted_production_anchor_inc_speaker_fast = jax.jit(
     jax.vmap(
         _production_anchor_inc_from_listeners,
@@ -1803,6 +1828,13 @@ jitted_production_anchor_orderplan_inc_speaker_fast = jax.jit(
     jax.vmap(
         _production_anchor_orderplan_inc_from_listeners,
         in_axes=(0, 0, 0, 0, 0, 0, 0, 0, None, None, None, None, None),
+    )
+)
+
+jitted_production_anchor_orderplan_global_speaker_fast = jax.jit(
+    jax.vmap(
+        _production_anchor_orderplan_global_from_listeners,
+        in_axes=(0, 0, 0, 0, 0, None, None, None),
     )
 )
 
@@ -1958,6 +1990,46 @@ def likelihood_production_anchor_orderplan_inc_speaker_hier(
         numpyro.sample("obs", ZOIB(model_prob, sigma, pi0, pi1), obs=data)
 
 
+def likelihood_production_anchor_orderplan_global_speaker_hier(
+    states=None, data=None,
+    pi0: float = 0.01, pi1: float = 0.01,
+    participant_idx=None, n_participants: int = 1,
+    L1_all=None, L2_all=None, is_sharp_all=None,
+    sufficient_dim_all=None, has_one_word_solution_all=None,
+    is_colour_sufficient_all=None,
+):
+    """Reliability-backup order-planning global slider reduction."""
+    del states, L1_all, is_sharp_all
+    alpha, beta_order, _lambda_salience, _rho_salience_stop = _sample_production_anchor_population()
+    lambda_order_planning = numpyro.sample("lambda_order_planning", dist.HalfNormal(1.0))
+    sigma = numpyro.sample("sigma", dist.HalfNormal(0.3))
+    delta = _sample_production_anchor_hierarchy(n_participants)
+    n_obs = L2_all.shape[0]
+    sufficient_dim_all = (
+        jnp.full(n_obs, -1, dtype=jnp.int32)
+        if sufficient_dim_all is None else sufficient_dim_all
+    )
+    has_one_word_solution_all = (
+        jnp.zeros(n_obs, dtype=jnp.float32)
+        if has_one_word_solution_all is None else has_one_word_solution_all
+    )
+    is_colour_sufficient_all = (
+        jnp.zeros(n_obs, dtype=jnp.float32)
+        if is_colour_sufficient_all is None else is_colour_sufficient_all
+    )
+    alpha_per_trial = jnp.maximum(alpha + delta[participant_idx], 0.0)
+    with numpyro.plate("data", n_obs):
+        model_prob = jitted_production_anchor_orderplan_global_speaker_fast(
+            L2_all, sufficient_dim_all, has_one_word_solution_all,
+            is_colour_sufficient_all, alpha_per_trial, beta_order,
+            lambda_order_planning, PRODUCTION_ANCHOR_EPSILON,
+        )
+        model_prob = jnp.clip(model_prob, 1e-6, 1 - 1e-6)
+        if data is not None:
+            data = jnp.clip(data, 0.0, 1.0)
+        numpyro.sample("obs", ZOIB(model_prob, sigma, pi0, pi1), obs=data)
+
+
 def likelihood_production_anchor_global_speaker_hier(
     states=None, data=None,
     pi0: float = 0.01, pi1: float = 0.01,
@@ -2052,6 +2124,51 @@ def likelihood_production_anchor_orderplan_inc_speaker_logalpha_hier(
             L1_all, L2_all, states, is_sharp_all,
             sufficient_dim_all, has_one_word_solution_all, is_colour_sufficient_all,
             alpha_per_trial, beta_order, lambda_salience, rho_salience_stop,
+            lambda_order_planning, PRODUCTION_ANCHOR_EPSILON,
+        )
+        model_prob = jnp.clip(model_prob, 1e-6, 1 - 1e-6)
+        if data is not None:
+            data = jnp.clip(data, 0.0, 1.0)
+        numpyro.sample("obs", ZOIB(model_prob, sigma, pi0, pi1), obs=data)
+
+
+def likelihood_production_anchor_orderplan_global_speaker_logalpha_hier(
+    states=None, data=None,
+    pi0: float = 0.01, pi1: float = 0.01,
+    participant_idx=None, n_participants: int = 1,
+    L1_all=None, L2_all=None, is_sharp_all=None,
+    sufficient_dim_all=None, has_one_word_solution_all=None,
+    is_colour_sufficient_all=None,
+):
+    """Reliability-backup order-planning global slider reduction with log-alpha offsets."""
+    del states, L1_all, is_sharp_all
+    _alpha, log_alpha, beta_order, _lambda_salience, _rho_salience_stop = (
+        _sample_production_anchor_logalpha_population()
+    )
+    lambda_order_planning = numpyro.sample("lambda_order_planning", dist.HalfNormal(1.0))
+    sigma = numpyro.sample("sigma", dist.HalfNormal(0.3))
+    alpha_participant = _sample_production_anchor_logalpha_hierarchy(
+        log_alpha,
+        n_participants,
+    )
+    n_obs = L2_all.shape[0]
+    sufficient_dim_all = (
+        jnp.full(n_obs, -1, dtype=jnp.int32)
+        if sufficient_dim_all is None else sufficient_dim_all
+    )
+    has_one_word_solution_all = (
+        jnp.zeros(n_obs, dtype=jnp.float32)
+        if has_one_word_solution_all is None else has_one_word_solution_all
+    )
+    is_colour_sufficient_all = (
+        jnp.zeros(n_obs, dtype=jnp.float32)
+        if is_colour_sufficient_all is None else is_colour_sufficient_all
+    )
+    alpha_per_trial = alpha_participant[participant_idx]
+    with numpyro.plate("data", n_obs):
+        model_prob = jitted_production_anchor_orderplan_global_speaker_fast(
+            L2_all, sufficient_dim_all, has_one_word_solution_all,
+            is_colour_sufficient_all, alpha_per_trial, beta_order,
             lambda_order_planning, PRODUCTION_ANCHOR_EPSILON,
         )
         model_prob = jnp.clip(model_prob, 1e-6, 1 - 1e-6)

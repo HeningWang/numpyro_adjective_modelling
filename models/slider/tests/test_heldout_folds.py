@@ -103,6 +103,12 @@ def test_heldout_speaker_ablation_specs_cover_signed_order_variants():
     assert heldout.MODEL_TO_SPEAKER[
         "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_static"
     ] == "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_static"
+    assert heldout.MODEL_TO_SPEAKER[
+        "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_glob_rec"
+    ] == "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_glob_rec"
+    assert heldout.MODEL_TO_SPEAKER[
+        "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_glob_static"
+    ] == "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_glob_static"
     assert (
         "production_anchor_sizesharp_2x2_inc_rec",
         "production_anchor_sizesharp_2x2_glob_rec",
@@ -135,6 +141,18 @@ def test_heldout_speaker_ablation_specs_cover_signed_order_variants():
         "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_static",
         "production_anchor_reliabilitybackup_logalpha_2x2_inc_static",
     ) in pairs
+    assert (
+        "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_rec",
+        "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_glob_rec",
+    ) in pairs
+    assert (
+        "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_static",
+        "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_glob_static",
+    ) in pairs
+    assert (
+        "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_glob_static",
+        "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_glob_rec",
+    ) in pairs
     assert heldout.is_production_anchor_speaker(
         "production_anchor_reliabilitybackup_2x2_inc_static"
     )
@@ -143,6 +161,9 @@ def test_heldout_speaker_ablation_specs_cover_signed_order_variants():
     )
     assert heldout.is_production_anchor_speaker(
         "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_inc_static"
+    )
+    assert heldout.is_production_anchor_speaker(
+        "production_anchor_reliabilitybackup_orderplan_logalpha_2x2_glob_static"
     )
 
 
