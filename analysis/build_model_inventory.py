@@ -65,6 +65,7 @@ CANDIDATE_GROUPS = {
             "Current production reliability-backup speaker and slider reduction; "
             "only response-space/hierarchy reductions should differ."
         ),
+        "same_model_claim_ok": True,
         "alignment_score": 0.95,
         "dataset_families": {
             "production": ["reliability_backup_shared"],
@@ -78,9 +79,10 @@ CANDIDATE_GROUPS = {
     "planned_order_shared_candidate": {
         "description": (
             "Planned-order/usefulness policy as a shared speaker improvement; "
-            "slider has fitted planned-usefulness variants, production currently "
-            "has only planned-prefix forward-audit/model code."
+            "slider has fitted planned-usefulness variants and production has a "
+            "reliability-backup order-planning pilot."
         ),
+        "same_model_claim_ok": False,
         "alignment_score": 0.80,
         "dataset_families": {
             "production": ["reliability_backup_order_planning", "planned_prefix"],
@@ -102,6 +104,7 @@ CANDIDATE_GROUPS = {
             "Older greedy incremental/static baseline family; useful as a fit "
             "reference but not the current production-anchor theory."
         ),
+        "same_model_claim_ok": False,
         "alignment_score": 0.60,
         "dataset_families": {
             "production": ["principled_salience_stop", "response_policy"],
@@ -114,12 +117,90 @@ CANDIDATE_GROUPS = {
             "Production-only response-policy extensions such as bounded-form, "
             "sharp-form, or size-sharp."
         ),
+        "same_model_claim_ok": False,
         "alignment_score": 0.35,
         "dataset_families": {
             "production": ["bounded_form", "sharp_form", "size_sharp"],
             "slider": [],
         },
         "next_inference_if_missing": "No slider counterpart without changing the response space.",
+    },
+}
+
+ONE_MODEL_CANDIDATES = {
+    "strict_reliability_backup": {
+        "claim_strength": "strict_shared_family",
+        "same_model_claim_ok": True,
+        "description": (
+            "Reliability-backup speaker in both datasets, with slider-only reductions "
+            "forced by the DC/CD response format and slider likelihood."
+        ),
+        "differentiation_notes": (
+            "Production has the full utterance response space; slider reduces the same "
+            "speaker family to the DC/CD order contrast."
+        ),
+        "alignment_score": 1.00,
+        "dataset_families": {
+            "production": ["reliability_backup_shared"],
+            "slider": [
+                "reliability_backup_shared_logalpha_slider",
+                "reliability_backup_shared",
+            ],
+        },
+    },
+    "strict_order_planning": {
+        "claim_strength": "strict_shared_family_missing_slider",
+        "same_model_claim_ok": True,
+        "description": (
+            "Reliability-backup plus order-planning as the same shared speaker family."
+        ),
+        "differentiation_notes": (
+            "Production order-planning has been fitted; no strict slider counterpart "
+            "with the same family label is summarized yet."
+        ),
+        "alignment_score": 0.95,
+        "dataset_families": {
+            "production": ["reliability_backup_order_planning"],
+            "slider": ["reliability_backup_order_planning"],
+        },
+    },
+    "loose_order_planning_bridge": {
+        "claim_strength": "loose_theoretical_bridge",
+        "same_model_claim_ok": False,
+        "description": (
+            "Production reliability-backup order-planning paired with slider "
+            "planned-usefulness/order variants."
+        ),
+        "differentiation_notes": (
+            "Useful as evidence that order-sensitive planning helps, but too different "
+            "to report as literally one model across datasets."
+        ),
+        "alignment_score": 0.65,
+        "dataset_families": {
+            "production": ["reliability_backup_order_planning"],
+            "slider": [
+                "planned_usefulness_order",
+                "planned_usefulness_signed_order",
+                "planned_usefulness_mixture",
+                "planned_usefulness_anchored_mixture",
+            ],
+        },
+    },
+    "loose_greedy_baseline": {
+        "claim_strength": "loose_baseline",
+        "same_model_claim_ok": False,
+        "description": (
+            "Older greedy incremental/static baseline family."
+        ),
+        "differentiation_notes": (
+            "Useful as a reference baseline, but it is not the current production-anchor "
+            "speaker family."
+        ),
+        "alignment_score": 0.55,
+        "dataset_families": {
+            "production": ["principled_salience_stop", "response_policy"],
+            "slider": ["slider_greedy_incremental"],
+        },
     },
 }
 
@@ -674,6 +755,7 @@ def build_cross_dataset_scores(inventory: pd.DataFrame) -> tuple[pd.DataFrame, p
                     "ppc_r2": selected.get("ppc_r2", np.nan),
                     "ppc_rmse": selected.get("ppc_rmse", np.nan),
                     "alignment_score": config["alignment_score"],
+                    "same_model_claim_ok": config.get("same_model_claim_ok", False),
                     "max_r_hat": selected.get("max_r_hat", np.nan),
                     "n_divergent": selected.get("n_divergent", np.nan),
                     "diagnostics_ok": selected.get("diagnostics_ok", np.nan),
@@ -719,6 +801,7 @@ def build_cross_dataset_scores(inventory: pd.DataFrame) -> tuple[pd.DataFrame, p
                 "ppc_r2": mean_ppc_r2,
                 "ppc_rmse": mean_ppc_rmse,
                 "alignment_score": config["alignment_score"],
+                "same_model_claim_ok": config.get("same_model_claim_ok", False),
                 "max_r_hat": np.nan,
                 "n_divergent": np.nan,
                 "diagnostics_ok": available_datasets == 2,
@@ -729,6 +812,7 @@ def build_cross_dataset_scores(inventory: pd.DataFrame) -> tuple[pd.DataFrame, p
                     available_datasets == 2
                     and missing_datasets == 0
                     and slider_nonheldout_penalty == 0.0
+                    and config.get("same_model_claim_ok", False)
                 ),
             }
         )
@@ -767,6 +851,7 @@ def build_shared_model_scorecard(ranked_scores: pd.DataFrame) -> pd.DataFrame:
             "mean_ppc_r2": combined["ppc_r2"],
             "mean_ppc_rmse": combined["ppc_rmse"],
             "alignment_score": combined["alignment_score"],
+            "same_model_claim_ok": bool(combined.get("same_model_claim_ok", False)),
             "missing_dataset_count": combined.get("missing_dataset_count", np.nan),
             "slider_nonheldout_penalty": combined.get("slider_nonheldout_penalty", np.nan),
             "rank": combined.get("rank", np.nan),
@@ -808,6 +893,119 @@ def build_shared_model_scorecard(ranked_scores: pd.DataFrame) -> pd.DataFrame:
             )
         records.append(row)
     return pd.DataFrame(records)
+
+
+def build_one_model_scorecard(inventory: pd.DataFrame) -> pd.DataFrame:
+    """Score candidates by how defensible the one-model-across-datasets claim is."""
+    scored = add_row_scores(inventory)
+    records = []
+    for candidate, config in ONE_MODEL_CANDIDATES.items():
+        selected_by_dataset = {}
+        missing_datasets = []
+        for dataset in ("production", "slider"):
+            families = config["dataset_families"].get(dataset, [])
+            selected = select_candidate_row(scored, dataset, families)
+            if selected is None:
+                missing_datasets.append(dataset)
+                continue
+            selected_by_dataset[dataset] = selected
+
+        available_in_both = len(selected_by_dataset) == 2
+        mean_fit = (
+            float(np.nanmean([row["fit_score"] for row in selected_by_dataset.values()]))
+            if selected_by_dataset
+            else 0.0
+        )
+        mean_ppc = (
+            float(np.nanmean([row["ppc_score"] for row in selected_by_dataset.values()]))
+            if selected_by_dataset
+            else 0.0
+        )
+        mean_ppc_r2 = (
+            float(np.nanmean([row.get("ppc_r2", np.nan) for row in selected_by_dataset.values()]))
+            if selected_by_dataset
+            else np.nan
+        )
+        mean_ppc_rmse = (
+            float(np.nanmean([row.get("ppc_rmse", np.nan) for row in selected_by_dataset.values()]))
+            if selected_by_dataset
+            else np.nan
+        )
+        slider_nonheldout_penalty = sum(
+            float(row.get("slider_metric_penalty", 0.0))
+            for row in selected_by_dataset.values()
+        )
+        missing_dataset_penalty = 0.25 * len(missing_datasets)
+        loose_claim_penalty = 0.20 if not config["same_model_claim_ok"] else 0.0
+        score = (
+            0.35 * mean_fit
+            + 0.35 * mean_ppc
+            + 0.30 * config["alignment_score"]
+            - missing_dataset_penalty
+            - slider_nonheldout_penalty
+            - loose_claim_penalty
+        )
+        ready_for_one_model_claim = (
+            available_in_both
+            and bool(config["same_model_claim_ok"])
+            and slider_nonheldout_penalty == 0.0
+        )
+        row = {
+            "candidate_family": candidate,
+            "claim_strength": config["claim_strength"],
+            "same_model_claim_ok": config["same_model_claim_ok"],
+            "ready_for_one_model_claim": ready_for_one_model_claim,
+            "available_in_both_datasets": available_in_both,
+            "missing_datasets": ";".join(missing_datasets),
+            "one_model_score": score,
+            "mean_fit_score": mean_fit,
+            "mean_ppc_score": mean_ppc,
+            "mean_ppc_r2": mean_ppc_r2,
+            "mean_ppc_rmse": mean_ppc_rmse,
+            "alignment_score": config["alignment_score"],
+            "missing_dataset_penalty": missing_dataset_penalty,
+            "slider_nonheldout_penalty": slider_nonheldout_penalty,
+            "loose_claim_penalty": loose_claim_penalty,
+            "candidate_description": config["description"],
+            "differentiation_notes": config["differentiation_notes"],
+        }
+        for dataset in ("production", "slider"):
+            prefix = f"{dataset}_"
+            selected = selected_by_dataset.get(dataset)
+            if selected is None:
+                row.update(
+                    {
+                        prefix + "available": False,
+                        prefix + "model_family": "",
+                        prefix + "model": "",
+                        prefix + "result_dir": "",
+                        prefix + "primary_metric_name": "",
+                        prefix + "primary_metric": np.nan,
+                        prefix + "ppc_r2": np.nan,
+                        prefix + "ppc_rmse": np.nan,
+                        prefix + "max_r_hat": np.nan,
+                        prefix + "n_divergent": np.nan,
+                    }
+                )
+            else:
+                row.update(
+                    {
+                        prefix + "available": True,
+                        prefix + "model_family": selected["model_family"],
+                        prefix + "model": selected["model"],
+                        prefix + "result_dir": selected["result_dir"],
+                        prefix + "primary_metric_name": selected["primary_metric_name"],
+                        prefix + "primary_metric": selected["primary_metric"],
+                        prefix + "ppc_r2": selected.get("ppc_r2", np.nan),
+                        prefix + "ppc_rmse": selected.get("ppc_rmse", np.nan),
+                        prefix + "max_r_hat": selected.get("max_r_hat", np.nan),
+                        prefix + "n_divergent": selected.get("n_divergent", np.nan),
+                    }
+                )
+        records.append(row)
+    out = pd.DataFrame(records)
+    out["rank"] = out["one_model_score"].rank(method="min", ascending=False).astype(int)
+    return out.sort_values(["rank", "candidate_family"])
 
 
 def planned_prefix_forward_status() -> dict[str, object]:
@@ -891,12 +1089,17 @@ def reliability_order_forward_status() -> dict[str, object]:
     }
 
 
-def build_decision_summary(ranked_scores: pd.DataFrame) -> pd.DataFrame:
+def build_decision_summary(
+    ranked_scores: pd.DataFrame,
+    one_model_scorecard: pd.DataFrame,
+) -> pd.DataFrame:
     combined = ranked_scores[ranked_scores["dataset"].eq("combined")].copy()
-    ready = combined[combined["ready_for_paper"].fillna(False)].sort_values(
-        "primary_metric", ascending=False
+    strict_ready = one_model_scorecard[
+        one_model_scorecard["ready_for_one_model_claim"].fillna(False)
+    ].sort_values(
+        "one_model_score", ascending=False
     )
-    top_ready = ready.iloc[0] if not ready.empty else None
+    top_ready = strict_ready.iloc[0] if not strict_ready.empty else None
     planned_status = planned_prefix_forward_status()
     order_status = reliability_order_forward_status()
     records = []
@@ -905,24 +1108,45 @@ def build_decision_summary(ranked_scores: pd.DataFrame) -> pd.DataFrame:
             {
                 "decision_item": "current_best_ready_shared_model",
                 "candidate_family": top_ready["candidate_family"],
-                "status": "ready_but_not_final_sweet_spot",
+                "status": "best_strict_one_model_candidate",
                 "evidence": (
-                    "Only diagnostic-passing candidate with both datasets available "
-                    "and slider heldout support."
+                    "Diagnostic-passing candidate with both datasets available, "
+                    "slider heldout support, and a defensible one-model claim."
                 ),
-                "sweet_spot_score": top_ready["primary_metric"],
+                "sweet_spot_score": top_ready["one_model_score"],
                 "next_action": (
-                    "Use as current anchor while testing whether a shared order-planning "
-                    "extension can recover slider PPC without harming production."
+                    "Use as the current paper-facing shared model unless a strict "
+                    "order-planning slider counterpart is fitted and improves the "
+                    "same one-model score."
                 ),
             }
+        )
+    order_strict = one_model_scorecard[
+        one_model_scorecard["candidate_family"].eq("strict_order_planning")
+    ]
+    order_loose = one_model_scorecard[
+        one_model_scorecard["candidate_family"].eq("loose_order_planning_bridge")
+    ]
+    order_evidence = (
+        "Strict order-planning missing."
+        if order_strict.empty
+        else (
+            f"Strict order-planning missing_datasets="
+            f"{order_strict.iloc[0]['missing_datasets']}; "
+            f"score={order_strict.iloc[0]['one_model_score']}."
+        )
+    )
+    if not order_loose.empty:
+        order_evidence += (
+            f" Loose bridge score={order_loose.iloc[0]['one_model_score']}; "
+            f"same_model_claim_ok={order_loose.iloc[0]['same_model_claim_ok']}."
         )
     records.append(
         {
             "decision_item": "reliability_order_planning",
-            "candidate_family": "planned_order_shared_candidate",
+            "candidate_family": "strict_order_planning",
             "status": (
-                "run_incremental_gpu_pilot"
+                "pilot_complete_but_missing_strict_slider_counterpart"
                 if order_status.get("recommended_for_gpu_pilot")
                 else "needs_forward_audit"
             ),
@@ -931,12 +1155,13 @@ def build_decision_summary(ranked_scores: pd.DataFrame) -> pd.DataFrame:
                 f"recommended_for_gpu_pilot={order_status.get('recommended_for_gpu_pilot')}; "
                 f"best_rank_score={order_status.get('best_rank_score')}; "
                 f"best_order_rmse_gain={order_status.get('best_order_rmse_gain')}; "
-                f"best_utterance_rmse_gain={order_status.get('best_utterance_rmse_gain')}."
+                f"best_utterance_rmse_gain={order_status.get('best_utterance_rmse_gain')}. "
+                f"{order_evidence}"
             ),
             "sweet_spot_score": np.nan,
             "next_action": (
-                "Run the two incremental reliabilitybackup_orderplan pilot cells "
-                "and compare them with the reliability-backup anchor."
+                "Do not report the loose bridge as one model. If the order-planning "
+                "idea is kept, fit a strict slider counterpart and re-score."
             ),
         }
     )
@@ -1029,7 +1254,8 @@ def main() -> None:
     sweet_spots = build_sweet_spot_summary(best_by_family)
     ranked_scores, missing_inference = build_cross_dataset_scores(inventory)
     shared_scorecard = build_shared_model_scorecard(ranked_scores)
-    decision_summary = build_decision_summary(ranked_scores)
+    one_model_scorecard = build_one_model_scorecard(inventory)
+    decision_summary = build_decision_summary(ranked_scores, one_model_scorecard)
     nc_inventory = parse_nc_artifacts()
 
     inventory.to_csv(out_dir / "fitted_model_inventory.csv", index=False)
@@ -1037,6 +1263,7 @@ def main() -> None:
     sweet_spots.to_csv(out_dir / "cross_dataset_sweet_spot_candidates.csv", index=False)
     ranked_scores.to_csv(out_dir / "cross_dataset_sweet_spot_ranked.csv", index=False)
     shared_scorecard.to_csv(out_dir / "shared_model_scorecard.csv", index=False)
+    one_model_scorecard.to_csv(out_dir / "one_model_scorecard.csv", index=False)
     missing_inference.to_csv(out_dir / "missing_inference_cells.csv", index=False)
     decision_summary.to_csv(out_dir / "sweet_spot_decision_summary.csv", index=False)
     pd.DataFrame(SCORING_RULE).to_csv(out_dir / "sweet_spot_scoring_rule.csv", index=False)
@@ -1047,6 +1274,7 @@ def main() -> None:
     print(f"Wrote {len(sweet_spots)} sweet-spot candidate rows")
     print(f"Wrote {len(ranked_scores)} ranked sweet-spot rows")
     print(f"Wrote {len(shared_scorecard)} shared model scorecard rows")
+    print(f"Wrote {len(one_model_scorecard)} one-model scorecard rows")
     print(f"Wrote {len(missing_inference)} missing-inference rows")
     print(f"Wrote {len(decision_summary)} decision-summary rows")
     print(f"Wrote {len(nc_inventory)} local nc artifact rows")

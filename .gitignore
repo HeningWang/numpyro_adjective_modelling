@@ -82,6 +82,7 @@ models/production/results_*_pilot/summary.txt
 models/production/results_*_full*/diagnostics/
 models/production/results_*_full*/ppc/
 models/production/results_*_full*/stats/*.png
+models/production/results_*_full*/stats/*.pdf
 models/production/results_*_full*/stats/*_empirical.csv
 models/production/results_*_full*/stats/*_predictions.csv
 models/production/results_*_full*/summary.txt
@@ -89,8 +90,11 @@ models/production/results_final_2x2/diagnostics/
 models/production/results_final_2x2/ppc/
 models/production/results_final_2x2/**/*.log
 models/production/results_final_2x2/stats/*.png
+models/production/results_final_2x2/stats/*.pdf
 models/production/results_final_2x2/stats/production_predictions.csv
 models/production/results_final_2x2/summary.txt
+
+models/production/results_*_pilot/stats/*.pdf
 
 # Forward-audit detail dumps (large, regenerable from compact audit scripts)
 models/*/results_semantic_variant_forward_audit/stats/*_listener_by_display.csv

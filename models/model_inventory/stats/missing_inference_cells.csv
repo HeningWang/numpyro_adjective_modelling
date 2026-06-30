@@ -1,3 +1,2 @@
 candidate_family,dataset,expected_model_families,reason,recommended_next_step
-planned_order_shared_candidate,production,reliability_backup_order_planning;planned_prefix,No diagnostic-passing summarized result found.,Do not run the existing production planned-prefix cell unless a new forward audit passes. First test a reliability-backup-compatible order-planning variant.
 production_specific_policy,slider,,No diagnostic-passing summarized result found.,No slider counterpart without changing the response space.
