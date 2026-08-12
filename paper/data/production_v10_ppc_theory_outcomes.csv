@@ -1,0 +1,15 @@
+outcome,condition,source,proportion
+Conditional size-first order,Both necessary,Observed,0.948905109489051
+Conditional size-first order,Both necessary,Plan-guided,0.9756440805360542
+Redundant adjective use,Both necessary · Low,Observed,0.4025974025974026
+Redundant adjective use,Both necessary · Low,Plan-guided,0.27270686456400745
+Redundant adjective use,Both necessary · High,Observed,0.37184873949579833
+Redundant adjective use,Both necessary · High,Plan-guided,0.29656880252100837
+Redundant adjective use,Size sufficient · Low,Observed,0.8975332068311195
+Redundant adjective use,Size sufficient · Low,Plan-guided,0.8521579696394687
+Redundant adjective use,Size sufficient · High,Observed,0.6252631578947369
+Redundant adjective use,Size sufficient · High,Plan-guided,0.6827457894736841
+Redundant adjective use,Colour sufficient · Low,Observed,0.3388888888888889
+Redundant adjective use,Colour sufficient · Low,Plan-guided,0.24452916666666666
+Redundant adjective use,Colour sufficient · High,Observed,0.2641509433962264
+Redundant adjective use,Colour sufficient · High,Plan-guided,0.20850890985324946

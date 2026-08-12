@@ -1,0 +1,19 @@
+outcome,model,observed_proportion,predicted_mean,residual_percentage_points
+"Form-colour utterance
+Colour-form, both necessary",Global,0.06296296296296296,0.10403333333333332,4.107037037037037
+"Two adjectives
+Colour-form, form sufficient",Global,0.2722222222222222,0.2577115740740741,-1.451064814814812
+"Colour initial
+Size-colour, both necessary",Global,0.3469387755102041,0.3008051948051948,-4.613358070500928
+"Form-colour utterance
+Colour-form, both necessary",Plan-guided,0.06296296296296296,0.06109398148148148,-0.18689814814814784
+"Two adjectives
+Colour-form, form sufficient",Plan-guided,0.2722222222222222,0.268375,-0.3847222222222224
+"Colour initial
+Size-colour, both necessary",Plan-guided,0.3469387755102041,0.3418033395176252,-0.5135435992578874
+"Form-colour utterance
+Colour-form, both necessary",Fully incremental,0.06296296296296296,0.0457111111111111,-1.7251851851851858
+"Two adjectives
+Colour-form, form sufficient",Fully incremental,0.2722222222222222,0.28976574074074074,1.7543518518518542
+"Colour initial
+Size-colour, both necessary",Fully incremental,0.3469387755102041,0.3628228200371057,1.588404452690162

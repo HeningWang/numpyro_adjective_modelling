@@ -2,49 +2,41 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Figure 1 — Overview of the Present Study</title>
+<title>Figure 1 - Overview of the Present Study</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  /* ── Functional palette ──────────────────────────────────────────────
-       BLUE  = compositional-semantics axis (context-fixed / updating)
-       ORANGE = speaker axis (global / incremental)
-       Grayscale = structure. GREEN = the single best-fitting model cell.
-
-       Typography follows Nature-style figure convention: sans-serif,
-       ~6-9pt at final size. Canvas 1200px @ \textwidth (~469pt) =>
-       0.39 pt/px, so 16px ≈ 6.2pt, 18px ≈ 7pt, 24px ≈ 9.3pt. ───────────── */
   :root {
-    --ink:  #1f1f1f;  --sub: #555;  --faint: #7d7d7d;
-    --line: #c4c4c4;  --hair:#e3e3e3; --soft: #f5f5f5;
-    --sem:  #1f5c8b;  --sem-tint:#eef4f9;  --sem-edge:#b9d0e1;
-    --spk:  #b5651d;  --spk-tint:#fbf1e7;  --spk-edge:#e6c6a2;
-    --best: #1b6b3a;  --best-tint:#e6f1e9;
-    --d-size:#2e6f9e; --d-col:#c7711e; --d-other:#9a9a9a;
-    --d-hi: #4d4d4d;  --d-lo:#c2c2c2;
-
+    --ink:#1f1f1f; --sub:#555; --faint:#7b7b7b;
+    --line:#c5c5c5; --hair:#e2e2e2; --soft:#f5f5f5;
+    --sem:#1f5c8b; --sem-tint:#eef4f9; --sem-edge:#b9d0e1;
+    --spk:#b5651d; --spk-tint:#fbf1e7; --spk-edge:#e6c6a2;
+    --best:#1b6b3a; --best-tint:#e7f1ea; --best-edge:#a7ccb2;
     --fs-letter:29px; --fs-ptitle:23px; --fs-sect:16px;
-    --fs-title:19px;  --fs-body:17px;   --fs-min:15px;
+    --fs-title:18px; --fs-body:16px; --fs-min:14px;
   }
-  html, body { background:#fff; }
+
+  @page { size:1210px 1040px; margin:0; }
+  html, body { width:1200px; height:1030px; background:#fff; }
   body { font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; color:var(--ink); }
 
   .fig {
-    width: 1200px;
-    display: grid;
-    grid-template-columns: 452px 1fr;
-    grid-auto-rows: auto;
-    gap: 10px;
-    padding: 5px;
+    width:1200px;
+    display:grid;
+    grid-template-columns:452px 1fr;
+    grid-template-rows:505px 505px;
+    gap:10px;
+    padding:5px;
   }
   .panel {
-    border: 1.4px solid var(--line);
-    border-radius: 5px;
-    background: #fff;
-    position: relative;
-    padding: 12px 14px 13px;
-    display: flex;
-    flex-direction: column;
+    border:1.4px solid var(--line);
+    border-radius:5px;
+    background:#fff;
+    position:relative;
+    padding:12px 14px 13px;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
   }
   .panel-label {
     position:absolute; top:9px; left:12px;
@@ -55,376 +47,417 @@
   }
   .sect {
     font-size:var(--fs-sect); font-weight:700; color:var(--sub);
-    text-transform:uppercase; letter-spacing:0.4px; text-align:center;
-    padding-bottom:4px; margin-bottom:9px; border-bottom:1.4px solid var(--hair);
+    text-transform:uppercase; letter-spacing:.35px; text-align:center;
+    padding-bottom:4px; margin-bottom:8px; border-bottom:1.4px solid var(--hair);
   }
   .sect.sem { color:var(--sem); }
   .sect.spk { color:var(--spk); }
-  .chip {
-    display:inline-block; font-size:var(--fs-min); font-weight:600;
-    padding:2px 9px; border-radius:999px; background:var(--soft);
-    border:1px solid var(--hair); color:var(--sub);
+  .smallcaps { text-transform:uppercase; letter-spacing:.35px; font-weight:700; }
+
+  /* Panel A: method and evidential pipeline */
+  .p-pipeline { grid-column:1; grid-row:1; background:#fcfcfc; }
+  .pipeline { flex:1; display:flex; flex-direction:column; justify-content:flex-start; }
+  .pipe-card {
+    border:1.4px solid var(--line); border-radius:5px; background:#fff;
+    padding:10px 12px; text-align:center;
+  }
+  .pipe-card .pt { font-size:var(--fs-title); font-weight:700; margin-bottom:5px; }
+  .pipe-card .pc { font-size:var(--fs-body); line-height:1.28; color:var(--sub); }
+  .study-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+  .study {
+    border:1px solid var(--hair); border-radius:4px; background:var(--soft);
+    padding:7px 5px; font-size:var(--fs-min); line-height:1.25; color:var(--sub);
+  }
+  .study b { display:block; color:var(--ink); font-size:var(--fs-body); margin-bottom:2px; }
+  .down {
+    height:27px; position:relative; flex:none;
+  }
+  .down::before {
+    content:""; position:absolute; left:50%; top:3px; height:16px;
+    border-left:2px solid #9a9a9a;
+  }
+  .down::after {
+    content:""; position:absolute; left:calc(50% - 5px); top:15px;
+    border-left:6px solid transparent; border-right:6px solid transparent;
+    border-top:8px solid #9a9a9a;
+  }
+  .model-card { border-left:6px solid var(--spk-edge); }
+  .model-card .pc b { color:var(--spk); }
+  .evidence-split { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+  .evidence-card {
+    border:1.4px solid var(--line); border-radius:5px; background:#fff;
+    padding:9px 8px; text-align:center; min-height:115px;
+  }
+  .evidence-card .et { font-size:var(--fs-body); font-weight:700; margin-bottom:5px; }
+  .evidence-card .em { font-size:var(--fs-min); color:var(--sub); line-height:1.24; }
+  .evidence-card .claim {
+    display:block; margin-top:7px; padding-top:6px; border-top:1px solid var(--hair);
+    font-size:var(--fs-min); font-weight:700; color:var(--ink);
   }
 
-  /* ═══ PANEL A ═══ */
-  .p-scene { grid-column:1; grid-row:1; background:#fcfcfc; }
+  /* Panel B: model space */
+  .p-model { grid-column:2; grid-row:1; }
+  .model-body { flex:1; display:flex; flex-direction:column; gap:12px; }
+  .semantic-row { display:grid; grid-template-columns:1fr 1fr; gap:11px; }
+  .semantic-card {
+    min-height:140px; border:1.4px solid var(--sem-edge); border-left:6px solid var(--sem-edge);
+    border-radius:5px; background:var(--sem-tint); padding:8px 10px; text-align:center;
+  }
+  .semantic-card .mt { color:var(--sem); font-size:var(--fs-title); font-weight:700; }
+  .semantic-card .mc { color:var(--sub); font-size:var(--fs-min); line-height:1.25; margin-top:4px; }
+  .sem-flow {
+    height:58px; display:flex; align-items:center; justify-content:center; gap:4px;
+    margin-top:5px;
+  }
+  .context {
+    border:1.3px solid var(--sem-edge); background:#fff; color:var(--sem);
+    border-radius:4px; padding:4px 6px; font-size:13px; font-weight:700;
+  }
+  .inner-context { width:96px; line-height:1.15; }
+  .arrow { color:var(--sem); font-size:20px; font-weight:700; line-height:1; }
+  .speaker-row { display:grid; grid-template-columns:1fr 1.18fr 1fr; gap:10px; }
+  .speaker-card {
+    min-height:200px; border:1.4px solid var(--spk-edge); border-left:6px solid var(--spk-edge);
+    border-radius:5px; background:var(--spk-tint); padding:8px 8px; text-align:center;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  .speaker-card.plan {
+    border:2px solid var(--best); border-left:7px solid var(--best);
+    background:var(--best-tint);
+  }
+  .speaker-card .mt { color:var(--spk); font-size:var(--fs-title); font-weight:700; }
+  .speaker-card.plan .mt { color:var(--best); }
+  .kappa {
+    margin-top:4px; font-size:var(--fs-min); font-weight:700; color:var(--sub);
+  }
+  .utterance-unit {
+    width:88%; border:1.4px solid var(--spk-edge); border-radius:5px; background:#fff;
+    padding:8px 5px; margin-top:18px; color:var(--spk); font-size:var(--fs-body); font-weight:700;
+  }
+  .word-flow {
+    width:100%; display:flex; align-items:center; justify-content:center; gap:3px; margin-top:18px;
+  }
+  .word {
+    min-width:39px; border:1.3px solid var(--spk-edge); background:#fff; border-radius:4px;
+    padding:7px 4px; color:var(--spk); font-size:var(--fs-min); font-weight:700;
+  }
+  .word-arrow { color:var(--spk); font-size:18px; }
+  .plan-shell {
+    width:100%; margin-top:10px; padding:8px 5px 6px;
+    border:1.5px dashed var(--best-edge); border-radius:6px; background:#fff;
+  }
+  .plan-label { font-size:12px; color:var(--best); font-weight:700; margin-bottom:4px; }
+  .plan-shell .word-flow { margin-top:0; }
+  .plan-shell .word { border-color:var(--best-edge); color:var(--best); }
+  .plan-shell .word-arrow { color:var(--best); }
+  .speaker-card .mc {
+    margin-top:auto; padding-top:8px; color:var(--sub); font-size:var(--fs-min); line-height:1.23;
+  }
+  .speaker-card.plan .mc { color:var(--best); font-weight:600; }
+  .common-response {
+    text-align:center; color:var(--sub); font-size:var(--fs-min); font-style:italic; margin-top:7px;
+  }
+
+  /* Panel C: design */
+  .p-design { grid-column:1; grid-row:2; background:#fcfcfc; }
   .scene {
     background:#fff; border:1.4px solid var(--hair); border-radius:5px;
-    padding:10px 8px 8px; text-align:center;
+    padding:7px 8px 6px; text-align:center;
   }
   .scene-grid {
-    display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(2,52px);
+    display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(2,44px);
     justify-items:center; align-items:center;
   }
-  .scene-cap { font-size:var(--fs-body); font-style:italic; margin-top:6px; }
-  .scene-sub { font-size:var(--fs-min); color:var(--faint); margin-top:3px; }
-
-  .design { flex:1; display:flex; flex-direction:column; margin-top:12px; gap:9px; }
+  .scene-cap { font-size:var(--fs-body); font-style:italic; margin-top:4px; }
+  .scene-sub { font-size:var(--fs-min); color:var(--faint); margin-top:2px; }
+  .design { flex:1; display:flex; flex-direction:column; margin-top:9px; gap:8px; }
   .design-h { font-size:var(--fs-title); font-weight:700; text-align:center; }
-  .factor { }
-  .factor .fh { font-size:var(--fs-min); font-weight:700; color:var(--faint); margin-bottom:6px; }
-  .factor .fh b { color:var(--sub); text-transform:uppercase; letter-spacing:0.4px; }
-  .frow { display:flex; gap:7px; }
-  .frow > div {
+  .factor .fh { font-size:var(--fs-min); font-weight:700; color:var(--faint); margin-bottom:5px; }
+  .factor .fh b { color:var(--sub); text-transform:uppercase; letter-spacing:.3px; }
+  .factor-row { display:flex; gap:6px; }
+  .factor-row > div {
     flex:1; text-align:center; font-size:var(--fs-min); color:var(--sub);
-    background:var(--soft); border:1px solid var(--hair); border-radius:4px;
-    padding:7px 4px;
+    background:var(--soft); border:1px solid var(--hair); border-radius:4px; padding:5px 3px;
   }
-  .frow > div b { display:block; color:var(--ink); font-size:var(--fs-body); margin-bottom:1px; }
-
-  /* ═══ PANEL B ═══ */
-  .p-model { grid-column:2; grid-row:1; }
-  .mbody { flex:1; display:flex; flex-direction:column; gap:14px; }
-  .msec { display:flex; flex-direction:column; }
-
-  /* shared two-variant schematic */
-  .vpair { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-  .vcard {
-    border:1.4px solid var(--line); border-radius:5px; padding:9px 10px 8px;
-    display:flex; flex-direction:column; align-items:center; text-align:center;
+  .factor-row > div b { display:block; color:var(--ink); font-size:var(--fs-body); margin-bottom:1px; }
+  .measure-row { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+  .measure {
+    border:1.3px solid var(--line); border-radius:4px; background:#fff;
+    padding:7px 5px; text-align:center; font-size:var(--fs-min); color:var(--sub); line-height:1.22;
   }
-  .vcard.sem { background:var(--sem-tint); border-left:6px solid var(--sem-edge); }
-  .vcard.spk { background:var(--spk-tint); border-left:6px solid var(--spk-edge); }
-  .vcard .vt { font-size:var(--fs-title); font-weight:700; margin-bottom:6px; }
-  .vcard.sem .vt { color:var(--sem); }
-  .vcard.spk .vt { color:var(--spk); }
-  .vcard svg { display:block; }
-  .vcard .vc { font-size:var(--fs-min); color:var(--sub); margin-top:6px; }
-  .shared-cap {
-    text-align:center; font-size:var(--fs-body); color:var(--ink);
-    margin-top:8px; font-style:italic;
+  .measure b { display:block; color:var(--ink); font-size:var(--fs-body); margin-bottom:2px; }
+  .study-tag {
+    display:block; color:var(--faint); font-size:12px; font-weight:700;
+    text-transform:uppercase; letter-spacing:.25px; margin-bottom:2px;
   }
-  .shared-cap b { font-style:normal; font-weight:700; }
 
-  /* ═══ PANEL C ═══ */
-  .p-exps { grid-column:1; grid-row:2; }
-  .ewrap { flex:1; display:flex; flex-direction:column; gap:10px; }
-  .ecard { flex:1; border:1.4px solid var(--line); border-radius:5px; padding:9px 14px;
-           display:flex; flex-direction:column; }
-  .ecard .eh { font-size:var(--fs-title); font-weight:700; text-align:center; }
-  .ecard .es { font-size:var(--fs-min); color:var(--sub); text-align:center; margin:1px 0 8px; }
-
-  .gbar { flex:1; display:flex; align-items:flex-end; justify-content:space-around; min-height:80px; }
-  .gbar .grp { display:flex; flex-direction:column; align-items:center; }
-  .gbar .bars { display:flex; align-items:flex-end; gap:6px; height:74px; }
-  .gbar .bar { width:24px; border-radius:2px 2px 0 0; }
-  .gbar .lab { font-size:var(--fs-min); color:var(--sub); margin-top:6px; }
-
-  .legend { display:flex; justify-content:center; gap:18px; margin-top:7px; }
-  .legend span { font-size:var(--fs-min); color:var(--sub); display:flex; align-items:center; gap:6px; }
-  .legend i { width:14px; height:14px; border-radius:3px; display:inline-block; }
-
-  .hbar { flex:1; display:flex; flex-direction:column; justify-content:center; gap:9px; }
-  .hrow { display:flex; align-items:center; gap:10px; }
-  .hrow .rl { font-size:var(--fs-min); font-weight:700; color:var(--sub); width:110px; text-align:right; }
-  .hrow .track { flex:1; display:flex; height:22px; border-radius:4px; overflow:hidden; }
-  .hrow .seg { height:100%; }
-
-  /* ═══ PANEL D ═══ */
+  /* Panel D: comparison and interpretation */
   .p-results { grid-column:2; grid-row:2; }
-  .dbody { flex:1; display:grid; grid-template-columns:1fr 1fr; gap:18px; }
-  .dcol { display:flex; flex-direction:column; }
-  .dh { font-size:var(--fs-min); font-weight:700; color:var(--sub); text-align:center; margin-bottom:9px; }
-  .cg {
-    flex:1; display:grid; grid-template-columns:96px 1fr 1fr;
-    grid-template-rows:auto 1fr 1fr; gap:6px;
+  .result-body {
+    flex:1; display:grid; grid-template-columns:1.08fr .92fr; grid-template-rows:auto auto;
+    column-gap:16px; row-gap:22px; align-content:center; align-items:center;
   }
-  .cg .ch, .cg .rh {
-    display:flex; align-items:center; justify-content:center; text-align:center;
-    font-size:var(--fs-min); font-weight:700;
+  .result-col { display:flex; flex-direction:column; }
+  .result-head {
+    font-size:var(--fs-sect); text-transform:uppercase; letter-spacing:.3px;
+    font-weight:700; color:var(--sub); text-align:center; margin-bottom:8px;
   }
-  .cg .ch { color:var(--sem); }
-  .cg .rh { color:var(--spk); }
-  .cg .cell {
-    border:1.4px solid var(--line); border-radius:5px; background:#fff;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    text-align:center; padding:6px 4px;
+  .arch-scale {
+    position:relative; height:164px; display:grid; grid-template-columns:1fr 1fr 1fr;
+    align-items:start; padding-top:8px;
   }
-  .cg .cell .cl { font-size:var(--fs-min); font-weight:600; color:var(--sub); }
-  .cg .cell .cs { font-size:var(--fs-min); margin-top:3px; }
-  .cg .cell.better { background:var(--soft); }
-  .cg .cell.better .cs { color:var(--spk); font-weight:700; }
-  .cg .cell.best { background:var(--best-tint); border:2px solid var(--best); }
-  .cg .cell.best .cl, .cg .cell.best .cs { color:var(--best); font-weight:700; }
-
-  .qs { flex:1; display:flex; flex-direction:column; justify-content:center; gap:12px; }
-  .q { display:flex; align-items:flex-start; gap:9px; font-size:var(--fs-body); }
-  .q .qn {
-    flex:none; width:30px; height:30px; border-radius:50%;
-    background:var(--soft); border:1.4px solid var(--line);
-    display:flex; align-items:center; justify-content:center;
-    font-size:var(--fs-min); font-weight:800; color:var(--sub);
+  .arch-scale::before {
+    content:""; position:absolute; left:15%; right:15%; top:73px;
+    height:3px; border-radius:3px; background:#cfcfcf;
   }
-  .q .qx { line-height:1.32; color:var(--ink); padding-top:2px; }
-  .q .qx .hs { color:var(--sem); font-weight:700; }
-  .q .qx .hp { color:var(--spk); font-weight:700; }
-  .q .qx .hb { color:var(--best); font-weight:700; }
+  .arch-node {
+    position:relative; z-index:1; display:flex; flex-direction:column; align-items:center;
+    text-align:center; color:var(--sub);
+  }
+  .arch-node .an { min-height:42px; font-size:var(--fs-body); font-weight:700; line-height:1.15; }
+  .arch-node .marker {
+    width:21px; height:21px; margin-top:12px; border:3px solid #8f8f8f;
+    border-radius:50%; background:#fff;
+  }
+  .arch-node .ak { margin-top:7px; font-size:var(--fs-min); color:var(--faint); }
+  .arch-node.best { color:var(--best); }
+  .arch-node.best .marker {
+    width:31px; height:31px; margin-top:7px; border:4px solid var(--best); background:var(--best-tint);
+    position:relative;
+  }
+  .arch-node.best .marker::after {
+    content:"\2605"; position:absolute; inset:-2px 0 0; color:var(--best); font-size:18px; line-height:25px;
+  }
+  .arch-node.best .ak { color:var(--best); font-weight:800; }
+  .arch-node .result-tag {
+    margin-top:5px; font-size:12px; font-weight:700; color:var(--best);
+  }
+  .plan-equation {
+    margin-top:8px; display:flex; align-items:center; justify-content:center; gap:7px;
+    padding:10px 8px; border:1.4px solid var(--best-edge); border-radius:5px; background:#f6faf7;
+  }
+  .plan-chip {
+    border:1px solid var(--best-edge); border-radius:4px; background:#fff;
+    padding:7px 8px; color:var(--best); font-size:var(--fs-min); font-weight:700; text-align:center;
+  }
+  .plus, .gives { color:var(--best); font-size:19px; font-weight:800; }
+  .update-map {
+    flex:1; display:flex; flex-direction:column; align-items:center; padding-top:8px;
+  }
+  .update-source {
+    width:82%; border:2px solid var(--sem); border-radius:5px; background:var(--sem-tint);
+    padding:10px 8px; text-align:center; color:var(--sem); font-size:var(--fs-body); font-weight:700;
+  }
+  .branch-stem { width:2px; height:25px; background:var(--sem-edge); }
+  .outcome-row {
+    width:100%; position:relative; display:grid; grid-template-columns:1fr 1fr; gap:9px; padding-top:12px;
+  }
+  .outcome-row::before {
+    content:""; position:absolute; left:25%; right:25%; top:0; height:2px; background:var(--sem-edge);
+  }
+  .outcome {
+    position:relative; min-height:130px; border:1.4px solid var(--sem-edge); border-radius:5px;
+    background:var(--sem-tint); padding:11px 7px; text-align:center;
+    display:flex; flex-direction:column; justify-content:center;
+  }
+  .outcome::before {
+    content:""; position:absolute; left:50%; top:-12px; height:12px; border-left:2px solid var(--sem-edge);
+  }
+  .outcome .oh { color:var(--sem); font-size:var(--fs-min); font-weight:700; margin-bottom:9px; }
+  .outcome .main { color:var(--ink); font-size:var(--fs-body); font-weight:800; line-height:1.18; }
+  .outcome .qual { color:var(--sub); font-size:12px; line-height:1.2; margin-top:7px; }
+  .omnibus {
+    grid-column:1 / -1; border:1.4px solid var(--line); border-radius:5px;
+    background:linear-gradient(90deg,#f6faf7 0%,#fff 50%,#f3f7fa 100%);
+    padding:11px 16px; text-align:center; color:var(--ink);
+    font-size:var(--fs-body); line-height:1.3;
+  }
+  .omnibus .op { color:var(--best); font-weight:800; }
+  .omnibus .os { color:var(--sem); font-weight:800; }
 </style>
 </head>
 <body>
 
 <div class="fig">
 
-  <!-- ═══════════ PANEL A ═══════════ -->
-  <div class="panel p-scene">
+  <div class="panel p-pipeline">
     <div class="panel-label">a</div>
-    <div class="panel-title">Experimental Paradigm</div>
+    <div class="panel-title">Method &amp; Evidential Pipeline</div>
+    <div class="pipeline">
+      <div class="pipe-card">
+        <div class="pt">Behavioural experiments</div>
+        <div class="pc">Studies 1a, 1b, and 2</div>
+      </div>
+      <div class="down"></div>
+      <div class="pipe-card model-card">
+        <div class="pt">Computational cognitive model</div>
+        <div class="pc">Model the <b>full utterance distribution</b> within the Rational Speech Act framework</div>
+      </div>
+      <div class="down"></div>
+      <div class="evidence-split">
+        <div class="evidence-card">
+          <div class="et">Held-out prediction</div>
+          <div class="em">Factorial model comparison<br>Participant-level PSIS-LOO + posterior prediction</div>
+          <span class="claim">Predictive contribution in observed production</span>
+        </div>
+        <div class="evidence-card">
+          <div class="et">Controlled simulation</div>
+          <div class="em">Broader range of randomly generated scenes</div>
+          <span class="claim">Generative sufficiency under selected conditions</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
+  <div class="panel p-model">
+    <div class="panel-label">b</div>
+    <div class="panel-title">Two Directions of Communicative Efficiency</div>
+    <div class="model-body">
+      <div>
+        <div class="sect sem">Hierarchical Semantic Composition</div>
+        <div class="semantic-row">
+          <div class="semantic-card">
+            <div class="mt">Context-fixed</div>
+            <div class="sem-flow">
+              <span class="context">size meaning</span><span class="arrow">&#8592;</span><span class="context">original scene</span>
+            </div>
+            <div class="mc">Size remains anchored to the original scene.</div>
+          </div>
+          <div class="semantic-card">
+            <div class="mt">Sequential context updating</div>
+            <div class="sem-flow">
+              <span class="context">size</span><span class="arrow">&#8592;</span><span class="context">restricted context</span><span class="arrow">&#8592;</span><span class="context inner-context">inner adjective<br>+ N</span>
+            </div>
+            <div class="mc">An inner property can change the context for interpreting size.</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="sect spk">Pragmatic Production</div>
+        <div class="speaker-row">
+          <div class="speaker-card">
+            <div class="mt">Global</div>
+            <div class="kappa">&kappa; = 0</div>
+            <div class="utterance-unit">big&nbsp; blue&nbsp; N</div>
+            <div class="mc">Complete utterances compete as single plans.</div>
+          </div>
+
+          <div class="speaker-card plan">
+            <div class="mt">Plan-guided</div>
+            <div class="kappa">0 &lt; &kappa; &lt; 1</div>
+            <div class="plan-shell">
+              <div class="plan-label">advance utterance plan</div>
+              <div class="word-flow">
+                <span class="word">big</span><span class="word-arrow">&#8594;</span><span class="word">blue</span><span class="word-arrow">&#8594;</span><span class="word">N</span>
+              </div>
+            </div>
+            <div class="mc">The plan constrains the utterance while successive choices continue to matter.</div>
+          </div>
+
+          <div class="speaker-card">
+            <div class="mt">Fully incremental</div>
+            <div class="kappa">&kappa; = 1</div>
+            <div class="word-flow">
+              <span class="word">big</span><span class="word-arrow">&#8594;</span><span class="word">blue</span><span class="word-arrow">&#8594;</span><span class="word">N</span>
+            </div>
+            <div class="mc">Each successive choice is evaluated against prefix-specific alternatives.</div>
+          </div>
+        </div>
+        <div class="common-response">All three architectures predict the same distribution over completed responses.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel p-design">
+    <div class="panel-label">c</div>
+    <div class="panel-title">Experimental Design</div>
     <div class="scene">
       <div class="scene-grid">
-        <div><svg width="52" height="52">
-          <circle cx="26" cy="26" r="21" fill="#56B4E9" stroke="#0072B2" stroke-width="1.3"/>
-          <rect x="2" y="2" width="48" height="48" rx="4" fill="none" stroke="#1f1f1f" stroke-width="2.2" stroke-dasharray="6 4"/>
-        </svg></div>
-        <div><svg width="28" height="28"><rect x="3" y="3" width="22" height="22" rx="3" fill="#56B4E9" stroke="#0072B2" stroke-width="1.1"/></svg></div>
-        <div><svg width="38" height="38"><circle cx="19" cy="19" r="15" fill="#E69F00" stroke="#CC7A00" stroke-width="1.1"/></svg></div>
-        <div><svg width="36" height="36"><polygon points="18,3 34,32 2,32" fill="#E69F00" stroke="#CC7A00" stroke-width="1.1"/></svg></div>
-        <div><svg width="24" height="24"><rect x="2" y="2" width="20" height="20" rx="2" fill="#009E73" stroke="#007A57" stroke-width="1.1"/></svg></div>
-        <div><svg width="34" height="34"><circle cx="17" cy="17" r="13" fill="#009E73" stroke="#007A57" stroke-width="1.1"/></svg></div>
+        <div><svg width="46" height="46"><circle cx="23" cy="23" r="18" fill="#56B4E9" stroke="#0072B2" stroke-width="1.3"/><rect x="1" y="1" width="44" height="44" rx="4" fill="none" stroke="#1f1f1f" stroke-width="2.1" stroke-dasharray="6 4"/></svg></div>
+        <div><svg width="27" height="27"><rect x="3" y="3" width="21" height="21" rx="3" fill="#56B4E9" stroke="#0072B2" stroke-width="1.1"/></svg></div>
+        <div><svg width="35" height="35"><circle cx="17.5" cy="17.5" r="14" fill="#E69F00" stroke="#CC7A00" stroke-width="1.1"/></svg></div>
+        <div><svg width="34" height="34"><polygon points="17,3 32,31 2,31" fill="#E69F00" stroke="#CC7A00" stroke-width="1.1"/></svg></div>
+        <div><svg width="23" height="23"><rect x="2" y="2" width="19" height="19" rx="2" fill="#009E73" stroke="#007A57" stroke-width="1.1"/></svg></div>
+        <div><svg width="32" height="32"><circle cx="16" cy="16" r="12" fill="#009E73" stroke="#007A57" stroke-width="1.1"/></svg></div>
       </div>
       <div class="scene-cap">&ldquo;the big blue circle sticker&rdquo;</div>
       <div class="scene-sub">target = dashed frame &middot; 6 objects</div>
     </div>
-
     <div class="design">
-      <div class="design-h">Factorial Design (size&ndash;colour)</div>
+      <div class="design-h">Factorial design</div>
       <div class="factor">
-        <div class="fh"><b>Referential context</b> &middot; within-subj.</div>
-        <div class="frow">
-          <div><b>Size</b>size alone</div>
-          <div><b>Both</b>size + colour</div>
-          <div><b>Colour</b>colour alone</div>
+        <div class="fh"><b>Referential context</b> &middot; within participant</div>
+        <div class="factor-row">
+          <div><b>Size</b>size sufficient</div>
+          <div><b>Both</b>both sufficient</div>
+          <div><b>Colour</b>colour sufficient</div>
         </div>
       </div>
       <div class="factor">
-        <div class="fh"><b>Size discriminability</b> &middot; between-subj.</div>
-        <div class="frow">
+        <div class="fh"><b>Size discriminability</b> &middot; between participants</div>
+        <div class="factor-row">
           <div><b>High</b>strong contrast</div>
           <div><b>Low</b>weak contrast</div>
         </div>
       </div>
-    </div>
-  </div>
-
-
-  <!-- ═══════════ PANEL B ═══════════ -->
-  <div class="panel p-model">
-    <div class="panel-label">b</div>
-    <div class="panel-title">Incremental RSA Model</div>
-
-    <div class="mbody">
-
-      <!-- Semantics: ONE shared contrast, schematic, no repeated equation -->
-      <div class="msec">
-        <div class="sect sem">Compositional Semantics &middot; Listener L&#x2080;</div>
-        <div class="vpair">
-          <div class="vcard sem">
-            <div class="vt">Context-Fixed</div>
-            <svg width="186" height="66" viewBox="0 0 186 66">
-              <line x1="14" y1="32" x2="172" y2="32" stroke="#c9d8e4" stroke-width="2"/>
-              <circle cx="30"  cy="32" r="5" fill="#cdd9e2"/>
-              <circle cx="58"  cy="32" r="5" fill="#cdd9e2"/>
-              <circle cx="93"  cy="32" r="7" fill="#1f5c8b"/>
-              <circle cx="128" cy="32" r="5" fill="#cdd9e2"/>
-              <circle cx="156" cy="32" r="5" fill="#cdd9e2"/>
-              <line x1="93" y1="16" x2="93" y2="48" stroke="#6b6b6b" stroke-width="2.4"/>
-              <rect x="87" y="11" width="12" height="7" rx="2" fill="#6b6b6b"/>
-              <text x="93" y="63" text-anchor="middle" font-family="Helvetica" font-size="11" fill="#6b6b6b">&theta; locked</text>
-            </svg>
-            <div class="vc">order-invariant</div>
-          </div>
-          <div class="vcard sem">
-            <div class="vt">Context-Updating</div>
-            <svg width="186" height="66" viewBox="0 0 186 66">
-              <line x1="14" y1="32" x2="172" y2="32" stroke="#c9d8e4" stroke-width="2"/>
-              <circle cx="30"  cy="32" r="5" fill="#cdd9e2"/>
-              <circle cx="58"  cy="32" r="5" fill="#cdd9e2"/>
-              <circle cx="86"  cy="32" r="6" fill="#9bb9cf"/>
-              <circle cx="120" cy="32" r="7" fill="#1f5c8b"/>
-              <circle cx="152" cy="32" r="5" fill="#cdd9e2"/>
-              <line x1="86"  y1="18" x2="86"  y2="46" stroke="#9bb9cf" stroke-width="2.2" stroke-dasharray="3 2"/>
-              <line x1="120" y1="16" x2="120" y2="48" stroke="#1f5c8b" stroke-width="2.6"/>
-              <path d="M90 23 Q 101 14 110 19" stroke="#1f5c8b" stroke-width="2" fill="none"/>
-              <polygon points="115,19 109,16 109.5,22" fill="#1f5c8b"/>
-              <text x="103" y="63" text-anchor="middle" font-family="Helvetica" font-size="11" fill="#1f5c8b">&theta; shifts</text>
-            </svg>
-            <div class="vc">order-sensitive</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Speaker: schematic, minimal words -->
-      <div class="msec">
-        <div class="sect spk">Pragmatic Speaker S&#x2081; &middot; Production</div>
-        <div class="vpair">
-          <div class="vcard spk">
-            <div class="vt">Global</div>
-            <svg width="200" height="50" viewBox="0 0 200 50">
-              <rect x="34" y="13" width="132" height="24" rx="5" fill="#fff" stroke="#e6c6a2" stroke-width="1.4"/>
-              <text x="100" y="29" text-anchor="middle" font-family="Helvetica" font-size="13" font-weight="700" fill="#b5651d">big&nbsp; blue&nbsp; N</text>
-              <text x="100" y="46" text-anchor="middle" font-family="Helvetica" font-size="11" fill="#a87a45">scored as one unit</text>
-            </svg>
-            <div class="vc">whole utterance</div>
-          </div>
-          <div class="vcard spk">
-            <div class="vt">Incremental</div>
-            <svg width="210" height="50" viewBox="0 0 210 50">
-              <rect x="6"   y="14" width="50" height="22" rx="4" fill="#fff" stroke="#e6c6a2" stroke-width="1.3"/>
-              <text x="31"  y="29" text-anchor="middle" font-family="Helvetica" font-size="12" font-weight="700" fill="#b5651d">big</text>
-              <rect x="80"  y="14" width="50" height="22" rx="4" fill="#fff" stroke="#e6c6a2" stroke-width="1.3"/>
-              <text x="105" y="29" text-anchor="middle" font-family="Helvetica" font-size="12" font-weight="700" fill="#b5651d">blue</text>
-              <rect x="154" y="14" width="50" height="22" rx="4" fill="#fff" stroke="#e6c6a2" stroke-width="1.3"/>
-              <text x="179" y="29" text-anchor="middle" font-family="Helvetica" font-size="12" font-weight="700" fill="#b5651d">N</text>
-              <line x1="56"  y1="25" x2="78"  y2="25" stroke="#b5651d" stroke-width="2"/><polygon points="76,21 82,25 76,29" fill="#b5651d"/>
-              <line x1="130" y1="25" x2="152" y2="25" stroke="#b5651d" stroke-width="2"/><polygon points="150,21 156,25 150,29" fill="#b5651d"/>
-              <text x="67"  y="46" text-anchor="middle" font-family="Helvetica" font-size="10" fill="#a87a45">L&#x2080;</text>
-              <text x="141" y="46" text-anchor="middle" font-family="Helvetica" font-size="10" fill="#a87a45">L&#x2080;</text>
-            </svg>
-            <div class="vc">word-by-word</div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-
-  <!-- ═══════════ PANEL C ═══════════ -->
-  <div class="panel p-exps">
-    <div class="panel-label">c</div>
-    <div class="panel-title">Empirical Results</div>
-
-    <div class="ewrap">
-
-      <div class="ecard">
-        <div class="eh">Exp 1 &middot; Slider Rating</div>
-        <div class="es">mean size-first preference</div>
-        <div class="gbar">
-          <div class="grp">
-            <div class="bars">
-              <div class="bar" style="height:40px; background:var(--d-hi);"></div>
-              <div class="bar" style="height:50px; background:var(--d-lo);"></div>
-            </div>
-            <div class="lab">Both</div>
-          </div>
-          <div class="grp">
-            <div class="bars">
-              <div class="bar" style="height:70px; background:var(--d-hi);"></div>
-              <div class="bar" style="height:62px; background:var(--d-lo);"></div>
-            </div>
-            <div class="lab">Size</div>
-          </div>
-          <div class="grp">
-            <div class="bars">
-              <div class="bar" style="height:13px; background:var(--d-hi);"></div>
-              <div class="bar" style="height:18px; background:var(--d-lo);"></div>
-            </div>
-            <div class="lab">Colour</div>
-          </div>
-        </div>
-        <div class="legend">
-          <span><i style="background:var(--d-hi);"></i>High discrim.</span>
-          <span><i style="background:var(--d-lo);"></i>Low discrim.</span>
-        </div>
-      </div>
-
-      <div class="ecard">
-        <div class="eh">Exp 2 &middot; Free Production</div>
-        <div class="es">proportion by utterance category</div>
-        <div class="hbar">
-          <div class="hrow">
-            <div class="rl">Both</div>
-            <div class="track">
-              <div class="seg" style="width:50%; background:var(--d-size);"></div>
-              <div class="seg" style="width:33%; background:var(--d-col);"></div>
-              <div class="seg" style="width:17%; background:var(--d-other);"></div>
-            </div>
-          </div>
-          <div class="hrow">
-            <div class="rl">Size</div>
-            <div class="track">
-              <div class="seg" style="width:78%; background:var(--d-size);"></div>
-              <div class="seg" style="width:12%; background:var(--d-col);"></div>
-              <div class="seg" style="width:10%; background:var(--d-other);"></div>
-            </div>
-          </div>
-          <div class="hrow">
-            <div class="rl">Colour</div>
-            <div class="track">
-              <div class="seg" style="width:4%; background:var(--d-size);"></div>
-              <div class="seg" style="width:90%; background:var(--d-col);"></div>
-              <div class="seg" style="width:6%; background:var(--d-other);"></div>
-            </div>
-          </div>
-        </div>
-        <div class="legend">
-          <span><i style="background:var(--d-size);"></i>size-1st</span>
-          <span><i style="background:var(--d-col);"></i>colour-1st</span>
-          <span><i style="background:var(--d-other);"></i>other</span>
-        </div>
+      <div class="measure-row">
+        <div class="measure"><b>Studies 1a/1b</b>Slider order judgements</div>
+        <div class="measure"><b>Study 2</b>Direct production: selection, length, and conditional order</div>
       </div>
     </div>
   </div>
 
-
-  <!-- ═══════════ PANEL D ═══════════ -->
   <div class="panel p-results">
     <div class="panel-label">d</div>
-    <div class="panel-title">Model Comparison &amp; Key Findings</div>
-
-    <div class="dbody">
-
-      <div class="dcol">
-        <div class="dh">2 &times; 2 Comparison (PSIS-LOO)</div>
-        <div class="cg">
-          <div></div>
-          <div class="ch">Context-<br>Fixed</div>
-          <div class="ch">Context-<br>Updating</div>
-
-          <div class="rh">Global</div>
-          <div class="cell"><span class="cl">G &times; Fixed</span><span class="cs" style="color:var(--faint);">baseline</span></div>
-          <div class="cell"><span class="cl">G &times; Updating</span></div>
-
-          <div class="rh">Incremental</div>
-          <div class="cell best"><span class="cl">I &times; Fixed</span><span class="cs">&#9733; best</span></div>
-          <div class="cell better"><span class="cl">I &times; Updating</span><span class="cs">near tie</span></div>
+    <div class="panel-title">Division of Labour</div>
+    <div class="result-body">
+      <div class="result-col">
+        <div class="result-head">Production architecture</div>
+        <div class="arch-scale">
+          <div class="arch-node">
+            <div class="an">Global</div>
+            <div class="marker"></div>
+            <div class="ak">&kappa; = 0</div>
+          </div>
+          <div class="arch-node best">
+            <div class="an">Plan-guided</div>
+            <div class="marker"></div>
+            <div class="ak">&kappa; = .447</div>
+            <div class="result-tag">best prediction</div>
+          </div>
+          <div class="arch-node">
+            <div class="an">Fully<br>incremental</div>
+            <div class="marker"></div>
+            <div class="ak">&kappa; = 1</div>
+          </div>
+        </div>
+        <div class="plan-equation">
+          <div class="plan-chip">advance plan</div><div class="plus">+</div><div class="plan-chip">successive choices</div><div class="gives">&#8594;</div><div class="plan-chip">completed response</div>
         </div>
       </div>
 
-      <div class="dcol">
-        <div class="dh">Key Findings</div>
-        <div class="qs">
-          <div class="q">
-            <div class="qn">Q1</div>
-            <div class="qx"><span class="hs">Context-updating</span> can generate the baseline preference.</div>
-          </div>
-          <div class="q">
-            <div class="qn">Q2</div>
-            <div class="qx"><span class="hp">Incremental production</span> explains behaviour once order and salience are included.</div>
+      <div class="result-col">
+        <div class="result-head">Sequential context updating</div>
+        <div class="update-map">
+          <div class="update-source">Sequential context updating</div>
+          <div class="branch-stem"></div>
+          <div class="outcome-row">
+            <div class="outcome">
+              <div class="oh">Fitted production</div>
+              <div class="main">No predictive gain</div>
+            </div>
+            <div class="outcome">
+              <div class="oh">Controlled simulation</div>
+              <div class="main">Order asymmetry</div>
+              <div class="qual">with stronger semantic consequences</div>
+            </div>
           </div>
         </div>
       </div>
-
+      <div class="omnibus">
+        Across the opposing directions of communicative efficiency, <span class="op">plan-guided incremental production</span> best predicts the observed response distribution; <span class="os">sequential context updating</span> can generate an order asymmetry under restricted simulation assumptions and adds no predictive gain in the production data.
+      </div>
     </div>
   </div>
 

@@ -1,0 +1,5 @@
+panel,label,estimate,lower,upper
+Production architecture,Plan-guided,0,0,0
+Production architecture,Global,229.6049158786803,58.76527743349092,376.1599376140421
+Production architecture,Fully incremental,422.3872162813708,221.2751690589197,647.3816390045926
+Successive-choice contribution,kappa,0.4472138155779787,0.4035759122333988,0.4897156277835954

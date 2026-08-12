@@ -34,9 +34,6 @@
 \newcommand{\adj}[1]{\textsc{#1}}
 \newcommand{\utter}[1]{\textsf{#1}}
 \newcommand{\param}[1]{\ensuremath{#1}}
-\newcommand{\GH}{\textsc{G-HO}}
-\newcommand{\KH}{\textsc{K-HO}}
-\newcommand{\IH}{\textsc{I-HO}}
 
 % ---- title matter -----------------------------------------------------------
 \shorttitle{Communicative Efficiency in Adjective Ordering}
@@ -45,9 +42,9 @@
 \authorsaffiliations{University of T\"ubingen}
 \leftheader{Wang et al.}
 
-\abstract{Adjective ordering must reconcile stable order expectations with the usefulness of properties in the current scene. Theoretical accounts locate communicative efficiency in two directions: hierarchical semantic composition interprets noun-adjacent modifiers before outer modifiers, whereas surface production makes linearly earlier information available first. We test how these pressures are expressed in explicit order judgements and in the full distribution of produced descriptions. Two German slider studies show a replicated context gradient and a small residual size-first preference when colour alone identifies the target. A production study shows that speakers often resolve reference with one adjective, so adjective selection and utterance length can pre-empt an ordering decision. We compare matched Rational Speech Act models over fifteen completed responses. After controlling participant-specific variation in language-model-derived stable order expectations, a model with a shared interior prefix-normalisation weight predicts responses better than globally normalised and fully prefix-normalised endpoints ($\kappa=.447$, 95\% interval $[.404,.490]$). Its advantage spans adjective selection, length, adjective set, and initial adjective. Belief-dependent size updating adds no predictive value in the fitted data; controlled simulation shows only that such updating can generate an asymmetry under stronger semantic assumptions. The results support a graded completed-response architecture, not a direct identification of token-by-token planning.}
+\abstract{Adjective ordering must reconcile stable order expectations with the usefulness of properties in the current scene. Theoretical accounts locate communicative efficiency in two directions: hierarchical semantic composition interprets noun-adjacent modifiers before outer modifiers, whereas surface production makes linearly earlier information available first. We test how these pressures are expressed in explicit order judgements and in the full distribution of produced utterances. Two German slider studies show a replicated context gradient and a small residual size-first preference when colour alone identifies the target. A production study shows that speakers often resolve reference with one adjective, so adjective selection and utterance length can pre-empt an ordering decision. We compare matched Rational Speech Act models over fifteen completed responses. After controlling participant-specific variation in stable order expectations, plan-guided incremental production predicts responses better than global and fully incremental alternatives. Its advantage spans adjective selection, length, adjective set, and initial adjective. Sequential context updating within hierarchical semantic composition is predictively neutral in the fitted data; controlled simulation identifies conditions under which it can generate an order asymmetry. The results support plan-guided incremental production as an account of completed utterance probabilities and leave the time course of planning open.}
 
-\keywords{adjective ordering, reference production, Rational Speech Act, prefix normalisation, Bayesian cognitive modelling}
+\keywords{adjective ordering, reference production, Rational Speech Act, incremental production, Bayesian cognitive modelling}
 
 % =============================================================================
 \begin{document}
@@ -65,45 +62,52 @@ Yet the first adjective is also the listener's first descriptive cue to the targ
 In a scene where colour alone identifies the intended sticker, \emph{blue} would provide the decisive information sooner, even though a colour-first sequence conflicts with the canonical size-first preference \citep{fukumura2018ordering,rubio2021wordorder}.
 The order that sounds most natural may therefore differ from the order that guides the listener most efficiently through the scene.
 
-But what counts as efficient---and therefore early---for the listener in a complex referential setting?
-One relevant line of work concerns adjective subjectivity.
+What counts as efficient---and therefore early---depends on the direction in which an adjective string is evaluated.
+One line of work concerns adjective subjectivity.
 More subjective adjectives tend to precede less subjective adjectives in prenominal sequences \citep{scontras2017subjectivity}.
-Some subjectivity-based proposals connect this tendency to hierarchical semantic composition, under which the noun-adjacent adjective composes before adjectives farther from the noun.
-In \emph{the big blue sticker}, the noun-adjacent adjective \emph{blue} therefore combines with \emph{sticker} before the linearly earlier \emph{big}, narrowing the comparison class against which the gradable size adjective is interpreted.
-Because \emph{blue} is typically less subjective than \emph{big}, its noun-adjacent position may provide a comparatively stable restriction before the size adjective is interpreted, potentially contributing to the surface size-first preference \citep{franke2019subjectivity,scontras2019grammatical,scontras2020incremental}.
-A separate line of referential work suggests that adjective order is also sensitive to the discriminatory strength of each property in the current scene \citep{fukumura2018ordering,rubio2021wordorder}.
-When colour distinguishes the target more effectively than size, colour-first orders may become more acceptable or more likely, consistent with a pressure to provide contextually useful information earlier in the surface sequence.
+Under hierarchical semantic composition, the adjective next to the noun combines with the noun before an adjective farther away.
+In \emph{the big blue sticker}, \emph{blue} therefore combines with \emph{sticker} before the gradable adjective \emph{big} is interpreted.
+Because colour is typically less subjective than size, this restriction can provide a more stable comparison class for interpreting size and thereby contribute to a size-first surface preference \citep{franke2019subjectivity,scontras2019grammatical,scontras2020incremental}.
 
-Depending on which perspective is taken, communicative efficiency may support conflicting adjective-ordering predictions.
-This tension is especially consequential in reference games \citep{franke2009signal,frank2012predicting}, where successful communication depends both on the completed description and on how information becomes available as that description unfolds.
-Work on incremental language processing emphasizes the latter: listeners integrate partial linguistic input with visual context to restrict candidate referents before the noun phrase is complete \citep{tanenhaus1995integration,sedivy1999achieving}.
-On this view, placing the most discriminating modifier early in the linear sequence may facilitate identification before the remaining words are heard \citep{rubio2020incrementality}.
-On the other hand, the subjectivity-based account emphasizes the former by evaluating a completed adjective sequence through the listener's hierarchical interpretation.
-From this comprehension-oriented perspective, an order is efficient when the noun-adjacent adjective provides a more reliable restriction for interpreting the outer adjective \citep{franke2019subjectivity,scontras2019grammatical,scontras2020incremental}.
-At the level of production, these two directions may guide different parts of the same process.\
-A representation of the intended, hierarchically interpreted description can support an advance plan.\
-Scene-specific usefulness can continue to shape choices among the remaining adjectives as the description unfolds.\
-We refer to this coordination as \emph{plan-guided incremental production}: speakers begin with a partial plan for the description and remain responsive to local alternatives during its surface realisation.\
+In reference games \citep{franke2009signal,frank2012predicting}, communicative efficiency concerns how an utterance guides the listener to the target as its words unfold.
+Referential usefulness therefore assigns priority through the surface linear sequence.
+Listeners encounter the first spoken adjective before the rest of the utterance and can use it to begin restricting the set of possible referents \citep{tanenhaus1995integration,sedivy1999achieving,rubio2020incrementality}.
+When colour distinguishes the target more effectively than size, placing colour first can make the decisive information available sooner \citep{fukumura2018ordering,rubio2021wordorder}.
+The same size--colour string is therefore traversed in two directions.
+Hierarchical composition reaches colour before size.
+Surface linear ordering reaches size before colour.
+Communicative efficiency can favour different surface orders depending on whether it operates through hierarchical semantic composition or surface linear ordering.
 
-Moreover, before a speaker can weigh alternative adjective orders, they first decide which properties to mention and when to stop.\
-In a colour-sufficient scene, \emph{the blue sticker} may complete the description, so competition between size--colour and colour--size orders may never arise in the first place.\
-Previous empirical studies show that colour is included redundantly more often than relative adjectives such as size \citep{tarenskeen2015overspecification,rubio2016redundant}.\
-Such redundancy can still support efficient identification, especially when modifier meanings are uncertain and gradable, as with size adjectives \citep{rubio2016redundant,degen2020redundancy}.\
-Scene-specific usefulness may therefore affect whether an adjective is used redundantly and, conditional on such redundant use, how the adjectives are ordered within a multi-adjective string.\
+Moreover, before a speaker can weigh alternative adjective orders, they first decide which properties to mention and when to stop.
+In a colour-sufficient scene, \emph{the blue sticker} may complete the utterance, so competition between size--colour and colour--size orders may never arise.
+In a size-sufficient scene, speakers may still produce \emph{the big blue sticker}.
+This creates an asymmetry in the redundant use of colour and size adjectives.
+Previous empirical studies show that colour is included redundantly more often than relative adjectives such as size \citep{tarenskeen2015overspecification,rubio2016redundant}.
+Such redundancy can still support efficient identification, especially when modifier meanings are uncertain and gradable, as with size adjectives \citep{rubio2016redundant,degen2020redundancy}.
+Scene-specific usefulness may therefore affect which adjectives are selected and when production stops, as well as how jointly selected adjectives are ordered.
 
-Taken together, these considerations place adjective order within a broader production problem.\
-Under plan-guided incremental production, advance commitment and local adjustment can influence which properties are selected, how many adjectives are produced, and how jointly selected adjectives are ordered.\
-The relevant empirical target is therefore the full distribution of one-, two-, and three-adjective strings, with adjective order treated as a conditional outcome of adjective selection and utterance length.\
-We ask three questions, moving from the empirical patterns to computational accounts of the mechanisms that may generate them.\
+These choices make the full distribution of one-, two-, and three-adjective utterances the relevant production outcome.
+Within this response space, adjective order is conditional on adjective selection and utterance length.
+This broader response space also raises a question about production architecture.
+A globally normalised speaker compares complete utterances as wholes.
+A fully incremental speaker evaluates each next adjective against the alternatives available after the words already produced.
+Between these endpoints, an utterance-level plan may constrain production while local alternatives continue to influence successive word choices.
+We call this intermediate hypothesis \emph{plan-guided incremental production}.
+Under this hypothesis, hierarchical semantic composition can guide an advance utterance plan, while scene-specific usefulness continues to shape word choice as the utterance unfolds.
+This possibility connects to broader literature on bounded planning, under which speakers can begin speaking before every part of an utterance has been prepared and can continue planning during articulation \citep{ferreira2002incremental,konopka2014priming}.
+It also shares with good-enough processing the broader idea that language users can rely on representations whose detail is sufficient for the current task \citep{ferreira2002goodenough,frances2024goodenough}.
+The plan-guided speaker translates this hypothesis into a distributional question by estimating how strongly successive adjective choices affect the probability of each completed utterance.
+
+We therefore ask three questions, moving from the empirical patterns to computational accounts of the mechanisms that may generate them.\
 First, how do stable size-first preferences and scene-specific referential usefulness jointly shape explicit order judgements and the production outcomes of adjective selection, utterance length, and conditional order?\
-Second, after stable order expectations are controlled, does the production distribution favour global evaluation of complete descriptions, fully incremental adjective choice, or plan-guided incremental production between these endpoints?\
+Second, after stable order expectations are controlled, does the production distribution favour global evaluation of complete utterances, fully incremental adjective choice, or plan-guided incremental production between these endpoints?\
 Third, does sequential context updating within hierarchical semantic composition improve prediction in the present production data, and under which controlled conditions can it generate an order asymmetry?\
 
-Isolating the source of contributions of each account remains methodologically challenging because different mechanisms can generate the same surface distribution.\
+Different mechanisms can generate the same surface distribution, making their separate contributions difficult to identify.\
 We therefore combine carefully controlled behavioural experiments, computational cognitive modelling, simulations across a broader range of randomly generated contexts, and Bayesian predictive model comparison.\
-The empirical component comprises two slider studies and one production study.\
-Study~1a and its direct replication, Study~1b, measure explicit preferences between size-first and colour-first descriptions across referential contexts using sliders.\
-Study~2 uses direct production to elicit descriptions and records adjective selection, utterance length, and order conditional on producing the same adjective set.\
+The empirical programme separates explicit ordering preferences from the production choices that make an order observable.
+Study~1a and its direct replication, Study~1b, measure explicit preferences between size-first and colour-first referential expressions across referential contexts using sliders.\
+Study~2 uses direct production to elicit utterances and records adjective selection, utterance length, and order conditional on producing the same adjective set.\
 Referential context varies the relative usefulness of size and colour within each scene.\
 Moreover, size discriminability is manipulated between participants, making size a more or less reliable visual cue throughout the experiment.\
 Crossing these factors separates the relative usefulness of size in a particular scene from its perceptual reliability throughout the task.\
@@ -111,41 +115,43 @@ The former directly operationalises discriminatory strength.\
 The latter provides a perceptual-reliability diagnostic relevant to the gradable size meaning invoked by subjectivity-based accounts, with lexical subjectivity held constant.
 
 On the modelling side, we formalise these questions within the Rational Speech Act framework \citep{frank2012predicting,goodman2016pragmatic,degen2023rational}.\
-All models assume hierarchical semantic composition.\
-They differ in whether the interpretation of size remains anchored to the original scene or is recomputed after another adjective restricts the relevant context.\
-They also differ in how descriptions are evaluated for production.\
-A global speaker evaluates complete descriptions.\
-An incremental speaker evaluates each adjective against the alternatives available at that point in the unfinished description.\
-The graded model allows the competitive consequences of these successive choices to vary between the two endpoints.\
-We interpret an interior value as plan-guided incremental production: an advance description-level plan constrains production, and competition among the remaining adjectives continues to shape its surface realisation.\
-Our comparison allows the consequences of these successive evaluations to range from absent at the global endpoint to fully retained at the incremental endpoint.\
-We estimate where along this range the observed production distribution is predicted best.\
-All models predict the same distribution of fifteen possible completed responses.\
-We compare their predictive accuracy using approximate leave-one-out prediction, with uncertainty assessed across participants.\
-Separate simulations test when sequential semantic updating is sufficient to generate an order asymmetry.\
+We extend the qualitative model of \citet{schlotterbeck2023incremental} from two fixed adjective orders to the full production distribution.
+That account combined sequential context updating within hierarchical semantic composition with incremental speaker choice and left their separate predictive contributions unresolved.
+All production models assign probabilities to the same fifteen ordered one-, two-, and three-adjective responses.
+They share controls for stable order expectations, visual salience, adjective selection, and utterance length.
+One comparison asks whether the interpretation of size remains fixed in the original context or is recomputed through sequential context updating within hierarchical semantic composition.
+A second comparison asks how strongly successive adjective choices contribute to the probability of a completed response.
+The global and fully incremental speakers define the two endpoints, and the plan-guided speaker estimates the contribution between them.
+
+Approximate leave-one-out prediction evaluates how accurately these models predict the observed production distribution, with uncertainty in the central contrasts assessed across participants \citep{vehtari2017practical}.
+The fitted comparison asks which components add predictive accuracy in the present materials.
+A separate simulation applies sequential context updating within hierarchical semantic composition across a broader range of randomly generated contexts.
+The simulation asks when that semantic operation is sufficient to generate an ordering asymmetry.
 
 Empirically, the slider studies reveal a replicated context gradient: size-first preferences are strongest when size identifies the target and weakest when colour does.\
 A small residual size-first preference remains when colour alone identifies the target.\
-The production study further shows that one-adjective descriptions often resolve reference before an ordering contrast arises.\
-Lower size discriminability primarily increases the production of additional adjective material, especially in size-sufficient scenes.\
-These findings place adjective order within a broader reference-generation problem in which scene-specific usefulness affects adjective selection and utterance length before an order among multiple adjectives becomes observable.\
+The production study shows that speakers often resolve reference with one adjective, so adjective selection and stopping frequently determine whether an order contrast arises.
+Lower size discriminability primarily increases the production of redundant adjective material, especially in size-sufficient scenes.\
 After accounting for variation across participants in stable order preferences, predictive accuracy is highest at an intermediate point on the range from global to fully incremental evaluation.\
-This pattern is consistent with plan-guided incremental production: advance commitment constrains the description, and local competition continues to shape its realisation.\
-The predictive gain extends across adjective selection, utterance length, adjective set, and initial adjective.\
-Belief-dependent size updating adds no meaningful predictive accuracy in the fitted production data.\
-Controlled simulations identify conditions under which hierarchical updating has stronger semantic consequences and generates an order asymmetry.\
+The best predictions therefore combine complete-utterance evaluation with continued influence from successive adjective choices.
+This contribution extends across adjective selection, utterance length, adjective set, and initial adjective.
+This intermediate architecture is consistent with plan-guided incremental production: advance planning constrains the utterance, and local competition continues to shape successive word choices.\
+Sequential context updating within hierarchical semantic composition adds no meaningful predictive accuracy in the fitted production data.\
+Controlled simulations identify conditions under which sequential context updating within hierarchical semantic composition has stronger semantic consequences and generates an order asymmetry.\
 
 The remainder of the paper is structured as follows.\
 \Cref{sec:background} preserves the two directional accounts of communicative efficiency and relates them to adjective selection and completed-response modelling.\
 \Cref{sec:experiments} reports the behavioural studies.\
 \Cref{sec:model,sec:modelcomparison} introduce the production model and estimate where prediction is strongest along the global-to-incremental range.\
-\Cref{sec:simulation} evaluates the fitted and generative roles of semantic updating, and \Cref{sec:discussion} considers the implications and limits of the findings.\
+\Cref{sec:simulation} evaluates the fitted and generative roles of sequential context updating within hierarchical semantic composition, and \Cref{sec:discussion} considers the implications and limits of the findings.\
 
-\todo{Replace the overview figure with the final evidential pipeline and G-HO/K-HO/I-HO architecture.}
 \begin{figure}[!t]
   \centering
   \includegraphics[width=0.92\textwidth]{overview_figure.pdf}
-  \caption{Planned overview of the final evidential structure. The behavioural studies distinguish explicit order judgements from adjective selection and length in production. The production model separates stable order expectations and terminal response-policy terms from the global, graded, and incremental completed-response architectures. Semantic updating is evaluated as a separate predictive and simulation boundary question.}
+  \caption{Overview of the design, model space, and evidential structure.
+  Panel A traces the behavioural evidence through computational modelling to held-out prediction and controlled simulation.
+  Panel B distinguishes sequential context updating within hierarchical semantic composition from global, plan-guided, and fully incremental production.
+  Panel C shows the experimental design, and Panel D summarises the predictive result for plan-guided production and the fitted and simulated evidence for sequential context updating.}
   \label{fig:overview}
 \end{figure}
 
@@ -154,75 +160,84 @@ The remainder of the paper is structured as follows.\
 \label{sec:background}
 % =============================================================================
 
-Research on adjective ordering has identified stable predictors of preferred order, including meaning-based factors such as closeness to the noun and inherentness \citep{sweet1898,whorf1945grammatical,martin1969a}, class-based hierarchies \citep{quirk1972,dixon1982,cinque1994,scott2002}, and information-theoretic measures \citep{Hahn_information_2018,futrell-etal-2020-determines,dyer2023evaluating}.
-These predictors explain substantial structure, while referential context contributes additional variation that fixed hierarchies do not fully capture \citep{fukumura2018ordering,trotzke2019}.
-The present paper focuses on two directional accounts of communicative efficiency and on the production decisions that determine whether an order contrast arises.
+Research on adjective ordering has identified several stable predictors of preferred order, including meaning-based factors such as closeness to the noun and inherentness \citep{sweet1898,whorf1945grammatical,martin1969a}, class-based hierarchies \citep{quirk1972,dixon1982,cinque1994,scott2002}, and information-theoretic measures \citep{Hahn_information_2018,futrell-etal-2020-determines,dyer2023evaluating}.
+These predictors explain substantial structure, while residual variation remains even for strong individual predictors \citep[for overviews, see][]{dyer2023evaluating,scontras2023adjective}.
+Referential context contributes further scene-specific variation in ordering preferences \citep{fukumura2018ordering,trotzke2019}.
+The present account brings together three lines of work: subjectivity and hierarchical semantic composition, discriminatory strength in reference production, and incremental pragmatic models.
+Their contributions to the full distribution of one-, two-, and three-adjective utterances remain unresolved.
 
 \subsection{Subjectivity, Hierarchical Composition, and Adjective Order}
 \label{sec:bg:subjectivity}
 
 A central empirical generalisation in the adjective-ordering literature is the relation between an adjective's \emph{subjectivity} and its preferred distance from the noun.
-\citet{scontras2017subjectivity} operationalised subjectivity as susceptibility to faultless disagreement and showed that it explains a large share of variance in English ordering preferences.
-Subsequent work suggests that the relation recurs across languages \citep{trainin2021s,scontras2023adjective}.
+\citet{scontras2017subjectivity} operationalised subjectivity as susceptibility to faultless disagreement and showed that it explains a large share of variance in English ordering preferences, outperforming earlier predictors such as inherentness and intersectivity.
+Subsequent work suggests that this relation recurs across languages \citep{trainin2021s,scontras2023adjective}.
 It is directly relevant to size--colour sequences because size adjectives are typically more subjective and gradable than colour adjectives, yielding an expected size-first surface preference.
 
 \citet{scontras2019grammatical} locate the explanatory pressure in restrictive composition.
-Assuming a hierarchical prenominal structure, the adjective closest to the noun combines with the nominal denotation before an outer adjective applies.
-The outer, more subjective adjective can therefore be evaluated against a comparison class already restricted by the inner, less subjective adjective.
-\citet{franke2019subjectivity} make the same intuition explicit in simulation, showing that subjectivity-aligned orders can increase average model-assigned target probability under sequential composition with noisy meanings.
-This account assigns priority through the semantic hierarchy: in a surface size--colour sequence, colour composes before size.
-The proposal concerns formal dependency and leaves the real-time sequence of semantic processing open.
+Under hierarchical semantic composition, the adjective closest to the noun restricts the nominal denotation before an outer adjective applies.
+The outer, more subjective adjective is then interpreted relative to a comparison class established by the inner, less subjective adjective.
+The inner adjective can therefore provide a comparatively stable basis for interpreting the outer gradable adjective.
+\citet{franke2019subjectivity} formalise this intuition in simulation and show that subjectivity-aligned orders can increase average model-assigned target probability under sequential composition with noisy meanings.
+This account locates the ordering pressure in hierarchical semantic composition.
+\citet{scontras2020incremental} develop the same mechanism as \emph{incremental semantic restriction}.
+Sequential restriction can therefore generate an ordering pressure when a speaker evaluates complete utterances as wholes.
 
-\citet{scontras2020incremental} develop this idea as \emph{incremental semantic restriction}.
-Sequential narrowing of the comparison class can generate an ordering pressure independently of incremental pragmatic production in a process-model sense.
-For the present materials, belief-dependent interpretation of size is therefore a plausible candidate source of a stable size-first asymmetry.
-The fitted analyses below test whether that candidate contributes predictively in the empirical regime; the simulation tests only whether it can generate an asymmetry under controlled assumptions.
+In the present model, sequential context updating within hierarchical semantic composition implements this proposal.
+After the inner adjective restricts the relevant context, the interpretation of gradable size can be recomputed relative to that restricted context.
+Previous simulations establish that this operation can generate an ordering asymmetry under selected semantic assumptions.
+Its predictive contribution to human production across the full response distribution remains open.
 
 \subsection{Referential Usefulness, Adjective Selection, and Length}
 \label{sec:bg:efficiency}
 
-A second directional pressure comes from referential usefulness in the emerging surface sequence.
-Adjective use is sensitive to whether a modifier helps the listener identify the referent in the current scene \citep{rubio2016redundant,rubio2019overinformative,degen2020redundancy}.
-This literature treats adjective choice and order as parts of a broader reference-generation problem.
-A related commitment appears in conceptualisation models that derive property choice from the contrast set available to the speaker \citep{fukumura2010use,van2019conceptualization}.
+A second ordering pressure comes from referential usefulness in the surface linear sequence.
+\citet{fukumura2018ordering} provide a direct empirical precedent for the present experiments: speakers were more likely to place the more discriminating adjective first.
+On this account, order reflects which property best distinguishes the target in the current scene.
+The same adjective can therefore be highly useful in one array and much less useful in another.
+Rubio-Fern\'andez and colleagues develop this proposal as \emph{incremental communicative efficiency} \citep{rubio2020incrementality,rubio2021wordorder}.
+They argue that an early modifier can be useful because it narrows the listener's candidate set before the utterance is complete.
+This proposal accords with evidence that listeners integrate partial linguistic input with visual context \citep{tanenhaus1995integration,sedivy1999achieving}.
+From this perspective, word order matters because it determines how the listener's search space is narrowed as the utterance unfolds.
 
-\citet{fukumura2018ordering} provide a direct empirical precedent.
-Speakers were more likely to place the more discriminating adjective first, consistent with the proposal that order reflects which property best distinguishes the target in the current scene.
-Rubio-Fern\'andez and colleagues develop this proposal as \emph{incremental efficiency}: an expression can be useful because it narrows the listener's candidate set before the description is complete \citep{rubio2020incrementality,rubio2021wordorder}.
-This production-side direction aligns with evidence that listeners integrate partial linguistic input with a visual context \citep{tanenhaus1995integration,sedivy1999achieving}.
+Referential usefulness also acts before an ordering choice becomes observable.
+Models of reference planning propose that the contrast set available to the speaker shapes which properties are selected for mention \citep{fukumura2010use,van2019conceptualization}.
+Perceptual or partner uncertainty can encourage additional, semantically redundant material, and an early redundant modifier can still facilitate visual search \citep{rubio2016redundant,rubio2019overinformative,degen2020redundancy}.
+A one-adjective utterance can resolve reference without creating an order contrast.
+Slider ratings hold adjective selection and utterance length fixed by presenting two complete orders.
+They establish an explicit ordering preference and leave open how often production reaches that choice.
+The relevant production distribution therefore includes one-, two-, and three-adjective utterances.
 
-The same referential pressure can affect adjective selection and utterance length before it affects order.
-A scene may elicit one sufficient modifier, while perceptual or partner uncertainty can encourage additional, semantically redundant material \citep{rubio2016redundant,rubio2019overinformative,degen2020redundancy}.
-An observable order contrast therefore depends on speakers selecting more than one adjective.
-This dependency motivates the full response-space analysis developed below.
-
-\subsection{Probability Architectures for Reference Generation}
+\subsection{Incremental RSA and the Full Production Distribution}
 \label{sec:bg:incremental}
 
-Psycholinguistic work shows that speakers can begin an utterance before later material is fully prepared and that planning scope varies across tasks and structures \citep{griffin2000eyes,ferreira2002incremental,konopka2014priming}.
-Those findings motivate process hypotheses, but completed descriptions do not by themselves reveal when particular words were planned.
-The Rational Speech Act framework instead provides a formal basis for comparing the distributional consequences of alternative choice architectures \citep{frank2012predicting,goodman2016pragmatic,degen2023rational}.
+The Rational Speech Act framework formalises rational communication in a shared probability space, allowing semantic interpretation, listener inference, and speaker choice to be combined and compared \citep{frank2012predicting,goodman2016pragmatic,degen2023rational}.
+Standard RSA models treat complete utterances as the units of speaker choice.
+The same pragmatic reasoning can be defined incrementally, with the speaker choosing one word at a time relative to the alternatives available after the words already selected \citep{cohngordon2019incremental}.
+Both architectures yield a distribution over completed responses.
+Variation in planning scope motivates treating global and fully incremental speakers as endpoints for the influence of successive choices \citep{griffin2000eyes,ferreira2002incremental,konopka2014priming}.
+Completed responses identify the distributional consequences of these architectures; planning time remains outside the evidence they provide.
+Related models show how incremental pragmatic reasoning can capture asymmetries in modifier position, order, and redundancy \citep{degen2020redundancy,rubio2021wordorder}.
 
-A globally normalised speaker assigns probability across completed descriptions.
-A prefix-normalised speaker evaluates each next adjective relative to a prefix-specific alternative set \citep{cohngordon2019incremental}.
-Both yield a final distribution over completed responses.
-The formal difference is whether the normalisers associated with successive alternative sets remain expressed in that completed-response distribution.
-Treating global and full prefix normalisation as endpoints allows a graded model to estimate the effective contribution of those normalisers without equating the parameter with planning time.
-
-Existing incremental pragmatic models and models of redundant modification show that prefix-sensitive reasoning can capture position and order asymmetries \citep{degen2020redundancy,rubio2021wordorder}.
-\citet{schlotterbeck2023incremental} combine a related production architecture with belief-dependent interpretation of size in the slider paradigm used here.
-That account successfully motivates the present theoretical contrast, but it leaves open which components are required to predict the complete production response space.
-The final comparison therefore separates the completed-response normalisation architecture from stable order expectations, terminal selection and length terms, and the secondary semantic-updating contrast.
+\citet{schlotterbeck2023incremental} introduced the slider paradigm on which Studies~1a and 1b build.
+Their qualitative RSA model combined sequential context updating within hierarchical semantic composition with incremental speaker choice.
+Sequential context updating recomputed the interpretation of gradable size as the relevant context was restricted, while the incremental speaker evaluated successive modifier choices.
+Together, these mechanisms captured a stable size-first preference and its modulation by discriminatory strength.
+The analysis considered two fixed size--colour orders and left the separate predictive contributions of the two directions unresolved.
+The present study extends that starting point with a direct slider replication and a production distribution over one-, two-, and three-adjective utterances, allowing adjective selection, utterance length, and order to be modelled jointly.
+Within this expanded response space, matched comparisons estimate how much predictive accuracy each direction contributes after stable order expectations and participant variation are controlled.
+Allowing the contribution of successive adjective choices to vary between the global and fully incremental endpoints provides the distributional test of plan-guided incremental production.
+A separate simulation asks when sequential context updating within hierarchical semantic composition is sufficient to generate an ordering asymmetry.
 
 
 % =============================================================================
-\section{Behavioural Studies}
+\section{Experiments}
 \label{sec:experiments}
 % =============================================================================
 
 The three studies expose different parts of the same empirical problem.
-Studies~1a and 1b ask participants to compare two completed size--colour orders directly.
-Study~2 instead elicits a description and therefore reveals whether speakers mention size, colour, or form, how many adjectives they produce, and only then how selected adjectives are ordered.
+Studies~1a and (HW: its direct replication 1b) ask participants to compare two completed size--colour orders directly.
+Study~2 instead elicits an utterance and therefore reveals whether speakers mention size, colour, or form, how many adjectives they produce, and only then how selected adjectives are ordered.
 The tasks can converge in their sensitivity to referential context without measuring the same behavioural construct.
 
 The slider studies test whether a size-first preference is graded by referential usefulness and whether a small residual preference remains when colour alone identifies the referent.
@@ -381,7 +396,7 @@ The weak Study~1a crossover did not recur, so size discriminability remains seco
   \centering
   \includegraphics[width=0.88\textwidth]{study1_slider_replication.pdf}
   \caption{Combined Study~1a and Study~1b slider results.
-  Mean centred ratings by referential context and size discriminability, with $95\%$ confidence intervals; positive values indicate size-first preference.}
+  Mean centred ratings by referential context in each study, with $95\%$ confidence intervals over participant-level means; positive values indicate size-first preference.}
   \label{fig:slider-replication}
 \end{figure}
 
@@ -420,16 +435,18 @@ For the mixed-effects logistic regressions, trials satisfying the coded outcome 
 
 \subsubsection{Results}
 
-\Cref{fig:production-empirical} summarises all 9{,}100 production trials across size--colour, size--form, and colour--form.
+\Cref{fig:production-distribution} provides an overview of the ordered response distribution for the 3{,}034 size--colour trials, which align directly with the slider studies and the targeted behavioural tests.
+The computational analysis below retains all 9{,}100 production trials across size--colour, size--form, and colour--form.
 The complete categorical distribution shows that referential context affects which adjectives are selected and how much adjective material is produced.
 Both-necessary scenes generally elicit longer descriptions, whereas one-property-sufficient scenes more often elicit a single adjective.
 In particular, colour-sufficient size--colour scenes are commonly resolved with colour alone.
 On those trials, no size--colour ordering decision is observed.
 
 \paragraph{Selection, adjective set, and length.}
-Across families, speakers preferentially mentioned properties that distinguished the target in the current scene.
+In the size--colour trials, speakers preferentially mentioned properties that distinguished the target in the current scene.
 The resulting unordered adjective-set distribution separates one-property responses from responses that contain both referentially relevant properties and from three-adjective descriptions.
 Lower size discriminability increased the probability of additional adjective material most clearly when size alone would otherwise have been sufficient.
+\Cref{fig:production-recodings}A isolates this pattern through the over-informative-response recoding used in the targeted hypothesis test.
 In the supplementary binary projection, over-informative responses were more frequent under low than high size discriminability in size-sufficient displays ($.90$ vs.\ $.63$).
 The Bayesian predictive difference was $.234$, 95\% credible interval $[.151,.318]$, and the targeted interaction against the other contexts was $.153$, $[.072,.236]$.
 The visual manipulation therefore bears most clearly on adjective selection and utterance length rather than on a stable ordering preference.
@@ -437,6 +454,7 @@ The visual manipulation therefore bears most clearly on adjective selection and 
 \paragraph{Initial adjective and conditional order.}
 Initial-adjective probabilities reflect both whether an adjective is selected and where it occurs.
 For this reason, size-initiality is a useful descriptive projection of the complete response space but not a direct counterpart of the slider outcome.
+\Cref{fig:production-recodings}B shows the size-initial recoding used in the targeted hypothesis test.
 Within the size--colour trials, the context-by-discriminability interaction for size-initial responses was significant, $\chi^2(2)=11.7$, $p=.003$.
 High discriminability increased size-initial responses in both-necessary displays ($.49$ vs.\ $.65$), with a Bayesian predictive difference of $.141$, 95\% credible interval $[.036,.242]$.
 The corresponding effects were small in the two one-property-sufficient contexts.
@@ -444,12 +462,24 @@ Conditional on producing both size and colour, size-first descriptions remained 
 That conditional subset is selected by the prior decision to mention both properties and is therefore reported separately from adjective selection and length.
 The same distinction applies to size--form, colour--form, and three-adjective responses.
 
-\todo{Replace the production figure with panels for adjective-set choice, response length, initial adjective, and conditional order within a fixed adjective set.}
-\begin{figure}[!ht]
+\begin{figure}[H]
   \centering
-  \includegraphics[width=0.95\textwidth]{production_empirical.pdf}
-  \caption{Production data across all 9{,}100 annotated trials. The current panels show initial-adjective proportions by adjective family and referential context and mean adjective count by family, context, and size discriminability. The final figure will additionally distinguish unordered adjective-set choice from order conditional on a fixed adjective set. Error bars are 95\% confidence intervals over participant-level summaries.}
-  \label{fig:production-empirical}
+  \includegraphics[width=0.95\textwidth]{production_distribution.pdf}
+  \caption{Ordered response distribution across the 3{,}034 size--colour production trials.
+  Bars show mean participant-level proportions by referential context and size discriminability, with $95\%$ confidence intervals.
+  Adjective labels preserve surface order; the figure shows responses reaching at least $2\%$ in one condition.}
+  \label{fig:production-distribution}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{production_hypothesis_recodings.pdf}
+  \caption{Hypothesis-linked recodings of the size--colour production responses.
+  Panel A codes redundant adjective use as over-informative: a multi-adjective response in a one-property-sufficient context or a three-adjective response when both properties are necessary.
+  Panel B codes whether the response begins with size.
+  Bars show Bayesian posterior medians and error bars show $95\%$ credible intervals.
+  Size-initiality combines adjective selection and order.}
+  \label{fig:production-recodings}
 \end{figure}
 
 \subsection{Behavioural Synthesis}
@@ -466,90 +496,27 @@ The formal model must therefore predict the complete fifteen-category response d
 
 
 % =============================================================================
-\section{A Model of Completed Referential Responses}
+\section{Modelling the Full Production Distribution}
 \label{sec:model}
 % =============================================================================
 
-The theoretical motivation distinguishes two directions of communicative efficiency: hierarchical semantic composition proceeds from noun-adjacent modifiers outwards, whereas the surface production path proceeds from the linearly first adjective onwards.
-The final model keeps both directions explicit.
-The semantic path specifies how the meanings in a completed adjective sequence are composed from the syntactically inner modifier to the outer modifier; the production path specifies how candidate surface prefixes are evaluated from left to right.
-These are different computational orderings over the same linguistic material.
-We ask separately whether belief-dependent meaning makes the inner-to-outer semantic path predictively consequential in the present materials and how strongly prefix-specific competition along the surface path remains expressed in completed responses.
+The modelling follows the research questions in two steps.
+The production comparison asks whether speakers evaluate complete utterances globally, choose adjectives fully incrementally, or combine an advance utterance plan with successive adjective choices.
+The semantic comparison asks whether sequential context updating within hierarchical semantic composition contributes to prediction when a noun-adjacent adjective restricts the comparison class for gradable size.
+The main text reports these scientifically interpretable comparisons.
+The Appendix documents the common display representation, stable-order control, task link for adjective selection and utterance length, and supporting robustness analyses.
 
-\subsection{Response Space and Observed Display Representation}
-\label{sec:model:input}
+\subsection{Complete Responses and the Literal Listener}
+\label{sec:model:response-space}
 
-The response space contains all fifteen ordered strings formed without repeating adjective types from size (\adj{S}), colour (\adj{C}), and form (\adj{F}): three one-adjective responses, six two-adjective responses, and six three-adjective responses.
-Each trial is represented by the raw observed six-object display.
-The final input is a deterministic $6\times3$ matrix containing observed size, colour, and form values, with the target at index 0.
-All visible properties are therefore available to the modelled listener; a family-masked representation is retained only as a robustness analysis.
+The model assigns probabilities to all fifteen ordered strings formed from size, colour, and form: three one-adjective utterances, six two-adjective utterances, and six three-adjective utterances.
+This response space allows the model to predict which properties speakers mention, how many adjectives they produce, and how jointly selected adjectives are ordered.
+All models use the observed six-object display and a Rational Speech Act speaker who favours utterances that guide a listener to the target \citep{frank2012predicting,goodman2016pragmatic,degen2023rational}.
+Size has a graded meaning defined relative to a comparison class \citep{schmidt2009how,franke2019subjectivity}.
+Colour and form provide additional visual information about the target.
 
-\subsection{Fixed Listener Semantics}
-\label{sec:model:semantics}
-
-Size is represented by a graded threshold over the scene-level comparison class $\mathcal C$ \citep{schmidt2009how,franke2019subjectivity}:
-\begin{equation}
-  \theta_{\delta}(\mathcal C)
-  = Q_{.80}(\mathcal C)
-    - \delta\,\bigl(Q_{.80}(\mathcal C)-Q_{.20}(\mathcal C)\bigr),
-  \label{eq:threshold}
-\end{equation}
-where $Q_{.20}$ and $Q_{.80}$ are probability-weighted size quantiles and $\delta$ controls threshold selectivity.\footnote{The implementation records this threshold-selectivity constant as \texttt{k}; the manuscript uses $\delta$ to distinguish it from the central prefix-normalisation parameter $\kappa$.}
-A perceptual-blur function makes size membership graded.
-Colour has a softened determinate meaning \citep{degen2020redundancy,waldon2021modeling}.
-The selected F0 package treats form as neutral in the listener core and captures form production through the terminal response policy.
-This is the best tested predictive package, not an identified claim that participants assign form adjectives a neutral meaning.
-
-The main listener uses context-fixed semantics: the size threshold is computed from the observed scene and remains constant while a surface prefix is evaluated.
-Belief-dependent size semantics is introduced separately in \Cref{sec:simulation} as a predictive and simulation boundary analysis.
-
-\subsection{Hierarchical Inner-to-Outer Composition}
-\label{sec:model:hierarchical-composition}
-
-The first computational direction follows the hierarchy of prenominal modification.
-Let a completed surface sequence be $u=w_1\ldots w_T$, and let $c_1,\ldots,c_T$ denote the same modifiers ordered from syntactically inner to outer.
-For prenominal modification, the noun-adjacent adjective is therefore $c_1=w_T$.
-Starting from the scene prior $H_0=P_0$, hierarchical composition successively restricts the current listener state:
-\begin{equation}
-  H_j(o)
-  \propto
-  H_{j-1}(o)\,
-  \llbracket c_j\rrbracket_{\rho_j}(o),
-  \qquad j=1,\ldots,T.
-  \label{eq:hierarchical-composition}
-\end{equation}
-For \emph{big blue sticker}, the hierarchical path therefore incorporates \emph{blue} before \emph{big}, even though \emph{big} is linearly first.
-
-The semantic regime determines what the subscript $\rho_j$ contributes.
-Under context-fixed semantics,
-\begin{equation}
-  \llbracket c_j\rrbracket_{\rho_j}(o)
-  =
-  \llbracket c_j\rrbracket_{\mathrm{fix}}(o),
-  \label{eq:hierarchical-fixed}
-\end{equation}
-so the meaning of size is anchored to the scene-level comparison class.
-Under belief-dependent semantics, the interpretation of a gradable size adjective can instead depend on the hierarchically prior listener state:
-\begin{equation}
-  \llbracket \adj{S}\rrbracket_{\rho_j}(o)
-  =
-  \llbracket \adj{S}\rrbracket_{\theta_{\delta}(H_{j-1})}(o).
-  \label{eq:hierarchical-updating}
-\end{equation}
-The noun-adjacent modifier can then change the comparison class against which an outer size adjective is interpreted.
-
-This inner-to-outer order is a property of the semantic representation.
-It does not by itself assert that comprehenders process the noun-adjacent adjective earlier in real time.
-With context-fixed meanings, the final literal restriction is order-insensitive because the same fixed meanings are multiplied together.
-The hierarchy becomes predictively consequential when a meaning depends on the intermediate state, as in the belief-dependent size account tested below and isolated in simulation.
-
-\subsection{Surface-Prefix Candidate Evaluation}
-\label{sec:model:prefix-semantics}
-
-The second computational direction follows the emerging surface sequence.
-For every candidate prefix, the listener distribution is reconstructed from the scene prior and each meaning in that prefix is applied once.
-Let $u_{\leq t}=w_1\ldots w_t$ be a left-to-right surface prefix.
-Under fixed semantics,
+Let $u_{\leq t}=w_1\ldots w_t$ be a surface prefix and $P_0(o)$ the prior probability of object $o$ in the display.
+Under context-fixed semantics, the literal listener after this prefix is
 \begin{equation}
   Q_t(o\mid u_{\leq t})
   \propto
@@ -557,68 +524,35 @@ Under fixed semantics,
   \llbracket w_j\rrbracket_{\mathrm{fix}}(o).
   \label{eq:prefix-listener}
 \end{equation}
-Thus the production path for \emph{big blue} evaluates a \emph{big} prefix before considering \emph{blue}, the reverse of the inner-to-outer semantic ordering for the completed phrase.
+The listener combines the meanings made available by the surface prefix and assigns probability to every object that remains compatible with them.
+This listener provides the target-directed value used by all three production accounts.
 
-For the belief-dependent production variant, the same Variant-B factorisation reconstructs each candidate prefix from $P_0$ and applies every meaning exactly once, but a size meaning can be computed relative to the listener state produced by earlier \emph{surface} material.
-This is deliberately distinct from \Cref{eq:hierarchical-composition}, where semantic dependency proceeds from the noun-adjacent modifier outwards.
-The distinction between these two update directions is one of the paper's central theoretical contrasts.
+\subsection{Successive Adjective Choice and Plan-Guided Production}
+\label{sec:model:architectures}
 
-Variant B replaces an earlier repeated-evidence implementation in which selected prefix meanings entered both the carried state and the candidate score.
-The revised factorisation changes neither the existence nor the direction of hierarchical semantic composition; it only ensures that the surface-prefix production calculation does not count previously selected evidence twice.
-
-\subsection{Raw Path Utilities}
-\label{sec:model:path-utility}
-
-At prefix $u_{<t}$, the raw utility of candidate adjective $a$ for target $o^*$ is
+At position $t$, the utility of candidate adjective $a$ for participant $i$ and target $o^*$ is
 \begin{equation}
   r_{it}(a;u_{<t},o^*)
   = \alpha_i\log Q_t(o^*\mid u_{<t}+a)
   + \lambda_{\mathrm{salience}}z_a,
   \label{eq:prefix-raw-utility}
 \end{equation}
-where $\alpha_i$ is participant-specific response determinism and $z_a$ is a centred display-derived salience score.
-The completed path accumulates the utilities of selected adjectives:
-\begin{equation}
-  R_i(u,o^*)=\sum_t r_{it}(w_t;u_{<t},o^*).
-  \label{eq:raw-path}
-\end{equation}
-For the same path, the accumulated prefix-specific log normalisers are
-\begin{equation}
+where $\alpha_i$ controls sensitivity to listener success and $z_a$ represents the visual salience of the candidate property.
+For a completed utterance $u$, the model records both the accumulated utility of its selected adjectives and the competition they faced at successive positions:
+\begin{align}
+  R_i(u,o^*)
+  &=\sum_t r_{it}(w_t;u_{<t},o^*),\\
   N_i(u,o^*)
-  =\sum_t\log\!\sum_{a\in\mathcal A(u_{<t})}
+  &=\sum_t\log\!\sum_{a\in\mathcal A(u_{<t})}
     \exp r_{it}(a;u_{<t},o^*),
-  \label{eq:prefix-normalisers}
-\end{equation}
-where $\mathcal A(u_{<t})$ contains adjective types not yet used in the prefix.
-Stopping is not a locally normalised action in the selected model.
-Utterance length is represented in the terminal response policy described below.
+  \label{eq:path-components}
+\end{align}
+where $\mathcal A(u_{<t})$ contains the adjective types still available after the current prefix.
+The term $R_i$ scores the selected path through the utterance.
+The term $N_i$ accumulates the local normalisers associated with the alternatives available along that path.
+All three accounts therefore use the target-directed values of intermediate prefixes contained in $R_i$.
 
-\subsection{Stable Order Expectations and Terminal Response Policy}
-\label{sec:model:task-links}
-
-Stable order expectations enter through a German language model's centred log-probability residual within each unordered adjective set.
-Let $\Omega(u)$ denote this residual.
-It distinguishes permutations while summing to zero within each adjective set.
-Its weight varies hierarchically across participants:
-\begin{equation}
-  \log\beta_i=\log\beta_0+\tau_\beta b_i,
-  \qquad b_i\sim\mathcal N(0,1).
-  \label{eq:participant-order}
-\end{equation}
-This hierarchy controls substantial participant variation in stable order weighting.
-It is an auxiliary random effect rather than a theory of the linguistic origin of canonical adjective order.
-
-The terminal response policy $T(u,X)$ links the shared pragmatic path to the task's complete response distribution.
-It includes a sufficient-one-word term, form backup, a three-word penalty, visual size-reliability terms, and the continuation cost associated with display salience.
-These components are shared across the compared architectures.
-They model adjective-set selection and length beyond what follows from target-directed path utility alone.
-The registered POLICY-LIGHT analysis shows that the relative preference for a graded architecture survives removal of the main direct length and backup terms, while absolute predictive accuracy deteriorates substantially.
-The successful account is therefore a probability architecture embedded in a task-specific terminal policy.
-
-\subsection{Global, Graded, and Fully Prefix-Normalised Architectures}
-\label{sec:model:architectures}
-
-The three final speakers share $R_i$, $N_i$, $\Omega$, and $T$ and differ only in the weight assigned to accumulated prefix normalisers:
+The probability of a completed utterance is
 \begin{equation}
   S_{\kappa,i}(u\mid o^*,X)
   \propto
@@ -627,182 +561,246 @@ The three final speakers share $R_i$, $N_i$, $\Omega$, and $T$ and differ only i
     -\kappa N_i(u,o^*)
     +\beta_i\Omega(u)
     +T(u,X)
-  \right\}.
-  \label{eq:graded-normalisation}
+  \right\},
+  \label{eq:plan-guided-speaker}
 \end{equation}
-The globally normalised endpoint \GH{} fixes $\kappa=0$.
-The graded model \KH{} estimates one shared population value $0<\kappa<1$.
-The fully prefix-normalised endpoint \IH{} fixes $\kappa=1$.
-At common parameter values, the graded implementation recovers both endpoints exactly.
+where $\Omega(u)$ is a German language model's relative score for alternative orders of the same adjectives and $\beta_i$ allows its influence to vary across participants.
+The task link $T(u,X)$ captures adjective selection and utterance length through the observed effects of adjective sufficiency, form use, size reliability, and length.
+These terms are shared across the three production accounts.
 
-The parameter $\kappa$ is an effective weight on the contribution of prefix-specific competition to the completed-response distribution.
-It is conditional on the listener representation, stable order model, and terminal response policy.
-An interior value does not by itself show that speakers temporally commit to a particular number of words in advance or plan one token at a time.
+At common values of the shared parameters, the same model can be written as a geometric interpolation between the global and fully incremental endpoints:
+\begin{equation}
+  S_{\kappa,i}(u\mid o^*,X)
+  \propto
+  S_{\mathrm{G},i}(u\mid o^*,X)^{1-\kappa}
+  S_{\mathrm{I},i}(u\mid o^*,X)^{\kappa},
+  \label{eq:plan-guided-interpolation}
+\end{equation}
+where $S_{\mathrm{G},i}$ and $S_{\mathrm{I},i}$ are the endpoint distributions evaluated with the same listener, stable-order component, task link, and participant parameters.
+The proportionality in \Cref{eq:plan-guided-interpolation} renormalises the interpolated scores over the fifteen completed utterances.
 
-\subsection{Theoretical Core and Task Links}
-\label{sec:model:inventory}
+The parameter $\kappa$ determines how strongly competition at successive adjective positions contributes to the completed-utterance probability.
+With $\kappa=0$, the local normalisers drop out and the \emph{global} speaker normalises over the fifteen completed paths.
+With $\kappa=1$, the \emph{fully incremental} speaker retains the complete contribution of locally normalised adjective choices.
+An interior value defines the \emph{plan-guided} speaker: an advance utterance plan constrains the completed response, and competition among locally available adjectives continues to shape its surface realisation.
+Stopping enters through $T(u,X)$ at the completed-response level.
+Accordingly, $\kappa$ measures the contribution of successive adjective choice.
+Online stopping and the time course of planning remain outside its interpretation.
 
-\begin{table}[ht]
-\centering
-\caption{Theoretical core and auxiliary task links in the final production model.}
-\label{tab:core-task-link}
-\footnotesize
-\begin{tabularx}{\textwidth}{p{3.0cm}p{2.2cm}X}
-\toprule
-Component & Classification & Role and evidential interpretation \\
-\midrule
-Raw path utility $R_i$ & Core & Target-directed utility accumulated along surface prefixes \\
-Prefix normalisers $N_i$ and $\kappa$ & Core & Competing completed-response probability architectures \\
-Fixed listener semantics & Shared representation & Common interpretation used in the final architecture comparison \\
-LM residual $\Omega(u)$ & Stable-order task link & Imports relative order expectations within adjective sets \\
-Participant order weight $\beta_i$ & Auxiliary hierarchy & Controls participant variation in stable order expectations \\
-Salience & Task link & Display-derived prominence in candidate utility \\
-One-word, form-backup, three-word, and reliability terms & Terminal task link & Supports adjective-set and utterance-length prediction \\
-Participant response determinism $\alpha_i$ & Repeated-response hierarchy & Controls participant variation in choice concentration \\
-\bottomrule
-\end{tabularx}
-\end{table}
+\subsection{Sequential Context Updating in Hierarchical Composition}
+\label{sec:model:semantic-comparison}
 
-\subsection{Inference and Predictive Estimand}
+The semantic comparison concerns the inner-to-outer direction of hierarchical composition.
+Let $c_1,\ldots,c_T$ denote the modifiers in a completed utterance ordered from the noun outwards, so that $c_1=w_T$ for prenominal modification.
+Starting from $H_0=P_0$, composition successively restricts the listener state:
+\begin{equation}
+  H_j(o)
+  \propto
+  H_{j-1}(o)\,
+  \llbracket c_j\rrbracket_{\rho_j}(o),
+  \qquad j=1,\ldots,T.
+  \label{eq:hierarchical-composition}
+\end{equation}
+For \emph{big blue sticker}, this path incorporates \emph{blue} before the gradable meaning of \emph{big} applies.
+
+The semantic regime determines the comparison class used for size:
+\begin{equation}
+  \llbracket \adj{S}\rrbracket_{\rho_j}(o)
+  =
+  \begin{cases}
+    \llbracket \adj{S}\rrbracket_{\theta_{\delta}(\mathcal C)}(o),
+      & \text{context-fixed},\\
+    \llbracket \adj{S}\rrbracket_{\theta_{\delta}(H_{j-1})}(o),
+      & \text{sequential context updating},
+  \end{cases}
+  \label{eq:hierarchical-size-regimes}
+\end{equation}
+where $\theta_{\delta}$ derives a graded size threshold from a comparison class and $\mathcal C$ is the original scene.
+Under context-fixed semantics, this threshold remains anchored to the original scene.
+Under sequential context updating, the threshold is recomputed from the listener state left by the hierarchically prior modifier.
+The surface-prefix listener in \Cref{eq:prefix-listener} follows the produced words from left to right.
+The hierarchical listener $H_j$ follows semantic composition from the noun outwards.
+This comparison asks whether recomputing the size comparison class adds predictive accuracy in the observed production data.
+A separate simulation asks when the same operation is sufficient to create an order asymmetry across a broader range of contexts.
+The threshold construction and further semantic details appear in \Cref{sec:appendix:model-specification,sec:appendix:semantic-details}.
+
+\subsection{Matched Comparisons and Claim Scope}
+\label{sec:model:development}
+
+Each final comparison varies one theoretically relevant component and holds the remaining model structure constant.
+The production comparison evaluates global, plan-guided, and fully incremental production with the same semantics, response space, task link, and participant structure.
+Stable order expectations vary across participants, allowing the comparison to isolate the additional contribution of successive adjective choices.
+Participant-specific variation in that contribution and participant-specific variation in stable order expectations are empirically indistinguishable in the present data.
+We therefore estimate one shared $\kappa$ and treat participant-level planning profiles as outside the identified claim.
+The semantic comparison holds the production account fixed and varies whether hierarchical composition uses a fixed or sequentially updated comparison class.
+Development checks for the task link and other shared model components are reported in the Appendix.
+
+\subsection{Inference and Predictive Target}
 \label{sec:model:inference}
 
-Models were implemented in NumPyro \citep{phan2019composable} and estimated with four NUTS chains \citep{hoffman2014no}, each using 1{,}000 warm-up iterations and 1{,}000 retained draws.
-The likelihood is categorical over all fifteen completed responses for each of the 9{,}100 production trials.
-Predictive adequacy was compared with observation-level PSIS-LOO \citep{vehtari2017practical}; uncertainty for the central contrasts was additionally aggregated and bootstrapped at the participant level.
-All final models use the same response support and matched auxiliary components.
-The estimand is the probability of a held-out completed response from the sampled task population.
-It is not a direct estimate of online planning time.
+We fit each model to the same 9{,}100 production trials using Bayesian inference in NumPyro \citep{phan2019composable}.
+Approximate leave-one-out prediction compares out-of-sample accuracy for the complete fifteen-response distribution \citep{vehtari2017practical}.
+Because observations are repeated within participants, uncertainty in the central contrasts is additionally aggregated and bootstrapped across participants.
+The predictive target is a held-out completed response from the sampled task population.
+Online planning time remains outside this target.
 
 
 % =============================================================================
-\section{Population Architecture Results}
+\section{Predictive Evidence for Plan-Guided Production}
 \label{sec:modelcomparison}
 \label{sec:model:extended}
 % =============================================================================
 
-\subsection{Final Matched Model Comparison}
+\subsection{Population-Level Architecture}
 \label{sec:architecture-comparison}
 
-The final comparison controls participant-specific variation in the LM-derived stable order weight in all three architectures.
-The globally normalised endpoint \GH{}, the graded model \KH{}, and the fully prefix-normalised endpoint \IH{} otherwise share the observed input, fixed semantics, terminal response policy, participant rationality hierarchy, and response support.
-All three fits had zero divergences, maximum $\widehat R\leq1.006$, and no observation with Pareto $k>.7$.
+The final comparison asks whether the production distribution is better predicted by global, fully incremental, or plan-guided incremental production.
+All three models use the same listener, response space, stable-order control, task link, and participant structure.
+The comparison varies the contribution of successive adjective choices to the probability of the completed utterance.
+The remaining components are held constant.
 
-\begin{table}[ht]
-\centering
-\caption{Final nuisance-controlled production-model comparison. Higher ELPD indicates better out-of-sample prediction.}
-\label{tab:final-model-comparison}
-\begin{tabularx}{0.92\textwidth}{Xrrrr}
-\toprule
-Model & ELPD & $\Delta$ from \KH{} & Max $\widehat R$ & Max Pareto $k$ \\
-\midrule
-\GH{} & $-13{,}771.122$ & $-229.605$ & $1.0055$ & $.466$ \\
-\KH{} & $-13{,}541.517$ & $0$ & $1.0046$ & $.461$ \\
-\IH{} & $-13{,}963.904$ & $-422.387$ & $1.0049$ & $.522$ \\
-\bottomrule
-\end{tabularx}
-\end{table}
+Plan-guided incremental production exceeded global production by $229.605$ ELPD units, with participant-clustered $SE=81.097$ and a participant-bootstrap 95\% interval of $[58.765,376.160]$.
+It exceeded fully incremental production by $422.387$ ELPD units, with participant-clustered $SE=108.714$ and a participant-bootstrap 95\% interval of $[221.275,647.382]$.
+The direct comparison between the two endpoints was unresolved: fully incremental minus global production was $-192.782$ ELPD, with a participant-bootstrap 95\% interval of $[-553.149,108.336]$.
+The model comparison therefore favours an account in which completed utterance probabilities reflect both an advance utterance plan and competition among successive adjective choices.
 
-\KH{} exceeded \GH{} by $229.605$ ELPD units.
-The participant-clustered total standard error was $81.097$, and a participant bootstrap gave a 95\% interval of $[58.765,376.160]$.
-The participant-level win rate was $.717$.
-The globally normalised endpoint therefore underexpresses the predictive consequences of competition within successive prefix-specific alternative sets.
-
-\KH{} exceeded \IH{} by $422.387$ ELPD units.
-The participant-clustered total standard error was $108.714$, and the participant-bootstrap 95\% interval was $[221.275,647.382]$.
-The participant-level win rate was $.637$.
-Retaining the full prefix-normaliser contribution is therefore also too strong for the completed-response distribution.
-The difference between the two endpoints was comparatively uncertain once participant order variation was controlled.
-
-\subsection{Population Prefix-Normalisation Weight}
+\subsection{Contribution of Successive Adjective Choices}
 \label{sec:kappa-result}
 
-The shared population weight was clearly interior:
+The estimated contribution of successive adjective choices was intermediate between the global and fully incremental endpoints:
 \begin{equation}
   \kappa=.4472,
-  \qquad 95\%~\mathrm{CI}=[.4036,.4897].
+  \qquad 95\%~\text{credible interval}=[.4036,.4897].
   \label{eq:kappa-result}
 \end{equation}
-The posterior excludes both endpoint regions under the final specification.
-The precise value is nevertheless model-conditional: it changes when the listener's feature scope or auxiliary policy changes.
-The robust conclusion is that an interior contribution of prefix-specific normalisers predicts better than either endpoint, not that human speakers implement a fixed proportion of incremental planning.
+The posterior lies between the two endpoint accounts under the final specification.
+The precise value remains conditional on the listener representation, stable-order control, and task link.
+Its scientific interpretation is therefore qualitative: successive choices contribute to the completed production distribution, and an advance utterance plan continues to constrain that distribution.
 
-\subsection{Where the Architecture Gain Occurs}
-\label{sec:architecture-localisation}
+\subsection{Posterior-Predictive Signature of Plan-Guided Production}
+\label{sec:architecture-ppc}
 
-The architecture advantage is not confined to the order of two already-selected adjectives.
-Relative to \GH{}, positive \KH{} contributions are largest in colour--form and size--colour trials, in two- and three-adjective responses, in the colour--form and three-adjective sets, and among colour-initial responses.
-Relative to \IH{}, the largest gains occur in both size-containing families, in one- and three-adjective responses, and across several adjective sets and initial-adjective categories.
-Selected positive contributions are shown in \Cref{tab:dimension-localisation}.
-These decompositions localise predictive gains and losses; the cells are not independent hypothesis tests.
+\Cref{fig:production-architecture-ppc} evaluates how well the plan-guided model reproduces the full production distribution.
+Panel A compares the observed and posterior-predicted proportions of the most frequent completed utterances in the size--colour trials, where the central ordering contrast arises.
+The model captures the broad shifts between one- and multi-adjective utterances across conditions.
+Several cells retain visible discrepancies.
+Panel B extends the check to all fifteen completed utterances across the three adjective families, referential contexts, and size-discriminability conditions, with uncertainty shown for both observed and predicted proportions.
+The correlation was $r=.911$ ($p<.001$).
+The $p$-value is descriptive because cells from the same condition form a compositional distribution and are therefore dependent.
+Panel C returns to two outcomes from the empirical analysis: size-first order conditional on producing the fixed size--colour adjective set, and redundant adjective use across referential contexts.
+The posterior-predictive check assesses absolute descriptive adequacy.
+The leave-one-out comparison evaluates the relative predictive performance of the three architectures.
 
-\begin{table}[ht]
-\centering
-\caption{Selected positive ELPD contributions to the final architecture contrasts.}
-\label{tab:dimension-localisation}
-\footnotesize
-\begin{tabularx}{\textwidth}{p{2.2cm}XrXr}
-\toprule
-Dimension & \KH{} minus \GH{} & Contribution & \KH{} minus \IH{} & Contribution \\
-\midrule
-Family & Colour--form & $140.953$ & Size--colour & $256.543$ \\
- & Size--colour & $81.461$ & Size--form & $209.579$ \\
-Length & Two adjectives & $118.682$ & One adjective & $235.955$ \\
- & Three adjectives & $104.183$ & Three adjectives & $144.046$ \\
-Adjective set & $\{C,F\}$ & $245.082$ & $\{C\}$ & $151.385$ \\
- & $\{S,C,F\}$ & $104.183$ & $\{S,C,F\}$ & $144.046$ \\
-Initial adjective & Colour & $439.253$ & Form & $181.764$ \\
-\bottomrule
-\end{tabularx}
-\end{table}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{production_architecture_ppc.pdf}
+  \caption{Posterior-predictive adequacy of the plan-guided model.
+  Panel A shows observed and posterior-predicted proportions with their respective uncertainty intervals for frequent size--colour utterances.
+  Panel B compares all 270 cells; horizontal intervals show participant-bootstrap uncertainty in the observations, vertical intervals show 95\% posterior-predictive uncertainty, and the dashed line marks equality.
+  Panel C compares observed and posterior-predicted size-first order conditional on the fixed size--colour adjective set in both-necessary trials, collapsed across size discriminability, and redundant adjective use across the referential contexts and size-discriminability conditions used in the empirical analysis.
+  The correlation is descriptive because cells within a condition are dependent.}
+  \label{fig:production-architecture-ppc}
+\end{figure}
 
-This distribution of gains supports the paper's central behavioural premise.
-The normalisation architecture predicts the joint response space over adjective selection, length, set, and initial adjective.
-It is not merely a flexible parameter for the conditional order of a fixed pair.
+\subsection{Where Plan-Guided Production Improves Prediction}
+\label{sec:architecture-residuals}
 
-\subsection{Dependence on the Terminal Response Policy}
-\label{sec:policy-boundary}
+\Cref{fig:production-architecture-results} combines the relative predictive comparison with a magnified view of three theory-relevant production outcomes.
+Panel A shows the leave-one-out predictive loss of the global and fully incremental endpoints relative to plan-guided production, and Panel B locates the posterior estimate of $\kappa$ between these endpoints.
+Panel C expresses prediction errors in percentage points for a colour-initial response, a two-adjective response, and a completed form--colour utterance.
+These outcomes respectively illustrate initial adjective choice, utterance length when one property is sufficient, and the probability of a particular multi-adjective order.
+The expanded scale makes the small differences among architectures visible while preserving their absolute magnitude.
+In each example, plan-guided production lies closer to the observed proportion than either endpoint, showing how an intermediate contribution from successive choices can improve several stages of the production distribution.
 
-A registered POLICY-LIGHT comparison removed the sufficient-one-word bonus, form backup, three-word penalty, and size-reliability terms as one bundle.
-The graded model continued to outperform both endpoint architectures and retained an interior $\kappa$.
-All three reduced-policy models, however, lost substantial absolute predictive accuracy relative to their FULL counterparts.
-The architecture preference is therefore not created entirely by the direct length and backup terms, but accurate prediction of the complete response distribution requires the terminal task link.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{production_architecture_results.pdf}
+  \caption{Predictive evidence and residual signature of plan-guided production.
+  Panel A reports leave-one-out predictive loss relative to plan-guided production; intervals are participant-bootstrap 95\% intervals.
+  Panel B places the posterior estimate of $\kappa$ between the global and fully incremental endpoints; the interval is a 95\% credible interval.
+  Panel C shows prediction minus observation in percentage points for three production outcomes selected to represent initial adjective choice, utterance length, and a completed multi-adjective utterance.
+  The residual axis is expanded to show the small relative differences among the three architectures.}
+  \label{fig:production-architecture-results}
+\end{figure}
 
-\subsection{Participant-Level Identification Audit}
-\label{sec:participant-audit}
+\subsection{Locating Participant Variation}
+\label{sec:participant-variation}
 
-Allowing participant-specific prefix-normalisation improved prediction relative to the shared model and to a matched participant-specific length-bias model.
-An equally flexible participant-specific stable-order model performed indistinguishably, and the participant-$\kappa$ fit also failed the registered diagnostic and dependence gates.
-We therefore do not interpret individual $\kappa_i$ values as identified speaker profiles.
-The full hierarchy comparison and descriptive parameter-decoding summaries appear in \Cref{sec:appendix:participant-audit}.
-Participant-specific stable-order weighting is retained in the final population models as an auxiliary random effect because the matched \GH{}/\KH{}/\IH{} comparison shows that the shared architecture result survives that control.
+The population-level comparison estimates one shared $\kappa$ while allowing stable order expectations to vary across participants.
+We examined the location of participant variation through three matched hierarchical extensions.
+Participant-specific $\kappa_i$ allows speakers to differ in how strongly successive adjective choices influence the probability of a completed utterance.
+Participant-specific stable-order weighting allows speakers to differ in their conventional order expectations.
+Participant-specific length bias allows speakers to differ in their general tendency to continue producing modifiers.
+
+The hierarchical $\kappa_i$ model and the participant-specific stable-order model yield nearly identical predictive gains over the shared model.
+Their direct difference, hierarchical $\kappa_i$ minus participant-specific stable-order weighting, was $-2.184$ ELPD, with participant-bootstrap interval $[-154.051,137.077]$.
+Participant-specific length bias added essentially no predictive accuracy.
+The hierarchical $\kappa_i$ fit also missed the registered diagnostic thresholds, with maximum $\widehat R=1.0133$ and two observations with Pareto $k>.7$.
+Completed utterances therefore reveal substantial participant variation.
+Its source remains unresolved between successive adjective choice and stable order expectations.
+The final specification uses participant-specific stable-order weighting as the control and estimates one population-level value of $\kappa$; its fit passed the registered diagnostics.
+The resulting population estimate supports plan-guided production after stable order variation is controlled.
+Individual planning profiles remain outside the identified claim.
+
+\Cref{fig:production-participant-variation} shows where this unresolved participant variation appears in the response distribution.
+Panel A displays posterior means and 95\% credible intervals for participant-specific $\kappa_i$ and stable-order weights in the two matched hierarchical models.
+Panel B shows that the two forms of participant variation often improve prediction for the same participants.
+Participants at the extremes can favour different parameterisations.
+For an exploratory residual description, Panels C and D divide participants by the upper and lower 15\% of their participant-level predictive difference between these models.
+Panel C shows the participant observations underlying these response profiles together with the three group means.
+The group relatively favouring participant-specific successive choice produced fewer one-adjective responses and more three-adjective responses.
+The group relatively favouring stable-order variation showed a lower rate of size-initial responses in multi-adjective utterances.
+Panel D localises the corresponding log-predictive differences across utterance length and initial adjective on one signed scale.
+Positive values indicate higher predictive accuracy for participant-specific successive choice, and negative values indicate higher predictive accuracy for participant-specific stable-order weighting.
+These groups are defined and described using the same responses, so they identify response patterns associated with the residual difference.
+Stable participant strategies remain unidentified.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{production_participant_variation.pdf}
+  \caption{Participant variation and its unresolved source.
+  Panel A shows participant-level posterior means and 95\% credible intervals, and Panel B compares leave-one-out predictive gains over the shared model.
+  Panel C shows observed participant proportions as pale points and group means as larger symbols for the lower 15\%, middle 70\%, and upper 15\% of the contrast between hierarchical models.
+  Panel D shows the mean leave-one-out log-score difference for the same groups across response categories; horizontal intervals are participant-level 95\% confidence intervals.
+  Positive values favour participant-specific successive-choice contribution, and negative values favour participant-specific stable-order weighting.
+  The $\kappa_i$ fit missed the registered diagnostic thresholds, and the groups provide an exploratory residual description.}
+  \label{fig:production-participant-variation}
+\end{figure}
+
+\subsection{Task Link and Claim Scope}
+\label{sec:production-scope}
+
+A reduced task link preserved the relative predictive advantage of plan-guided production and substantially reduced absolute predictive accuracy.
+The production account therefore requires both a model of how utterances are evaluated and a task link for adjective selection and length.
+The full model-development and participant-identification analyses appear in \Cref{sec:appendix:auxiliary-models,sec:appendix:participant-audit}.
 
 
 % =============================================================================
-\section{Semantic Updating as a Boundary Case}
+\section{Sequential Context Updating within Hierarchical Semantic Composition}
 \label{sec:simulation}
 % =============================================================================
 
-\subsection{Predictive Equivalence in the Production Data}
+\subsection{Predictive Contribution in the Production Data}
 \label{sec:semantic-null}
 
-The two directional accounts of communicative efficiency motivate a separate test of whether the inner-to-outer semantic path becomes order-sensitive when size meaning depends on the intermediate comparison class.
-The formal hierarchy in \Cref{eq:hierarchical-composition} remains part of the theory under both semantic regimes.
-What differs is whether the interpretation of size is fixed from the scene or recomputed from the hierarchically prior state.
+The third research question asks whether sequential context updating within hierarchical semantic composition contributes to the production distribution.
+Both models preserve the same inner-to-outer semantic hierarchy.
+They differ in whether the interpretation of size remains fixed in the original scene or is recomputed after the noun-adjacent adjective restricts the relevant context.
 
-In the matched deterministic-input comparison, belief-dependent updating did not improve prediction: updating minus fixed semantics was $-0.26$ ELPD, with participant-bootstrap interval $[-0.97,0.44]$.
+The matched comparison found effectively equal predictive accuracy: updating minus fixed semantics was $-0.26$ ELPD, with participant-bootstrap interval $[-0.97,0.44]$.
 Under the production constants and actual size--colour displays, recomputing the size threshold after a colour restriction changed the target's graded size value and the literal listener's target probability by less than $.001$ on average.
-The fitted materials therefore place the model in a regime where making the hierarchical composition path belief-dependent is an extremely small perturbation.
+The fitted materials therefore place the model in a regime where sequential context updating has extremely small semantic consequences.
 
-This null result does not remove inner-to-outer composition from the account.
-It limits a more specific claim: the present production data do not require the comparison class for size to be dynamically recomputed along that hierarchy once the completed-response architecture and task links are modelled.
-We use simulation to ask a different question---whether belief-dependent hierarchical composition can generate an order asymmetry under conditions in which its semantic consequences are larger.
+The formal inner-to-outer hierarchy is retained in both models.
+The predictive result concerns the additional proposal that the comparison class for size is dynamically recomputed along that hierarchy.
+The simulation evaluates the same proposal under conditions in which its semantic consequences are larger.
 
-\subsection{When Can Hierarchical Updating Create an Order Asymmetry?}
+\subsection{When Can Sequential Context Updating Create an Order Asymmetry?}
 \label{sec:simulation:boundary}
 
-The simulation removes the fitted LM order residual, visual-salience calibration, terminal policy, and participant variation.
+The simulation removes the fitted stable-order component, visual-salience calibration, task link, and participant variation.
 Both surface orders are interpreted by a hierarchically compositional listener that combines the noun-adjacent adjective first.
-We cross global versus prefix-normalised speaker architectures with fixed versus belief-dependent size semantics over a broad grid of context sizes, size distributions, colour reliability, threshold selectivity, and perceptual blur.
+We cross global versus fully incremental production with fixed versus sequentially updated comparison classes over a broad grid of context sizes, size distributions, colour reliability, threshold selectivity, and perceptual blur.
 Full grid details appear in \Cref{sec:appendix:sim-params}.
 
 For each simulated context, we compute the pragmatic listener's target probability after \emph{big blue} and after \emph{blue big}.
@@ -818,15 +816,15 @@ Positive values indicate a higher model-assigned target probability for the size
 \begin{figure}[ht]
   \centering
   \includegraphics[width=0.90\textwidth]{sim_advantage_nobj.pdf}
-  \caption{Boundary simulation of the size-first advantage $\Delta_{\mathrm{SF}}$ as a function of context size and contextual spread, faceted by speaker architecture and semantic regime. Positive values indicate a higher model-assigned target probability for the size-first order. The figure characterises model behaviour under simulated assumptions; it does not identify the mechanism used by participants.}
+  \caption{Boundary simulation of the size-first advantage $\Delta_{\mathrm{SF}}$ as a function of context size and contextual spread, faceted by production account and semantic regime. Positive values indicate a higher model-assigned target probability for the size-first order. The figure characterises model behaviour under simulated assumptions and leaves participants' use of the mechanism open.}
   \label{fig:sim-nobj}
 \end{figure}
 
-Belief-dependent hierarchical updating produces a positive size-first advantage across much of the high-reliability simulation grid, including under a globally normalised speaker.
-The corresponding fixed-semantic global model assigns the same target probability to the two orders.
-Prefix normalisation changes the shape of the asymmetry and can yield a colour-first advantage when size is weak and the context is small.
+Sequential context updating produces a positive size-first advantage across much of the high-reliability simulation grid, including under global production.
+The fixed-context global model assigns the same target probability to the two orders.
+Fully incremental production changes the shape of the asymmetry and can yield a colour-first advantage when size is weak and the context is small.
 The simulation therefore establishes generative sufficiency and boundary conditions.
-It does not show that the semantic update contributed to the fitted production responses.
+Its evidential target is the behaviour generated by the model under controlled assumptions.
 
 
 % =============================================================================
@@ -834,57 +832,55 @@ It does not show that the semantic update contributed to the fitted production r
 \label{sec:discussion}
 % =============================================================================
 
-The behavioural studies show why adjective ordering cannot be isolated from the broader problem of reference generation.
+The behavioural studies place adjective ordering within the broader problem of reference generation.
 Explicit slider judgements exhibit a replicated context gradient: size-first preference is strongest when size identifies the target, weakest when colour does, and remains slightly positive in colour-sufficient scenes.
 Production distributes the same contextual pressure across a larger response space.
 Speakers often select one sufficient adjective, and visual size reliability primarily affects whether they add material.
 On those trials, selection and utterance length determine whether a multi-adjective ordering decision arises at all.
 
 The final production comparison evaluates that complete response space.
-After participant-specific variation in stable LM-derived order expectations is controlled, the shared graded model outpredicts both a globally normalised endpoint and a fully prefix-normalised endpoint.
-The estimated prefix-normalisation weight is clearly interior, and the predictive gains extend across adjective families, response lengths, adjective sets, and initial adjectives.
+After participant-specific variation in stable order expectations is controlled, plan-guided incremental production outpredicts both global and fully incremental production.
+The estimated contribution of successive adjective choices lies between these endpoints, and the predictive gains extend across adjective families, response lengths, adjective sets, and initial adjectives.
 This is the paper's central computational result.
-It concerns the predictive consequences of different completed-response probability architectures, not the temporal implementation of human planning.
+It concerns the probability distribution over completed utterances and leaves the temporal implementation of planning open.
 
-The final model also clarifies what the architecture result does not explain by itself.
 Stable order expectations enter through a German language-model residual whose influence varies across participants.
-The model therefore controls, rather than derives, the conventional size-first tendency.
-Likewise, accurate prediction of adjective selection and length requires a terminal response policy containing salience, one-word support, form backup, and reliability-related terms.
-A reduced policy preserves the relative preference for an interior architecture but loses substantial absolute predictive accuracy.
-The successful account is consequently a graded normalisation architecture embedded in an explicit task link.
+The model treats this conventional size-first tendency as a controlled source of variation.
+Accurate prediction of adjective selection and length additionally requires a task link for salience, adjective sufficiency, form use, visual reliability, and utterance length.
+A reduced task link preserves the relative advantage of plan-guided production and loses substantial absolute predictive accuracy.
+Plan-guided production therefore operates within a broader account of the task decisions that make an adjective order observable.
 
-The two directional accounts of communicative efficiency remain theoretically useful, but the fitted evidence is asymmetric.
-Belief-dependent size updating makes no practically meaningful predictive contribution in the present materials.
-Controlled simulation shows that hierarchical updating can create a size-first target-probability advantage when colour is more reliable and the semantic update is less diffuse.
+The two directional accounts of communicative efficiency receive different forms of evidence.
+Sequential context updating within hierarchical semantic composition makes no practically meaningful predictive contribution in the present materials.
+Controlled simulation shows that the same operation can create a size-first target-probability advantage when colour is more reliable and the semantic update is less diffuse.
 That result establishes a possible semantic route under the implemented assumptions.
-It does not show that participants used the route in this experiment, and it does not restore an empirically identified division of labour between semantics and production.
+Participants' use of that route remains open, leaving an empirically identified division of labour between semantics and production beyond the present evidence.
 
 The participant hierarchy yields a second negative identification result.
-Participant-specific prefix-normalisation improves prediction relative to a shared model, but participant-specific stable-order weighting performs indistinguishably.
-The completed responses therefore reveal systematic participant consistency without identifying its source as an individual prefix-normalisation profile.
+Participant-specific planning weights and participant-specific stable-order weights perform indistinguishably.
+The completed responses therefore reveal systematic participant consistency while leaving its source unidentified.
 The final model retains participant order variation as an auxiliary control and one shared population $\kappa$.
-Individual $\kappa_i$ values are not interpreted as stable strategies, planning traits, or cross-session characteristics.
+Individual planning profiles, stable strategies, and cross-session characteristics remain outside the interpretation.
 
-The distinction between hierarchical semantic computation and surface-prefix probability architecture should also remain explicit.
 Hierarchical composition specifies which semantic restriction is computed inside another in a formal representation.
-The production model evaluates surface prefixes and retains a graded contribution from their normalisers in the completed-response distribution.
-Neither operation, as measured here, establishes the millisecond time course of semantic interpretation or utterance planning.
+Plan-guided production specifies how an advance utterance plan and successive surface choices jointly shape completed utterance probabilities.
+The millisecond time course of semantic interpretation and utterance planning remains open for both operations.
 Online measures would be needed to identify temporal implementation.
 
-The experiments use German prenominal descriptions in a controlled reference task with a fixed adjective vocabulary and a restricted fifteen-response support.
-The final form package is predictive rather than an identified theory of form meaning, and the stable order component is imported rather than explained.
+The experiments use German prenominal noun phrases in a controlled reference task with a fixed adjective vocabulary and a restricted fifteen-response support.
+The treatment of form supports prediction, and the stable order component is imported from a language model.
 Further work can test whether the architecture generalises to freer production, new lexical families, different adjective systems, and designs that independently manipulate lexical subjectivity and perceptual reliability.
 Such extensions should preserve the distinction between response-space prediction, semantic sufficiency, and process identification.
 
-The strongest conclusion is therefore bounded but substantive.
+The strongest conclusion is therefore bounded and substantive.
 Adjective order is an outcome of choices about what to mention and how much to say.
-Within that response-generation problem, completed descriptions are predicted better by an interior contribution of prefix-specific normalisers than by either endpoint architecture, even after substantial participant variation in stable order expectations is controlled.
+Within that response-generation problem, completed utterances are predicted best by plan-guided incremental production, in which an advance utterance plan constrains production while successive adjective choices continue to shape the final response.
 
 
 \section{Data Availability Statement}
 
 Data, analysis scripts, model code, final posterior summaries, and figure-generation scripts will be made available in an anonymised repository upon submission.
-The repository will include the deterministic raw-observed production input, the final \GH{}/\KH{}/\IH{} artifacts, preprocessing and reconstruction receipts, and the scripts required to reproduce the reported behavioural and predictive analyses.
+The repository will include the deterministic production input, the final global, plan-guided, and fully incremental model artifacts, preprocessing and reconstruction receipts, and the scripts required to reproduce the reported behavioural and predictive analyses.
 
 \section{Author Note}
 
@@ -1023,6 +1019,19 @@ An earlier preprocessing pipeline generated nuisance-feature values stochastical
 Legacy first-draw, last-draw, and agreement-subset analyses are retained only as reproducibility sensitivities.
 The architecture and semantic-boundary conclusions are qualitatively stable across those legacy specifications.
 
+\subsection{Graded Size Meaning}
+
+Size is represented by a graded threshold over the scene-level comparison class $\mathcal C$ \citep{schmidt2009how,franke2019subjectivity}:
+\begin{equation}
+  \theta_{\delta}(\mathcal C)
+  = Q_{.80}(\mathcal C)
+    - \delta\,\bigl(Q_{.80}(\mathcal C)-Q_{.20}(\mathcal C)\bigr),
+  \label{eq:size-threshold}
+\end{equation}
+where $Q_{.20}$ and $Q_{.80}$ are probability-weighted size quantiles and $\delta$ controls threshold selectivity.
+The implementation applies a perceptual-blur function around this threshold, yielding graded size-membership values.
+\Cref{eq:prefix-listener,eq:prefix-raw-utility,eq:path-components,eq:plan-guided-speaker} define how this meaning enters the literal listener and the three production accounts.
+
 \subsection{Component Inventory}
 
 \begin{table}[H]
@@ -1034,23 +1043,23 @@ The architecture and semantic-boundary conclusions are qualitatively stable acro
 \toprule
 Component & Status & Role \\
 \midrule
-Observed E0 input & Fixed & All visible size, colour, and form values \\
+Observed display input & Fixed & All visible size, colour, and form values \\
 Size threshold and blur & Fixed constants & Graded size meaning in the scene comparison class \\
 Colour reliability & Fixed & Soft determinate colour meaning \\
-Form reliability & Fixed neutral & F0 listener package; form production supported by terminal backup \\
+Form reliability & Fixed neutral & Form production supported by the task link \\
 Pragmatic rationality & Estimated, hierarchical & Participant variation in response concentration \\
-LM order residual & Fixed feature & Stable relative order score within adjective sets \\
-LM order weight & Estimated, hierarchical & Participant variation in stable order expectation \\
+Stable-order score $\Omega$ & Fixed feature & Relative order expectation within adjective sets \\
+Stable-order weight $\beta_i$ & Estimated, hierarchical & Participant variation in stable order expectation \\
 Salience coefficient & Estimated & Display prominence in candidate utility \\
-Terminal policy coefficients & Estimated & One-word support, form backup, length and reliability terms \\
-Prefix-normalisation weight $\kappa$ & Estimated in \KH{} & Shared architecture parameter \\
+Task-link coefficients & Estimated & One-word support, form backup, length and reliability terms \\
+Successive-choice weight $\kappa$ & Estimated in plan-guided production & Shared production parameter \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-\todo{Insert the frozen prior inventory for the final K-HO model from the v10 model registry.}
+\todo{Insert the frozen prior inventory for the final plan-guided production model.}
 
-\section{Final Architecture Comparison and Diagnostics}
+\section{Production Account Comparison and Diagnostics}
 \label{sec:appendix:model-diagnostics}
 
 \begin{table}[H]
@@ -1062,79 +1071,74 @@ Prefix-normalisation weight $\kappa$ & Estimated in \KH{} & Shared architecture 
 \toprule
 Contrast & $\Delta$ELPD & Paired SE & Participant-clustered SE & Bootstrap 95\% interval \\
 \midrule
-\KH{} minus \GH{} & $229.605$ & $20.900$ & $81.097$ & $[58.765,376.160]$ \\
-\KH{} minus \IH{} & $422.387$ & $35.615$ & $108.714$ & $[221.275,647.382]$ \\
-\IH{} minus \GH{} & $-192.782$ & \multicolumn{1}{c}{---} & $169.152$ & $[-553.149,108.336]$ \\
+Plan-guided minus global & $229.605$ & $20.900$ & $81.097$ & $[58.765,376.160]$ \\
+Plan-guided minus fully incremental & $422.387$ & $35.615$ & $108.714$ & $[221.275,647.382]$ \\
+Fully incremental minus global & $-192.782$ & \multicolumn{1}{c}{---} & $169.152$ & $[-553.149,108.336]$ \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
 All three final models used four chains, 1{,}000 warm-up iterations, and 1{,}000 retained draws.
 They had zero divergences, maximum $\widehat R\leq1.006$, minimum BFMI above $.64$, and no observation with Pareto $k>.7$.
-The exact endpoint audit returned maximum probability and log-probability differences of zero when the graded implementation was evaluated at $\kappa=0$ and $\kappa=1$.
+The exact endpoint audit returned maximum probability and log-probability differences of zero when plan-guided production was evaluated at $\kappa=0$ and $\kappa=1$.
 
-\section{Auxiliary Form, Order, and Policy Comparisons}
+\section{Model-Development Checks}
 \label{sec:appendix:auxiliary-models}
 
 \paragraph{Form package.}
-The selected F0 package fixes form reliability at $.50$ and estimates a terminal form-backup coefficient.
+The selected form specification fixes form reliability at $.50$ and estimates a form-use coefficient in the task link.
 Two fixed informative alternatives tied form reliability to the colour value, with either the original or a strongly shrunk backup prior.
-Neither alternative was predictively equivalent to F0 in the full response space.
-This comparison supports F0 as an auxiliary predictive specification but does not identify participants' lexical semantics for form.
+The alternatives had lower predictive accuracy in the full response space.
+This comparison supports the selected form specification as an auxiliary predictive component and leaves participants' lexical semantics for form open.
 
 \paragraph{Stable order source.}
-The selected O0 package uses the German LM residual alone.
+The selected specification uses the German language-model residual alone.
 Adding a reliability-order term yielded worse conditional-order prediction within fixed adjective sets.
-Models that removed the LM residual did not provide valid posterior or PSIS evidence.
-The comparison therefore rejects the proposed addition but does not establish the LM residual as a unique cognitive source of order expectations.
+Models that removed the language-model residual yielded invalid posterior or PSIS evidence.
+The comparison rejects the proposed reliability addition and leaves the cognitive source of stable order expectations open.
 
-\paragraph{Terminal policy.}
-POLICY-LIGHT removed the sufficient-one-word bonus, form backup, three-word penalty, and size-reliability terms as one bundle.
-The graded architecture retained its relative advantage over both endpoints, while all reduced-policy models lost substantial absolute predictive accuracy.
+\paragraph{Task link.}
+The reduced task-link comparison removed the sufficient-one-word bonus, form-use term, three-word penalty, and size-reliability terms as one bundle.
+Plan-guided production retained its relative advantage over both endpoints, while all reduced models lost substantial absolute predictive accuracy.
 
-\todo{Insert the compact F0/FT/FTS, O0/O1, and POLICY-LIGHT numerical tables from the final analysis receipts.}
+\todo{Insert the compact numerical tables for the auxiliary form, stable-order, and reduced task-link comparisons.}
 
 \section{Participant Hierarchy Audit}
 \label{sec:appendix:participant-audit}
 
-The participant hierarchy audit compared the shared-$\kappa$ model (H0) with participant-specific prefix-normalisation (HK), a participant-specific generic length bias (HL), and participant-specific LM-order weighting (HO).
-The registered contrasts were:
-\begin{align*}
-  \mathrm{HK}-\mathrm{H0} &= +317.301\ \mathrm{ELPD},\\
-  \mathrm{HK}-\mathrm{HL} &= +317.891\ \mathrm{ELPD},\\
-  \mathrm{HK}-\mathrm{HO} &= -2.184\ \mathrm{ELPD}.
-\end{align*}
-The HK--HO participant-bootstrap interval was $[-154.051,137.077]$.
-HK also had maximum $\widehat R=1.0133$, two observations with Pareto $k>.7$, and a failed participant-scale dependence screen.
-The audit therefore supplies no evidence that participant-specific $\kappa_i$ is uniquely identified relative to stable-order heterogeneity.
-Descriptive correlations between fitted $\kappa_i$ values and the same participants' response summaries decode the latent parameter within that fit; they are not independent validation.
+The participant hierarchy audit compared the shared planning parameter with participant-specific planning, participant-specific length bias, and participant-specific stable-order weighting.
+Participant-specific planning gained $317.301$ ELPD units over the shared model and $317.891$ over participant-specific length bias.
+It differed from participant-specific stable-order weighting by $-2.184$ ELPD units, with participant-bootstrap interval $[-154.051,137.077]$.
+The participant-specific planning model also had maximum $\widehat R=1.0133$, two observations with Pareto $k>.7$, and a failed participant-scale dependence screen.
+The audit therefore leaves participant-specific planning and stable-order heterogeneity unidentified.
+Descriptive correlations between fitted participant parameters and response summaries decode the latent parameter within that fit and provide no independent validation.
 
 \section{Endpoint Identity and Architecture Audit}
 \label{sec:appendix:normalisation-audit}
 
-At common parameter values, the graded K-HO implementation with $\kappa=0$ exactly recovers G-HO, and with $\kappa=1$ exactly recovers I-HO.
+At common parameter values, plan-guided production with $\kappa=0$ exactly recovers global production, and with $\kappa=1$ exactly recovers fully incremental production.
 The participant-specific order mapping, terminal response-policy kernel, and response support are identical across the three architectures.
 Maximum category-probability and log-probability differences were zero at a numerical tolerance of $10^{-10}$.
 
-\section{Belief-Dependent Size Semantics}
+\section{Sequential Context Updating for Size}
 \label{sec:appendix:semantic-details}
 
 For the hierarchical semantic path, let $H_{j-1}$ be the state after the syntactically inner modifiers have composed.
-The updating listener recomputes the size threshold from this hierarchically prior belief state:
+The context-updating listener recomputes the size threshold from this hierarchically prior state:
 \begin{equation}
   \llbracket \adj{S}\rrbracket_{\mathrm{upd},H_{j-1}}(o)
   =\llbracket \adj{S}\rrbracket_{\theta_{\delta}(H_{j-1})}(o),
   \label{eq:context-updating}
 \end{equation}
-whereas the fixed listener anchors the threshold to the scene prior:
+The context-fixed listener anchors the threshold to the scene prior:
 \begin{equation}
   \llbracket \adj{S}\rrbracket_{\mathrm{fix}}(o)
   =\llbracket \adj{S}\rrbracket_{\theta_{\delta}(P_0)}(o).
   \label{eq:context-fixed}
 \end{equation}
 For \emph{big blue}, hierarchical composition applies the colour restriction before interpreting size.
-The distinct surface-prefix production calculation follows left-to-right order and, under Variant B, reconstructs each candidate prefix from the prior while applying every meaning once.
-The matched E0 comparison yielded no practically meaningful predictive difference between fixed and updating semantics.
+The distinct surface production calculation follows left-to-right order and uses the validated factorisation in which every meaning is applied once.
+The matched observed-display comparison yielded no practically meaningful predictive difference between fixed and sequentially updated comparison classes.
 
 \section{Simulation Parameter Sweeps}
 \label{sec:appendix:sim-params}

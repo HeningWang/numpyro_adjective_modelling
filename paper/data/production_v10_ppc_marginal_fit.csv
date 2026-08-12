@@ -1,0 +1,13 @@
+summary_type,category,source,proportion,stage,display_category
+Initial adjective,C,Observed,0.4512087912087912,Initial adjective,Colour
+Initial adjective,C,Plan-guided,0.4195656593406593,Initial adjective,Colour
+Initial adjective,D,Observed,0.3415384615384615,Initial adjective,Size
+Initial adjective,D,Plan-guided,0.35952749999999994,Initial adjective,Size
+Initial adjective,F,Observed,0.20725274725274725,Initial adjective,Form
+Initial adjective,F,Plan-guided,0.22090684065934066,Initial adjective,Form
+Response length,1,Observed,0.389010989010989,Utterance length,One adjective
+Response length,1,Plan-guided,0.4225820604395605,Utterance length,One adjective
+Response length,2,Observed,0.43153846153846154,Utterance length,Two adjectives
+Response length,2,Plan-guided,0.39804409340659336,Utterance length,Two adjectives
+Response length,3,Observed,0.17945054945054945,Utterance length,Three adjectives
+Response length,3,Plan-guided,0.17937384615384613,Utterance length,Three adjectives

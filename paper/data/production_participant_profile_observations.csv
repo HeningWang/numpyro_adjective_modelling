@@ -1,0 +1,453 @@
+id,pattern,measure,value
+1,Middle 70%,One adjective,0.6666666666666666
+1,Middle 70%,Three adjectives,0.04938271604938271
+1,Middle 70%,Size initial,0.6296296296296297
+1,Middle 70%,Canonical order,0.9629629629629628
+2,Stable order favoured,One adjective,0.6419753086419753
+2,Stable order favoured,Three adjectives,0.03703703703703703
+2,Stable order favoured,Size initial,0.3793103448275862
+2,Stable order favoured,Canonical order,0.896551724137931
+3,Middle 70%,One adjective,0.35802469135802467
+3,Middle 70%,Three adjectives,0.18518518518518515
+3,Middle 70%,Size initial,0.5961538461538461
+3,Middle 70%,Canonical order,0.9423076923076924
+4,Successive choice favoured,One adjective,0
+4,Successive choice favoured,Three adjectives,0.2716049382716049
+4,Successive choice favoured,Size initial,0.2345679012345679
+4,Successive choice favoured,Canonical order,0.9629629629629628
+5,Successive choice favoured,One adjective,0.43209876543209874
+5,Successive choice favoured,Three adjectives,0.1111111111111111
+5,Successive choice favoured,Size initial,0.6304347826086957
+5,Successive choice favoured,Canonical order,0.5
+6,Successive choice favoured,One adjective,0.2222222222222222
+6,Successive choice favoured,Three adjectives,0.6049382716049383
+6,Successive choice favoured,Size initial,0.9523809523809524
+6,Successive choice favoured,Canonical order,0.5396825396825397
+7,Successive choice favoured,One adjective,0.345679012345679
+7,Successive choice favoured,Three adjectives,0.30864197530864196
+7,Successive choice favoured,Size initial,0.5094339622641509
+7,Successive choice favoured,Canonical order,1
+8,Middle 70%,One adjective,0.4567901234567901
+8,Middle 70%,Three adjectives,0.14814814814814814
+8,Middle 70%,Size initial,0.6590909090909091
+8,Middle 70%,Canonical order,1
+9,Successive choice favoured,One adjective,0.3333333333333333
+9,Successive choice favoured,Three adjectives,0.19753086419753085
+9,Successive choice favoured,Size initial,0.2962962962962963
+9,Successive choice favoured,Canonical order,1
+10,Middle 70%,One adjective,0.5063291139240507
+10,Middle 70%,Three adjectives,0.10126582278481013
+10,Middle 70%,Size initial,0.38461538461538464
+10,Middle 70%,Canonical order,0.8717948717948718
+11,Stable order favoured,One adjective,0
+11,Stable order favoured,Three adjectives,0.1111111111111111
+11,Stable order favoured,Size initial,0.1111111111111111
+11,Stable order favoured,Canonical order,0.7901234567901234
+12,Middle 70%,One adjective,0.5555555555555556
+12,Middle 70%,Three adjectives,0.08641975308641975
+12,Middle 70%,Size initial,0.5555555555555556
+12,Middle 70%,Canonical order,0.9722222222222222
+13,Middle 70%,One adjective,0.48148148148148145
+13,Middle 70%,Three adjectives,0.1111111111111111
+13,Middle 70%,Size initial,0.5952380952380952
+13,Middle 70%,Canonical order,0.9761904761904762
+14,Stable order favoured,One adjective,0.2345679012345679
+14,Stable order favoured,Three adjectives,0.30864197530864196
+14,Stable order favoured,Size initial,0.6935483870967742
+14,Stable order favoured,Canonical order,1
+15,Middle 70%,One adjective,0.6049382716049383
+15,Middle 70%,Three adjectives,0.03703703703703703
+15,Middle 70%,Size initial,0.5625
+15,Middle 70%,Canonical order,1
+16,Middle 70%,One adjective,0
+16,Middle 70%,Three adjectives,0.4074074074074074
+16,Middle 70%,Size initial,0.01234567901234567
+16,Middle 70%,Canonical order,0.6049382716049383
+17,Middle 70%,One adjective,0.5432098765432098
+17,Middle 70%,Three adjectives,0.16049382716049382
+17,Middle 70%,Size initial,0.5675675675675675
+17,Middle 70%,Canonical order,0.972972972972973
+18,Middle 70%,One adjective,0.5061728395061729
+18,Middle 70%,Three adjectives,0.345679012345679
+18,Middle 70%,Size initial,0.725
+18,Middle 70%,Canonical order,1
+19,Middle 70%,One adjective,0.1728395061728395
+19,Middle 70%,Three adjectives,0.5061728395061729
+19,Middle 70%,Size initial,0.6119402985074627
+19,Middle 70%,Canonical order,0.6567164179104478
+20,Middle 70%,One adjective,0.5185185185185185
+20,Middle 70%,Three adjectives,0.2962962962962963
+20,Middle 70%,Size initial,0.8205128205128205
+20,Middle 70%,Canonical order,0.9230769230769232
+21,Middle 70%,One adjective,0.5432098765432098
+21,Middle 70%,Three adjectives,0.01234567901234567
+21,Middle 70%,Size initial,0.7837837837837838
+21,Middle 70%,Canonical order,1
+22,Middle 70%,One adjective,0.5802469135802469
+22,Middle 70%,Three adjectives,0
+22,Middle 70%,Size initial,0.6764705882352942
+22,Middle 70%,Canonical order,0.9117647058823528
+23,Middle 70%,One adjective,0.4074074074074074
+23,Middle 70%,Three adjectives,0.18518518518518515
+23,Middle 70%,Size initial,0.5208333333333334
+23,Middle 70%,Canonical order,0.9583333333333334
+24,Middle 70%,One adjective,0.3950617283950617
+24,Middle 70%,Three adjectives,0.16049382716049382
+24,Middle 70%,Size initial,0.5714285714285714
+24,Middle 70%,Canonical order,0.9387755102040816
+25,Middle 70%,One adjective,0.5822784810126582
+25,Middle 70%,Three adjectives,0.0759493670886076
+25,Middle 70%,Size initial,0.6666666666666666
+25,Middle 70%,Canonical order,0.9696969696969696
+26,Successive choice favoured,One adjective,0.6049382716049383
+26,Successive choice favoured,Three adjectives,0.02469135802469135
+26,Successive choice favoured,Size initial,0.8125
+26,Successive choice favoured,Canonical order,0.96875
+27,Stable order favoured,One adjective,0
+27,Stable order favoured,Three adjectives,0
+27,Stable order favoured,Size initial,0
+27,Stable order favoured,Canonical order,0.7407407407407407
+28,Middle 70%,One adjective,0.5925925925925926
+28,Middle 70%,Three adjectives,0.13580246913580246
+28,Middle 70%,Size initial,0.6666666666666666
+28,Middle 70%,Canonical order,0.8787878787878788
+29,Middle 70%,One adjective,0.4177215189873418
+29,Middle 70%,Three adjectives,0.27848101265822783
+29,Middle 70%,Size initial,0.7608695652173914
+29,Middle 70%,Canonical order,0.6086956521739131
+30,Middle 70%,One adjective,0.4444444444444444
+30,Middle 70%,Three adjectives,0.2962962962962963
+30,Middle 70%,Size initial,0.5555555555555556
+30,Middle 70%,Canonical order,0.9111111111111112
+31,Successive choice favoured,One adjective,0.09876543209876544
+31,Successive choice favoured,Three adjectives,0.8518518518518519
+31,Successive choice favoured,Size initial,0.9178082191780822
+31,Successive choice favoured,Canonical order,0.2602739726027397
+32,Middle 70%,One adjective,0.5063291139240507
+32,Middle 70%,Three adjectives,0.02531645569620253
+32,Middle 70%,Size initial,0.6153846153846154
+32,Middle 70%,Canonical order,0.8205128205128205
+33,Middle 70%,One adjective,0.345679012345679
+33,Middle 70%,Three adjectives,0.2222222222222222
+33,Middle 70%,Size initial,0.4339622641509434
+33,Middle 70%,Canonical order,0.8679245283018868
+34,Middle 70%,One adjective,0.3703703703703703
+34,Middle 70%,Three adjectives,0
+34,Middle 70%,Size initial,0.5098039215686274
+34,Middle 70%,Canonical order,1
+35,Stable order favoured,One adjective,0.32098765432098764
+35,Stable order favoured,Three adjectives,0.08641975308641975
+35,Stable order favoured,Size initial,0.07272727272727272
+35,Stable order favoured,Canonical order,0.6727272727272727
+36,Middle 70%,One adjective,0.6049382716049383
+36,Middle 70%,Three adjectives,0.03703703703703703
+36,Middle 70%,Size initial,0.65625
+36,Middle 70%,Canonical order,1
+37,Middle 70%,One adjective,0.5974025974025974
+37,Middle 70%,Three adjectives,0.09090909090909093
+37,Middle 70%,Size initial,0.5483870967741935
+37,Middle 70%,Canonical order,0.967741935483871
+38,Middle 70%,One adjective,0.19753086419753085
+38,Middle 70%,Three adjectives,0.2962962962962963
+38,Middle 70%,Size initial,0.3692307692307693
+38,Middle 70%,Canonical order,0.6615384615384615
+39,Successive choice favoured,One adjective,0
+39,Successive choice favoured,Three adjectives,0.32098765432098764
+39,Successive choice favoured,Size initial,0.30864197530864196
+39,Successive choice favoured,Canonical order,0.9876543209876544
+40,Middle 70%,One adjective,0.48148148148148145
+40,Middle 70%,Three adjectives,0.13580246913580246
+40,Middle 70%,Size initial,0.6904761904761905
+40,Middle 70%,Canonical order,0.9047619047619048
+41,Middle 70%,One adjective,0.5185185185185185
+41,Middle 70%,Three adjectives,0.13580246913580246
+41,Middle 70%,Size initial,0.6923076923076923
+41,Middle 70%,Canonical order,0.9230769230769232
+42,Middle 70%,One adjective,0.5555555555555556
+42,Middle 70%,Three adjectives,0.06172839506172839
+42,Middle 70%,Size initial,0.5555555555555556
+42,Middle 70%,Canonical order,0.75
+43,Stable order favoured,One adjective,0.30864197530864196
+43,Stable order favoured,Three adjectives,0.13580246913580246
+43,Stable order favoured,Size initial,0.6071428571428571
+43,Stable order favoured,Canonical order,1
+44,Successive choice favoured,One adjective,0.18518518518518515
+44,Successive choice favoured,Three adjectives,0.2345679012345679
+44,Successive choice favoured,Size initial,0.3333333333333333
+44,Successive choice favoured,Canonical order,1
+45,Successive choice favoured,One adjective,0.32098765432098764
+45,Successive choice favoured,Three adjectives,0.32098765432098764
+45,Successive choice favoured,Size initial,0.38181818181818183
+45,Successive choice favoured,Canonical order,0.7636363636363637
+46,Middle 70%,One adjective,0.2345679012345679
+46,Middle 70%,Three adjectives,0.2716049382716049
+46,Middle 70%,Size initial,0.4516129032258064
+46,Middle 70%,Canonical order,1
+47,Middle 70%,One adjective,0.24691358024691357
+47,Middle 70%,Three adjectives,0.4567901234567901
+47,Middle 70%,Size initial,0.01639344262295082
+47,Middle 70%,Canonical order,0.4098360655737705
+48,Middle 70%,One adjective,0
+48,Middle 70%,Three adjectives,0.2307692307692308
+48,Middle 70%,Size initial,0.21794871794871795
+48,Middle 70%,Canonical order,0.01282051282051282
+49,Middle 70%,One adjective,0.4444444444444444
+49,Middle 70%,Three adjectives,0.02469135802469135
+49,Middle 70%,Size initial,0.6888888888888889
+49,Middle 70%,Canonical order,1
+50,Middle 70%,One adjective,0.4074074074074074
+50,Middle 70%,Three adjectives,0.20987654320987653
+50,Middle 70%,Size initial,0.7083333333333334
+50,Middle 70%,Canonical order,0.9583333333333334
+51,Stable order favoured,One adjective,0.26582278481012656
+51,Stable order favoured,Three adjectives,0.4810126582278481
+51,Stable order favoured,Size initial,0.913793103448276
+51,Stable order favoured,Canonical order,0.913793103448276
+52,Successive choice favoured,One adjective,0.19753086419753085
+52,Successive choice favoured,Three adjectives,0.1728395061728395
+52,Successive choice favoured,Size initial,0.3230769230769231
+52,Successive choice favoured,Canonical order,0.9846153846153848
+53,Middle 70%,One adjective,0.5064935064935064
+53,Middle 70%,Three adjectives,0.1038961038961039
+53,Middle 70%,Size initial,0.6842105263157895
+53,Middle 70%,Canonical order,0.9736842105263158
+54,Middle 70%,One adjective,0.5679012345679012
+54,Middle 70%,Three adjectives,0.08641975308641975
+54,Middle 70%,Size initial,0.5714285714285714
+54,Middle 70%,Canonical order,0.9428571428571428
+55,Middle 70%,One adjective,0
+55,Middle 70%,Three adjectives,0.2222222222222222
+55,Middle 70%,Size initial,0.2222222222222222
+55,Middle 70%,Canonical order,1
+56,Middle 70%,One adjective,0.5308641975308642
+56,Middle 70%,Three adjectives,0.06172839506172839
+56,Middle 70%,Size initial,0.6578947368421053
+56,Middle 70%,Canonical order,1
+57,Stable order favoured,One adjective,0.48148148148148145
+57,Stable order favoured,Three adjectives,0.19753086419753085
+57,Stable order favoured,Size initial,0.3333333333333333
+57,Stable order favoured,Canonical order,0.6666666666666666
+58,Successive choice favoured,One adjective,0.2962962962962963
+58,Successive choice favoured,Three adjectives,0.20987654320987653
+58,Successive choice favoured,Size initial,0.3684210526315789
+58,Successive choice favoured,Canonical order,0.9824561403508772
+59,Middle 70%,One adjective,0.4567901234567901
+59,Middle 70%,Three adjectives,0.01234567901234567
+59,Middle 70%,Size initial,0.6363636363636364
+59,Middle 70%,Canonical order,1
+60,Middle 70%,One adjective,0.2894736842105263
+60,Middle 70%,Three adjectives,0.40789473684210525
+60,Middle 70%,Size initial,0.5740740740740741
+60,Middle 70%,Canonical order,0.8703703703703703
+61,Middle 70%,One adjective,0
+61,Middle 70%,Three adjectives,0.345679012345679
+61,Middle 70%,Size initial,0.35802469135802467
+61,Middle 70%,Canonical order,0.9753086419753086
+62,Middle 70%,One adjective,0.5125
+62,Middle 70%,Three adjectives,0.0875
+62,Middle 70%,Size initial,0.6153846153846154
+62,Middle 70%,Canonical order,0.97435897435897445
+63,Middle 70%,One adjective,0.25925925925925924
+63,Middle 70%,Three adjectives,0.04938271604938271
+63,Middle 70%,Size initial,0.5166666666666667
+63,Middle 70%,Canonical order,1
+64,Middle 70%,One adjective,0.6049382716049383
+64,Middle 70%,Three adjectives,0.01234567901234567
+64,Middle 70%,Size initial,0.71875
+64,Middle 70%,Canonical order,0.9375
+65,Stable order favoured,One adjective,0.5569620253164557
+65,Stable order favoured,Three adjectives,0.189873417721519
+65,Stable order favoured,Size initial,0.42857142857142855
+65,Stable order favoured,Canonical order,0.7714285714285715
+66,Middle 70%,One adjective,0.49382716049382713
+66,Middle 70%,Three adjectives,0.04938271604938271
+66,Middle 70%,Size initial,0.6097560975609756
+66,Middle 70%,Canonical order,0.975609756097561
+67,Middle 70%,One adjective,0.19753086419753085
+67,Middle 70%,Three adjectives,0.32098765432098764
+67,Middle 70%,Size initial,0.4153846153846154
+67,Middle 70%,Canonical order,0.9384615384615383
+68,Middle 70%,One adjective,0.5308641975308642
+68,Middle 70%,Three adjectives,0.2222222222222222
+68,Middle 70%,Size initial,0.7105263157894737
+68,Middle 70%,Canonical order,0.9736842105263158
+69,Middle 70%,One adjective,0.5061728395061729
+69,Middle 70%,Three adjectives,0.13580246913580246
+69,Middle 70%,Size initial,0.7
+69,Middle 70%,Canonical order,0.825
+70,Stable order favoured,One adjective,0.3333333333333333
+70,Stable order favoured,Three adjectives,0
+70,Stable order favoured,Size initial,0
+70,Stable order favoured,Canonical order,1
+71,Middle 70%,One adjective,0.6419753086419753
+71,Middle 70%,Three adjectives,0.02469135802469135
+71,Middle 70%,Size initial,0.7241379310344828
+71,Middle 70%,Canonical order,1
+72,Middle 70%,One adjective,0.55
+72,Middle 70%,Three adjectives,0.1
+72,Middle 70%,Size initial,0.7222222222222222
+72,Middle 70%,Canonical order,1
+73,Middle 70%,One adjective,0.24691358024691357
+73,Middle 70%,Three adjectives,0.18518518518518515
+73,Middle 70%,Size initial,0.4918032786885246
+73,Middle 70%,Canonical order,0.918032786885246
+74,Middle 70%,One adjective,0.3670886075949367
+74,Middle 70%,Three adjectives,0.16455696202531644
+74,Middle 70%,Size initial,0.54
+74,Middle 70%,Canonical order,0.96
+75,Middle 70%,One adjective,0.5308641975308642
+75,Middle 70%,Three adjectives,0.14814814814814814
+75,Middle 70%,Size initial,0.7105263157894737
+75,Middle 70%,Canonical order,1
+76,Middle 70%,One adjective,0.32098765432098764
+76,Middle 70%,Three adjectives,0.30864197530864196
+76,Middle 70%,Size initial,0.4727272727272727
+76,Middle 70%,Canonical order,1
+77,Middle 70%,One adjective,0.41975308641975306
+77,Middle 70%,Three adjectives,0.1728395061728395
+77,Middle 70%,Size initial,0.5957446808510638
+77,Middle 70%,Canonical order,0.9361702127659576
+78,Middle 70%,One adjective,0.5125
+78,Middle 70%,Three adjectives,0.025
+78,Middle 70%,Size initial,0.5384615384615384
+78,Middle 70%,Canonical order,0.9487179487179488
+79,Stable order favoured,One adjective,0.4074074074074074
+79,Stable order favoured,Three adjectives,0.345679012345679
+79,Stable order favoured,Size initial,0.8125
+79,Stable order favoured,Canonical order,1
+80,Stable order favoured,One adjective,0.691358024691358
+80,Stable order favoured,Three adjectives,0
+80,Stable order favoured,Size initial,0.48
+80,Stable order favoured,Canonical order,0.8
+81,Middle 70%,One adjective,0.382716049382716
+81,Middle 70%,Three adjectives,0.18518518518518515
+81,Middle 70%,Size initial,0.6
+81,Middle 70%,Canonical order,0.94
+82,Middle 70%,One adjective,0.5308641975308642
+82,Middle 70%,Three adjectives,0.06172839506172839
+82,Middle 70%,Size initial,0.42105263157894735
+82,Middle 70%,Canonical order,0.8421052631578947
+83,Successive choice favoured,One adjective,0.49382716049382713
+83,Successive choice favoured,Three adjectives,0.01234567901234567
+83,Successive choice favoured,Size initial,0.6829268292682927
+83,Successive choice favoured,Canonical order,0.8780487804878049
+84,Middle 70%,One adjective,0.5555555555555556
+84,Middle 70%,Three adjectives,0.03703703703703703
+84,Middle 70%,Size initial,0.7777777777777778
+84,Middle 70%,Canonical order,0.9722222222222222
+85,Middle 70%,One adjective,0.48148148148148145
+85,Middle 70%,Three adjectives,0.13580246913580246
+85,Middle 70%,Size initial,0.7142857142857143
+85,Middle 70%,Canonical order,0.9523809523809524
+86,Middle 70%,One adjective,0.382716049382716
+86,Middle 70%,Three adjectives,0.16049382716049382
+86,Middle 70%,Size initial,0.52
+86,Middle 70%,Canonical order,0.98
+87,Middle 70%,One adjective,0.14473684210526316
+87,Middle 70%,Three adjectives,0.21052631578947367
+87,Middle 70%,Size initial,0.4
+87,Middle 70%,Canonical order,1
+88,Stable order favoured,One adjective,0.6790123456790124
+88,Stable order favoured,Three adjectives,0
+88,Stable order favoured,Size initial,0
+88,Stable order favoured,Canonical order,0.5769230769230769
+89,Stable order favoured,One adjective,0
+89,Stable order favoured,Three adjectives,0.24691358024691357
+89,Stable order favoured,Size initial,0.25925925925925924
+89,Stable order favoured,Canonical order,0.8024691358024691
+90,Middle 70%,One adjective,0.4875
+90,Middle 70%,Three adjectives,0.25
+90,Middle 70%,Size initial,0.7560975609756098
+90,Middle 70%,Canonical order,0.975609756097561
+91,Successive choice favoured,One adjective,0.3703703703703703
+91,Successive choice favoured,Three adjectives,0.13580246913580246
+91,Successive choice favoured,Size initial,0.392156862745098
+91,Successive choice favoured,Canonical order,1
+92,Middle 70%,One adjective,0.5802469135802469
+92,Middle 70%,Three adjectives,0.06172839506172839
+92,Middle 70%,Size initial,0.6764705882352942
+92,Middle 70%,Canonical order,1
+93,Middle 70%,One adjective,0.35802469135802467
+93,Middle 70%,Three adjectives,0.1728395061728395
+93,Middle 70%,Size initial,0.36538461538461536
+93,Middle 70%,Canonical order,0.9807692307692308
+94,Middle 70%,One adjective,0
+94,Middle 70%,Three adjectives,0.3703703703703703
+94,Middle 70%,Size initial,0.3703703703703703
+94,Middle 70%,Canonical order,1
+95,Successive choice favoured,One adjective,0
+95,Successive choice favoured,Three adjectives,0.2716049382716049
+95,Successive choice favoured,Size initial,0.2716049382716049
+95,Successive choice favoured,Canonical order,1
+96,Middle 70%,One adjective,0.4074074074074074
+96,Middle 70%,Three adjectives,0.13580246913580246
+96,Middle 70%,Size initial,0.5625
+96,Middle 70%,Canonical order,1
+97,Middle 70%,One adjective,0
+97,Middle 70%,Three adjectives,0.345679012345679
+97,Middle 70%,Size initial,0.345679012345679
+97,Middle 70%,Canonical order,1
+98,Middle 70%,One adjective,0.48148148148148145
+98,Middle 70%,Three adjectives,0.1111111111111111
+98,Middle 70%,Size initial,0.6666666666666666
+98,Middle 70%,Canonical order,0.9523809523809524
+99,Successive choice favoured,One adjective,0.3717948717948718
+99,Successive choice favoured,Three adjectives,0.14102564102564102
+99,Successive choice favoured,Size initial,0.2653061224489796
+99,Successive choice favoured,Canonical order,0.8775510204081632
+100,Middle 70%,One adjective,0.4868421052631579
+100,Middle 70%,Three adjectives,0.18421052631578944
+100,Middle 70%,Size initial,0.4615384615384616
+100,Middle 70%,Canonical order,0.7948717948717948
+101,Middle 70%,One adjective,0.30666666666666664
+101,Middle 70%,Three adjectives,0.14666666666666667
+101,Middle 70%,Size initial,0.4230769230769231
+101,Middle 70%,Canonical order,0.9807692307692308
+102,Middle 70%,One adjective,0.4444444444444444
+102,Middle 70%,Three adjectives,0.09876543209876544
+102,Middle 70%,Size initial,0.6666666666666666
+102,Middle 70%,Canonical order,0.8666666666666667
+103,Successive choice favoured,One adjective,0.2839506172839506
+103,Successive choice favoured,Three adjectives,0.2716049382716049
+103,Successive choice favoured,Size initial,0.43103448275862066
+103,Successive choice favoured,Canonical order,0.9655172413793104
+104,Middle 70%,One adjective,0.43209876543209874
+104,Middle 70%,Three adjectives,0.32098765432098764
+104,Middle 70%,Size initial,0.8043478260869565
+104,Middle 70%,Canonical order,0.9347826086956522
+105,Middle 70%,One adjective,0.43209876543209874
+105,Middle 70%,Three adjectives,0.1111111111111111
+105,Middle 70%,Size initial,0.6521739130434783
+105,Middle 70%,Canonical order,0.9347826086956522
+106,Middle 70%,One adjective,0.6049382716049383
+106,Middle 70%,Three adjectives,0.04938271604938271
+106,Middle 70%,Size initial,0.6875
+106,Middle 70%,Canonical order,0.96875
+107,Middle 70%,One adjective,0.4691358024691358
+107,Middle 70%,Three adjectives,0.1111111111111111
+107,Middle 70%,Size initial,0.5581395348837209
+107,Middle 70%,Canonical order,0.9069767441860463
+108,Middle 70%,One adjective,0.43209876543209874
+108,Middle 70%,Three adjectives,0.16049382716049382
+108,Middle 70%,Size initial,0.6956521739130435
+108,Middle 70%,Canonical order,1
+109,Middle 70%,One adjective,0.5308641975308642
+109,Middle 70%,Three adjectives,0.1111111111111111
+109,Middle 70%,Size initial,0.631578947368421
+109,Middle 70%,Canonical order,1
+110,Stable order favoured,One adjective,0.691358024691358
+110,Stable order favoured,Three adjectives,0.04938271604938271
+110,Stable order favoured,Size initial,0.44
+110,Stable order favoured,Canonical order,1
+111,Middle 70%,One adjective,0.3950617283950617
+111,Middle 70%,Three adjectives,0.25925925925925924
+111,Middle 70%,Size initial,0.5714285714285714
+111,Middle 70%,Canonical order,1
+112,Stable order favoured,One adjective,0
+112,Stable order favoured,Three adjectives,0.6790123456790124
+112,Stable order favoured,Size initial,0.6790123456790124
+112,Stable order favoured,Canonical order,0.9876543209876544
+113,Stable order favoured,One adjective,0.5679012345679012
+113,Stable order favoured,Three adjectives,0.13580246913580246
+113,Stable order favoured,Size initial,0.14285714285714285
+113,Stable order favoured,Canonical order,0.4857142857142857
