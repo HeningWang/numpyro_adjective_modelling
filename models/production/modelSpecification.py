@@ -27,6 +27,13 @@ from numpyro import handlers
 from numpyro.infer import MCMC, NUTS, HMC, MixedHMC, init_to_value
 from numpyro.infer import Predictive
 from sklearn.model_selection import train_test_split
+from discovery import (
+    DISCOVERY_CANDIDATE_IDS,
+    legacy_vs_final_lapse_max_probability_shift,
+    noncentered_participant_alpha,
+    noncentered_participant_kappa,
+    normalization_path_distribution,
+)
 from helper import import_dataset, import_dataset_hier, normalize, build_utterance_prior_jax
 from principled_features import ORDER_ONLY_LM_RESID_15 as ORDER_ONLY_LM_RESID_15_NP
 
@@ -193,6 +200,126 @@ def compute_size_semantics_fast_presorted(
     denom = wf * jnp.sqrt(sizes ** 2 + theta_k ** 2 + eps)
     z = (sizes - theta_k) / denom
     return 0.5 * (1.0 + lax.erf(z / jnp.sqrt(2.0)))
+
+
+def compute_size_semantics_comparison_class(
+    states:     jnp.ndarray,  # (n_obj, 3)
+    class_mask: jnp.ndarray,  # (n_obj,), hard comparison-class indicator
+    k:          float,
+    wf:         float,
+    q_low:      float = 0.2,
+    q_high:     float = 0.8,
+) -> jnp.ndarray:
+    """Size semantics with thresholds computed over a hard comparison class.
+
+    The mask is supplied by determinate colour/form adjectives to the right of
+    the size adjective.  If that class is empty, the display-wide class is used.
+    """
+    n_obj = states.shape[0]
+    mask = class_mask.astype(jnp.float32)
+    mask_total = jnp.sum(mask)
+    fallback_prior = jnp.ones(n_obj, dtype=jnp.float32) / n_obj
+    class_prior = mask / jnp.clip(mask_total, 1e-8)
+    state_prior = jnp.where(mask_total > 0.0, class_prior, fallback_prior)
+    return compute_size_semantics(states, state_prior, k, wf, q_low, q_high)
+
+
+def _literal_listener_comparison_class_one(
+    states:      jnp.ndarray,
+    utterance:   jnp.ndarray,
+    color_sem:   float,
+    form_sem:    float,
+    k:           float,
+    wf:          float,
+    state_prior: jnp.ndarray,
+) -> jnp.ndarray:
+    """Literal listener for one utterance under comparison-class size semantics."""
+    eps = 1e-8
+    colors = states[:, 1]
+    forms = states[:, 2]
+    color_vec = jnp.where(colors == 1, color_sem, 1.0 - color_sem)
+    form_vec = jnp.where(forms == 1, form_sem, 1.0 - form_sem)
+    color_class = (colors == 1).astype(jnp.float32)
+    form_class = (forms == 1).astype(jnp.float32)
+
+    def step(carry, token_i):
+        posterior_i, class_mask_i = carry
+
+        def skip(_):
+            return posterior_i, class_mask_i
+
+        def apply(_):
+            size_vec = compute_size_semantics_comparison_class(
+                states,
+                class_mask_i,
+                k,
+                wf,
+            )
+
+            def apply_size(__):
+                return posterior_i * size_vec, class_mask_i
+
+            def apply_color(__):
+                return posterior_i * color_vec, class_mask_i * color_class
+
+            def apply_form(__):
+                return posterior_i * form_vec, class_mask_i * form_class
+
+            return lax.switch(
+                token_i,
+                [apply_size, apply_color, apply_form],
+                operand=None,
+            )
+
+        return lax.cond(token_i < 0, skip, apply, operand=None), None
+
+    tokens_rev = jnp.flip(utterance)
+    init_class = jnp.ones(states.shape[0], dtype=jnp.float32)
+    final, _ = lax.scan(step, (state_prior, init_class), tokens_rev)
+    posterior, _ = final
+    return posterior / jnp.clip(jnp.sum(posterior), eps)
+
+
+def literal_listener_comparison_class_batch(
+    states:      jnp.ndarray,
+    utterances:  jnp.ndarray,
+    color_sem:   float = 0.95,
+    form_sem:    float = 0.80,
+    k:           float = 0.5,
+    wf:          float = 0.5,
+    state_prior: jnp.ndarray = None,
+) -> jnp.ndarray:
+    """Literal listener matrix for a batch of utterances."""
+    if state_prior is None:
+        state_prior = jnp.ones(states.shape[0], dtype=jnp.float32) / states.shape[0]
+
+    return jax.vmap(
+        _literal_listener_comparison_class_one,
+        in_axes=(None, 0, None, None, None, None, None),
+    )(states, utterances, color_sem, form_sem, k, wf, state_prior)
+
+
+def incremental_semantics_jax_comparison_class(
+    states:      jnp.ndarray,
+    color_sem:   float = 0.95,
+    form_sem:    float = 0.80,
+    k:           float = 0.5,
+    wf:          float = 0.5,
+    state_prior: jnp.ndarray = None,
+    utterances:  jnp.ndarray = None,
+) -> jnp.ndarray:
+    """Literal listener with size thresholds from right-context comparison classes."""
+    if utterances is None:
+        utterances = utterance_list
+    return literal_listener_comparison_class_batch(
+        states=states,
+        utterances=utterances,
+        color_sem=color_sem,
+        form_sem=form_sem,
+        k=k,
+        wf=wf,
+        state_prior=state_prior,
+    )
 
 
 
@@ -534,6 +661,10 @@ for t in range(T):
 TOKEN_PRESENT = jnp.asarray(token_present_np)   # (T, n_utt, 3, 3)
 # TOKEN_PRESENT[t, u, a, :] = which vocab items are in prefix+candidate sequence
 # replaces the inner scan(apply_tok) with a single einsum
+CANDIDATE_TOKEN_PRESENT = jnp.broadcast_to(
+    jnp.eye(VOCAB_SIZE, dtype=jnp.float32),
+    (T, n_utt, VOCAB_SIZE, VOCAB_SIZE),
+)  # candidate adjective only, used by prefix Variant C
 
 # ── Actual tokens at each position for posterior update ───────────────────────
 # ACTUAL_TOK[t, u] = tokens_t[u], clamped
@@ -589,6 +720,82 @@ FULL_PRESENT_15 = jnp.asarray(np.stack([
     for d in range(VOCAB_SIZE)
 ], axis=1))  # (n_utt, 3)
 
+# COMPLETION_MASK[t, u, a, v] = True iff terminal utterance v is reachable
+# after extending utterance u's prefix at position t with adjective a.
+# This supports a planned-prefix incremental variant while preserving the
+# original 15 terminal utterance inventory.
+completion_mask_np = np.zeros((T, n_utt, VOCAB_SIZE, n_utt), dtype=bool)
+utterance_list_np = np.asarray(utterance_list)
+
+for t in range(T):
+    for u in range(n_utt):
+        for a in range(VOCAB_SIZE):
+            if not cand_mask_np[t, u, a]:
+                continue
+            prefix = prefix_utts_np[t, u, a]
+            prefix_valid = prefix[prefix >= 0]
+            prefix_len = len(prefix_valid)
+            for v in range(n_utt):
+                terminal = utterance_list_np[v]
+                terminal_valid = terminal[terminal >= 0]
+                if len(terminal_valid) < prefix_len:
+                    continue
+                completion_mask_np[t, u, a, v] = bool(
+                    np.array_equal(terminal_valid[:prefix_len], prefix_valid)
+                )
+
+COMPLETION_MASK = jnp.asarray(completion_mask_np)
+
+# ── Explicit STOP-local action support ───────────────────────────────────────
+# Columns are [STOP, D, C, F].  This terminal-prefix mask records the actions
+# available after each completed response; prefix-state masks below are used
+# for the local action product itself.
+stop_local_action_mask_np = np.zeros((n_utt, VOCAB_SIZE + 1), dtype=bool)
+for _u, _utt in enumerate(utterance_list_np):
+    _tokens = [int(token) for token in _utt if token >= 0]
+    stop_local_action_mask_np[_u, 0] = True
+    _used = set(_tokens)
+    for _action in range(VOCAB_SIZE):
+        stop_local_action_mask_np[_u, _action + 1] = _action not in _used
+STOP_LOCAL_ACTION_MASK = jnp.asarray(stop_local_action_mask_np)
+
+# Prefix metadata is independent of trial-specific semantics and is safe to
+# use inside JAX-traced model functions.
+prefix_present_np = np.zeros((T + 1, n_utt, VOCAB_SIZE), dtype=np.float32)
+prefix_index_np = np.full((T + 1, n_utt), -1, dtype=np.int32)
+prefix_salience_load_np = np.zeros((T + 1, n_utt, VOCAB_SIZE), dtype=np.float32)
+for _length in range(T + 1):
+    for _u, _utt in enumerate(utterance_list_np):
+        _tokens = [int(token) for token in _utt[:_length] if token >= 0]
+        for _token in set(_tokens):
+            prefix_present_np[_length, _u, _token] = 1.0
+        for _position, _token in enumerate(_tokens[:-1]):
+            prefix_salience_load_np[_length, _u, _token] += 1.0
+        for _candidate, _terminal in enumerate(utterance_list_np):
+            _terminal_tokens = [int(token) for token in _terminal if token >= 0]
+            if len(_terminal_tokens) >= _length and _terminal_tokens[:_length] == _tokens:
+                prefix_index_np[_length, _u] = _candidate
+                break
+PREFIX_PRESENT = jnp.asarray(prefix_present_np)
+PREFIX_INDEX = jnp.asarray(prefix_index_np)
+PREFIX_SALIENCE_LOAD = jnp.asarray(prefix_salience_load_np)
+
+# For a prefix shorter than three adjectives, at least one terminal response
+# realizes the same prefix and supplies its continuation logits.  These rows
+# are used when evaluating STOP at the end of a shorter response.
+prefix_representative_np = np.zeros((T + 1, n_utt), dtype=np.int32)
+for _length in range(T + 1):
+    for _u, _utt in enumerate(utterance_list_np):
+        _tokens = [int(token) for token in _utt[:_length] if token >= 0]
+        for _candidate, _terminal in enumerate(utterance_list_np):
+            _terminal_tokens = [int(token) for token in _terminal if token >= 0]
+            if len(_terminal_tokens) > _length and _terminal_tokens[:_length] == _tokens:
+                prefix_representative_np[_length, _u] = _candidate
+                break
+        else:
+            prefix_representative_np[_length, _u] = _u
+PREFIX_REPRESENTATIVE = jnp.asarray(prefix_representative_np)
+
 # ── levers ───────────────────────────────────────────────────────────
 # (2) Non-canonical-order mask: 1 if BOTH colour (1) and form (2) appear AND
 #     form precedes colour (F-before-C). These are exactly {DFC, FDC, FC, FCD}
@@ -627,6 +834,25 @@ for _u in range(n_utt):
     if any(toks[i] > toks[i + 1] for i in range(len(toks) - 1)):
         _noncanon[_u] = 1.0
 NONCANON_MASK = jnp.asarray(_noncanon)                  # (n_utt,)
+
+# Order-only planning utilities.  These preserve the total probability assigned
+# to each unordered adjective set and only reallocate among its surface orders.
+_order_set_mask_np = np.zeros((n_utt, n_utt), dtype=np.float32)
+_full_present_np = np.asarray(FULL_PRESENT_15)
+for _u in range(n_utt):
+    for _v in range(n_utt):
+        _order_set_mask_np[_u, _v] = float(
+            np.array_equal(_full_present_np[_u], _full_present_np[_v])
+        )
+ORDER_SET_MASK_15 = jnp.asarray(_order_set_mask_np)
+
+_order_position_weights_np = np.zeros((n_utt, VOCAB_SIZE), dtype=np.float32)
+_position_discount_np = np.array([1.0, 0.45, 0.20], dtype=np.float32)
+for _u, _utt in enumerate(np.asarray(utterance_list)):
+    for _pos, _tok in enumerate(_utt):
+        if _tok >= 0:
+            _order_position_weights_np[_u, int(_tok)] += _position_discount_np[_pos]
+ORDER_POSITION_WEIGHTS_15 = jnp.asarray(_order_position_weights_np)
 # Binary masks: which utterances start with C / F (D is reference)
 STARTS_C = (FIRST_WORD == 1).astype(jnp.float32)  # (n_utt,)
 STARTS_F = (FIRST_WORD == 2).astype(jnp.float32)  # (n_utt,)
@@ -2046,8 +2272,15 @@ def incremental_speaker_principled(
     order_scores:          jnp.ndarray = LOG_LM_ORDER_ONLY_15,
     base_visual_salience:  jnp.ndarray = BASE_VISUAL_SALIENCE,
     recursive:             bool = True,
+    size_context_mode:     str = "posterior",
 ) -> jnp.ndarray:
     """Simplified speaker with order-only LM prior and derived visual features."""
+
+    if size_context_mode not in ("posterior", "comparison_class"):
+        raise ValueError(
+            f"Unknown size_context_mode {size_context_mode!r}; "
+            "expected 'posterior' or 'comparison_class'."
+        )
 
     eps = 1e-8
     referent_index = 0
@@ -2094,27 +2327,42 @@ def incremental_speaker_principled(
         cand_mask_t = CANDIDATE_MASK[t]
         active_t = ACTIVE_POS[t]
 
-        size_log_sems_recursive = jax.vmap(size_log_sem_for_utt)(per_utt_posts)
-        size_log_sems = size_log_sems_recursive if recursive else size_log_sems_static
+        if size_context_mode == "comparison_class" and recursive:
+            candidate_seqs = jnp.reshape(PREFIX_UTTS[t], (n_utt * VOCAB_SIZE, T))
+            candidate_posts = jnp.reshape(
+                literal_listener_comparison_class_batch(
+                    states,
+                    candidate_seqs,
+                    color_semval,
+                    form_semval,
+                    k,
+                    wf,
+                ),
+                (n_utt, VOCAB_SIZE, n_obj),
+            )
+            log_L_ref = jnp.log(jnp.clip(candidate_posts[:, :, referent_index], eps))
+        else:
+            size_log_sems_recursive = jax.vmap(size_log_sem_for_utt)(per_utt_posts)
+            size_log_sems = size_log_sems_recursive if recursive else size_log_sems_static
 
-        log_sem_static = jnp.stack([log_color_sem, log_form_sem], axis=0)
-        log_sem_table = jnp.concatenate([
-            size_log_sems[:, None, :],
-            jnp.broadcast_to(log_sem_static[None, :, :], (n_utt, 2, n_obj)),
-        ], axis=1)
+            log_sem_static = jnp.stack([log_color_sem, log_form_sem], axis=0)
+            log_sem_table = jnp.concatenate([
+                size_log_sems[:, None, :],
+                jnp.broadcast_to(log_sem_static[None, :, :], (n_utt, 2, n_obj)),
+            ], axis=1)
 
-        token_pres_t = TOKEN_PRESENT[t]
-        log_prod_sem = jnp.einsum(
-            "uav, uvo -> uao",
-            token_pres_t,
-            log_sem_table,
-        )
+            token_pres_t = TOKEN_PRESENT[t]
+            log_prod_sem = jnp.einsum(
+                "uav, uvo -> uao",
+                token_pres_t,
+                log_sem_table,
+            )
 
-        log_per_utt_posts = jnp.log(jnp.clip(per_utt_posts, eps))
-        log_updated = log_per_utt_posts[:, None, :] + log_prod_sem
-        log_Z = jax.scipy.special.logsumexp(log_updated, axis=-1)
-        log_norm = log_updated - log_Z[:, :, None]
-        log_L_ref = log_norm[:, :, referent_index]
+            log_per_utt_posts = jnp.log(jnp.clip(per_utt_posts, eps))
+            log_updated = log_per_utt_posts[:, None, :] + log_prod_sem
+            log_Z = jax.scipy.special.logsumexp(log_updated, axis=-1)
+            log_norm = log_updated - log_Z[:, :, None]
+            log_L_ref = log_norm[:, :, referent_index]
 
         salience_boost = lambda_salience * salience_vec
         logits = jnp.where(
@@ -2128,20 +2376,33 @@ def incremental_speaker_principled(
         chosen = jnp.where(active_t, chosen, 1.0)
         log_chosen = jnp.where(active_t, jnp.log(jnp.clip(chosen, eps)), 0.0)
 
-        selected_log_sem = jnp.einsum(
-            "uv, uvo -> uo",
-            ACTUAL_TOK_ONEHOT[t],
-            log_sem_table,
-        )
-        log_updated_post = log_per_utt_posts + jnp.where(
-            active_t[:, None],
-            selected_log_sem,
-            0.0,
-        )
-        log_Z_post = jax.scipy.special.logsumexp(
-            log_updated_post, axis=-1, keepdims=True
-        )
-        new_per_utt_posts = jnp.exp(log_updated_post - log_Z_post)
+        if size_context_mode == "comparison_class" and recursive:
+            actual_idx = ACTUAL_TOK[t][:, None, None]
+            selected_posts = jnp.take_along_axis(
+                candidate_posts,
+                jnp.broadcast_to(actual_idx, (n_utt, 1, n_obj)),
+                axis=1,
+            )[:, 0, :]
+            new_per_utt_posts = jnp.where(
+                active_t[:, None],
+                selected_posts,
+                per_utt_posts,
+            )
+        else:
+            selected_log_sem = jnp.einsum(
+                "uv, uvo -> uo",
+                ACTUAL_TOK_ONEHOT[t],
+                log_sem_table,
+            )
+            log_updated_post = log_per_utt_posts + jnp.where(
+                active_t[:, None],
+                selected_log_sem,
+                0.0,
+            )
+            log_Z_post = jax.scipy.special.logsumexp(
+                log_updated_post, axis=-1, keepdims=True
+            )
+            new_per_utt_posts = jnp.exp(log_updated_post - log_Z_post)
 
         return (log_scores + log_chosen, new_per_utt_posts), None
 
@@ -2157,6 +2418,1429 @@ def incremental_speaker_principled(
     log_unnorm = log_order_prior + log_final_scores + length_bonus - salience_stop_cost
     model_probs = jax.nn.softmax(log_unnorm)
     return (1.0 - epsilon) * model_probs + epsilon / n_utt
+
+
+def principled_incremental_path_components(
+    states:               jnp.ndarray,
+    is_sharp:             float,
+    alpha:                float = 3.0,
+    lambda_salience:      float = 0.0,
+    color_semval:         float = 0.59,
+    form_semval:          float = 0.50,
+    k:                    float = 0.50,
+    wf:                   float = 0.6856,
+    base_visual_salience: jnp.ndarray = BASE_VISUAL_SALIENCE,
+    recursive:            bool = True,
+    size_context_mode:    str = "posterior",
+    prefix_mode:          str = "A",
+) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
+    """Return path scores S, local log-normalizers C, and legacy floor bonus B.
+
+    The operational parent clips each chosen local probability at ``1e-8``
+    before taking its log. Consequently, ``S - C + B`` exactly reproduces the
+    parent's accumulated chosen-prefix score, including that numerical floor.
+    """
+    if size_context_mode not in ("posterior", "comparison_class"):
+        raise ValueError(
+            f"Unknown size_context_mode {size_context_mode!r}; "
+            "expected 'posterior' or 'comparison_class'."
+        )
+    if prefix_mode not in ("A", "B", "C"):
+        raise ValueError(
+            f"Unknown prefix_mode {prefix_mode!r}; expected 'A', 'B', or 'C'."
+        )
+    if prefix_mode == "C" and recursive and size_context_mode == "comparison_class":
+        raise ValueError(
+            "Prefix Variant C is defined for posterior-state updating; "
+            "comparison-class updating has no carried candidate-only state."
+        )
+
+    eps = 1e-8
+    referent_index = 0
+    n_obj = states.shape[0]
+
+    sizes = states[:, 0]
+    size_sort_idx = jnp.argsort(sizes)
+    sizes_sorted = sizes[size_sort_idx]
+    salience_vec = _visual_salience_scores(
+        states,
+        is_sharp,
+        base_visual_salience,
+    )
+
+    colors = states[:, 1]
+    forms = states[:, 2]
+    log_color_sem = jnp.log(
+        jnp.where(colors == 1, color_semval, 1.0 - color_semval) + eps
+    )
+    log_form_sem = jnp.log(
+        jnp.where(forms == 1, form_semval, 1.0 - form_semval) + eps
+    )
+
+    uniform = jnp.ones(n_obj) / n_obj
+    init_scores = jnp.zeros(n_utt)
+    init_posts = jnp.broadcast_to(uniform, (n_utt, n_obj))
+
+    def size_log_sem_for_utt(post):
+        size_semantics = compute_size_semantics_fast_presorted(
+            sizes,
+            size_sort_idx,
+            sizes_sorted,
+            post,
+            k,
+            wf,
+        )
+        return jnp.log(jnp.clip(size_semantics, eps))
+
+    size_log_sems_static = jax.vmap(size_log_sem_for_utt)(init_posts)
+
+    def step(carry, t):
+        (
+            raw_scores,
+            correction_scores,
+            floor_adjustment_scores,
+            per_utt_posts,
+        ) = carry
+        cand_mask_t = CANDIDATE_MASK[t]
+        active_t = ACTIVE_POS[t]
+
+        if size_context_mode == "comparison_class" and recursive:
+            candidate_seqs = jnp.reshape(
+                PREFIX_UTTS[t],
+                (n_utt * VOCAB_SIZE, T),
+            )
+            candidate_posts = jnp.reshape(
+                literal_listener_comparison_class_batch(
+                    states,
+                    candidate_seqs,
+                    color_semval,
+                    form_semval,
+                    k,
+                    wf,
+                ),
+                (n_utt, VOCAB_SIZE, n_obj),
+            )
+            log_L_ref = jnp.log(
+                jnp.clip(candidate_posts[:, :, referent_index], eps)
+            )
+        else:
+            if prefix_mode == "B":
+                size_log_sems = size_log_sems_static
+            else:
+                size_log_sems_recursive = jax.vmap(size_log_sem_for_utt)(
+                    per_utt_posts
+                )
+                size_log_sems = (
+                    size_log_sems_recursive
+                    if recursive
+                    else size_log_sems_static
+                )
+            log_sem_static = jnp.stack(
+                [log_color_sem, log_form_sem],
+                axis=0,
+            )
+            log_sem_table = jnp.concatenate(
+                [
+                    size_log_sems[:, None, :],
+                    jnp.broadcast_to(
+                        log_sem_static[None, :, :],
+                        (n_utt, 2, n_obj),
+                    ),
+                ],
+                axis=1,
+            )
+            log_prod_sem = jnp.einsum(
+                "uav, uvo -> uao",
+                TOKEN_PRESENT[t],
+                log_sem_table,
+            )
+            log_per_utt_posts = jnp.log(jnp.clip(per_utt_posts, eps))
+            log_updated = log_per_utt_posts[:, None, :] + log_prod_sem
+            log_Z = jax.scipy.special.logsumexp(log_updated, axis=-1)
+            log_L_ref = (
+                log_updated - log_Z[:, :, None]
+            )[:, :, referent_index]
+
+        candidate_logits = (
+            alpha * log_L_ref
+            + lambda_salience * salience_vec[None, :]
+        )
+        active_logits = jnp.where(
+            cand_mask_t,
+            candidate_logits,
+            -jnp.inf,
+        )
+        # Completed utterances have no active next-token alternatives. Give
+        # those rows one inert finite entry before logsumexp/softmax; active
+        # rows retain exact -inf for every invalid action.
+        inactive_logits = jnp.full_like(active_logits, -jnp.inf)
+        inactive_logits = inactive_logits.at[:, 0].set(0.0)
+        logits = jnp.where(
+            active_t[:, None],
+            active_logits,
+            inactive_logits,
+        )
+        chosen_raw = jnp.sum(
+            jnp.where(ACTUAL_TOK_ONEHOT[t] > 0.0, logits, 0.0),
+            axis=-1,
+        )
+        local_log_Z = jax.scipy.special.logsumexp(logits, axis=-1)
+        chosen_raw = jnp.where(active_t, chosen_raw, 0.0)
+        local_log_Z = jnp.where(active_t, local_log_Z, 0.0)
+        local_probs = jax.nn.softmax(logits, axis=-1)
+        chosen_probability = jnp.sum(
+            local_probs * ACTUAL_TOK_ONEHOT[t],
+            axis=-1,
+        )
+        chosen_probability = jnp.where(
+            active_t,
+            chosen_probability,
+            1.0,
+        )
+        legacy_log_chosen = jnp.where(
+            active_t,
+            jnp.log(jnp.clip(chosen_probability, eps)),
+            0.0,
+        )
+        exact_log_chosen = chosen_raw - local_log_Z
+        legacy_floor_adjustment = legacy_log_chosen - exact_log_chosen
+
+        if size_context_mode == "comparison_class" and recursive:
+            actual_idx = ACTUAL_TOK[t][:, None, None]
+            selected_posts = jnp.take_along_axis(
+                candidate_posts,
+                jnp.broadcast_to(actual_idx, (n_utt, 1, n_obj)),
+                axis=1,
+            )[:, 0, :]
+            new_per_utt_posts = jnp.where(
+                active_t[:, None],
+                selected_posts,
+                per_utt_posts,
+            )
+        else:
+            selected_log_sem = jnp.einsum(
+                "uv, uvo -> uo",
+                ACTUAL_TOK_ONEHOT[t],
+                log_sem_table,
+            )
+            log_updated_post = log_per_utt_posts + jnp.where(
+                active_t[:, None],
+                selected_log_sem,
+                0.0,
+            )
+            log_Z_post = jax.scipy.special.logsumexp(
+                log_updated_post,
+                axis=-1,
+                keepdims=True,
+            )
+            new_per_utt_posts = jnp.exp(log_updated_post - log_Z_post)
+
+        return (
+            raw_scores + chosen_raw,
+            correction_scores + local_log_Z,
+            floor_adjustment_scores + legacy_floor_adjustment,
+            new_per_utt_posts,
+        ), None
+
+    (
+        raw_path_score,
+        local_log_normalizer,
+        legacy_floor_adjustment,
+        _,
+    ), _ = lax.scan(
+        step,
+        (init_scores, init_scores, init_scores, init_posts),
+        jnp.arange(T),
+    )
+    return (
+        raw_path_score,
+        local_log_normalizer,
+        legacy_floor_adjustment,
+    )
+
+
+def principled_incremental_terminal_policy(
+    states:                jnp.ndarray,
+    is_sharp:              float,
+    beta_order:            float = 1.0,
+    rho_salience_stop:     float = 0.0,
+    gamma_uncertainty_len: float = 0.0,
+    k:                     float = 0.50,
+    wf:                    float = 0.6856,
+    order_scores:          jnp.ndarray = LOG_LM_ORDER_ONLY_15,
+    base_visual_salience:  jnp.ndarray = BASE_VISUAL_SALIENCE,
+) -> jnp.ndarray:
+    """Return order, stopping, and uncertainty-length terminal utilities."""
+    salience_vec = _visual_salience_scores(
+        states,
+        is_sharp,
+        base_visual_salience,
+    )
+    size_uncertainty = _size_uncertainty_excess(states, is_sharp, k, wf)
+    length_bonus = (
+        gamma_uncertainty_len
+        * size_uncertainty
+        * jnp.maximum(N_WORDS - 1.0, 0.0)
+    )
+    salience_stop_cost = (
+        rho_salience_stop * _salience_continuation_load(salience_vec)
+    )
+    return beta_order * order_scores + length_bonus - salience_stop_cost
+
+
+def principled_reliability_response_logits(
+    sufficient_dim:       int,
+    has_one_word_solution: float,
+    is_sharp:             float,
+    is_colour_sufficient: float,
+    lambda_sufficient_single: float,
+    lambda_reliability_form: float,
+    lambda_three_word_penalty: float = 0.0,
+    lambda_size_reliability_single_bonus: float = 0.0,
+    lambda_size_reliability_form_pair_tradeoff: float = 0.0,
+) -> jnp.ndarray:
+    """Return the reliability-backup parent's additive response utilities."""
+    dim_count = jnp.sum(FULL_PRESENT_15, axis=1)
+    single_dim = (dim_count == 1.0).astype(jnp.float32)
+    two_dim = (dim_count == 2.0).astype(jnp.float32)
+    dim_id = jnp.argmax(FULL_PRESENT_15, axis=1)
+    sufficient_match = (
+        (sufficient_dim >= 0)
+        & (dim_id == sufficient_dim)
+        & (N_WORDS == 1.0)
+    ).astype(jnp.float32)
+    sufficient_single_bonus = (
+        lambda_sufficient_single
+        * has_one_word_solution
+        * single_dim
+        * sufficient_match
+    )
+    reliability_form_bonus = (
+        lambda_reliability_form
+        * (1.0 - is_colour_sufficient)
+        * F_PRESENT_15
+    )
+    safe_sufficient_dim = jnp.maximum(sufficient_dim, 0)
+    sufficient_present = FULL_PRESENT_15[:, safe_sufficient_dim]
+    exact_sufficient_form_pair = (
+        has_one_word_solution
+        * (sufficient_dim >= 0)
+        * (sufficient_dim != 2)
+        * two_dim
+        * sufficient_present
+        * F_PRESENT_15
+    )
+    size_reliability_gate = (
+        has_one_word_solution
+        * (sufficient_dim == 0)
+        * is_sharp
+    )
+    size_unreliability_gate = (
+        has_one_word_solution
+        * (sufficient_dim == 0)
+        * (1.0 - is_sharp)
+    )
+    size_reliability_single_bonus = (
+        lambda_size_reliability_single_bonus
+        * size_reliability_gate
+        * single_dim
+        * sufficient_match
+    )
+    size_form_pair_tradeoff = (
+        lambda_size_reliability_form_pair_tradeoff
+        * (size_unreliability_gate - size_reliability_gate)
+        * exact_sufficient_form_pair
+    )
+    three_word_penalty = (
+        lambda_three_word_penalty * (N_WORDS == 3.0)
+    )
+    return (
+        sufficient_single_bonus
+        + reliability_form_bonus
+        + size_reliability_single_bonus
+        + size_form_pair_tradeoff
+        - three_word_penalty
+    )
+
+
+def incremental_speaker_principled_discovery(
+    states:                    jnp.ndarray,
+    sufficient_dim:            int,
+    has_one_word_solution:     float,
+    is_sharp:                  float,
+    is_colour_sufficient:      float,
+    alpha:                     float = 3.0,
+    beta_order:                float = 1.0,
+    lambda_salience:           float = 0.0,
+    rho_salience_stop:         float = 0.0,
+    lambda_sufficient_single:  float = 0.0,
+    lambda_reliability_form:   float = 0.0,
+    lambda_three_word_penalty: float = 0.0,
+    lambda_size_reliability_single_bonus: float = 0.0,
+    lambda_size_reliability_form_pair_tradeoff: float = 0.0,
+    gamma_uncertainty_len:     float = 0.0,
+    lambda_length:            float = 0.0,
+    kappa:                     float = 1.0,
+    nu_F:                      float = 0.50,
+    color_semval:              float = 0.59,
+    size_threshold_k:          float = 0.50,
+    wf:                        float = 0.6856,
+    epsilon:                   float = 0.003,
+    order_scores:              jnp.ndarray = LOG_LM_ORDER_ONLY_15,
+    base_visual_salience:      jnp.ndarray = BASE_VISUAL_SALIENCE,
+    recursive:                 bool = False,
+    size_context_mode:         str = "posterior",
+    prefix_mode:               str = "A",
+    lambda_order_planning:     float = 0.0,
+) -> jnp.ndarray:
+    """Reliability-backup speaker with isolated path-normalization strength.
+
+    The interpolated path score is ``S - kappa * (C - B)``. Its endpoints are
+    the matched raw path utility ``S`` at zero and the legacy clipped
+    incremental path score ``S - C + B`` at one.
+    """
+    (
+        raw_path_score,
+        local_log_normalizer,
+        legacy_floor_adjustment,
+    ) = principled_incremental_path_components(
+        states=states,
+        is_sharp=is_sharp,
+        alpha=alpha,
+        lambda_salience=lambda_salience,
+        color_semval=color_semval,
+        form_semval=nu_F,
+        k=size_threshold_k,
+        wf=wf,
+        base_visual_salience=base_visual_salience,
+        recursive=recursive,
+        size_context_mode=size_context_mode,
+        prefix_mode=prefix_mode,
+    )
+    interpolated_local_correction = (
+        local_log_normalizer - legacy_floor_adjustment
+    )
+    base_terminal_policy = principled_incremental_terminal_policy(
+        states=states,
+        is_sharp=is_sharp,
+        beta_order=beta_order,
+        rho_salience_stop=rho_salience_stop,
+        gamma_uncertainty_len=gamma_uncertainty_len,
+        k=size_threshold_k,
+        wf=wf,
+        order_scores=order_scores,
+        base_visual_salience=base_visual_salience,
+    )
+    response_terminal_policy = principled_reliability_response_logits(
+        sufficient_dim=sufficient_dim,
+        has_one_word_solution=has_one_word_solution,
+        is_sharp=is_sharp,
+        is_colour_sufficient=is_colour_sufficient,
+        lambda_sufficient_single=lambda_sufficient_single,
+        lambda_reliability_form=lambda_reliability_form,
+        lambda_three_word_penalty=lambda_three_word_penalty,
+        lambda_size_reliability_single_bonus=(
+            lambda_size_reliability_single_bonus
+        ),
+        lambda_size_reliability_form_pair_tradeoff=(
+            lambda_size_reliability_form_pair_tradeoff
+        ),
+    )
+    response_probs = normalization_path_distribution(
+        raw_path_score,
+        interpolated_local_correction,
+        base_terminal_policy + response_terminal_policy,
+        kappa,
+        epsilon,
+    )
+    return _apply_order_only_planning_policy(
+        response_probs,
+        sufficient_dim,
+        has_one_word_solution,
+        is_colour_sufficient,
+        lambda_order_planning,
+    )
+
+
+def incremental_speaker_principled_discovery_stop_local(
+    states:                    jnp.ndarray,
+    sufficient_dim:            int,
+    has_one_word_solution:     float,
+    is_sharp:                  float,
+    is_colour_sufficient:      float,
+    alpha:                     float = 3.0,
+    beta_order:                float = 1.0,
+    lambda_salience:           float = 0.0,
+    rho_salience_stop:         float = 0.0,
+    lambda_sufficient_single:  float = 0.0,
+    lambda_reliability_form:   float = 0.0,
+    lambda_three_word_penalty: float = 0.0,
+    lambda_size_reliability_single_bonus: float = 0.0,
+    lambda_size_reliability_form_pair_tradeoff: float = 0.0,
+    gamma_uncertainty_len:     float = 0.0,
+    kappa:                     float = 1.0,
+    nu_F:                      float = 0.50,
+    color_semval:              float = 0.59,
+    size_threshold_k:          float = 0.50,
+    wf:                       float = 0.6856,
+    epsilon:                   float = 0.003,
+    order_scores:              jnp.ndarray = LOG_LM_ORDER_ONLY_15,
+    base_visual_salience:      jnp.ndarray = BASE_VISUAL_SALIENCE,
+    recursive:                 bool = True,
+    size_context_mode:         str = "posterior",
+    prefix_mode:               str = "B",
+    eta_0:                     float = 0.0,
+    eta_1:                     float = 0.0,
+    eta_2:                     float = 0.0,
+    eta_3:                     float = 0.0,
+    lambda_len:                float = 0.0,
+    temperature:               float = 1.0,
+) -> jnp.ndarray:
+    """Produce complete responses from local continuation and STOP actions.
+
+    The returned probability for a response is the product of local action
+    probabilities along its prefix and the STOP probability at its terminal
+    prefix.  ``rho_salience_stop`` is used once in the terminal STOP utility;
+    ``lambda_len`` is the separate per-continuation word cost.  This resolves
+    the salience overlap identified in the pre-fit STOP audit.
+    """
+    if size_context_mode not in ("posterior", "comparison_class"):
+        raise ValueError(
+            f"Unknown size_context_mode {size_context_mode!r}; "
+            "expected 'posterior' or 'comparison_class'."
+        )
+    if prefix_mode not in ("A", "B", "C"):
+        raise ValueError(
+            f"Unknown prefix_mode {prefix_mode!r}; expected 'A', 'B', or 'C'."
+        )
+    if prefix_mode == "C" and recursive and size_context_mode == "comparison_class":
+        raise ValueError(
+            "Prefix Variant C is defined for posterior-state updating; "
+            "comparison-class updating has no carried candidate-only state."
+        )
+    temperature = jnp.maximum(temperature, 1e-6)
+
+    eps = 1e-8
+    referent_index = 0
+    n_obj = states.shape[0]
+    sizes = states[:, 0]
+    size_sort_idx = jnp.argsort(sizes)
+    sizes_sorted = sizes[size_sort_idx]
+    salience_vec = _visual_salience_scores(
+        states,
+        is_sharp,
+        base_visual_salience,
+    )
+    colors = states[:, 1]
+    forms = states[:, 2]
+    log_color_sem = jnp.log(
+        jnp.where(colors == 1, color_semval, 1.0 - color_semval) + eps
+    )
+    log_form_sem = jnp.log(
+        jnp.where(forms == 1, nu_F, 1.0 - nu_F) + eps
+    )
+    uniform = jnp.ones(n_obj) / n_obj
+    init_posts = jnp.broadcast_to(uniform, (n_utt, n_obj))
+
+    def size_log_sem_for_utt(post):
+        size_semantics = compute_size_semantics_fast_presorted(
+            sizes,
+            size_sort_idx,
+            sizes_sorted,
+            post,
+            size_threshold_k,
+            wf,
+        )
+        return jnp.log(jnp.clip(size_semantics, eps))
+
+    size_log_sems_static = jax.vmap(size_log_sem_for_utt)(init_posts)
+
+    def continuation_step(per_utt_posts, t):
+        cand_mask_t = CANDIDATE_MASK[t]
+        active_t = ACTIVE_POS[t]
+        if size_context_mode == "comparison_class" and recursive:
+            candidate_seqs = jnp.reshape(
+                PREFIX_UTTS[t],
+                (n_utt * VOCAB_SIZE, T),
+            )
+            candidate_posts = jnp.reshape(
+                literal_listener_comparison_class_batch(
+                    states,
+                    candidate_seqs,
+                    color_semval,
+                    nu_F,
+                    size_threshold_k,
+                    wf,
+                ),
+                (n_utt, VOCAB_SIZE, n_obj),
+            )
+            log_L_ref = jnp.log(
+                jnp.clip(candidate_posts[:, :, referent_index], eps)
+            )
+        else:
+            if prefix_mode == "B":
+                size_log_sems = size_log_sems_static
+            else:
+                size_log_sems_recursive = jax.vmap(size_log_sem_for_utt)(
+                    per_utt_posts
+                )
+                size_log_sems = (
+                    size_log_sems_recursive
+                    if recursive
+                    else size_log_sems_static
+                )
+            log_sem_table = jnp.concatenate(
+                [
+                    size_log_sems[:, None, :],
+                    jnp.broadcast_to(
+                        jnp.stack([log_color_sem, log_form_sem], axis=0)[None, :, :],
+                        (n_utt, 2, n_obj),
+                    ),
+                ],
+                axis=1,
+            )
+            log_prod_sem = jnp.einsum(
+                "uav, uvo -> uao",
+                CANDIDATE_TOKEN_PRESENT[t] if prefix_mode == "C" else TOKEN_PRESENT[t],
+                log_sem_table,
+            )
+            log_per_utt_posts = jnp.log(jnp.clip(per_utt_posts, eps))
+            log_updated = log_per_utt_posts[:, None, :] + log_prod_sem
+            log_raw = log_prod_sem - jax.scipy.special.logsumexp(
+                log_prod_sem,
+                axis=-1,
+                keepdims=True,
+            )
+            log_updated = log_updated - jax.scipy.special.logsumexp(
+                log_updated,
+                axis=-1,
+                keepdims=True,
+            )
+            log_L_ref = (
+                (1.0 - kappa) * log_raw
+                + kappa * log_updated
+            )[:, :, referent_index]
+
+        candidate_logits = (
+            alpha * log_L_ref
+            + lambda_salience * salience_vec[None, :]
+            - lambda_len
+        )
+        candidate_logits = jnp.where(
+            cand_mask_t,
+            candidate_logits,
+            -1e9,
+        )
+        if size_context_mode == "comparison_class" and recursive:
+            actual_idx = ACTUAL_TOK[t][:, None, None]
+            selected_posts = jnp.take_along_axis(
+                candidate_posts,
+                jnp.broadcast_to(actual_idx, (n_utt, 1, n_obj)),
+                axis=1,
+            )[:, 0, :]
+            new_posts = jnp.where(
+                active_t[:, None],
+                selected_posts,
+                per_utt_posts,
+            )
+        else:
+            selected_log_sem = jnp.einsum(
+                "uv, uvo -> uo",
+                ACTUAL_TOK_ONEHOT[t],
+                log_sem_table,
+            )
+            log_per_utt_posts = jnp.log(jnp.clip(per_utt_posts, eps))
+            log_updated_post = log_per_utt_posts + jnp.where(
+                active_t[:, None],
+                selected_log_sem,
+                0.0,
+            )
+            new_posts = jnp.exp(
+                log_updated_post
+                - jax.scipy.special.logsumexp(
+                    log_updated_post,
+                    axis=-1,
+                    keepdims=True,
+                )
+            )
+        return new_posts, candidate_logits
+
+    _, continuation_logits = lax.scan(
+        continuation_step,
+        init_posts,
+        jnp.arange(T),
+    )
+
+    prefix_lengths = jnp.arange(T + 1, dtype=jnp.float32)[:, None]
+    prefix_indices = jnp.clip(PREFIX_INDEX, 0, n_utt - 1)
+    prefix_order = order_scores[prefix_indices]
+    prefix_present = PREFIX_PRESENT
+    dim_count = jnp.sum(prefix_present, axis=-1)
+    dim_id = jnp.argmax(prefix_present, axis=-1)
+    single_dim = (dim_count == 1.0).astype(jnp.float32)
+    two_dim = (dim_count == 2.0).astype(jnp.float32)
+    safe_sufficient_dim = jnp.maximum(sufficient_dim, 0)
+    sufficient_present = prefix_present[:, :, safe_sufficient_dim]
+    sufficient_match = (
+        (sufficient_dim >= 0)
+        & (dim_id == sufficient_dim)
+        & (prefix_lengths == 1.0)
+    ).astype(jnp.float32)
+    sufficient_single_bonus = (
+        lambda_sufficient_single
+        * has_one_word_solution
+        * single_dim
+        * sufficient_match
+    )
+    reliability_form_bonus = (
+        lambda_reliability_form
+        * (1.0 - is_colour_sufficient)
+        * prefix_present[:, :, 2]
+    )
+    exact_sufficient_form_pair = (
+        has_one_word_solution
+        * (sufficient_dim >= 0)
+        * (sufficient_dim != 2)
+        * two_dim
+        * sufficient_present
+        * prefix_present[:, :, 2]
+    )
+    size_reliability_gate = (
+        has_one_word_solution * (sufficient_dim == 0) * is_sharp
+    )
+    size_unreliability_gate = (
+        has_one_word_solution * (sufficient_dim == 0) * (1.0 - is_sharp)
+    )
+    response_policy = (
+        sufficient_single_bonus
+        + reliability_form_bonus
+        + lambda_size_reliability_single_bonus
+        * size_reliability_gate
+        * single_dim
+        * sufficient_match
+        + lambda_size_reliability_form_pair_tradeoff
+        * (size_unreliability_gate - size_reliability_gate)
+        * exact_sufficient_form_pair
+        - lambda_three_word_penalty * (prefix_lengths == 3.0)
+    )
+    size_uncertainty = _size_uncertainty_excess(
+        states,
+        is_sharp,
+        size_threshold_k,
+        wf,
+    )
+    eta = jnp.stack([
+        jnp.asarray(eta_0),
+        jnp.asarray(eta_1),
+        jnp.asarray(eta_2),
+        jnp.asarray(eta_3),
+    ])[:, None]
+    stop_utility = (
+        eta
+        + beta_order * prefix_order
+        + response_policy
+        + lambda_length * jnp.maximum(prefix_lengths - 1.0, 0.0)
+        + gamma_uncertainty_len
+        * size_uncertainty
+        * jnp.maximum(prefix_lengths - 1.0, 0.0)
+        - rho_salience_stop
+        * jnp.einsum("tuv,v->tu", PREFIX_SALIENCE_LOAD, salience_vec)
+    )
+
+    lengths = N_WORDS.astype(jnp.int32)
+    log_response = jnp.zeros(n_utt)
+    for t in range(T):
+        continuation = continuation_logits[t]
+        action_logits = jnp.concatenate(
+            [
+                stop_utility[t][:, None],
+                continuation,
+            ],
+            axis=1,
+        )
+        stop_available = jnp.full((n_utt,), t > 0)
+        action_mask = jnp.concatenate(
+            [
+                stop_available[:, None],
+                CANDIDATE_MASK[t],
+            ],
+            axis=1,
+        )
+        scaled = temperature * action_logits
+        normalizer = jax.scipy.special.logsumexp(
+            jnp.where(action_mask, scaled, -1e9),
+            axis=1,
+        )
+        chosen_index = ACTUAL_TOK[t] + 1
+        chosen_log_prob = (
+            jnp.take_along_axis(scaled, chosen_index[:, None], axis=1)[:, 0]
+            - normalizer
+        )
+        log_response = log_response + jnp.where(
+            lengths > t,
+            chosen_log_prob,
+            0.0,
+        )
+
+    terminal_lengths = lengths
+    terminal_rows = jnp.arange(n_utt)
+    representative_rows = PREFIX_REPRESENTATIVE[terminal_lengths, terminal_rows]
+    safe_terminal_lengths = jnp.minimum(terminal_lengths, T - 1)
+    terminal_stop = stop_utility[terminal_lengths, terminal_rows]
+    terminal_stop = temperature * terminal_stop
+    terminal_is_three = terminal_lengths == T
+    terminal_continuation = jnp.where(
+        terminal_is_three[:, None],
+        jnp.zeros((n_utt, VOCAB_SIZE)),
+        continuation_logits[safe_terminal_lengths, representative_rows],
+    )
+    terminal_mask = jnp.where(
+        terminal_is_three[:, None],
+        jnp.zeros((n_utt, VOCAB_SIZE), dtype=bool),
+        CANDIDATE_MASK[safe_terminal_lengths, representative_rows],
+    )
+    terminal_action_logits = jnp.concatenate(
+        [terminal_stop[:, None], terminal_continuation],
+        axis=1,
+    )
+    terminal_mask = jnp.concatenate(
+        [jnp.ones((n_utt, 1), dtype=bool), terminal_mask],
+        axis=1,
+    )
+    terminal_log_normalizer = jax.scipy.special.logsumexp(
+        jnp.where(terminal_mask, terminal_action_logits, -1e9),
+        axis=1,
+    )
+    log_response = log_response + terminal_stop - terminal_log_normalizer
+    response_probs = jax.nn.softmax(log_response)
+    return (1.0 - epsilon) * response_probs + epsilon / n_utt
+
+
+def principled_legacy_vs_final_lapse_max_probability_shift(
+    states:                    jnp.ndarray,
+    sufficient_dim:            int,
+    has_one_word_solution:     float,
+    is_sharp:                  float,
+    is_colour_sufficient:      float,
+    alpha:                     float = 3.0,
+    beta_order:                float = 1.0,
+    lambda_salience:           float = 0.0,
+    rho_salience_stop:         float = 0.0,
+    lambda_sufficient_single:  float = 0.0,
+    lambda_reliability_form:   float = 0.0,
+    lambda_three_word_penalty: float = 0.0,
+    lambda_size_reliability_single_bonus: float = 0.0,
+    lambda_size_reliability_form_pair_tradeoff: float = 0.0,
+    gamma_uncertainty_len:     float = 0.0,
+    kappa:                     float = 1.0,
+    nu_F:                      float = 0.50,
+    color_semval:              float = 0.59,
+    size_threshold_k:          float = 0.50,
+    wf:                        float = 0.6856,
+    epsilon:                   float = 0.003,
+    order_scores:              jnp.ndarray = LOG_LM_ORDER_ONLY_15,
+    base_visual_salience:      jnp.ndarray = BASE_VISUAL_SALIENCE,
+    recursive:                 bool = False,
+    size_context_mode:         str = "posterior",
+) -> jnp.ndarray:
+    """Report the maximum legacy-versus-final lapse probability shift."""
+    (
+        raw_path_score,
+        local_log_normalizer,
+        legacy_floor_adjustment,
+    ) = principled_incremental_path_components(
+        states=states,
+        is_sharp=is_sharp,
+        alpha=alpha,
+        lambda_salience=lambda_salience,
+        color_semval=color_semval,
+        form_semval=nu_F,
+        k=size_threshold_k,
+        wf=wf,
+        base_visual_salience=base_visual_salience,
+        recursive=recursive,
+        size_context_mode=size_context_mode,
+    )
+    interpolated_local_correction = (
+        local_log_normalizer - legacy_floor_adjustment
+    )
+    base_terminal_policy = principled_incremental_terminal_policy(
+        states=states,
+        is_sharp=is_sharp,
+        beta_order=beta_order,
+        rho_salience_stop=rho_salience_stop,
+        gamma_uncertainty_len=gamma_uncertainty_len,
+        k=size_threshold_k,
+        wf=wf,
+        order_scores=order_scores,
+        base_visual_salience=base_visual_salience,
+    )
+    response_terminal_policy = principled_reliability_response_logits(
+        sufficient_dim=sufficient_dim,
+        has_one_word_solution=has_one_word_solution,
+        is_sharp=is_sharp,
+        is_colour_sufficient=is_colour_sufficient,
+        lambda_sufficient_single=lambda_sufficient_single,
+        lambda_reliability_form=lambda_reliability_form,
+        lambda_three_word_penalty=lambda_three_word_penalty,
+        lambda_size_reliability_single_bonus=(
+            lambda_size_reliability_single_bonus
+        ),
+        lambda_size_reliability_form_pair_tradeoff=(
+            lambda_size_reliability_form_pair_tradeoff
+        ),
+    )
+    return legacy_vs_final_lapse_max_probability_shift(
+        raw_path_score,
+        interpolated_local_correction,
+        base_terminal_policy,
+        response_terminal_policy,
+        kappa,
+        epsilon,
+    )
+
+
+def _principled_terminal_log_ref(
+    states: jnp.ndarray,
+    color_semval: float,
+    form_semval: float,
+    k: float,
+    wf: float,
+    recursive: bool,
+    size_context_mode: str,
+) -> jnp.ndarray:
+    if size_context_mode == "comparison_class" and recursive:
+        listener_fn = incremental_semantics_jax_comparison_class
+    else:
+        listener_fn = incremental_semantics_jax if recursive else incremental_semantics_jax_frozen
+    listener = listener_fn(
+        states=states,
+        color_sem=color_semval,
+        form_sem=form_semval,
+        k=k,
+        wf=wf,
+    )
+    return jnp.log(jnp.clip(listener[:, 0], 1e-8))
+
+
+def incremental_speaker_principled_planned_prefix(
+    states:                jnp.ndarray,
+    sufficient_dim:        int,
+    has_one_word_solution: float,
+    is_sharp:              float,
+    alpha:                 float = 3.0,
+    beta_order:            float = 1.0,
+    lambda_salience:       float = 0.0,
+    rho_salience_stop:     float = 0.0,
+    planning_scale:        float = 0.0,
+    gamma_uncertainty_len: float = 0.0,
+    color_semval:          float = 0.59,
+    form_semval:           float = 0.50,
+    k:                     float = 0.50,
+    wf:                    float = 0.6856,
+    epsilon:               float = 0.01,
+    order_scores:          jnp.ndarray = LOG_LM_ORDER_ONLY_15,
+    base_visual_salience:  jnp.ndarray = BASE_VISUAL_SALIENCE,
+    recursive:             bool = True,
+    size_context_mode:     str = "posterior",
+) -> jnp.ndarray:
+    """Principled incremental speaker with lookahead over reachable utterances.
+
+    Local adjective choices retain the current greedy informativeness term, but
+    candidate prefixes also receive a soft option value over complete
+    utterances reachable from that prefix.  Setting ``planning_scale`` to zero
+    recovers the original principled incremental speaker.
+    """
+
+    if size_context_mode not in ("posterior", "comparison_class"):
+        raise ValueError(
+            f"Unknown size_context_mode {size_context_mode!r}; "
+            "expected 'posterior' or 'comparison_class'."
+        )
+
+    eps = 1e-8
+    referent_index = 0
+    n_obj = states.shape[0]
+
+    del sufficient_dim, has_one_word_solution
+
+    sizes = states[:, 0]
+    size_sort_idx = jnp.argsort(sizes)
+    sizes_sorted = sizes[size_sort_idx]
+
+    log_order_prior = beta_order * order_scores
+    salience_vec = _visual_salience_scores(states, is_sharp, base_visual_salience)
+
+    colors = states[:, 1]
+    forms = states[:, 2]
+    log_color_sem = jnp.log(
+        jnp.where(colors == 1, color_semval, 1.0 - color_semval) + eps
+    )
+    log_form_sem = jnp.log(
+        jnp.where(forms == 1, form_semval, 1.0 - form_semval) + eps
+    )
+
+    uniform = jnp.ones(n_obj) / n_obj
+    init_scores = jnp.zeros(n_utt)
+    init_posts = jnp.broadcast_to(uniform, (n_utt, n_obj))
+
+    def size_log_sem_for_utt(post):
+        sv = compute_size_semantics_fast_presorted(
+            sizes,
+            size_sort_idx,
+            sizes_sorted,
+            post,
+            k,
+            wf,
+        )
+        return jnp.log(jnp.clip(sv, eps))
+
+    size_log_sems_static = jax.vmap(size_log_sem_for_utt)(init_posts)
+    terminal_log_ref = _principled_terminal_log_ref(
+        states,
+        color_semval,
+        form_semval,
+        k,
+        wf,
+        recursive,
+        size_context_mode,
+    )
+    size_uncertainty = _size_uncertainty_excess(states, is_sharp, k, wf)
+    length_bonus = gamma_uncertainty_len * size_uncertainty * jnp.maximum(N_WORDS - 1.0, 0.0)
+    salience_stop_cost = rho_salience_stop * _salience_continuation_load(salience_vec)
+    terminal_utility = (
+        alpha * terminal_log_ref
+        + log_order_prior
+        + length_bonus
+        - salience_stop_cost
+    )
+
+    def step(carry, t):
+        log_scores, per_utt_posts = carry
+
+        cand_mask_t = CANDIDATE_MASK[t]
+        active_t = ACTIVE_POS[t]
+
+        if size_context_mode == "comparison_class" and recursive:
+            candidate_seqs = jnp.reshape(PREFIX_UTTS[t], (n_utt * VOCAB_SIZE, T))
+            candidate_posts = jnp.reshape(
+                literal_listener_comparison_class_batch(
+                    states,
+                    candidate_seqs,
+                    color_semval,
+                    form_semval,
+                    k,
+                    wf,
+                ),
+                (n_utt, VOCAB_SIZE, n_obj),
+            )
+            log_L_ref = jnp.log(jnp.clip(candidate_posts[:, :, referent_index], eps))
+        else:
+            size_log_sems_recursive = jax.vmap(size_log_sem_for_utt)(per_utt_posts)
+            size_log_sems = size_log_sems_recursive if recursive else size_log_sems_static
+
+            log_sem_static = jnp.stack([log_color_sem, log_form_sem], axis=0)
+            log_sem_table = jnp.concatenate([
+                size_log_sems[:, None, :],
+                jnp.broadcast_to(log_sem_static[None, :, :], (n_utt, 2, n_obj)),
+            ], axis=1)
+
+            token_pres_t = (
+                CANDIDATE_TOKEN_PRESENT[t]
+                if prefix_mode == "C"
+                else TOKEN_PRESENT[t]
+            )
+            log_prod_sem = jnp.einsum(
+                "uav, uvo -> uao",
+                token_pres_t,
+                log_sem_table,
+            )
+
+            log_per_utt_posts = jnp.log(jnp.clip(per_utt_posts, eps))
+            log_updated = log_per_utt_posts[:, None, :] + log_prod_sem
+            log_Z = jax.scipy.special.logsumexp(log_updated, axis=-1)
+            log_norm = log_updated - log_Z[:, :, None]
+            log_L_ref = log_norm[:, :, referent_index]
+
+        completion_values = jax.scipy.special.logsumexp(
+            jnp.where(
+                COMPLETION_MASK[t],
+                terminal_utility[None, None, :],
+                -1e9,
+            ),
+            axis=-1,
+        )
+        salience_boost = lambda_salience * salience_vec
+        logits = jnp.where(
+            cand_mask_t,
+            alpha * log_L_ref
+            + salience_boost[None, :]
+            + planning_scale * completion_values,
+            -1e9,
+        )
+        local_probs = jax.nn.softmax(logits, axis=-1)
+
+        chosen = jnp.sum(local_probs * ACTUAL_TOK_ONEHOT[t], axis=-1)
+        chosen = jnp.where(active_t, chosen, 1.0)
+        log_chosen = jnp.where(active_t, jnp.log(jnp.clip(chosen, eps)), 0.0)
+
+        if size_context_mode == "comparison_class" and recursive:
+            actual_idx = ACTUAL_TOK[t][:, None, None]
+            selected_posts = jnp.take_along_axis(
+                candidate_posts,
+                jnp.broadcast_to(actual_idx, (n_utt, 1, n_obj)),
+                axis=1,
+            )[:, 0, :]
+            new_per_utt_posts = jnp.where(
+                active_t[:, None],
+                selected_posts,
+                per_utt_posts,
+            )
+        else:
+            selected_log_sem = jnp.einsum(
+                "uv, uvo -> uo",
+                ACTUAL_TOK_ONEHOT[t],
+                log_sem_table,
+            )
+            log_updated_post = log_per_utt_posts + jnp.where(
+                active_t[:, None],
+                selected_log_sem,
+                0.0,
+            )
+            log_Z_post = jax.scipy.special.logsumexp(
+                log_updated_post, axis=-1, keepdims=True
+            )
+            new_per_utt_posts = jnp.exp(log_updated_post - log_Z_post)
+
+        return (log_scores + log_chosen, new_per_utt_posts), None
+
+    (log_final_scores, _), _ = lax.scan(
+        step,
+        (init_scores, init_posts),
+        jnp.arange(T),
+    )
+
+    log_unnorm = log_order_prior + log_final_scores + length_bonus - salience_stop_cost
+    model_probs = jax.nn.softmax(log_unnorm)
+    return (1.0 - epsilon) * model_probs + epsilon / n_utt
+
+
+def _apply_principled_response_policy(
+    probs: jnp.ndarray,
+    sufficient_dim: int,
+    has_one_word_solution: float,
+    is_sharp: float,
+    is_colour_sufficient: float,
+    lambda_sufficient_single: float,
+    lambda_reliability_form: float,
+    lambda_sufficient_form_pair: float = 0.0,
+    lambda_three_word_penalty: float = 0.0,
+    lambda_sharp_form_suppression: float = 0.0,
+    lambda_size_sharp_single_bonus: float = 0.0,
+    lambda_size_sharp_form_pair_penalty: float = 0.0,
+) -> jnp.ndarray:
+    dim_count = jnp.sum(FULL_PRESENT_15, axis=1)
+    single_dim = (dim_count == 1.0).astype(jnp.float32)
+    two_dim = (dim_count == 2.0).astype(jnp.float32)
+    dim_id = jnp.argmax(FULL_PRESENT_15, axis=1)
+    sufficient_match = (
+        (sufficient_dim >= 0)
+        & (dim_id == sufficient_dim)
+        & (N_WORDS == 1.0)
+    ).astype(jnp.float32)
+    sufficient_single_bonus = (
+        lambda_sufficient_single
+        * has_one_word_solution
+        * single_dim
+        * sufficient_match
+    )
+    reliability_form_bonus = (
+        lambda_reliability_form
+        * (1.0 - is_colour_sufficient)
+        * F_PRESENT_15
+    )
+    safe_sufficient_dim = jnp.maximum(sufficient_dim, 0)
+    sufficient_present = FULL_PRESENT_15[:, safe_sufficient_dim]
+    sufficient_form_pair_bonus = (
+        lambda_sufficient_form_pair
+        * has_one_word_solution
+        * (sufficient_dim >= 0)
+        * (sufficient_dim != 2)
+        * two_dim
+        * sufficient_present
+        * F_PRESENT_15
+    )
+    three_word_penalty = lambda_three_word_penalty * (N_WORDS == 3.0)
+    sharp_form_penalty = (
+        lambda_sharp_form_suppression
+        * is_sharp
+        * has_one_word_solution
+        * (sufficient_dim >= 0)
+        * (sufficient_dim != 2)
+        * F_PRESENT_15
+    )
+    size_sharp_gate = is_sharp * has_one_word_solution * (sufficient_dim == 0)
+    exact_size_single = (N_WORDS == 1.0) * FULL_PRESENT_15[:, 0]
+    exact_size_form_pair = (
+        (N_WORDS == 2.0)
+        * FULL_PRESENT_15[:, 0]
+        * (1.0 - FULL_PRESENT_15[:, 1])
+        * FULL_PRESENT_15[:, 2]
+    )
+    size_sharp_single_bonus = (
+        lambda_size_sharp_single_bonus * size_sharp_gate * exact_size_single
+    )
+    size_sharp_form_pair_penalty = (
+        lambda_size_sharp_form_pair_penalty * size_sharp_gate * exact_size_form_pair
+    )
+    logits = (
+        jnp.log(jnp.clip(probs, 1e-12))
+        + sufficient_single_bonus
+        + reliability_form_bonus
+        + sufficient_form_pair_bonus
+        + size_sharp_single_bonus
+        - three_word_penalty
+        - sharp_form_penalty
+        - size_sharp_form_pair_penalty
+    )
+    return jax.nn.softmax(logits)
+
+
+def _apply_principled_reliability_response_policy(
+    probs: jnp.ndarray,
+    sufficient_dim: int,
+    has_one_word_solution: float,
+    is_sharp: float,
+    is_colour_sufficient: float,
+    lambda_sufficient_single: float,
+    lambda_reliability_form: float,
+    lambda_three_word_penalty: float = 0.0,
+    lambda_size_reliability_single_bonus: float = 0.0,
+    lambda_size_reliability_form_pair_tradeoff: float = 0.0,
+) -> jnp.ndarray:
+    dim_count = jnp.sum(FULL_PRESENT_15, axis=1)
+    single_dim = (dim_count == 1.0).astype(jnp.float32)
+    two_dim = (dim_count == 2.0).astype(jnp.float32)
+    dim_id = jnp.argmax(FULL_PRESENT_15, axis=1)
+    sufficient_match = (
+        (sufficient_dim >= 0)
+        & (dim_id == sufficient_dim)
+        & (N_WORDS == 1.0)
+    ).astype(jnp.float32)
+    sufficient_single_bonus = (
+        lambda_sufficient_single
+        * has_one_word_solution
+        * single_dim
+        * sufficient_match
+    )
+    reliability_form_bonus = (
+        lambda_reliability_form
+        * (1.0 - is_colour_sufficient)
+        * F_PRESENT_15
+    )
+    safe_sufficient_dim = jnp.maximum(sufficient_dim, 0)
+    sufficient_present = FULL_PRESENT_15[:, safe_sufficient_dim]
+    exact_sufficient_form_pair = (
+        has_one_word_solution
+        * (sufficient_dim >= 0)
+        * (sufficient_dim != 2)
+        * two_dim
+        * sufficient_present
+        * F_PRESENT_15
+    )
+    size_reliability_gate = (
+        has_one_word_solution
+        * (sufficient_dim == 0)
+        * is_sharp
+    )
+    size_unreliability_gate = (
+        has_one_word_solution
+        * (sufficient_dim == 0)
+        * (1.0 - is_sharp)
+    )
+    size_reliability_single_bonus = (
+        lambda_size_reliability_single_bonus
+        * size_reliability_gate
+        * single_dim
+        * sufficient_match
+    )
+    size_form_pair_tradeoff = (
+        lambda_size_reliability_form_pair_tradeoff
+        * (size_unreliability_gate - size_reliability_gate)
+        * exact_sufficient_form_pair
+    )
+    three_word_penalty = lambda_three_word_penalty * (N_WORDS == 3.0)
+    logits = (
+        jnp.log(jnp.clip(probs, 1e-12))
+        + sufficient_single_bonus
+        + reliability_form_bonus
+        + size_reliability_single_bonus
+        + size_form_pair_tradeoff
+        - three_word_penalty
+    )
+    return jax.nn.softmax(logits)
+
+
+def _apply_order_only_planning_policy(
+    probs: jnp.ndarray,
+    sufficient_dim: int,
+    has_one_word_solution: float,
+    is_colour_sufficient: float,
+    lambda_order_planning: float = 0.0,
+) -> jnp.ndarray:
+    both_required = 1.0 - has_one_word_solution
+    size_weight = jnp.where(
+        has_one_word_solution > 0.5,
+        jnp.where(sufficient_dim == 0, 1.0, 0.0),
+        1.0,
+    )
+    colour_weight = jnp.where(
+        is_colour_sufficient > 0.5,
+        1.0,
+        jnp.where(both_required > 0.5, 0.75, 0.0),
+    )
+    form_weight = jnp.where(is_colour_sufficient > 0.5, 0.40, 0.30)
+    dim_weights = jnp.stack([size_weight, colour_weight, form_weight])
+    order_scores = ORDER_POSITION_WEIGHTS_15 @ dim_weights
+    adjusted = jnp.clip(probs, 1e-12) * jnp.exp(lambda_order_planning * order_scores)
+    set_totals = ORDER_SET_MASK_15 @ probs
+    adjusted_set_totals = ORDER_SET_MASK_15 @ adjusted
+    replanned = adjusted * set_totals / jnp.clip(adjusted_set_totals, 1e-12)
+    return replanned / jnp.sum(replanned)
+
+
+def incremental_speaker_principled_response_policy(
+    states:                    jnp.ndarray,
+    sufficient_dim:            int,
+    has_one_word_solution:     float,
+    is_sharp:                  float,
+    is_colour_sufficient:      float,
+    alpha:                     float = 3.0,
+    beta_order:                float = 1.0,
+    lambda_salience:           float = 0.0,
+    rho_salience_stop:         float = 0.0,
+    lambda_sufficient_single:  float = 0.0,
+    lambda_reliability_form:   float = 0.0,
+    lambda_sufficient_form_pair: float = 0.0,
+    lambda_three_word_penalty:   float = 0.0,
+    lambda_sharp_form_suppression: float = 0.0,
+    lambda_size_sharp_single_bonus: float = 0.0,
+    lambda_size_sharp_form_pair_penalty: float = 0.0,
+    gamma_uncertainty_len:     float = 0.0,
+    color_semval:              float = 0.59,
+    form_semval:               float = 0.50,
+    k:                         float = 0.50,
+    wf:                        float = 0.6856,
+    epsilon:                   float = 0.01,
+    order_scores:              jnp.ndarray = LOG_LM_ORDER_ONLY_15,
+    base_visual_salience:      jnp.ndarray = BASE_VISUAL_SALIENCE,
+    recursive:                 bool = True,
+    size_context_mode:         str = "posterior",
+) -> jnp.ndarray:
+    """Principled incremental speaker plus two response-policy pressures."""
+    base_probs = incremental_speaker_principled(
+        states,
+        sufficient_dim,
+        has_one_word_solution,
+        is_sharp,
+        alpha,
+        beta_order,
+        lambda_salience,
+        rho_salience_stop,
+        gamma_uncertainty_len,
+        color_semval,
+        form_semval,
+        k,
+        wf,
+        epsilon,
+        order_scores,
+        base_visual_salience,
+        recursive=recursive,
+        size_context_mode=size_context_mode,
+    )
+    return _apply_principled_response_policy(
+        base_probs,
+        sufficient_dim,
+        has_one_word_solution,
+        is_sharp,
+        is_colour_sufficient,
+        lambda_sufficient_single,
+        lambda_reliability_form,
+        lambda_sufficient_form_pair,
+        lambda_three_word_penalty,
+        lambda_sharp_form_suppression,
+        lambda_size_sharp_single_bonus,
+        lambda_size_sharp_form_pair_penalty,
+    )
+
+
+def incremental_speaker_principled_reliability_response_policy(
+    states:                    jnp.ndarray,
+    sufficient_dim:            int,
+    has_one_word_solution:     float,
+    is_sharp:                  float,
+    is_colour_sufficient:      float,
+    alpha:                     float = 3.0,
+    beta_order:                float = 1.0,
+    lambda_salience:           float = 0.0,
+    rho_salience_stop:         float = 0.0,
+    lambda_sufficient_single:  float = 0.0,
+    lambda_reliability_form:   float = 0.0,
+    lambda_three_word_penalty: float = 0.0,
+    lambda_size_reliability_single_bonus: float = 0.0,
+    lambda_size_reliability_form_pair_tradeoff: float = 0.0,
+    lambda_order_planning:    float = 0.0,
+    gamma_uncertainty_len:     float = 0.0,
+    color_semval:              float = 0.59,
+    form_semval:               float = 0.50,
+    k:                         float = 0.50,
+    wf:                        float = 0.6856,
+    epsilon:                   float = 0.01,
+    order_scores:              jnp.ndarray = LOG_LM_ORDER_ONLY_15,
+    base_visual_salience:      jnp.ndarray = BASE_VISUAL_SALIENCE,
+    recursive:                 bool = True,
+    size_context_mode:         str = "posterior",
+) -> jnp.ndarray:
+    """Response policy with size-reliability-gated backup form marking."""
+    base_probs = incremental_speaker_principled(
+        states,
+        sufficient_dim,
+        has_one_word_solution,
+        is_sharp,
+        alpha,
+        beta_order,
+        lambda_salience,
+        rho_salience_stop,
+        gamma_uncertainty_len,
+        color_semval,
+        form_semval,
+        k,
+        wf,
+        epsilon,
+        order_scores,
+        base_visual_salience,
+        recursive=recursive,
+        size_context_mode=size_context_mode,
+    )
+    policy_probs = _apply_principled_reliability_response_policy(
+        base_probs,
+        sufficient_dim,
+        has_one_word_solution,
+        is_sharp,
+        is_colour_sufficient,
+        lambda_sufficient_single,
+        lambda_reliability_form,
+        lambda_three_word_penalty,
+        lambda_size_reliability_single_bonus,
+        lambda_size_reliability_form_pair_tradeoff,
+    )
+    return _apply_order_only_planning_policy(
+        policy_probs,
+        sufficient_dim,
+        has_one_word_solution,
+        is_colour_sufficient,
+        lambda_order_planning,
+    )
 
 
 def global_speaker_principled(
@@ -2177,12 +3861,22 @@ def global_speaker_principled(
     order_scores:          jnp.ndarray = LOG_LM_ORDER_ONLY_15,
     base_visual_salience:  jnp.ndarray = BASE_VISUAL_SALIENCE,
     recursive:             bool = True,
+    size_context_mode:     str = "posterior",
 ) -> jnp.ndarray:
     """Global utterance-choice counterpart of the principled speaker."""
 
+    if size_context_mode not in ("posterior", "comparison_class"):
+        raise ValueError(
+            f"Unknown size_context_mode {size_context_mode!r}; "
+            "expected 'posterior' or 'comparison_class'."
+        )
+
     del sufficient_dim, has_one_word_solution
 
-    listener_fn = incremental_semantics_jax if recursive else incremental_semantics_jax_frozen
+    if size_context_mode == "comparison_class" and recursive:
+        listener_fn = incremental_semantics_jax_comparison_class
+    else:
+        listener_fn = incremental_semantics_jax if recursive else incremental_semantics_jax_frozen
     listener = listener_fn(
         states=states,
         color_sem=color_semval,
@@ -2209,6 +3903,140 @@ def global_speaker_principled(
     )
     model_probs = jax.nn.softmax(log_unnorm)
     return (1.0 - epsilon) * model_probs + epsilon / n_utt
+
+
+def global_speaker_principled_response_policy(
+    states:                    jnp.ndarray,
+    sufficient_dim:            int,
+    has_one_word_solution:     float,
+    is_sharp:                  float,
+    is_colour_sufficient:      float,
+    alpha:                     float = 3.0,
+    beta_order:                float = 1.0,
+    lambda_salience:           float = 0.0,
+    rho_salience_stop:         float = 0.0,
+    lambda_sufficient_single:  float = 0.0,
+    lambda_reliability_form:   float = 0.0,
+    lambda_sufficient_form_pair: float = 0.0,
+    lambda_three_word_penalty:   float = 0.0,
+    lambda_sharp_form_suppression: float = 0.0,
+    lambda_size_sharp_single_bonus: float = 0.0,
+    lambda_size_sharp_form_pair_penalty: float = 0.0,
+    gamma_uncertainty_len:     float = 0.0,
+    color_semval:              float = 0.59,
+    form_semval:               float = 0.50,
+    k:                         float = 0.50,
+    wf:                        float = 0.6856,
+    epsilon:                   float = 0.01,
+    order_scores:              jnp.ndarray = LOG_LM_ORDER_ONLY_15,
+    base_visual_salience:      jnp.ndarray = BASE_VISUAL_SALIENCE,
+    recursive:                 bool = True,
+    size_context_mode:         str = "posterior",
+) -> jnp.ndarray:
+    """Principled global speaker plus the shared utterance-level policy."""
+    base_probs = global_speaker_principled(
+        states,
+        sufficient_dim,
+        has_one_word_solution,
+        is_sharp,
+        alpha,
+        beta_order,
+        lambda_salience,
+        rho_salience_stop,
+        gamma_uncertainty_len,
+        color_semval,
+        form_semval,
+        k,
+        wf,
+        epsilon,
+        order_scores,
+        base_visual_salience,
+        recursive=recursive,
+        size_context_mode=size_context_mode,
+    )
+    return _apply_principled_response_policy(
+        base_probs,
+        sufficient_dim,
+        has_one_word_solution,
+        is_sharp,
+        is_colour_sufficient,
+        lambda_sufficient_single,
+        lambda_reliability_form,
+        lambda_sufficient_form_pair,
+        lambda_three_word_penalty,
+        lambda_sharp_form_suppression,
+        lambda_size_sharp_single_bonus,
+        lambda_size_sharp_form_pair_penalty,
+    )
+
+
+def global_speaker_principled_reliability_response_policy(
+    states:                    jnp.ndarray,
+    sufficient_dim:            int,
+    has_one_word_solution:     float,
+    is_sharp:                  float,
+    is_colour_sufficient:      float,
+    alpha:                     float = 3.0,
+    beta_order:                float = 1.0,
+    lambda_salience:           float = 0.0,
+    rho_salience_stop:         float = 0.0,
+    lambda_sufficient_single:  float = 0.0,
+    lambda_reliability_form:   float = 0.0,
+    lambda_three_word_penalty: float = 0.0,
+    lambda_size_reliability_single_bonus: float = 0.0,
+    lambda_size_reliability_form_pair_tradeoff: float = 0.0,
+    lambda_order_planning:    float = 0.0,
+    gamma_uncertainty_len:     float = 0.0,
+    color_semval:              float = 0.59,
+    form_semval:               float = 0.50,
+    k:                         float = 0.50,
+    wf:                        float = 0.6856,
+    epsilon:                   float = 0.01,
+    order_scores:              jnp.ndarray = LOG_LM_ORDER_ONLY_15,
+    base_visual_salience:      jnp.ndarray = BASE_VISUAL_SALIENCE,
+    recursive:                 bool = True,
+    size_context_mode:         str = "posterior",
+) -> jnp.ndarray:
+    """Global speaker with the reliability-gated utterance-level policy."""
+    base_probs = global_speaker_principled(
+        states,
+        sufficient_dim,
+        has_one_word_solution,
+        is_sharp,
+        alpha,
+        beta_order,
+        lambda_salience,
+        rho_salience_stop,
+        gamma_uncertainty_len,
+        color_semval,
+        form_semval,
+        k,
+        wf,
+        epsilon,
+        order_scores,
+        base_visual_salience,
+        recursive=recursive,
+        size_context_mode=size_context_mode,
+    )
+    policy_probs = _apply_principled_reliability_response_policy(
+        base_probs,
+        sufficient_dim,
+        has_one_word_solution,
+        is_sharp,
+        is_colour_sufficient,
+        lambda_sufficient_single,
+        lambda_reliability_form,
+        lambda_three_word_penalty,
+        lambda_size_reliability_single_bonus,
+        lambda_size_reliability_form_pair_tradeoff,
+    )
+    return _apply_order_only_planning_policy(
+        policy_probs,
+        sufficient_dim,
+        has_one_word_solution,
+        is_colour_sufficient,
+        lambda_order_planning,
+    )
 
 
 # ── Vectorise over trials ──────────────────────────────────────────────────────
@@ -2484,22 +4312,296 @@ vectorized_incremental_speaker_principled_hier = jax.vmap(
              None, # order_scores
              None, # base_visual_salience
              None, # recursive
+             None, # size_context_mode
              ),
 )
 
-@partial(jax.jit, static_argnames=("recursive",))
+vectorized_incremental_speaker_principled_planned_hier = jax.vmap(
+    incremental_speaker_principled_planned_prefix,
+    in_axes=(0,    # states
+             0,    # sufficient_dim
+             0,    # has_one_word_solution
+             0,    # is_sharp
+             0,    # alpha
+             None, # beta_order
+             None, # lambda_salience
+             None, # rho_salience_stop
+             None, # planning_scale
+             None, # gamma_uncertainty_len
+             None, # color_semval
+             None, # form_semval
+             None, # k
+             None, # wf
+             None, # epsilon
+             None, # order_scores
+             None, # base_visual_salience
+             None, # recursive
+             None, # size_context_mode
+             ),
+)
+
+vectorized_incremental_speaker_principled_response_policy_hier = jax.vmap(
+    incremental_speaker_principled_response_policy,
+    in_axes=(0,    # states
+             0,    # sufficient_dim
+             0,    # has_one_word_solution
+             0,    # is_sharp
+             0,    # is_colour_sufficient
+             0,    # alpha
+             None, # beta_order
+             None, # lambda_salience
+             None, # rho_salience_stop
+             None, # lambda_sufficient_single
+             None, # lambda_reliability_form
+             None, # lambda_sufficient_form_pair
+             None, # lambda_three_word_penalty
+             None, # lambda_sharp_form_suppression
+             None, # lambda_size_sharp_single_bonus
+             None, # lambda_size_sharp_form_pair_penalty
+             None, # gamma_uncertainty_len
+             None, # color_semval
+             None, # form_semval
+             None, # k
+             None, # wf
+             None, # epsilon
+             None, # order_scores
+             None, # base_visual_salience
+             None, # recursive
+             None, # size_context_mode
+             ),
+)
+
+vectorized_incremental_speaker_principled_reliability_response_policy_hier = jax.vmap(
+    incremental_speaker_principled_reliability_response_policy,
+    in_axes=(0,    # states
+             0,    # sufficient_dim
+             0,    # has_one_word_solution
+             0,    # is_sharp
+             0,    # is_colour_sufficient
+             0,    # alpha
+             None, # beta_order
+             None, # lambda_salience
+             None, # rho_salience_stop
+             None, # lambda_sufficient_single
+             None, # lambda_reliability_form
+             None, # lambda_three_word_penalty
+             None, # lambda_size_reliability_single_bonus
+             None, # lambda_size_reliability_form_pair_tradeoff
+             None, # lambda_order_planning
+             None, # gamma_uncertainty_len
+             None, # color_semval
+             None, # form_semval
+             None, # k
+             None, # wf
+             None, # epsilon
+             None, # order_scores
+             None, # base_visual_salience
+             None, # recursive
+             None, # size_context_mode
+             None, # prefix_mode
+             ),
+)
+
+vectorized_incremental_speaker_principled_discovery_hier = jax.vmap(
+    incremental_speaker_principled_discovery,
+    in_axes=(
+        0,    # states
+        0,    # sufficient_dim
+        0,    # has_one_word_solution
+        0,    # is_sharp
+        0,    # is_colour_sufficient
+        0,    # alpha
+        0,    # beta_order
+        None, # lambda_salience
+        None, # rho_salience_stop
+        None, # lambda_sufficient_single
+        None, # lambda_reliability_form
+        None, # lambda_three_word_penalty
+        None, # lambda_size_reliability_single_bonus
+        None, # lambda_size_reliability_form_pair_tradeoff
+        0,    # gamma_uncertainty_len
+        0,    # lambda_length
+        0,    # kappa
+        None, # nu_F
+        None, # color_semval
+        None, # size_threshold_k
+        None, # wf
+        None, # epsilon
+        None, # order_scores
+        None, # base_visual_salience
+        None, # recursive
+        None, # size_context_mode
+        None, # prefix_mode
+        None, # lambda_order_planning
+    ),
+)
+
+
+@partial(jax.jit, static_argnames=("recursive", "size_context_mode", "prefix_mode"))
+def jitted_speaker_principled_discovery_hier(
+    states, sufficient_dim, has_one_word_solution, is_sharp,
+    is_colour_sufficient, alpha_per_trial, beta_order, lambda_salience,
+    rho_salience_stop, lambda_sufficient_single, lambda_reliability_form,
+    lambda_three_word_penalty, lambda_size_reliability_single_bonus,
+    lambda_size_reliability_form_pair_tradeoff, gamma_uncertainty_len,
+    lambda_length,
+    kappa_per_trial, nu_F, color_semval, size_threshold_k, wf, epsilon,
+    order_scores, base_visual_salience, recursive=False,
+    size_context_mode="posterior",
+    prefix_mode="A",
+    lambda_order_planning=0.0,
+):
+    n_trials = states.shape[0]
+    beta_order = jnp.broadcast_to(beta_order, (n_trials,))
+    gamma_uncertainty_len = jnp.broadcast_to(gamma_uncertainty_len, (n_trials,))
+    lambda_length = jnp.broadcast_to(lambda_length, (n_trials,))
+    return vectorized_incremental_speaker_principled_discovery_hier(
+        states,
+        sufficient_dim,
+        has_one_word_solution,
+        is_sharp,
+        is_colour_sufficient,
+        alpha_per_trial,
+        beta_order,
+        lambda_salience,
+        rho_salience_stop,
+        lambda_sufficient_single,
+        lambda_reliability_form,
+        lambda_three_word_penalty,
+        lambda_size_reliability_single_bonus,
+        lambda_size_reliability_form_pair_tradeoff,
+        gamma_uncertainty_len,
+        lambda_length,
+        kappa_per_trial,
+        nu_F,
+        color_semval,
+        size_threshold_k,
+        wf,
+        epsilon,
+        order_scores,
+        base_visual_salience,
+        recursive,
+        size_context_mode,
+        prefix_mode,
+        lambda_order_planning,
+    )
+
+
+vectorized_incremental_speaker_principled_discovery_stop_local_hier = jax.vmap(
+    incremental_speaker_principled_discovery_stop_local,
+    in_axes=(
+        0, 0, 0, 0, 0, 0,                    # states through alpha
+        None, None, None, None, None, None, None, None, None,  # scalar policy
+        0,                                      # participant kappa
+        None, None, None, None, None, None, None,  # fixed semantics
+        None, None, None, None, None, None, None, None, None,  # STOP controls
+    ),
+)
+
+
+@partial(
+    jax.jit,
+    static_argnames=("recursive", "size_context_mode", "prefix_mode"),
+)
+def jitted_speaker_principled_discovery_stop_local_hier(
+    states, sufficient_dim, has_one_word_solution, is_sharp,
+    is_colour_sufficient, alpha_per_trial, beta_order, lambda_salience,
+    rho_salience_stop, lambda_sufficient_single, lambda_reliability_form,
+    lambda_three_word_penalty, lambda_size_reliability_single_bonus,
+    lambda_size_reliability_form_pair_tradeoff, gamma_uncertainty_len,
+    kappa_per_trial, nu_F, color_semval, size_threshold_k, wf, epsilon,
+    order_scores, base_visual_salience, recursive=True,
+    size_context_mode="posterior", prefix_mode="B", eta_0=0.0, eta_1=0.0,
+    eta_2=0.0, eta_3=0.0, lambda_len=0.0, temperature=1.0,
+):
+    return vectorized_incremental_speaker_principled_discovery_stop_local_hier(
+        states, sufficient_dim, has_one_word_solution, is_sharp,
+        is_colour_sufficient, alpha_per_trial, beta_order, lambda_salience,
+        rho_salience_stop, lambda_sufficient_single, lambda_reliability_form,
+        lambda_three_word_penalty, lambda_size_reliability_single_bonus,
+        lambda_size_reliability_form_pair_tradeoff, gamma_uncertainty_len,
+        kappa_per_trial, nu_F, color_semval, size_threshold_k, wf, epsilon,
+        order_scores, base_visual_salience, recursive, size_context_mode,
+        prefix_mode, eta_0, eta_1, eta_2, eta_3, lambda_len, temperature,
+    )
+
+
+@partial(jax.jit, static_argnames=("recursive", "size_context_mode"))
 def jitted_speaker_principled_hier(
     states, sufficient_dim, has_one_word_solution, is_sharp,
     alpha_per_trial, beta_order, lambda_salience, rho_salience_stop,
     gamma_uncertainty_len,
     color_semval, form_semval, k, wf, epsilon, order_scores,
-    base_visual_salience, recursive=True,
+    base_visual_salience, recursive=True, size_context_mode="posterior",
 ):
     return vectorized_incremental_speaker_principled_hier(
         states, sufficient_dim, has_one_word_solution, is_sharp,
         alpha_per_trial, beta_order, lambda_salience, rho_salience_stop,
         gamma_uncertainty_len, color_semval, form_semval, k, wf, epsilon,
-        order_scores, base_visual_salience, recursive,
+        order_scores, base_visual_salience, recursive, size_context_mode,
+    )
+
+
+@partial(jax.jit, static_argnames=("recursive", "size_context_mode"))
+def jitted_speaker_principled_planned_hier(
+    states, sufficient_dim, has_one_word_solution, is_sharp,
+    alpha_per_trial, beta_order, lambda_salience, rho_salience_stop,
+    planning_scale, gamma_uncertainty_len,
+    color_semval, form_semval, k, wf, epsilon, order_scores,
+    base_visual_salience, recursive=True, size_context_mode="posterior",
+):
+    return vectorized_incremental_speaker_principled_planned_hier(
+        states, sufficient_dim, has_one_word_solution, is_sharp,
+        alpha_per_trial, beta_order, lambda_salience, rho_salience_stop,
+        planning_scale, gamma_uncertainty_len, color_semval, form_semval, k,
+        wf, epsilon, order_scores, base_visual_salience, recursive,
+        size_context_mode,
+    )
+
+
+@partial(jax.jit, static_argnames=("recursive", "size_context_mode"))
+def jitted_speaker_principled_response_policy_hier(
+    states, sufficient_dim, has_one_word_solution, is_sharp, is_colour_sufficient,
+    alpha_per_trial, beta_order, lambda_salience, rho_salience_stop,
+    lambda_sufficient_single, lambda_reliability_form,
+    lambda_sufficient_form_pair, lambda_three_word_penalty,
+    lambda_sharp_form_suppression, lambda_size_sharp_single_bonus,
+    lambda_size_sharp_form_pair_penalty,
+    gamma_uncertainty_len,
+    color_semval, form_semval, k, wf, epsilon, order_scores,
+    base_visual_salience, recursive=True, size_context_mode="posterior",
+):
+    return vectorized_incremental_speaker_principled_response_policy_hier(
+        states, sufficient_dim, has_one_word_solution, is_sharp,
+        is_colour_sufficient, alpha_per_trial, beta_order, lambda_salience,
+        rho_salience_stop, lambda_sufficient_single, lambda_reliability_form,
+        lambda_sufficient_form_pair, lambda_three_word_penalty,
+        lambda_sharp_form_suppression, lambda_size_sharp_single_bonus,
+        lambda_size_sharp_form_pair_penalty,
+        gamma_uncertainty_len, color_semval, form_semval, k, wf, epsilon,
+        order_scores, base_visual_salience, recursive, size_context_mode,
+    )
+
+
+@partial(jax.jit, static_argnames=("recursive", "size_context_mode"))
+def jitted_speaker_principled_reliability_response_policy_hier(
+    states, sufficient_dim, has_one_word_solution, is_sharp, is_colour_sufficient,
+    alpha_per_trial, beta_order, lambda_salience, rho_salience_stop,
+    lambda_sufficient_single, lambda_reliability_form,
+    lambda_three_word_penalty, lambda_size_reliability_single_bonus,
+    lambda_size_reliability_form_pair_tradeoff, lambda_order_planning,
+    gamma_uncertainty_len,
+    color_semval, form_semval, k, wf, epsilon, order_scores,
+    base_visual_salience, recursive=True, size_context_mode="posterior",
+):
+    return vectorized_incremental_speaker_principled_reliability_response_policy_hier(
+        states, sufficient_dim, has_one_word_solution, is_sharp,
+        is_colour_sufficient, alpha_per_trial, beta_order, lambda_salience,
+        rho_salience_stop, lambda_sufficient_single, lambda_reliability_form,
+        lambda_three_word_penalty, lambda_size_reliability_single_bonus,
+        lambda_size_reliability_form_pair_tradeoff, lambda_order_planning,
+        gamma_uncertainty_len, color_semval, form_semval, k, wf, epsilon,
+        order_scores, base_visual_salience, recursive, size_context_mode,
     )
 
 
@@ -2522,23 +4624,133 @@ vectorized_global_speaker_principled_hier = jax.vmap(
              None, # order_scores
              None, # base_visual_salience
              None, # recursive
+             None, # size_context_mode
              ),
 )
 
 
-@partial(jax.jit, static_argnames=("recursive",))
+vectorized_global_speaker_principled_response_policy_hier = jax.vmap(
+    global_speaker_principled_response_policy,
+    in_axes=(0,    # states
+             0,    # sufficient_dim
+             0,    # has_one_word_solution
+             0,    # is_sharp
+             0,    # is_colour_sufficient
+             0,    # alpha
+             None, # beta_order
+             None, # lambda_salience
+             None, # rho_salience_stop
+             None, # lambda_sufficient_single
+             None, # lambda_reliability_form
+             None, # lambda_sufficient_form_pair
+             None, # lambda_three_word_penalty
+             None, # lambda_sharp_form_suppression
+             None, # lambda_size_sharp_single_bonus
+             None, # lambda_size_sharp_form_pair_penalty
+             None, # gamma_uncertainty_len
+             None, # color_semval
+             None, # form_semval
+             None, # k
+             None, # wf
+             None, # epsilon
+             None, # order_scores
+             None, # base_visual_salience
+             None, # recursive
+             None, # size_context_mode
+             ),
+)
+
+vectorized_global_speaker_principled_reliability_response_policy_hier = jax.vmap(
+    global_speaker_principled_reliability_response_policy,
+    in_axes=(0,    # states
+             0,    # sufficient_dim
+             0,    # has_one_word_solution
+             0,    # is_sharp
+             0,    # is_colour_sufficient
+             0,    # alpha
+             None, # beta_order
+             None, # lambda_salience
+             None, # rho_salience_stop
+             None, # lambda_sufficient_single
+             None, # lambda_reliability_form
+             None, # lambda_three_word_penalty
+             None, # lambda_size_reliability_single_bonus
+             None, # lambda_size_reliability_form_pair_tradeoff
+             None, # lambda_order_planning
+             None, # gamma_uncertainty_len
+             None, # color_semval
+             None, # form_semval
+             None, # k
+             None, # wf
+             None, # epsilon
+             None, # order_scores
+             None, # base_visual_salience
+             None, # recursive
+             None, # size_context_mode
+             ),
+)
+
+
+@partial(jax.jit, static_argnames=("recursive", "size_context_mode"))
 def jitted_global_speaker_principled_hier(
     states, sufficient_dim, has_one_word_solution, is_sharp,
     alpha_per_trial, beta_order, lambda_salience, rho_salience_stop,
     gamma_uncertainty_len,
     color_semval, form_semval, k, wf, epsilon, order_scores,
-    base_visual_salience, recursive=True,
+    base_visual_salience, recursive=True, size_context_mode="posterior",
 ):
     return vectorized_global_speaker_principled_hier(
         states, sufficient_dim, has_one_word_solution, is_sharp,
         alpha_per_trial, beta_order, lambda_salience, rho_salience_stop,
         gamma_uncertainty_len, color_semval, form_semval, k, wf, epsilon,
-        order_scores, base_visual_salience, recursive,
+        order_scores, base_visual_salience, recursive, size_context_mode,
+    )
+
+
+@partial(jax.jit, static_argnames=("recursive", "size_context_mode"))
+def jitted_global_speaker_principled_response_policy_hier(
+    states, sufficient_dim, has_one_word_solution, is_sharp, is_colour_sufficient,
+    alpha_per_trial, beta_order, lambda_salience, rho_salience_stop,
+    lambda_sufficient_single, lambda_reliability_form,
+    lambda_sufficient_form_pair, lambda_three_word_penalty,
+    lambda_sharp_form_suppression, lambda_size_sharp_single_bonus,
+    lambda_size_sharp_form_pair_penalty,
+    gamma_uncertainty_len,
+    color_semval, form_semval, k, wf, epsilon, order_scores,
+    base_visual_salience, recursive=True, size_context_mode="posterior",
+):
+    return vectorized_global_speaker_principled_response_policy_hier(
+        states, sufficient_dim, has_one_word_solution, is_sharp,
+        is_colour_sufficient, alpha_per_trial, beta_order, lambda_salience,
+        rho_salience_stop, lambda_sufficient_single, lambda_reliability_form,
+        lambda_sufficient_form_pair, lambda_three_word_penalty,
+        lambda_sharp_form_suppression, lambda_size_sharp_single_bonus,
+        lambda_size_sharp_form_pair_penalty,
+        gamma_uncertainty_len, color_semval, form_semval, k, wf, epsilon,
+        order_scores, base_visual_salience, recursive, size_context_mode,
+    )
+
+
+@partial(jax.jit, static_argnames=("recursive", "size_context_mode"))
+def jitted_global_speaker_principled_reliability_response_policy_hier(
+    states, sufficient_dim, has_one_word_solution, is_sharp, is_colour_sufficient,
+    alpha_per_trial, beta_order, lambda_salience, rho_salience_stop,
+    lambda_sufficient_single, lambda_reliability_form,
+    lambda_three_word_penalty, lambda_size_reliability_single_bonus,
+    lambda_size_reliability_form_pair_tradeoff,
+    lambda_order_planning,
+    gamma_uncertainty_len,
+    color_semval, form_semval, k, wf, epsilon, order_scores,
+    base_visual_salience, recursive=True, size_context_mode="posterior",
+):
+    return vectorized_global_speaker_principled_reliability_response_policy_hier(
+        states, sufficient_dim, has_one_word_solution, is_sharp,
+        is_colour_sufficient, alpha_per_trial, beta_order, lambda_salience,
+        rho_salience_stop, lambda_sufficient_single, lambda_reliability_form,
+        lambda_three_word_penalty, lambda_size_reliability_single_bonus,
+        lambda_size_reliability_form_pair_tradeoff, lambda_order_planning,
+        gamma_uncertainty_len, color_semval, form_semval, k, wf, epsilon,
+        order_scores, base_visual_salience, recursive, size_context_mode,
     )
 
 
@@ -3031,6 +5243,16 @@ PRINCIPLED_PRIOR_PROFILES = {
         "log_beta_order_sd": 0.5,
         "lambda_salience_scale": 2.0,
         "rho_salience_stop_scale": 2.0,
+        "planning_scale": 1.0,
+        "lambda_sufficient_single_scale": 2.0,
+        "lambda_reliability_form_scale": 2.0,
+        "lambda_sufficient_form_pair_scale": 1.5,
+        "lambda_three_word_penalty_scale": 1.5,
+        "lambda_sharp_form_suppression_scale": 1.5,
+        "lambda_size_sharp_single_bonus_scale": 1.5,
+        "lambda_size_sharp_form_pair_penalty_scale": 1.5,
+        "lambda_size_reliability_single_bonus_scale": 1.5,
+        "lambda_size_reliability_form_pair_tradeoff_scale": 1.5,
         "gamma_uncertainty_len_scale": 2.0,
         "tau_scale": 0.2,
     },
@@ -3039,6 +5261,16 @@ PRINCIPLED_PRIOR_PROFILES = {
         "log_beta_order_sd": 0.35,
         "lambda_salience_scale": 1.0,
         "rho_salience_stop_scale": 0.75,
+        "planning_scale": 0.75,
+        "lambda_sufficient_single_scale": 1.5,
+        "lambda_reliability_form_scale": 1.5,
+        "lambda_sufficient_form_pair_scale": 1.0,
+        "lambda_three_word_penalty_scale": 1.0,
+        "lambda_sharp_form_suppression_scale": 1.0,
+        "lambda_size_sharp_single_bonus_scale": 1.0,
+        "lambda_size_sharp_form_pair_penalty_scale": 1.0,
+        "lambda_size_reliability_single_bonus_scale": 1.0,
+        "lambda_size_reliability_form_pair_tradeoff_scale": 1.0,
         "gamma_uncertainty_len_scale": 1.0,
         "tau_scale": 0.15,
     },
@@ -3047,6 +5279,16 @@ PRINCIPLED_PRIOR_PROFILES = {
         "log_beta_order_sd": 0.25,
         "lambda_salience_scale": 0.75,
         "rho_salience_stop_scale": 0.5,
+        "planning_scale": 0.5,
+        "lambda_sufficient_single_scale": 1.0,
+        "lambda_reliability_form_scale": 1.0,
+        "lambda_sufficient_form_pair_scale": 0.75,
+        "lambda_three_word_penalty_scale": 0.75,
+        "lambda_sharp_form_suppression_scale": 0.75,
+        "lambda_size_sharp_single_bonus_scale": 0.75,
+        "lambda_size_sharp_form_pair_penalty_scale": 0.75,
+        "lambda_size_reliability_single_bonus_scale": 0.75,
+        "lambda_size_reliability_form_pair_tradeoff_scale": 0.75,
         "gamma_uncertainty_len_scale": 0.75,
         "tau_scale": 0.10,
     },
@@ -3056,9 +5298,17 @@ PRINCIPLED_PRIOR_PROFILES = {
 def _make_principled_model(
     drop: tuple = (),
     salience_stop: bool = False,
+    planned_prefix: bool = False,
+    response_policy: bool = False,
+    bounded_form: bool = False,
+    sharp_form_suppression: bool = False,
+    size_sharp_policy: bool = False,
+    reliability_policy: bool = False,
+    order_only_planning: bool = False,
     prior_profile: str = "default",
     cell: str = "inc_rec",
     fixed_epsilon: float | None = None,
+    size_context_mode: str = "posterior",
 ):
     """Order-only LM + soft salience + derived size-uncertainty model."""
     _valid_drops = {"order", "salience", "uncertainty_len"}
@@ -3078,19 +5328,59 @@ def _make_principled_model(
     if cell not in _valid_cells:
         raise ValueError(f"Unsupported principled 2x2 cell {cell!r}; "
                          f"supported: {sorted(_valid_cells)}")
+    if planned_prefix and cell in ("glob_rec", "glob_static"):
+        raise ValueError("planned_prefix is defined for incremental 2x2 cells.")
+    if planned_prefix and response_policy:
+        raise ValueError("planned_prefix and response_policy are separate variants.")
+    if bounded_form and not response_policy:
+        raise ValueError("bounded_form requires response_policy.")
+    if sharp_form_suppression and not response_policy:
+        raise ValueError("sharp_form_suppression requires response_policy.")
+    if size_sharp_policy and not response_policy:
+        raise ValueError("size_sharp_policy requires response_policy.")
+    if reliability_policy and not response_policy:
+        raise ValueError("reliability_policy requires response_policy.")
+    if reliability_policy and (bounded_form or sharp_form_suppression or size_sharp_policy):
+        raise ValueError(
+            "reliability_policy is an alternative to bounded/sharp-form policy terms."
+        )
+    if order_only_planning and not reliability_policy:
+        raise ValueError("order_only_planning requires reliability_policy.")
+    _valid_size_context_modes = {"posterior", "comparison_class"}
+    if size_context_mode not in _valid_size_context_modes:
+        raise ValueError(
+            f"Unsupported principled size_context_mode {size_context_mode!r}; "
+            f"supported: {sorted(_valid_size_context_modes)}"
+        )
 
     priors = PRINCIPLED_PRIOR_PROFILES[prior_profile]
     order_scores = jnp.zeros_like(LOG_LM_ORDER_ONLY_15) if "order" in drop else LOG_LM_ORDER_ONLY_15
-    speaker_fn = (
-        jitted_global_speaker_principled_hier
-        if cell in ("glob_rec", "glob_static")
-        else jitted_speaker_principled_hier
-    )
+    if planned_prefix:
+        speaker_fn = jitted_speaker_principled_planned_hier
+    elif reliability_policy:
+        speaker_fn = (
+            jitted_global_speaker_principled_reliability_response_policy_hier
+            if cell in ("glob_rec", "glob_static")
+            else jitted_speaker_principled_reliability_response_policy_hier
+        )
+    elif response_policy:
+        speaker_fn = (
+            jitted_global_speaker_principled_response_policy_hier
+            if cell in ("glob_rec", "glob_static")
+            else jitted_speaker_principled_response_policy_hier
+        )
+    else:
+        speaker_fn = (
+            jitted_global_speaker_principled_hier
+            if cell in ("glob_rec", "glob_static")
+            else jitted_speaker_principled_hier
+        )
     recursive = cell in ("inc_rec", "glob_rec")
 
     def model(states=None, empirical=None,
               participant_idx=None, n_participants=None,
-              sufficient_dim=None, has_one_word_solution=None, is_sharp=None):
+              sufficient_dim=None, has_one_word_solution=None, is_sharp=None,
+              is_colour_sufficient=None):
         alpha = numpyro.sample("alpha", dist.HalfNormal(priors["alpha_scale"]))
         if "order" in drop:
             beta_order = 0.0
@@ -3114,6 +5404,85 @@ def _make_principled_model(
             )
             if salience_stop else 0.0
         )
+        planning_scale = (
+            numpyro.sample(
+                "planning_scale",
+                dist.HalfNormal(priors["planning_scale"]),
+            )
+            if planned_prefix else 0.0
+        )
+        lambda_sufficient_single = (
+            numpyro.sample(
+                "lambda_sufficient_single",
+                dist.HalfNormal(priors["lambda_sufficient_single_scale"]),
+            )
+            if response_policy else 0.0
+        )
+        lambda_reliability_form = (
+            numpyro.sample(
+                "lambda_reliability_form",
+                dist.HalfNormal(priors["lambda_reliability_form_scale"]),
+            )
+            if response_policy else 0.0
+        )
+        lambda_sufficient_form_pair = (
+            numpyro.sample(
+                "lambda_sufficient_form_pair",
+                dist.HalfNormal(priors["lambda_sufficient_form_pair_scale"]),
+            )
+            if bounded_form else 0.0
+        )
+        lambda_three_word_penalty = (
+            numpyro.sample(
+                "lambda_three_word_penalty",
+                dist.HalfNormal(priors["lambda_three_word_penalty_scale"]),
+            )
+            if (bounded_form or reliability_policy) else 0.0
+        )
+        lambda_sharp_form_suppression = (
+            numpyro.sample(
+                "lambda_sharp_form_suppression",
+                dist.HalfNormal(priors["lambda_sharp_form_suppression_scale"]),
+            )
+            if sharp_form_suppression else 0.0
+        )
+        lambda_size_sharp_single_bonus = (
+            numpyro.sample(
+                "lambda_size_sharp_single_bonus",
+                dist.HalfNormal(priors["lambda_size_sharp_single_bonus_scale"]),
+            )
+            if size_sharp_policy else 0.0
+        )
+        lambda_size_sharp_form_pair_penalty = (
+            numpyro.sample(
+                "lambda_size_sharp_form_pair_penalty",
+                dist.HalfNormal(priors["lambda_size_sharp_form_pair_penalty_scale"]),
+            )
+            if size_sharp_policy else 0.0
+        )
+        lambda_size_reliability_single_bonus = (
+            numpyro.sample(
+                "lambda_size_reliability_single_bonus",
+                dist.HalfNormal(priors["lambda_size_reliability_single_bonus_scale"]),
+            )
+            if reliability_policy else 0.0
+        )
+        lambda_size_reliability_form_pair_tradeoff = (
+            numpyro.sample(
+                "lambda_size_reliability_form_pair_tradeoff",
+                dist.HalfNormal(
+                    priors["lambda_size_reliability_form_pair_tradeoff_scale"]
+                ),
+            )
+            if reliability_policy else 0.0
+        )
+        lambda_order_planning = (
+            numpyro.sample(
+                "lambda_order_planning",
+                dist.HalfNormal(priors["planning_scale"]),
+            )
+            if order_only_planning else 0.0
+        )
         gamma_uncertainty_len = (
             0.0 if "uncertainty_len" in drop
             else numpyro.sample(
@@ -3134,18 +5503,817 @@ def _make_principled_model(
         alpha_per_trial = jnp.maximum(alpha + delta[participant_idx], 0.0)
 
         with numpyro.plate("data", len(states)):
-            probs = speaker_fn(
-                states, sufficient_dim, has_one_word_solution, is_sharp,
-                alpha_per_trial, beta_order, lambda_salience, rho_salience_stop,
-                gamma_uncertainty_len, 0.59, 0.50, 0.50, 0.6856,
-                epsilon, order_scores, BASE_VISUAL_SALIENCE,
-                recursive=recursive,
-            )
+            if planned_prefix:
+                probs = speaker_fn(
+                    states, sufficient_dim, has_one_word_solution, is_sharp,
+                    alpha_per_trial, beta_order, lambda_salience,
+                    rho_salience_stop, planning_scale, gamma_uncertainty_len,
+                    0.59, 0.50, 0.50, 0.6856, epsilon, order_scores,
+                    BASE_VISUAL_SALIENCE, recursive=recursive,
+                    size_context_mode=size_context_mode,
+                )
+            elif reliability_policy:
+                probs = speaker_fn(
+                    states, sufficient_dim, has_one_word_solution, is_sharp,
+                    is_colour_sufficient, alpha_per_trial, beta_order,
+                    lambda_salience, rho_salience_stop, lambda_sufficient_single,
+                    lambda_reliability_form, lambda_three_word_penalty,
+                    lambda_size_reliability_single_bonus,
+                    lambda_size_reliability_form_pair_tradeoff,
+                    lambda_order_planning,
+                    gamma_uncertainty_len, 0.59, 0.50, 0.50, 0.6856,
+                    epsilon, order_scores,
+                    BASE_VISUAL_SALIENCE, recursive=recursive,
+                    size_context_mode=size_context_mode,
+                )
+            elif response_policy:
+                probs = speaker_fn(
+                    states, sufficient_dim, has_one_word_solution, is_sharp,
+                    is_colour_sufficient, alpha_per_trial, beta_order,
+                    lambda_salience, rho_salience_stop, lambda_sufficient_single,
+                    lambda_reliability_form, lambda_sufficient_form_pair,
+                    lambda_three_word_penalty, lambda_sharp_form_suppression,
+                    lambda_size_sharp_single_bonus,
+                    lambda_size_sharp_form_pair_penalty,
+                    gamma_uncertainty_len, 0.59, 0.50, 0.50, 0.6856,
+                    epsilon, order_scores,
+                    BASE_VISUAL_SALIENCE, recursive=recursive,
+                    size_context_mode=size_context_mode,
+                )
+            else:
+                probs = speaker_fn(
+                    states, sufficient_dim, has_one_word_solution, is_sharp,
+                    alpha_per_trial, beta_order, lambda_salience, rho_salience_stop,
+                    gamma_uncertainty_len, 0.59, 0.50, 0.50, 0.6856,
+                    epsilon, order_scores, BASE_VISUAL_SALIENCE,
+                    recursive=recursive,
+                    size_context_mode=size_context_mode,
+                )
             if empirical is None:
                 numpyro.sample("obs", dist.Categorical(probs=probs))
             else:
                 numpyro.sample("obs", dist.Categorical(probs=probs), obs=empirical)
     return model
+
+
+def _make_discovery_model(
+    variant: str,
+    *,
+    recursive: bool = False,
+    participant_hierarchy: bool = True,
+    prefix_mode: str = "A",
+    form_spec: str | None = None,
+    order_source: str = "O0",
+    policy_light: bool = False,
+):
+    """Factory for isolated incremental-static reliability-backup candidates."""
+    valid_variants = {
+        "fixed_kappa_1",
+        "fixed_kappa_0",
+        "free_kappa",
+        "form_reliability",
+        "form_f0",
+        "form_f1",
+        "form_f2",
+        "form_f3",
+        "form_f4",
+        "participant_kappa",
+        "participant_kappa_order",
+        "participant_length",
+        "participant_order",
+        "participant_order_fixed_kappa_0",
+        "participant_order_fixed_kappa_1",
+    }
+    if variant not in valid_variants:
+        raise ValueError(
+            f"Unsupported discovery variant {variant!r}; "
+            f"supported: {sorted(valid_variants)}"
+        )
+    priors = PRINCIPLED_PRIOR_PROFILES["regularized"]
+    if prefix_mode not in ("A", "B", "C"):
+        raise ValueError(
+            f"Unknown prefix_mode {prefix_mode!r}; expected 'A', 'B', or 'C'."
+        )
+    if form_spec not in (None, "F0", "FT", "FTS"):
+        raise ValueError(
+            f"Unknown fixed form specification {form_spec!r}; "
+            "expected None, 'F0', 'FT', or 'FTS'."
+        )
+    if order_source not in ("O0", "O1", "O2", "O3"):
+        raise ValueError(
+            f"Unknown order source {order_source!r}; "
+            "expected 'O0', 'O1', 'O2', or 'O3'."
+        )
+    participant_order_variants = {
+        "participant_order",
+        "participant_kappa_order",
+        "participant_order_fixed_kappa_0",
+        "participant_order_fixed_kappa_1",
+    }
+    participant_kappa_variants = {
+        "participant_kappa",
+        "participant_kappa_order",
+    }
+    if variant in participant_order_variants and order_source in ("O2", "O3"):
+        raise ValueError("participant_order requires an active order source (O0 or O1).")
+
+    def model(
+        states=None,
+        empirical=None,
+        participant_idx=None,
+        n_participants=None,
+        sufficient_dim=None,
+        has_one_word_solution=None,
+        is_sharp=None,
+        is_colour_sufficient=None,
+    ):
+        alpha = numpyro.sample(
+            "alpha",
+            dist.HalfNormal(priors["alpha_scale"]),
+        )
+        if order_source in ("O2", "O3"):
+            beta_order = jnp.asarray(0.0)
+        else:
+            log_beta_order = numpyro.sample(
+                "log_beta_order",
+                dist.Normal(0.0, priors["log_beta_order_sd"]),
+            )
+            if variant in participant_order_variants:
+                tau_order = numpyro.sample("tau_order", dist.HalfNormal(0.5))
+            else:
+                tau_order = None
+        lambda_salience = numpyro.sample(
+            "lambda_salience",
+            dist.HalfNormal(priors["lambda_salience_scale"]),
+        )
+        rho_salience_stop = numpyro.sample(
+            "rho_salience_stop",
+            dist.HalfNormal(priors["rho_salience_stop_scale"]),
+        )
+        if policy_light:
+            lambda_sufficient_single = jnp.asarray(0.0)
+            lambda_reliability_form = jnp.asarray(0.0)
+            lambda_three_word_penalty = jnp.asarray(0.0)
+            lambda_size_reliability_single_bonus = jnp.asarray(0.0)
+            lambda_size_reliability_form_pair_tradeoff = jnp.asarray(0.0)
+        elif form_spec == "FTS":
+            backup_scale = 0.25
+            lambda_reliability_form = numpyro.sample(
+                "lambda_reliability_form",
+                dist.HalfNormal(backup_scale),
+            )
+        elif form_spec in ("F0", "FT"):
+            lambda_reliability_form = numpyro.sample(
+                "lambda_reliability_form",
+                dist.HalfNormal(1.5),
+            )
+        elif variant in {"form_f1", "form_f2"}:
+            backup_scale = 0.25
+            lambda_reliability_form = numpyro.sample(
+                "lambda_reliability_form",
+                dist.HalfNormal(backup_scale),
+            )
+        elif variant == "form_f3":
+            lambda_reliability_form = numpyro.deterministic(
+                "lambda_reliability_form", jnp.asarray(0.0)
+            )
+        else:
+            backup_scale = priors["lambda_reliability_form_scale"]
+            lambda_reliability_form = numpyro.sample(
+                "lambda_reliability_form",
+                dist.HalfNormal(backup_scale),
+            )
+        if not policy_light:
+            lambda_sufficient_single = numpyro.sample(
+                "lambda_sufficient_single",
+                dist.HalfNormal(priors["lambda_sufficient_single_scale"]),
+            )
+        if not policy_light:
+            lambda_three_word_penalty = numpyro.sample(
+                "lambda_three_word_penalty",
+                dist.HalfNormal(priors["lambda_three_word_penalty_scale"]),
+            )
+            lambda_size_reliability_single_bonus = numpyro.sample(
+                "lambda_size_reliability_single_bonus",
+                dist.HalfNormal(
+                    priors["lambda_size_reliability_single_bonus_scale"]
+                ),
+            )
+            lambda_size_reliability_form_pair_tradeoff = numpyro.sample(
+                "lambda_size_reliability_form_pair_tradeoff",
+                dist.HalfNormal(
+                    priors["lambda_size_reliability_form_pair_tradeoff_scale"]
+                ),
+            )
+        epsilon = numpyro.deterministic("epsilon", jnp.asarray(0.003))
+
+        if variant == "fixed_kappa_1":
+            population_kappa = numpyro.deterministic(
+                "kappa",
+                jnp.asarray(1.0),
+            )
+        elif variant == "fixed_kappa_0":
+            population_kappa = numpyro.deterministic(
+                "kappa",
+                jnp.asarray(0.0),
+            )
+        elif variant in {"free_kappa", "participant_length", "participant_order"} or variant.startswith("form_f"):
+            population_kappa = numpyro.sample(
+                "kappa",
+                dist.Uniform(0.0, 1.0),
+            )
+        elif variant == "participant_order_fixed_kappa_0":
+            population_kappa = numpyro.deterministic(
+                "kappa",
+                jnp.asarray(0.0),
+            )
+        elif variant == "participant_order_fixed_kappa_1":
+            population_kappa = numpyro.deterministic(
+                "kappa",
+                jnp.asarray(1.0),
+            )
+        elif variant in participant_kappa_variants:
+            population_kappa = numpyro.sample(
+                "kappa_mean",
+                dist.Uniform(0.0, 1.0),
+            )
+        else:
+            population_kappa = numpyro.deterministic(
+                "kappa",
+                jnp.asarray(1.0),
+            )
+
+        if form_spec in ("FT", "FTS"):
+            nu_F = numpyro.deterministic("nu_F", jnp.asarray(0.59))
+        elif form_spec == "F0":
+            nu_F = numpyro.deterministic("nu_F", jnp.asarray(0.50))
+        elif variant == "form_f1":
+            nu_F = numpyro.deterministic("nu_F", jnp.asarray(0.59))
+        elif variant in {"form_f2", "form_f3", "form_f4"}:
+            xi_F = numpyro.sample("xi_F", dist.Normal(0.0, 1.5))
+            nu_F = numpyro.deterministic(
+                "nu_F",
+                0.5 + 0.5 * jax.nn.sigmoid(xi_F),
+            )
+        elif variant == "form_reliability":
+            nu_F = numpyro.sample("nu_F", dist.Uniform(0.5, 1.0))
+        else:
+            nu_F = numpyro.deterministic("nu_F", jnp.asarray(0.5))
+
+        tau_log_alpha = (
+            numpyro.sample(
+                "tau_log_alpha",
+                dist.HalfNormal(priors["tau_scale"]),
+            )
+            if participant_hierarchy
+            else None
+        )
+        tau_kappa = (
+            numpyro.sample("tau_kappa", dist.HalfNormal(0.5))
+            if variant in participant_kappa_variants
+            else None
+        )
+        tau_length = (
+            numpyro.sample("tau_length", dist.HalfNormal(0.5))
+            if variant == "participant_length"
+            else None
+        )
+        length_mean = (
+            numpyro.sample("length_mean", dist.Normal(0.0, 0.5))
+            if variant == "participant_length"
+            else jnp.asarray(0.0)
+        )
+        if participant_hierarchy or variant in {
+            "participant_kappa",
+            "participant_length",
+            *participant_order_variants,
+        }:
+            with numpyro.plate("participants", n_participants):
+                z_alpha = (
+                    numpyro.sample(
+                        "z_alpha",
+                        dist.Normal(0.0, 1.0),
+                    )
+                    if participant_hierarchy
+                    else None
+                )
+                z_kappa = (
+                    numpyro.sample("z_kappa", dist.Normal(0.0, 1.0))
+                    if variant in participant_kappa_variants
+                    else None
+                )
+                z_length = (
+                    numpyro.sample("z_length", dist.Normal(0.0, 1.0))
+                    if variant == "participant_length"
+                    else None
+                )
+                z_order = (
+                    numpyro.sample("z_order", dist.Normal(0.0, 1.0))
+                    if variant in participant_order_variants
+                    else None
+                )
+        else:
+            z_alpha = None
+            z_kappa = None
+            z_length = None
+            z_order = None
+
+        if participant_hierarchy:
+            alpha_by_participant = numpyro.deterministic(
+                "alpha_by_participant",
+                noncentered_participant_alpha(
+                    alpha,
+                    tau_log_alpha,
+                    z_alpha,
+                ),
+            )
+            numpyro.deterministic(
+                "delta",
+                alpha_by_participant - alpha,
+            )
+            alpha_per_trial = alpha_by_participant[participant_idx]
+        else:
+            alpha_per_trial = jnp.broadcast_to(alpha, (len(states),))
+        if variant in participant_kappa_variants:
+            kappa_by_participant = numpyro.deterministic(
+                "kappa_by_participant",
+                noncentered_participant_kappa(
+                    population_kappa,
+                    tau_kappa,
+                    z_kappa,
+                ),
+            )
+            kappa_per_trial = kappa_by_participant[participant_idx]
+        else:
+            kappa_per_trial = jnp.broadcast_to(
+                population_kappa,
+                (len(states),),
+            )
+
+        if variant == "participant_length":
+            length_by_participant = numpyro.deterministic(
+                "length_by_participant",
+                length_mean + tau_length * z_length,
+            )
+            lambda_length = length_by_participant[participant_idx]
+        else:
+            lambda_length = jnp.asarray(0.0)
+
+        if variant in participant_order_variants:
+            log_beta_order_by_participant = numpyro.deterministic(
+                "log_beta_order_by_participant",
+                log_beta_order + tau_order * z_order,
+            )
+            beta_order = numpyro.deterministic(
+                "beta_order_by_participant",
+                jnp.exp(log_beta_order_by_participant),
+            )
+            beta_order = beta_order[participant_idx]
+        elif order_source in ("O2", "O3"):
+            beta_order = jnp.asarray(0.0)
+        else:
+            beta_order = jnp.exp(log_beta_order)
+
+        if order_source in ("O1", "O2"):
+            lambda_order_planning = numpyro.sample(
+                "lambda_order_planning",
+                dist.HalfNormal(priors["planning_scale"]),
+            )
+        else:
+            lambda_order_planning = jnp.asarray(0.0)
+        order_scores = (
+            LOG_LM_ORDER_ONLY_15
+            if order_source in ("O0", "O1")
+            else jnp.zeros_like(LOG_LM_ORDER_ONLY_15)
+        )
+
+        with numpyro.plate("data", len(states)):
+            probs = jitted_speaker_principled_discovery_hier(
+                states,
+                sufficient_dim,
+                has_one_word_solution,
+                is_sharp,
+                is_colour_sufficient,
+                alpha_per_trial,
+                beta_order,
+                lambda_salience,
+                rho_salience_stop,
+                lambda_sufficient_single,
+                lambda_reliability_form,
+                lambda_three_word_penalty,
+                lambda_size_reliability_single_bonus,
+                lambda_size_reliability_form_pair_tradeoff,
+                0.0,
+                lambda_length,
+                kappa_per_trial,
+                nu_F,
+                0.59,
+                0.50,
+                0.6856,
+                epsilon,
+                order_scores,
+                BASE_VISUAL_SALIENCE,
+                recursive=recursive,
+                size_context_mode="posterior",
+                prefix_mode=prefix_mode,
+                lambda_order_planning=lambda_order_planning,
+            )
+            if empirical is None:
+                numpyro.sample("obs", dist.Categorical(probs=probs))
+            else:
+                numpyro.sample(
+                    "obs",
+                    dist.Categorical(probs=probs),
+                    obs=empirical,
+                )
+
+    return model
+
+
+def _make_stop_local_model(*, core: bool = False):
+    """Factory for the pre-specified K-FIX STOP-local pilot cells."""
+    priors = PRINCIPLED_PRIOR_PROFILES["regularized"]
+
+    def model(
+        states=None,
+        empirical=None,
+        participant_idx=None,
+        n_participants=None,
+        sufficient_dim=None,
+        has_one_word_solution=None,
+        is_sharp=None,
+        is_colour_sufficient=None,
+    ):
+        alpha = numpyro.sample("alpha", dist.HalfNormal(priors["alpha_scale"]))
+        log_beta_order = numpyro.sample(
+            "log_beta_order",
+            dist.Normal(0.0, priors["log_beta_order_sd"]),
+        )
+        beta_order = jnp.exp(log_beta_order)
+        lambda_salience = numpyro.sample(
+            "lambda_salience",
+            dist.HalfNormal(priors["lambda_salience_scale"]),
+        )
+        rho_salience_stop = numpyro.sample(
+            "rho_salience_stop",
+            dist.HalfNormal(priors["rho_salience_stop_scale"]),
+        )
+        lambda_sufficient_single = (
+            jnp.asarray(0.0)
+            if core
+            else numpyro.sample(
+                "lambda_sufficient_single",
+                dist.HalfNormal(priors["lambda_sufficient_single_scale"]),
+            )
+        )
+        lambda_reliability_form = numpyro.sample(
+            "lambda_reliability_form",
+            dist.HalfNormal(priors["lambda_reliability_form_scale"]),
+        )
+        lambda_three_word_penalty = (
+            jnp.asarray(0.0)
+            if core
+            else numpyro.sample(
+                "lambda_three_word_penalty",
+                dist.HalfNormal(priors["lambda_three_word_penalty_scale"]),
+            )
+        )
+        lambda_size_reliability_single_bonus = numpyro.sample(
+            "lambda_size_reliability_single_bonus",
+            dist.HalfNormal(
+                priors["lambda_size_reliability_single_bonus_scale"]
+            ),
+        )
+        lambda_size_reliability_form_pair_tradeoff = numpyro.sample(
+            "lambda_size_reliability_form_pair_tradeoff",
+            dist.HalfNormal(
+                priors["lambda_size_reliability_form_pair_tradeoff_scale"]
+            ),
+        )
+        gamma_uncertainty_len = numpyro.sample(
+            "gamma_uncertainty_len",
+            dist.HalfNormal(priors["gamma_uncertainty_len_scale"]),
+        )
+        lambda_len = numpyro.sample("lambda_len", dist.HalfNormal(0.5))
+        log_temperature = numpyro.sample(
+            "log_temperature",
+            dist.Normal(0.0, 0.25),
+        )
+        temperature = jnp.exp(log_temperature)
+        eta_0 = numpyro.sample("eta_0", dist.Normal(0.0, 1.0))
+        eta_raw = numpyro.sample(
+            "eta_raw",
+            dist.Normal(0.0, 1.0).expand([3]).to_event(1),
+        )
+        eta_centered = eta_raw - jnp.mean(eta_raw)
+        eta_1, eta_2, eta_3 = eta_centered
+
+        population_kappa = numpyro.sample("kappa", dist.Uniform(0.0, 1.0))
+        tau_log_alpha = numpyro.sample(
+            "tau_log_alpha",
+            dist.HalfNormal(priors["tau_scale"]),
+        )
+        with numpyro.plate("participants", n_participants):
+            z_alpha = numpyro.sample("z_alpha", dist.Normal(0.0, 1.0))
+        alpha_by_participant = numpyro.deterministic(
+            "alpha_by_participant",
+            noncentered_participant_alpha(alpha, tau_log_alpha, z_alpha),
+        )
+        numpyro.deterministic("delta", alpha_by_participant - alpha)
+        alpha_per_trial = alpha_by_participant[participant_idx]
+        kappa_per_trial = jnp.broadcast_to(population_kappa, (len(states),))
+
+        with numpyro.plate("data", len(states)):
+            probs = jitted_speaker_principled_discovery_stop_local_hier(
+                states,
+                sufficient_dim,
+                has_one_word_solution,
+                is_sharp,
+                is_colour_sufficient,
+                alpha_per_trial,
+                beta_order,
+                lambda_salience,
+                rho_salience_stop,
+                lambda_sufficient_single,
+                lambda_reliability_form,
+                lambda_three_word_penalty,
+                lambda_size_reliability_single_bonus,
+                lambda_size_reliability_form_pair_tradeoff,
+                gamma_uncertainty_len,
+                kappa_per_trial,
+                0.5,
+                0.59,
+                0.50,
+                0.6856,
+                0.003,
+                LOG_LM_ORDER_ONLY_15,
+                BASE_VISUAL_SALIENCE,
+                recursive=True,
+                size_context_mode="posterior",
+                prefix_mode="B",
+                eta_0=eta_0,
+                eta_1=eta_1,
+                eta_2=eta_2,
+                eta_3=eta_3,
+                lambda_len=lambda_len,
+                temperature=temperature,
+            )
+            numpyro.sample(
+                "obs",
+                dist.Categorical(probs=probs),
+                obs=empirical,
+            )
+
+    return model
+
+
+likelihood_function_discovery_normpath_kappa1_inc_static_fixedeps_hier = (
+    _make_discovery_model("fixed_kappa_1")
+)
+likelihood_function_discovery_normpath_kappa0_matched_global_static_fixedeps_hier = (
+    _make_discovery_model("fixed_kappa_0")
+)
+likelihood_function_discovery_normpath_kappa_free_static_fixedeps_hier = (
+    _make_discovery_model("free_kappa")
+)
+likelihood_function_discovery_form_reliability_static_fixedeps_hier = (
+    _make_discovery_model("form_reliability")
+)
+likelihood_function_discovery_participant_kappa_static_fixedeps_hier = (
+    _make_discovery_model("participant_kappa")
+)
+
+# Shared graded-kappa semantic comparison.  These two models hold the
+# response support, priors, participant-rationality hierarchy, and terminal
+# policy fixed while toggling only the fixed-vs-updating semantic state.
+likelihood_function_discovery_kappa_free_inc_static_fixedeps_hier = (
+    _make_discovery_model("free_kappa", recursive=False)
+)
+likelihood_function_discovery_kappa_free_inc_recursive_fixedeps_hier = (
+    _make_discovery_model("free_kappa", recursive=True)
+)
+
+# V6 form-semantics factorial. F0 is neutral form plus a free backup; F1 ties
+# form reliability to the fixed colour reliability and shrinks the backup;
+# F2 frees informative form reliability with the same shrunk backup; F3
+# removes the backup; F4 is the free-both diagnostic. These are K-FIX-B/static
+# cells and remain separate from the endpoint architecture registry.
+FORM_SEMANTIC_MODELS = {
+    "F0-neutral-backup": _make_discovery_model(
+        "form_f0", recursive=False, prefix_mode="B"
+    ),
+    "F1-informative-backup": _make_discovery_model(
+        "form_f1", recursive=False, prefix_mode="B"
+    ),
+    "F2-informative-shrunk-backup": _make_discovery_model(
+        "form_f2", recursive=False, prefix_mode="B"
+    ),
+    "F3-informative-no-backup": _make_discovery_model(
+        "form_f3", recursive=False, prefix_mode="B"
+    ),
+    "F4-informative-free-backup": _make_discovery_model(
+        "form_f4", recursive=False, prefix_mode="B"
+    ),
+}
+
+# V8 publication-path registries.  These keep the fixed form, order-source,
+# and grouped terminal-policy comparisons explicit while reusing the same
+# Variant-B discovery likelihood and participant hierarchy.
+V8_FIXED_FORM_MODELS = {
+    "K-FIX-B-ST-E0-FT": _make_discovery_model(
+        "free_kappa", recursive=False, prefix_mode="B", form_spec="FT"
+    ),
+    "K-FIX-B-ST-E0-FTS": _make_discovery_model(
+        "free_kappa", recursive=False, prefix_mode="B", form_spec="FTS"
+    ),
+    "G-FIX-B-ST-E0-FT": _make_discovery_model(
+        "fixed_kappa_0", recursive=False, prefix_mode="B", form_spec="FT"
+    ),
+    "I-FIX-B-ST-E0-FT": _make_discovery_model(
+        "fixed_kappa_1", recursive=False, prefix_mode="B", form_spec="FT"
+    ),
+    "G-FIX-B-ST-E0-FTS": _make_discovery_model(
+        "fixed_kappa_0", recursive=False, prefix_mode="B", form_spec="FTS"
+    ),
+    "I-FIX-B-ST-E0-FTS": _make_discovery_model(
+        "fixed_kappa_1", recursive=False, prefix_mode="B", form_spec="FTS"
+    ),
+}
+
+V8_ORDER_SOURCE_MODELS = {
+    f"K-FIX-B-ST-E0-{source}": _make_discovery_model(
+        "free_kappa", recursive=False, prefix_mode="B", form_spec="F0",
+        order_source=source,
+    )
+    for source in ("O0", "O1", "O2", "O3")
+}
+
+V8_POLICY_LIGHT_MODELS = {
+    f"{endpoint}-E0-{form}-POLICY-LIGHT": _make_discovery_model(
+        variant,
+        recursive=False,
+        prefix_mode="B",
+        form_spec=form,
+        order_source="O0",
+        policy_light=True,
+    )
+    for endpoint, variant in (
+        ("G-FIX-B-ST", "fixed_kappa_0"),
+        ("I-FIX-B-ST", "fixed_kappa_1"),
+        ("K-FIX-B-ST", "free_kappa"),
+    )
+    for form in ("F0", "FT", "FTS")
+}
+
+# Matched v9 participant-heterogeneity screen.  All four cells retain the
+# canonical E0/F0/O0/FULL specification and the participant alpha hierarchy;
+# each alternative adds one participant latent dimension with a shared SD.
+V9_PARTICIPANT_MODELS = {
+    "H0": _make_discovery_model(
+        "free_kappa", recursive=False, prefix_mode="B", form_spec="F0",
+        order_source="O0", policy_light=False,
+    ),
+    "HK": _make_discovery_model(
+        "participant_kappa", recursive=False, prefix_mode="B", form_spec="F0",
+        order_source="O0", policy_light=False,
+    ),
+    "HL": _make_discovery_model(
+        "participant_length", recursive=False, prefix_mode="B", form_spec="F0",
+        order_source="O0", policy_light=False,
+    ),
+    "HO": _make_discovery_model(
+        "participant_order", recursive=False, prefix_mode="B", form_spec="F0",
+        order_source="O0", policy_light=False,
+    ),
+}
+
+# V10 nuisance-controlled architecture comparison. G-HO and I-HO share the
+# K-HO participant-order hierarchy and differ only in fixed population kappa.
+V10_ORDER_MODELS = {
+    "G-HO": _make_discovery_model(
+        "participant_order_fixed_kappa_0", recursive=False, prefix_mode="B",
+        form_spec="F0", order_source="O0", policy_light=False,
+    ),
+    "I-HO": _make_discovery_model(
+        "participant_order_fixed_kappa_1", recursive=False, prefix_mode="B",
+        form_spec="F0", order_source="O0", policy_light=False,
+    ),
+    "K-HO": _make_discovery_model(
+        "participant_order", recursive=False, prefix_mode="B",
+        form_spec="F0", order_source="O0", policy_light=False,
+    ),
+}
+
+# Targeted joint participant hierarchy for the plan-guided speaker.  K-HKO
+# retains the K-HO alpha and stable-order hierarchies and additionally allows
+# the plan-guided interpolation weight to vary by participant.
+V11_JOINT_PARTICIPANT_MODELS = {
+    "K-HKO": _make_discovery_model(
+        "participant_kappa_order", recursive=False, prefix_mode="B",
+        form_spec="F0", order_source="O0", policy_light=False,
+    ),
+}
+
+# Matched semantic-updating extension of the K-HKO participant hierarchy.
+V12_UPDATING_JOINT_PARTICIPANT_MODELS = {
+    "K-UPD-HKO": _make_discovery_model(
+        "participant_kappa_order", recursive=True, prefix_mode="B",
+        form_spec="F0", order_source="O0", policy_light=False,
+    ),
+}
+
+# Matched v10 semantic-updating cells.  These preserve the full v10 nuisance
+# control and response support while changing only recursive context updating.
+V10_ORDER_UPD_MODELS = {
+    "G-UPD-HO": _make_discovery_model(
+        "participant_order_fixed_kappa_0", recursive=True, prefix_mode="B",
+        form_spec="F0", order_source="O0", policy_light=False,
+    ),
+    "I-UPD-HO": _make_discovery_model(
+        "participant_order_fixed_kappa_1", recursive=True, prefix_mode="B",
+        form_spec="F0", order_source="O0", policy_light=False,
+    ),
+    "K-UPD-HO": _make_discovery_model(
+        "participant_order", recursive=True, prefix_mode="B",
+        form_spec="F0", order_source="O0", policy_light=False,
+    ),
+}
+
+DISCOVERY_CANDIDATE_MODELS = dict(
+    zip(
+        DISCOVERY_CANDIDATE_IDS,
+        (
+            likelihood_function_discovery_normpath_kappa1_inc_static_fixedeps_hier,
+            likelihood_function_discovery_normpath_kappa0_matched_global_static_fixedeps_hier,
+            likelihood_function_discovery_normpath_kappa_free_static_fixedeps_hier,
+            likelihood_function_discovery_form_reliability_static_fixedeps_hier,
+            likelihood_function_discovery_participant_kappa_static_fixedeps_hier,
+        ),
+    )
+)
+
+# Foundation-only corrected final-lapse refits.  These four cells are kept
+# outside the one-mechanism candidate registry.
+FOUNDATION_2X2_MODELS = {
+    "foundation_normpath_kappa1_inc_recursive_fixedeps": (
+        _make_discovery_model("fixed_kappa_1", recursive=True)
+    ),
+    "foundation_normpath_kappa1_inc_static_fixedeps": (
+        _make_discovery_model("fixed_kappa_1", recursive=False)
+    ),
+    "foundation_normpath_kappa0_matched_global_recursive_fixedeps": (
+        _make_discovery_model("fixed_kappa_0", recursive=True)
+    ),
+    "foundation_normpath_kappa0_matched_global_static_fixedeps": (
+        _make_discovery_model("fixed_kappa_0", recursive=False)
+    ),
+    "foundation_kappa_free_inc_static_fixedeps": (
+        likelihood_function_discovery_kappa_free_inc_static_fixedeps_hier
+    ),
+    "foundation_kappa_free_inc_recursive_fixedeps": (
+        likelihood_function_discovery_kappa_free_inc_recursive_fixedeps_hier
+    ),
+}
+
+# Explicit Variant-B updating suite for the matched semantic comparison.
+# Prefix construction is held fixed while the endpoint architecture and
+# population kappa are varied across the three required updating models.
+FOUNDATION_VARIANT_B_MODELS = {
+    "G-UPD-B": _make_discovery_model(
+        "fixed_kappa_0", recursive=True, prefix_mode="B"
+    ),
+    "I-UPD-B": _make_discovery_model(
+        "fixed_kappa_1", recursive=True, prefix_mode="B"
+    ),
+    "K-UPD-B": _make_discovery_model(
+        "free_kappa", recursive=True, prefix_mode="B"
+    ),
+}
+
+STOP_LOCAL_MODELS = {
+    "stop_local_plus_terminal": _make_stop_local_model(core=False),
+    "stop_local_core": _make_stop_local_model(core=True),
+}
+
+# Small population-only probes used by the staged foundation controller.
+# They intentionally omit participant effects and held-out quadrature so that
+# sampler geometry is tested before the hierarchy is introduced.
+FOUNDATION_PROBE_MODELS = {
+    "foundation_probe_kappa0_static_population": (
+        _make_discovery_model(
+            "fixed_kappa_0",
+            recursive=False,
+            participant_hierarchy=False,
+        )
+    ),
+    "foundation_probe_kappa1_static_population": (
+        _make_discovery_model(
+            "fixed_kappa_1",
+            recursive=False,
+            participant_hierarchy=False,
+        )
+    ),
+}
 
 
 likelihood_function_principled_hier = _make_principled_model()
@@ -3200,6 +6368,328 @@ likelihood_function_principled_salience_stop_regularized_2x2_glob_static_fixedep
     prior_profile="regularized",
     cell="glob_static",
     fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_tmcc_2x2_inc_rec_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    prior_profile="regularized",
+    cell="inc_rec",
+    size_context_mode="comparison_class",
+)
+likelihood_function_principled_salience_stop_regularized_tmcc_2x2_inc_static_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    prior_profile="regularized",
+    cell="inc_static",
+    size_context_mode="comparison_class",
+)
+likelihood_function_principled_salience_stop_regularized_plannedprefix_2x2_inc_rec_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    planned_prefix=True,
+    prior_profile="regularized",
+    cell="inc_rec",
+)
+likelihood_function_principled_salience_stop_regularized_plannedprefix_2x2_inc_static_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    planned_prefix=True,
+    prior_profile="regularized",
+    cell="inc_static",
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_inc_rec_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    prior_profile="regularized",
+    cell="inc_rec",
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_inc_static_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    prior_profile="regularized",
+    cell="inc_static",
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_glob_rec_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    prior_profile="regularized",
+    cell="glob_rec",
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_glob_static_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    prior_profile="regularized",
+    cell="glob_static",
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_inc_rec_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    prior_profile="regularized",
+    cell="inc_rec",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_inc_static_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    prior_profile="regularized",
+    cell="inc_static",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_glob_rec_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    prior_profile="regularized",
+    cell="glob_rec",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_glob_static_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    prior_profile="regularized",
+    cell="glob_static",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_rec_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    bounded_form=True,
+    prior_profile="regularized",
+    cell="inc_rec",
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_static_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    bounded_form=True,
+    prior_profile="regularized",
+    cell="inc_static",
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_rec_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    bounded_form=True,
+    prior_profile="regularized",
+    cell="glob_rec",
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_static_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    bounded_form=True,
+    prior_profile="regularized",
+    cell="glob_static",
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_rec_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    bounded_form=True,
+    prior_profile="regularized",
+    cell="inc_rec",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_static_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    bounded_form=True,
+    prior_profile="regularized",
+    cell="inc_static",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_sharpform_2x2_inc_rec_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    bounded_form=True,
+    sharp_form_suppression=True,
+    prior_profile="regularized",
+    cell="inc_rec",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_sharpform_2x2_inc_static_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    bounded_form=True,
+    sharp_form_suppression=True,
+    prior_profile="regularized",
+    cell="inc_static",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_inc_rec_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    bounded_form=True,
+    size_sharp_policy=True,
+    prior_profile="regularized",
+    cell="inc_rec",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_inc_static_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    bounded_form=True,
+    size_sharp_policy=True,
+    prior_profile="regularized",
+    cell="inc_static",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_glob_rec_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    bounded_form=True,
+    size_sharp_policy=True,
+    prior_profile="regularized",
+    cell="glob_rec",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_glob_static_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    bounded_form=True,
+    size_sharp_policy=True,
+    prior_profile="regularized",
+    cell="glob_static",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_rec_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    reliability_policy=True,
+    prior_profile="regularized",
+    cell="inc_rec",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_static_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    reliability_policy=True,
+    prior_profile="regularized",
+    cell="inc_static",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_inc_rec_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    reliability_policy=True,
+    order_only_planning=True,
+    prior_profile="regularized",
+    cell="inc_rec",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_inc_static_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    reliability_policy=True,
+    order_only_planning=True,
+    prior_profile="regularized",
+    cell="inc_static",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_glob_rec_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    reliability_policy=True,
+    order_only_planning=True,
+    prior_profile="regularized",
+    cell="glob_rec",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_glob_static_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    reliability_policy=True,
+    order_only_planning=True,
+    prior_profile="regularized",
+    cell="glob_static",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_glob_rec_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    reliability_policy=True,
+    prior_profile="regularized",
+    cell="glob_rec",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_glob_static_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    reliability_policy=True,
+    prior_profile="regularized",
+    cell="glob_static",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_rec_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    bounded_form=True,
+    prior_profile="regularized",
+    cell="glob_rec",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_static_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    response_policy=True,
+    bounded_form=True,
+    prior_profile="regularized",
+    cell="glob_static",
+    fixed_epsilon=0.003,
+)
+likelihood_function_principled_salience_stop_regularized_tmcc_2x2_glob_rec_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    prior_profile="regularized",
+    cell="glob_rec",
+    size_context_mode="comparison_class",
+)
+likelihood_function_principled_salience_stop_regularized_tmcc_2x2_glob_static_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    prior_profile="regularized",
+    cell="glob_static",
+    size_context_mode="comparison_class",
+)
+likelihood_function_principled_salience_stop_regularized_tmcc_2x2_glob_rec_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    prior_profile="regularized",
+    cell="glob_rec",
+    fixed_epsilon=0.003,
+    size_context_mode="comparison_class",
+)
+likelihood_function_principled_salience_stop_regularized_tmcc_2x2_glob_static_fixedeps_hier = _make_principled_model(
+    drop=("uncertainty_len",),
+    salience_stop=True,
+    prior_profile="regularized",
+    cell="glob_static",
+    fixed_epsilon=0.003,
+    size_context_mode="comparison_class",
 )
 likelihood_function_principled_salience_stop_strong_regularized_hier = _make_principled_model(
     drop=("uncertainty_len",),

@@ -482,12 +482,8 @@ p_kappa <- architecture_plot_data %>%
 architecture_figure <- p_architecture / p_kappa +
   plot_layout(heights = c(1.05, .82))
 
-save_csp_pdf(
-  architecture_figure,
-  "figures/production_architecture_results.pdf",
-  8.4,
-  5.8
-)
+# The final architecture comparison is exported by
+# scripts/plot_architecture_diagnostics.R alongside its endpoint diagnostics.
 
 # -----------------------------------------------------------------------------
 # Section 5: posterior-predictive interpretation of plan-guided production.

@@ -1,32 +1,79 @@
 %% ============================================================
-%%  APA7-style manuscript draft
+%%  Journal-style manuscript draft
 %%  From Adjective Choice to Adjective Order
 %% ============================================================
-\documentclass[man,floatsintext]{apa7}
+\documentclass[10pt,a4paper,fleqn]{article}
 \setcounter{secnumdepth}{3}
-\raggedbottom
 
-% ---- packages ---------------------------------------------------------------
-\usepackage[british]{babel}
-\usepackage[T1]{fontenc}
-\usepackage[utf8]{inputenc}
-\usepackage{microtype}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage[section]{placeins}
+\usepackage{xurl}
+\usepackage{authblk}
+
+\usepackage{CSPstyles}
+\usepackage{comment}
+\usepackage{nicefrac}
+\usepackage{times}
+\usepackage{multicol}
+
+\RequirePackage[style=authoryear-comp,
+          natbib=true,
+          hyperref=true,
+          maxnames=3,
+          doi=false,
+          url=false,
+          sortcites=false
+          ]{biblatex}
+\DeclareSourcemap{
+  \maps[datatype=bibtex]{
+    \map{
+      \step[fieldset=abstract, null]
+      \step[fieldset=annotation, null]
+      \step[fieldset=annote, null]
+    }
+  }
+}
+\usepackage[final,
+          colorlinks,
+          linkcolor=black,
+          citecolor=glaucous-main,
+          urlcolor=glaucous-main,
+          plainpages=false,
+          pdfpagelabels,
+          hypertexnames=false
+          ]{hyperref}
+
+%%% Bibliography %%%
+\addbibresource{references.bib}
+\setlength{\bibhang}{.125in}
+\providecommand{\SortNoop}[1]{}
+
+%========================================
+% Packages
+%========================================
+
+\usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{booktabs}
+\usepackage{subcaption}
+\usepackage{enumerate}
+\usepackage{paralist}
+\usepackage{url}
+\usepackage{setspace}
+\usepackage{xspace}
+
+% Packages required by the present manuscript.
 \usepackage{tabularx}
 \usepackage{multirow}
-\usepackage{amsmath, amssymb}
 \usepackage{mathtools}
 \usepackage{stmaryrd}
 \usepackage{bm}
-\usepackage{graphicx}
-\graphicspath{{figures/}}
-\usepackage{float}
-\usepackage[section]{placeins}
-\usepackage{comment}
 \usepackage{cleveref}
 \usepackage{todonotes}
 \presetkeys{todonotes}{inline, backgroundcolor=yellow!40}{}
-\usepackage[natbibapa]{apacite}
+\graphicspath{{figures/}}
 
 % ---- convenience commands ---------------------------------------------------
 \newcommand{\eg}{\textit{e.g.}}
@@ -36,19 +83,31 @@
 \newcommand{\param}[1]{\ensuremath{#1}}
 
 % ---- title matter -----------------------------------------------------------
-\shorttitle{Communicative Efficiency in Adjective Ordering}
 \title{Communicative Efficiency in Adjective Ordering: Plan-Guided Production between Hierarchical Semantic Composition and Incremental Pragmatic Choice}
-\authorsnames{Hening Wang, Fabian Schlotterbeck, Michael Franke}
-\authorsaffiliations{University of T\"ubingen}
-\leftheader{Wang et al.}
-
-\abstract{Adjective ordering must reconcile stable order expectations with the usefulness of properties in the current scene. Theoretical accounts locate communicative efficiency in two directions: hierarchical semantic composition interprets noun-adjacent modifiers before outer modifiers, whereas surface production makes linearly earlier information available first. We test how these pressures are expressed in explicit order judgements and in the full distribution of produced utterances. Two German slider studies show a replicated context gradient and a small residual size-first preference when colour alone identifies the target. A production study shows that speakers often resolve reference with one adjective, so adjective selection and utterance length can pre-empt an ordering decision. We compare matched Rational Speech Act models over fifteen completed responses. After controlling participant-specific variation in stable order expectations, plan-guided incremental production predicts responses better than global and fully incremental alternatives. Its advantage spans adjective selection, length, adjective set, and initial adjective. Sequential context updating within hierarchical semantic composition is predictively neutral in the fitted data; controlled simulation identifies conditions under which it can generate an order asymmetry. The results support plan-guided incremental production as an account of completed utterance probabilities and leave the time course of planning open.}
-
-\keywords{adjective ordering, reference production, Rational Speech Act, incremental production, Bayesian cognitive modelling}
+\author[1]{Hening Wang}
+\author[1]{Fabian Schlotterbeck}
+\author[1]{Michael Franke}
+\affil[1]{Department of General Linguistics, University of T\"ubingen}
+\date{}
 
 % =============================================================================
 \begin{document}
 \maketitle
+
+\begin{abstract}
+Adjective ordering must reconcile stable order expectations with the usefulness of properties in the current scene.
+Theoretical accounts locate communicative efficiency in two directions: hierarchical semantic composition interprets noun-adjacent modifiers before outer modifiers, whereas surface production makes linearly earlier information available first.
+We test how these pressures are expressed in explicit order judgements and in the full distribution of produced utterances.
+Two German slider studies show a replicated context gradient and a small residual size-first preference when colour alone identifies the target.
+A production study shows that speakers often resolve reference with one adjective, so adjective selection and utterance length can pre-empt an ordering decision.
+We compare matched Rational Speech Act models over fifteen completed responses.
+After controlling participant-specific variation in stable order expectations, plan-guided incremental production predicts responses better than global and fully incremental alternatives.
+Its advantage spans adjective selection, length, adjective set, and initial adjective.
+Sequential context updating within hierarchical semantic composition is predictively neutral in the fitted data; controlled simulation identifies conditions under which it can generate an order asymmetry.
+The results support plan-guided incremental production as an account of completed utterance probabilities and leave the time course of planning open.
+
+\noindent\textbf{Keywords:} adjective ordering, reference production, Rational Speech Act, incremental production, Bayesian cognitive modelling
+\end{abstract}
 
 
 % =============================================================================
@@ -142,8 +201,9 @@ Controlled simulations identify conditions under which sequential context updati
 The remainder of the paper is structured as follows.\
 \Cref{sec:background} preserves the two directional accounts of communicative efficiency and relates them to adjective selection and completed-response modelling.\
 \Cref{sec:experiments} reports the behavioural studies.\
-\Cref{sec:model,sec:modelcomparison} introduce the production model and estimate where prediction is strongest along the global-to-incremental range.\
-\Cref{sec:simulation} evaluates the fitted and generative roles of sequential context updating within hierarchical semantic composition, and \Cref{sec:discussion} considers the implications and limits of the findings.\
+\Cref{sec:model} defines the formal framework for the complete production distribution.\
+\Cref{sec:modelcomparison} introduces the matched comparisons, answers the two computational questions in the fitted production data, and examines the best-predicting model.\
+\Cref{sec:simulation} evaluates when sequential context updating within hierarchical semantic composition is sufficient to generate an order asymmetry, and \Cref{sec:discussion} considers the implications and limits of the findings.\
 
 \begin{figure}[!t]
   \centering
@@ -203,6 +263,11 @@ From this perspective, word order matters because it determines how the listener
 Referential usefulness also acts before an ordering choice becomes observable.
 Models of reference planning propose that the contrast set available to the speaker shapes which properties are selected for mention \citep{fukumura2010use,van2019conceptualization}.
 Perceptual or partner uncertainty can encourage additional, semantically redundant material, and an early redundant modifier can still facilitate visual search \citep{rubio2016redundant,rubio2019overinformative,degen2020redundancy}.
+At the maximal end of the response space, producing all three available adjectives has at least two plausible sources.
+Speaker-internal accounts of reference production, often termed egocentric, propose that perceptually accessible properties can be encoded before the speaker has completed the search for a minimally sufficient description, reducing the planning required to decide which activated property to omit \citep{pechmann1989incremental,engelhardt2006speakers}.
+Audience-oriented accounts assign the additional material a cooperative role: redundant properties can guide visual search and hedge uncertainty about which cue the listener will use \citep{rubio2016redundant,rubio2019overinformative,degen2020redundancy,tourtouri2021rational}.
+In a shared visual scene, these routes can converge because a property that is easy for the speaker to retrieve may also help the listener identify the target.
+The completed utterance alone therefore leaves the source of a maximal description unresolved.
 A one-adjective utterance can resolve reference without creating an order contrast.
 Slider ratings hold adjective selection and utterance length fixed by presenting two complete orders.
 They establish an explicit ordering preference and leave open how often production reaches that choice.
@@ -235,20 +300,20 @@ A separate simulation asks when sequential context updating within hierarchical 
 \label{sec:experiments}
 % =============================================================================
 
-The three studies expose different parts of the same empirical problem.
-Studies~1a and (HW: its direct replication 1b) ask participants to compare two completed size--colour orders directly.
-Study~2 instead elicits an utterance and therefore reveals whether speakers mention size, colour, or form, how many adjectives they produce, and only then how selected adjectives are ordered.
-The tasks can converge in their sensitivity to referential context without measuring the same behavioural construct.
+The three studies expose different aspects of the same empirical problem.
+Studies~1a and (HW: its direct replication 1b) ask participants to compare two completed size--colour orders directly (HW: using sliders).
+Study~2 instead elicits an utterance via direct production and therefore reveals (HW: richer structure of adjective use in referential communication under our experimental setting of adjective ordering, adjective selection and redundant use of adjectives) (DELETE:whether speakers mention size, colour, or form, how many adjectives they produce, and only then how selected adjectives are ordered).
+The two experiments are complementary in the sense of ...
+Throughout experiments, we carefully control the relative communicative efficiency between size and color in a specific referential szene, as well as the overall discriminability of size adjetive through blurring the gap between comparison class.
+Comparing the two tasks lets us ask whether the same context manipulations affect both direct judgments between competing orders and speakers' own adjective choices that ordering is conditional on.
 
-The slider studies test whether a size-first preference is graded by referential usefulness and whether a small residual preference remains when colour alone identifies the referent.
-The size-discriminability manipulation supplies a secondary display-level diagnostic, but it is not treated as a direct manipulation of lexical subjectivity.
-The production study tests how context and visual size reliability affect adjective selection, utterance length, initial adjective, and order conditional on producing the same adjective set.
 
-\subsection{Shared Method}
+
+\subsection{General Method shared between experiments}
 
 \subsubsection{Design}
 
-The three studies shared the same basic referential design.
+The three studies shared the same basic factorial design.
 The response format differed across experiments.
 The visual displays and target-definition logic were shared.
 On every critical trial, participants saw a six-object display with one framed target.
@@ -263,7 +328,7 @@ High size-discriminability displays used larger target--competitor gaps, making 
 Low size-discriminability displays used smaller gaps, making size a less reliable cue.
 This factor was manipulated between participants so that each participant experienced a consistent level of visual size contrast throughout the task (\Cref{fig:design}).
 
-\begin{figure}[ht]
+\begin{figure}[H]
   \centering
   \begin{minipage}[c]{0.42\textwidth}
     \textbf{A}\par\vspace{0.4em}
@@ -624,155 +689,215 @@ This comparison asks whether recomputing the size comparison class adds predicti
 A separate simulation asks when the same operation is sufficient to create an order asymmetry across a broader range of contexts.
 The threshold construction and further semantic details appear in \Cref{sec:appendix:model-specification,sec:appendix:semantic-details}.
 
-\subsection{Matched Comparisons and Claim Scope}
-\label{sec:model:development}
-
-Each final comparison varies one theoretically relevant component and holds the remaining model structure constant.
-The production comparison evaluates global, plan-guided, and fully incremental production with the same semantics, response space, task link, and participant structure.
-Stable order expectations vary across participants, allowing the comparison to isolate the additional contribution of successive adjective choices.
-Participant-specific variation in that contribution and participant-specific variation in stable order expectations are empirically indistinguishable in the present data.
-We therefore estimate one shared $\kappa$ and treat participant-level planning profiles as outside the identified claim.
-The semantic comparison holds the production account fixed and varies whether hierarchical composition uses a fixed or sequentially updated comparison class.
-Development checks for the task link and other shared model components are reported in the Appendix.
-
-\subsection{Inference and Predictive Target}
-\label{sec:model:inference}
-
-We fit each model to the same 9{,}100 production trials using Bayesian inference in NumPyro \citep{phan2019composable}.
-Approximate leave-one-out prediction compares out-of-sample accuracy for the complete fifteen-response distribution \citep{vehtari2017practical}.
-Because observations are repeated within participants, uncertainty in the central contrasts is additionally aggregated and bootstrapped across participants.
-The predictive target is a held-out completed response from the sampled task population.
-Online planning time remains outside this target.
-
-
 % =============================================================================
-\section{Predictive Evidence for Plan-Guided Production}
+\section{Model Comparison and Predictive Evidence}
 \label{sec:modelcomparison}
 \label{sec:model:extended}
 % =============================================================================
 
-\subsection{Population-Level Architecture}
+Section~4 specified a linking model from hierarchical semantic composition and successive adjective choices to a probability distribution over completed utterances.
+The analyses address three levels of inference.
+Matched model comparisons test which production and semantic architectures improve prediction.
+The best-fitted model then characterises how its parameters shape completed responses and how these effects vary across participants.
+Parameter estimates locate degrees within an architecture.
+Matched predictive contrasts assess whether the architecture earns predictive accuracy.
+
+\subsection{Inference Setup}
+\label{sec:model:development}
+\label{sec:model:inference}
+
+We fit each model to the same 9{,}100 production trials from 113 participants using Bayesian inference in NumPyro \citep{phan2019composable}.
+Each likelihood evaluation scores all fifteen completed utterances and performs the required semantic composition and prefix-level normalisation.
+To make this exact calculation feasible, we precomputed trial-independent utterance and prefix structures, vectorised and compiled the listener and speaker computations in JAX, and ran four NUTS chains on a GPU.
+Figure~\ref{fig:production-inference-plate} separates fixed theoretical choices, estimated parameters, participant variation, and observed responses.
+The fixed variables $A$ and $S$ index production architecture and semantic regime.
+For participant $i$ on trial $t$, the model maps the display and target $X_{it}$ and the stable-order score $\Omega(u)$ to a probability $\pi_{it}(u)$ over the fifteen possible utterances, from which the observed response $y_{it}$ is drawn.
+The vector $\boldsymbol\lambda$ collects the shared task-link coefficients for adjective selection and utterance length.
+The participant parameters $\alpha_i$, $\kappa_i$, and $\beta_i$ govern pragmatic optimality, successive adjective choice, and stable order expectations.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.97\textwidth]{production_inference_plate.pdf}
+  \caption{Formal plate for the final joint hierarchical model and the restrictions used in the matched comparisons.
+  Solid circles represent estimated quantities, squares represent fixed model or trial inputs, the double circle represents the deterministic utterance distribution, and the shaded circle represents the observed response.
+  The dashed $\kappa$ hierarchy is activated only in the final plan-guided refinement.}
+  \label{fig:production-inference-plate}
+\end{figure}
+
+Higher $\alpha_i$ increases sensitivity to listener success and concentrates probability on higher-utility responses.
+The parameter $\kappa_i$ controls how strongly competition among the adjectives available after an emerging prefix contributes to a completed utterance.
+Its endpoints are global production at $\kappa=0$ and fully incremental production at $\kappa=1$.
+Higher $\beta_i$ increases the influence of the stable-order score $\Omega(u)$.
+The task link includes support for a sufficient one-adjective response, task-conditioned form use, visual reliability, and a shared cost for three-adjective utterances.
+The probability of a three-adjective utterance therefore reflects its accumulated referential value and salience, the shared three-adjective cost, and the participant's values of $\alpha_i$, $\kappa_i$, and $\beta_i$.
+These quantities identify how the fitted model distributes maximal utterances while remaining agnostic about the cognitive source of redundant production.
+
+The matched $3\times2$ comparison provides two architecture-level tests.
+For production, $A$ selects global, plan-guided, or fully incremental production by fixing $\kappa=0$, estimating one shared $\kappa$, or fixing $\kappa=1$.
+The plan-guided-minus-endpoints contrast tests whether allowing an intermediate contribution from successive adjective choices improves prediction.
+For hierarchical semantic composition, $S$ selects context-fixed semantics or sequential context updating.
+The updating-minus-fixed contrast tests whether recomputing the interpretation of size after the noun-adjacent adjective improves prediction.
+All six models share the same response space, task link, semantic parameters, and participant hierarchies for $\alpha_i$ and $\beta_i$.
+These controls isolate the predictive contribution of each proposed direction of communicative efficiency.
+
+The final refinement is confined to plan-guided production.
+It replaces the shared $\kappa$ with a population distribution over participant-specific successive-choice weights $\kappa_i$ and retains the existing hierarchies for $\alpha_i$ and $\beta_i$.
+Its predictive comparison tests whether participant variation in successive adjective choice is required.
+The population location $\mu_{\kappa}$ and scale $\tau_{\kappa}$ then describe where participants lie between the global and fully incremental endpoints and how widely they vary.
+Section~5.2 reports the matched architecture tests, Section~5.3 evaluates the best-fitted refinement and its absolute adequacy, and Section~5.4 localises its gains across utterances and participants.
+
+Approximate leave-one-out prediction compares out-of-sample accuracy for the complete fifteen-response distribution \citep{vehtari2017practical}.
+The pointwise score vectors use the same trial ordering and response support.
+Because observations are repeated within participants, paired score contributions are first summed within participant.
+A participant-level Bayesian bootstrap then assigns Dirichlet weights to the 113 participant contributions over 200{,}000 draws.
+Reported uncertainty comprises 95\% credible intervals, posterior probabilities for directional contrasts, and posterior probabilities that semantic effects fall within the predefined $\pm4$-ELPD region of practical equivalence.
+The predictive target is an additional completed response from a sampled participant, with that participant's remaining trials available to estimate their participant-specific parameters.
+Online planning time remains outside this target.
+
+\subsection{Model-Comparison Results}
 \label{sec:architecture-comparison}
 
-The final comparison asks whether the production distribution is better predicted by global, fully incremental, or plan-guided incremental production.
-All three models use the same listener, response space, stable-order control, task link, and participant structure.
-The comparison varies the contribution of successive adjective choices to the probability of the completed utterance.
-The remaining components are held constant.
+The matched comparisons quantify the predictive contribution of each proposed direction of communicative efficiency to completed utterances.
 
-Plan-guided incremental production exceeded global production by $229.605$ ELPD units, with participant-clustered $SE=81.097$ and a participant-bootstrap 95\% interval of $[58.765,376.160]$.
-It exceeded fully incremental production by $422.387$ ELPD units, with participant-clustered $SE=108.714$ and a participant-bootstrap 95\% interval of $[221.275,647.382]$.
-The direct comparison between the two endpoints was unresolved: fully incremental minus global production was $-192.782$ ELPD, with a participant-bootstrap 95\% interval of $[-553.149,108.336]$.
-The model comparison therefore favours an account in which completed utterance probabilities reflect both an advance utterance plan and competition among successive adjective choices.
-
-\subsection{Contribution of Successive Adjective Choices}
-\label{sec:kappa-result}
-
-The estimated contribution of successive adjective choices was intermediate between the global and fully incremental endpoints:
+\paragraph{Production architecture.}
+Plan-guided production exceeded the average of the global and fully incremental endpoints by $326.280$ ELPD, with a 95\% credible interval of $[241.632,417.363]$ and posterior probability above zero greater than $.999$.
+Its marginal predictive accuracy was the highest of the three architectures in $.991$ of the Bayesian-bootstrap draws.
+The endpoint contrast remained uncertain: fully incremental minus global production was $-192.079$ ELPD, with a 95\% credible interval of $[-573.371,84.802]$ and posterior probability above zero of $.106$.
+Within the matched plan-guided model, the shared successive-choice weight was
 \begin{equation}
-  \kappa=.4472,
-  \qquad 95\%~\text{credible interval}=[.4036,.4897].
+  \kappa=.447,
+  \qquad 95\%~\text{credible interval}=[.404,.490].
   \label{eq:kappa-result}
 \end{equation}
-The posterior lies between the two endpoint accounts under the final specification.
-The precise value remains conditional on the listener representation, stable-order control, and task link.
-Its scientific interpretation is therefore qualitative: successive choices contribute to the completed production distribution, and an advance utterance plan continues to constrain that distribution.
+The matched comparison supports completed utterance probabilities shaped jointly by the advance utterance plan and competition among successive adjective choices.
 
-\subsection{Posterior-Predictive Signature of Plan-Guided Production}
+\paragraph{Hierarchical semantic composition.}
+Sequential context updating minus context-fixed semantics averaged $-.229$ ELPD across the three production architectures, with a 95\% credible interval of $[-1.271,.808]$.
+Its posterior probability of falling within the predefined $\pm4$-ELPD region was greater than $.999$.
+The architecture-specific effects were likewise small: $-1.121$ ELPD for global production, $.149$ for plan-guided production, and $.285$ for fully incremental production.
+The posterior probability that all three effects fell within a four-ELPD range was $.993$.
+Under the production constants and actual size--colour displays, recomputing the size threshold changed the target's graded size value and the literal listener's target probability by less than $.001$ on average.
+The fitted materials therefore place the model in a regime where sequential context updating has extremely small semantic consequences.
+The simulation in \Cref{sec:simulation} evaluates the same operation under conditions in which its semantic consequences are larger.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{production_architecture_comparison.pdf}
+  \caption{Matched comparisons of production architecture and sequential context updating.
+  Panel A reports predictive loss for all six matched models relative to the plan-guided model with sequential context updating; lower values indicate better leave-one-out prediction.
+  Panel B places the shared successive-choice weight $\kappa$ between the global and fully incremental endpoints.
+  Panel C shows updating-minus-fixed ELPD for each production architecture and their average.
+  Intervals are 95\% credible intervals from the participant-level Bayesian bootstrap; the solid vertical line in Panel C marks zero, and the dashed lines mark the predefined $\pm4$-ELPD practical-equivalence boundaries.}
+  \label{fig:production-architecture-results}
+\end{figure}
+
+\subsection{The Best-Fitted Plan-Guided Model}
 \label{sec:architecture-ppc}
 
-\Cref{fig:production-architecture-ppc} evaluates how well the plan-guided model reproduces the full production distribution.
-Panel A compares the observed and posterior-predicted proportions of the most frequent completed utterances in the size--colour trials, where the central ordering contrast arises.
-The model captures the broad shifts between one- and multi-adjective utterances across conditions.
-Several cells retain visible discrepancies.
-Panel B extends the check to all fifteen completed utterances across the three adjective families, referential contexts, and size-discriminability conditions, with uncertainty shown for both observed and predicted proportions.
-The correlation was $r=.911$ ($p<.001$).
+The matched comparison identifies the production-architecture advantage with equal participant structure across models.
+The final refinement tests whether the contribution of successive adjective choices varies across participants within the plan-guided architecture.
+Adding a participant hierarchy for $\kappa_i$ gained $351.425$ ELPD under context-fixed semantics, with a 95\% credible interval of $[239.353,503.120]$, and $352.150$ ELPD under sequential context updating, with a 95\% credible interval of $[240.022,504.081]$.
+Both posterior probabilities above zero were greater than $.999$.
+The sequentially updating model had the highest numerical ELPD.
+The context-fixed version was lower by only $.875$ ELPD, with a 95\% credible interval of $[-.605,2.357]$ and posterior probability of practical equivalence of $.9999$.
+Subsequent diagnostics use the sequentially updating model as the best-fitted representative and retain the semantic equivalence conclusion from the matched comparison.
+
+The population location of its participant-specific successive-choice weights was intermediate between the global and fully incremental endpoints, $\mu_{\kappa}=.491$, with a 95\% credible interval of $[.337,.643]$.
+The participant distribution was broad, with an estimated logit-scale standard deviation of $2.822$, 95\% credible interval $[2.353,3.329]$.
+The model had an absolute ELPD of $-13{,}189.217$, zero divergences, maximum $\widehat R=1.0064$, no observation with Pareto $k>.7$, and minimum BFMI of $.707$.
+
+\Cref{fig:production-architecture-ppc} evaluates its adequacy for the complete observed distribution.
+Panel A compares frequent completed utterances in the size--colour trials, where the central ordering contrast arises.
+Panel B extends the check to all fifteen completed utterances across the three adjective families, referential contexts, and size-discriminability conditions.
+Across these 270 cells, the posterior predictions correlated with the observed proportions at $r=.911$ and $R^2=.830$ ($p<.001$).
 The $p$-value is descriptive because cells from the same condition form a compositional distribution and are therefore dependent.
-Panel C returns to two outcomes from the empirical analysis: size-first order conditional on producing the fixed size--colour adjective set, and redundant adjective use across referential contexts.
-The posterior-predictive check assesses absolute descriptive adequacy.
-The leave-one-out comparison evaluates the relative predictive performance of the three architectures.
+Panel C focuses on size-initial responses and redundant adjective use across referential contexts.
+The model captures the broad shifts between one- and multi-adjective utterances across conditions, with visible discrepancies remaining in several cells.
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.95\textwidth]{production_architecture_ppc.pdf}
-  \caption{Posterior-predictive adequacy of the plan-guided model.
+  \caption{Posterior-predictive adequacy of the best-fitted plan-guided model.
   Panel A shows observed and posterior-predicted proportions with their respective uncertainty intervals for frequent size--colour utterances.
   Panel B compares all 270 cells; horizontal intervals show participant-bootstrap uncertainty in the observations, vertical intervals show 95\% posterior-predictive uncertainty, and the dashed line marks equality.
-  Panel C compares observed and posterior-predicted size-first order conditional on the fixed size--colour adjective set in both-necessary trials, collapsed across size discriminability, and redundant adjective use across the referential contexts and size-discriminability conditions used in the empirical analysis.
-  The correlation is descriptive because cells within a condition are dependent.}
+  Panel C compares observed and posterior-predicted size-initial responses and redundant adjective use, with referential context on the vertical axis and size discriminability in facet rows.
+  Intervals in Panel C show participant-bootstrap 95\% intervals for the observed proportions and 95\% posterior-predictive intervals for the model predictions.}
   \label{fig:production-architecture-ppc}
 \end{figure}
 
-\subsection{Where Plan-Guided Production Improves Prediction}
+\subsection{Mechanism and Participant Variation}
 \label{sec:architecture-residuals}
-
-\Cref{fig:production-architecture-results} combines the relative predictive comparison with a magnified view of three theory-relevant production outcomes.
-Panel A shows the leave-one-out predictive loss of the global and fully incremental endpoints relative to plan-guided production, and Panel B locates the posterior estimate of $\kappa$ between these endpoints.
-Panel C expresses prediction errors in percentage points for a colour-initial response, a two-adjective response, and a completed form--colour utterance.
-These outcomes respectively illustrate initial adjective choice, utterance length when one property is sufficient, and the probability of a particular multi-adjective order.
-The expanded scale makes the small differences among architectures visible while preserving their absolute magnitude.
-In each example, plan-guided production lies closer to the observed proportion than either endpoint, showing how an intermediate contribution from successive choices can improve several stages of the production distribution.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.95\textwidth]{production_architecture_results.pdf}
-  \caption{Predictive evidence and residual signature of plan-guided production.
-  Panel A reports leave-one-out predictive loss relative to plan-guided production; intervals are participant-bootstrap 95\% intervals.
-  Panel B places the posterior estimate of $\kappa$ between the global and fully incremental endpoints; the interval is a 95\% credible interval.
-  Panel C shows prediction minus observation in percentage points for three production outcomes selected to represent initial adjective choice, utterance length, and a completed multi-adjective utterance.
-  The residual axis is expanded to show the small relative differences among the three architectures.}
-  \label{fig:production-architecture-results}
-\end{figure}
-
-\subsection{Locating Participant Variation}
 \label{sec:participant-variation}
 
-The population-level comparison estimates one shared $\kappa$ while allowing stable order expectations to vary across participants.
-We examined the location of participant variation through three matched hierarchical extensions.
-Participant-specific $\kappa_i$ allows speakers to differ in how strongly successive adjective choices influence the probability of a completed utterance.
-Participant-specific stable-order weighting allows speakers to differ in their conventional order expectations.
-Participant-specific length bias allows speakers to differ in their general tendency to continue producing modifiers.
+\paragraph{Architecture-level response patterns.}
+Qualitative diagnostics localise the distributional patterns that distinguish plan-guided production from its matched endpoints.
+\Cref{fig:production-architecture-residuals} shows initial-adjective cells in which the largest difference among architecture predictions is at least 6.7 percentage points and traces these differences into completed utterances.
+The largest separations occur in form-involving trials, where colour and form compete for the initial position.
+Colour-initial responses contribute $289.682$ of the matched plan-guided model's $326.280$-ELPD advantage over the average endpoint, or $88.8\%$ of the summed pointwise contrast.
+Across the displayed cells, plan-guided production often lies between the global and fully incremental endpoints.
 
-The hierarchical $\kappa_i$ model and the participant-specific stable-order model yield nearly identical predictive gains over the shared model.
-Their direct difference, hierarchical $\kappa_i$ minus participant-specific stable-order weighting, was $-2.184$ ELPD, with participant-bootstrap interval $[-154.051,137.077]$.
-Participant-specific length bias added essentially no predictive accuracy.
-The hierarchical $\kappa_i$ fit also missed the registered diagnostic thresholds, with maximum $\widehat R=1.0133$ and two observations with Pareto $k>.7$.
-Completed utterances therefore reveal substantial participant variation.
-Its source remains unresolved between successive adjective choice and stable order expectations.
-The final specification uses participant-specific stable-order weighting as the control and estimates one population-level value of $\kappa$; its fit passed the registered diagnostics.
-The resulting population estimate supports plan-guided production after stable order variation is controlled.
-Individual planning profiles remain outside the identified claim.
-
-\Cref{fig:production-participant-variation} shows where this unresolved participant variation appears in the response distribution.
-Panel A displays posterior means and 95\% credible intervals for participant-specific $\kappa_i$ and stable-order weights in the two matched hierarchical models.
-Panel B shows that the two forms of participant variation often improve prediction for the same participants.
-Participants at the extremes can favour different parameterisations.
-For an exploratory residual description, Panels C and D divide participants by the upper and lower 15\% of their participant-level predictive difference between these models.
-Panel C shows the participant observations underlying these response profiles together with the three group means.
-The group relatively favouring participant-specific successive choice produced fewer one-adjective responses and more three-adjective responses.
-The group relatively favouring stable-order variation showed a lower rate of size-initial responses in multi-adjective utterances.
-Panel D localises the corresponding log-predictive differences across utterance length and initial adjective on one signed scale.
-Positive values indicate higher predictive accuracy for participant-specific successive choice, and negative values indicate higher predictive accuracy for participant-specific stable-order weighting.
-These groups are defined and described using the same responses, so they identify response patterns associated with the residual difference.
-Stable participant strategies remain unidentified.
+Successive normalisation produces this pattern in the model.
+The global speaker evaluates the completed utterance distribution.
+The fully incremental speaker also normalizes among the adjectives available after each emerging prefix.
+Different opening adjectives create different sets of plausible continuations, so competition at later positions redistributes probability among the completed paths that share each initial adjective.
+This redistribution has larger consequences when several properties remain viable, especially when colour and form compete in form-involving displays.
+The plan-guided speaker gives this prefix-specific competition a participant-specific weight, preserving constraints from the completed utterance and allowing continuation alternatives to reshape its surface realisation to different degrees across participants.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.95\textwidth]{production_participant_variation.pdf}
-  \caption{Participant variation and its unresolved source.
-  Panel A shows participant-level posterior means and 95\% credible intervals, and Panel B compares leave-one-out predictive gains over the shared model.
-  Panel C shows observed participant proportions as pale points and group means as larger symbols for the lower 15\%, middle 70\%, and upper 15\% of the contrast between hierarchical models.
-  Panel D shows the mean leave-one-out log-score difference for the same groups across response categories; horizontal intervals are participant-level 95\% confidence intervals.
-  Positive values favour participant-specific successive-choice contribution, and negative values favour participant-specific stable-order weighting.
-  The $\kappa_i$ fit missed the registered diagnostic thresholds, and the groups provide an exploratory residual description.}
-  \label{fig:production-participant-variation}
+  \includegraphics[width=0.95\textwidth]{production_architecture_residuals.pdf}
+  \caption{Qualitative comparison of the matched production architectures.
+  Panel A shows initial-adjective cells for which the maximum difference among model predictions is at least 6.7 percentage points.
+  Panel B shows completed utterances with differences of at least five percentage points within the three experimental conditions with the largest pairwise total-variation distance among model predictions.
+  Response labels use S for size, C for colour, and F for form.
+  Intervals show participant-bootstrap 95\% intervals for observed proportions and 95\% posterior-predictive intervals for model predictions.
+  Horizontal scales vary across conditions to make the comparatively small differences among production architectures visible.
+  The displayed cells are descriptive diagnostics; the held-out comparison in \Cref{fig:production-architecture-results} provides the evidence for relative predictive accuracy.}
+  \label{fig:production-architecture-residuals}
 \end{figure}
 
-\subsection{Task Link and Claim Scope}
-\label{sec:production-scope}
+\paragraph{Participant variation.}
+The gain from participant-specific successive-choice weights also has a clear distributional location.
+Participants whose posterior mean $\kappa_i$ lay farther from the shared $\kappa=.448$ gained more participant-level ELPD from the hierarchy.
+The observed correlation was $r=.606$, and the participant-level Bayesian-bootstrap mean was $.627$, with a 95\% credible interval of $[.512,.756]$ and posterior probability above zero greater than $.999$.
+At the response level, the hierarchy gained $214.577$ ELPD on two-adjective utterances, 95\% credible interval $[151.759,302.283]$, and $177.423$ ELPD on three-adjective utterances, 95\% credible interval $[97.047,295.251]$.
+Its contribution to one-adjective utterances was $-39.849$ ELPD, with a 95\% credible interval of $[-64.418,-16.247]$.
+The participant hierarchy therefore improves prediction where speakers traverse multi-adjective paths and successive alternatives can redistribute probability among completed utterances.
 
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{production_kappa_hierarchy_diagnostics.pdf}
+  \caption{Where participant-specific successive-choice weights improve prediction.
+  Panel A relates each participant's leave-one-out gain from the $\kappa_i$ hierarchy to their posterior mean $\kappa_i$; the dashed line marks the shared-$\kappa$ estimate and the curve is a descriptive smooth.
+  Panel B decomposes the total ELPD gain by observed response length.
+  Intervals in Panel B are 95\% credible intervals from the participant-level Bayesian bootstrap.
+  Both panels use the best-fitted plan-guided model and its otherwise matched shared-$\kappa$ ablation to localise the held-out model contrast.}
+  \label{fig:production-kappa-hierarchy}
+\end{figure}
+
+The joint participant hierarchy includes variation in pragmatic optimality $\alpha_i$ and stable-order weight $\beta_i$ alongside variation in $\kappa_i$.
+Posterior-predictive contrasts between participants in the lower and upper tails of each parameter localise their fitted response signatures.
+Higher $\alpha_i$ concentrates probability on a sufficient single adjective, especially S in size-sufficient displays and F in form-sufficient displays.
+Higher $\kappa_i$ mainly redistributes probability among form-involving responses whose continuation sets differ after the first adjective.
+Higher $\beta_i$ shifts probability from single-adjective responses towards longer responses that follow the stable order score.
+The posterior participant-level association between $\kappa_i$ and $\beta_i$ was positive and moderate, with mean $r=.291$ and 95\% credible interval $[.200,.376]$.
+The associations of $\alpha_i$ with $\kappa_i$ and $\beta_i$ were centred near zero.
+These tail contrasts are derived from the same joint fit and clarify the distributional interpretation of the parameters; independent observations across tasks or sessions would be required to identify corresponding participant strategies.
+
+Maximal three-adjective utterances accounted for 1{,}633 of the 9{,}100 modelled responses, or 17.9\%.
+Within the fitted model, these responses balance accumulated referential value and salience against a shared three-adjective cost, with $\alpha_i$, $\kappa_i$, and $\beta_i$ determining how that balance is expressed for each participant.
+The predictive gain on three-adjective utterances shows that participant variation in successive adjective choice helps locate these responses in the observed distribution.
+\FloatBarrier
+
+\paragraph{Claim scope.}
+\label{sec:production-scope}
+The architecture and hierarchy contrasts assess prediction of completed utterances.
+The localisation plots use the same fitted data, and their evidential role is to locate the already established held-out gains within the response distribution.
 A reduced task link preserved the relative predictive advantage of plan-guided production and substantially reduced absolute predictive accuracy.
 The production account therefore requires both a model of how utterances are evaluated and a task link for adjective selection and length.
 The full model-development and participant-identification analyses appear in \Cref{sec:appendix:auxiliary-models,sec:appendix:participant-audit}.
+Individual online planning profiles remain outside the evidence supplied by these data.
+\FloatBarrier
 
 
 % =============================================================================
@@ -780,30 +905,15 @@ The full model-development and participant-identification analyses appear in \Cr
 \label{sec:simulation}
 % =============================================================================
 
-\subsection{Predictive Contribution in the Production Data}
-\label{sec:semantic-null}
-
-The third research question asks whether sequential context updating within hierarchical semantic composition contributes to the production distribution.
-Both models preserve the same inner-to-outer semantic hierarchy.
-They differ in whether the interpretation of size remains fixed in the original scene or is recomputed after the noun-adjacent adjective restricts the relevant context.
-
-The matched comparison found effectively equal predictive accuracy: updating minus fixed semantics was $-0.26$ ELPD, with participant-bootstrap interval $[-0.97,0.44]$.
-Under the production constants and actual size--colour displays, recomputing the size threshold after a colour restriction changed the target's graded size value and the literal listener's target probability by less than $.001$ on average.
-The fitted materials therefore place the model in a regime where sequential context updating has extremely small semantic consequences.
-
-The formal inner-to-outer hierarchy is retained in both models.
-The predictive result concerns the additional proposal that the comparison class for size is dynamically recomputed along that hierarchy.
-The simulation evaluates the same proposal under conditions in which its semantic consequences are larger.
-
-\subsection{When Can Sequential Context Updating Create an Order Asymmetry?}
+\subsection{Conditions for an Order Asymmetry}
 \label{sec:simulation:boundary}
 
 The simulation removes the fitted stable-order component, visual-salience calibration, task link, and participant variation.
 Both surface orders are interpreted by a hierarchically compositional listener that combines the noun-adjacent adjective first.
-We cross global versus fully incremental production with fixed versus sequentially updated comparison classes over a broad grid of context sizes, size distributions, colour reliability, threshold selectivity, and perceptual blur.
+The simulation crosses global and fully incremental production with context-fixed semantics and sequential context updating over a broad grid of context sizes, size distributions, colour reliability, threshold selectivity, and perceptual blur.
 Full grid details appear in \Cref{sec:appendix:sim-params}.
 
-For each simulated context, we compute the pragmatic listener's target probability after \emph{big blue} and after \emph{blue big}.
+For each simulated context, the analysis computes the pragmatic listener's target probability after \emph{big blue} and after \emph{blue big}.
 The size-first advantage is
 \begin{equation}
   \Delta_{\mathrm{SF}}
@@ -813,7 +923,7 @@ The size-first advantage is
 \end{equation}
 Positive values indicate a higher model-assigned target probability for the size-first order.
 
-\begin{figure}[ht]
+\begin{figure}[H]
   \centering
   \includegraphics[width=0.90\textwidth]{sim_advantage_nobj.pdf}
   \caption{Boundary simulation of the size-first advantage $\Delta_{\mathrm{SF}}$ as a function of context size and contextual spread, faceted by production account and semantic regime. Positive values indicate a higher model-assigned target probability for the size-first order. The figure characterises model behaviour under simulated assumptions and leaves participants' use of the mechanism open.}
@@ -821,9 +931,9 @@ Positive values indicate a higher model-assigned target probability for the size
 \end{figure}
 
 Sequential context updating produces a positive size-first advantage across much of the high-reliability simulation grid, including under global production.
-The fixed-context global model assigns the same target probability to the two orders.
+The global context-fixed model assigns the same target probability to the two orders.
 Fully incremental production changes the shape of the asymmetry and can yield a colour-first advantage when size is weak and the context is small.
-The simulation therefore establishes generative sufficiency and boundary conditions.
+The simulation identifies generative sufficiency and its boundary conditions.
 Its evidential target is the behaviour generated by the model under controlled assumptions.
 
 
@@ -839,28 +949,59 @@ Speakers often select one sufficient adjective, and visual size reliability prim
 On those trials, selection and utterance length determine whether a multi-adjective ordering decision arises at all.
 
 The final production comparison evaluates that complete response space.
-After participant-specific variation in stable order expectations is controlled, plan-guided incremental production outpredicts both global and fully incremental production.
-The estimated contribution of successive adjective choices lies between these endpoints, and the predictive gains extend across adjective families, response lengths, adjective sets, and initial adjectives.
-This is the paper's central computational result.
-It concerns the probability distribution over completed utterances and leaves the temporal implementation of planning open.
+With participant-specific variation in pragmatic optimality and stable order expectations controlled, plan-guided incremental production outpredicts both global and fully incremental production.
+The population location of the successive-choice weights lies between these endpoints, and participants vary widely around it.
+The matched architecture advantage is concentrated in colour-initial responses, and the participant hierarchy gains predictive accuracy primarily on multi-adjective utterances.
+The central computational result concerns the probability distribution over completed utterances and leaves the temporal implementation of planning open.
 
 Stable order expectations enter through a German language-model residual whose influence varies across participants.
 The model treats this conventional size-first tendency as a controlled source of variation.
 Accurate prediction of adjective selection and length additionally requires a task link for salience, adjective sufficiency, form use, visual reliability, and utterance length.
-A reduced task link preserves the relative advantage of plan-guided production and loses substantial absolute predictive accuracy.
-Plan-guided production therefore operates within a broader account of the task decisions that make an adjective order observable.
+A reduced task link preserves the relative advantage of plan-guided production and incurs a substantial loss in absolute predictive accuracy.
+Plan-guided production operates within a broader account of the task decisions that make an adjective order observable.
 
 The two directional accounts of communicative efficiency receive different forms of evidence.
-Sequential context updating within hierarchical semantic composition makes no practically meaningful predictive contribution in the present materials.
+The predictive contribution of sequential context updating within hierarchical semantic composition is practically negligible in the present materials.
 Controlled simulation shows that the same operation can create a size-first target-probability advantage when colour is more reliable and the semantic update is less diffuse.
 That result establishes a possible semantic route under the implemented assumptions.
-Participants' use of that route remains open, leaving an empirically identified division of labour between semantics and production beyond the present evidence.
+The fitted predictive gain lies in production architecture, and the simulation establishes generative sufficiency for hierarchical semantic composition.
+Participants' use of the simulated semantic route remains open.
 
-The participant hierarchy yields a second negative identification result.
-Participant-specific planning weights and participant-specific stable-order weights perform indistinguishably.
-The completed responses therefore reveal systematic participant consistency while leaving its source unidentified.
-The final model retains participant order variation as an auxiliary control and one shared population $\kappa$.
-Individual planning profiles, stable strategies, and cross-session characteristics remain outside the interpretation.
+\subsection{Participant Variation and Redundant Production}
+
+The participant hierarchy locates individual variation along pragmatic optimality, successive adjective choice, and stable order expectations.
+The cognitive sources of these distributional dimensions remain underdetermined, especially for maximal three-adjective descriptions.
+Egocentric accounts predict redundant production when perceptually accessible properties are encoded early and omitting them would require additional planning \citep{pechmann1989incremental,engelhardt2006speakers}.
+Audience-oriented accounts predict redundant production when additional properties can guide visual search or hedge uncertainty about the cues available to the listener \citep{rubio2016redundant,rubio2019overinformative,degen2020redundancy,tourtouri2021rational}.
+Both pressures can converge on the same completed utterance in a shared visual task.
+Independent manipulations of property accessibility, partner knowledge, and listener uncertainty would be required to distinguish their contributions.
+The participant parameters and response signatures in Section~5 provide distributional targets for these tests.
+
+\subsection{Resource Bounds and Competing Efficiency Pressures}
+
+The production model exposes a computational limit of closed-world RSA models, for which scalability and cognitive boundedness remain general challenges \citep{degen2023rational}.
+With $d$ available adjectives and no repetition, the number of ordered non-empty strings is $|\mathcal U_d|=\sum_{k=1}^{d}d!/(d-k)!$: the present three-adjective vocabulary yields 15 responses, four adjectives yield 64, five yield 325, and ten yield almost ten million.
+Each response must additionally be evaluated across its surface prefixes and possible referents, and sequential context updating can require the interpretation of size to be recomputed after a semantic restriction.
+The present model uses one pragmatic speaker level; its computational burden arises from this exact enumeration, repeated semantic composition, and local normalisation within every Bayesian likelihood evaluation.
+
+Precomputed response and prefix structures, vectorised and compiled JAX operations, GPU execution, and NumPyro inference make exact fitting feasible for the present fifteen-response space.
+The same implementation leaves open how a speaker model should operate when the adjective vocabulary, referential context, and set of possible utterances are substantially larger.
+This boundary matters for cognitive interpretation because computational-level theories are constrained by the resources available to the system that implements them \citep{vanrooij2008tractable}.
+
+A resource-bounded extension could retrieve or sample a limited set of salient utterances, use a top-$k$ or beam approximation to continuation sets, or estimate prefix normalisers through importance sampling.
+These approximations would need to be evaluated against the exact model under controlled computational budgets, using held-out predictive accuracy and the qualitative production-architecture diagnostics as joint criteria.
+Approximation can introduce systematic inferential errors, so preservation of the present fit and parameter interpretation would remain an empirical result \citep{kwisthout2011bayesian}.
+This comparison would connect plan-guided production to resource-rational analysis by asking which approximate computations achieve the highest communicative value for their computational cost \citep{lieder2020resource}.
+
+The competing pressures in the model define a related multi-objective problem.
+Referential success, early informativeness, stable order expectations, utterance length, and computational effort can favour different responses.
+Losses on one objective that accompany gains on another define a \emph{Pareto trade-off}; a weighted RSA utility selects one compromise among these objectives.
+Related information-theoretic work characterises pragmatic reasoning as a trade-off between expected utility and communicative effort \citep{zaslavsky2021rate}.
+The present comparison shows that plan-guided production predicts the observed compromise better than its endpoints.
+Pareto optimality remains untested in the present analyses.
+A resource-bounded comparison could trace a predictive-accuracy--computation frontier and ask whether similar fit can be retained with fewer utterance alternatives or fewer local normalisations.
+
+\subsection{Process and Generalisation}
 
 Hierarchical composition specifies which semantic restriction is computed inside another in a formal representation.
 Plan-guided production specifies how an advance utterance plan and successive surface choices jointly shape completed utterance probabilities.
@@ -872,8 +1013,7 @@ The treatment of form supports prediction, and the stable order component is imp
 Further work can test whether the architecture generalises to freer production, new lexical families, different adjective systems, and designs that independently manipulate lexical subjectivity and perceptual reliability.
 Such extensions should preserve the distinction between response-space prediction, semantic sufficiency, and process identification.
 
-The strongest conclusion is therefore bounded and substantive.
-Adjective order is an outcome of choices about what to mention and how much to say.
+Taken together, the results locate adjective order within choices about what to mention and how much to say.
 Within that response-generation problem, completed utterances are predicted best by plan-guided incremental production, in which an advance utterance plan constrains production while successive adjective choices continue to shape the final response.
 
 
@@ -887,8 +1027,7 @@ The repository will include the deterministic production input, the final global
 Acknowledgements, funding information, author contributions, and competing-interest statements will be finalised with the author team before journal submission.
 
 % =============================================================================
-\bibliographystyle{apacite}
-\bibliography{references}
+\printbibliography
 % =============================================================================
 \appendix
 
@@ -993,7 +1132,7 @@ For production over-informativeness, the descriptive model used the same fixed a
 The two production models converged without singular fits.
 For size-initiality, the planned discriminability contrast was supported in the both-necessary context ($p=.004$) and uncertain in the size- and colour-sufficient contexts ($p=.36$ and $p=.60$).
 For over-informativeness, the corresponding contrast was supported in the size-sufficient context ($p<.001$) and uncertain in the other two contexts ($p=.43$ and $p=.11$).
-The analysis script \texttt{paper/scripts/behavioural\_robustness.R} writes the reported marginal estimates, planned contrasts, likelihood-ratio tests, and convergence checks to four CSV files under \texttt{paper/data/}.
+The analysis script \path{paper/scripts/behavioural_robustness.R} writes the reported marginal estimates, planned contrasts, likelihood-ratio tests, and convergence checks to four CSV files under \path{paper/data/}.
 
 The complementary Bayesian analyses retained these outcome definitions and random-effects structures.
 The slider models used a Gaussian likelihood, correlated participant intercepts and context slopes, $\operatorname{Normal}(0,.30)$ priors on fixed effects, $\operatorname{HalfNormal}(.20)$ priors on participant standard deviations, and a $\operatorname{HalfNormal}(.25)$ prior on residual standard deviation.
@@ -1003,7 +1142,7 @@ Four vectorized chains each provided $1{,}000$ retained draws after $1{,}000$ wa
 All four fits had zero divergences, no maximum-tree-depth hits, $\widehat{R}\leq1.01$, and minimum effective sample sizes above $900$.
 For each posterior draw, posterior-predictive cell expectations were computed for a new participant and, in production, a new item by integrating over the fitted random-effects distributions.
 The planned predictive hypotheses were then evaluated on the rating or response-probability scale.
-The script \texttt{analysis/behavioural\_bayes.py} writes the cell predictions, planned hypothesis contrasts, and inference diagnostics to \texttt{paper/data/behavioural\_bayesian\_predictions.csv}, \texttt{paper/data/behavioural\_bayesian\_hypotheses.csv}, and \texttt{paper/data/behavioural\_bayesian\_diagnostics.csv}.
+The script \path{analysis/behavioural_bayes.py} writes the cell predictions, planned hypothesis contrasts, and inference diagnostics to \path{paper/data/behavioural_bayesian_predictions.csv}, \path{paper/data/behavioural_bayesian_hypotheses.csv}, and \path{paper/data/behavioural_bayesian_diagnostics.csv}.
 
 
 
@@ -1052,7 +1191,7 @@ Stable-order score $\Omega$ & Fixed feature & Relative order expectation within 
 Stable-order weight $\beta_i$ & Estimated, hierarchical & Participant variation in stable order expectation \\
 Salience coefficient & Estimated & Display prominence in candidate utility \\
 Task-link coefficients & Estimated & One-word support, form backup, length and reliability terms \\
-Successive-choice weight $\kappa$ & Estimated in plan-guided production & Shared production parameter \\
+Successive-choice weight $\kappa_i$ & Estimated, hierarchical, in plan-guided production & Participant variation in successive adjective choice \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -1064,23 +1203,24 @@ Successive-choice weight $\kappa$ & Estimated in plan-guided production & Shared
 
 \begin{table}[H]
 \centering
-\caption{Final architecture contrasts after participant-specific stable-order variation is controlled.}
+\caption{Bayesian-bootstrap contrasts for the matched production architectures and the plan-guided participant hierarchy.}
 \label{tab:final-architecture-contrasts}
 \footnotesize
-\begin{tabularx}{\textwidth}{Xrrrr}
+\begin{tabularx}{\textwidth}{Xrrr}
 \toprule
-Contrast & $\Delta$ELPD & Paired SE & Participant-clustered SE & Bootstrap 95\% interval \\
+Contrast & $\Delta$ELPD & 95\% credible interval & $P(\Delta>0)$ \\
 \midrule
-Plan-guided minus global & $229.605$ & $20.900$ & $81.097$ & $[58.765,376.160]$ \\
-Plan-guided minus fully incremental & $422.387$ & $35.615$ & $108.714$ & $[221.275,647.382]$ \\
-Fully incremental minus global & $-192.782$ & \multicolumn{1}{c}{---} & $169.152$ & $[-553.149,108.336]$ \\
+Plan-guided, shared $\kappa$, minus average endpoints & $326.280$ & $[241.632,417.363]$ & $>.999$ \\
+Fully incremental minus global & $-192.079$ & $[-573.371,84.802]$ & $.106$ \\
+Participant $\kappa_i$ hierarchy, context-fixed & $351.425$ & $[239.353,503.120]$ & $>.999$ \\
+Participant $\kappa_i$ hierarchy, updating & $352.150$ & $[240.022,504.081]$ & $>.999$ \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-All three final models used four chains, 1{,}000 warm-up iterations, and 1{,}000 retained draws.
-They had zero divergences, maximum $\widehat R\leq1.006$, minimum BFMI above $.64$, and no observation with Pareto $k>.7$.
-The exact endpoint audit returned maximum probability and log-probability differences of zero when plan-guided production was evaluated at $\kappa=0$ and $\kappa=1$.
+All six models in the matched factorial comparison used four chains, 1{,}000 warm-up iterations, and 1{,}000 retained draws.
+They had zero divergences, maximum $\widehat R<1.007$, minimum BFMI above $.640$, and no observation with Pareto $k>.7$.
+In both semantic regimes, the exact endpoint audit returned maximum probability and log-probability differences of zero when the shared successive-choice weight in plan-guided production was fixed at $\kappa=0$ or $\kappa=1$.
 
 \section{Model-Development Checks}
 \label{sec:appendix:auxiliary-models}
@@ -1106,12 +1246,13 @@ Plan-guided production retained its relative advantage over both endpoints, whil
 \section{Participant Hierarchy Audit}
 \label{sec:appendix:participant-audit}
 
-The participant hierarchy audit compared the shared planning parameter with participant-specific planning, participant-specific length bias, and participant-specific stable-order weighting.
-Participant-specific planning gained $317.301$ ELPD units over the shared model and $317.891$ over participant-specific length bias.
-It differed from participant-specific stable-order weighting by $-2.184$ ELPD units, with participant-bootstrap interval $[-154.051,137.077]$.
-The participant-specific planning model also had maximum $\widehat R=1.0133$, two observations with Pareto $k>.7$, and a failed participant-scale dependence screen.
-The audit therefore leaves participant-specific planning and stable-order heterogeneity unidentified.
-Descriptive correlations between fitted participant parameters and response summaries decode the latent parameter within that fit and provide no independent validation.
+The participant hierarchy audit first fitted separate extensions of the shared-$\kappa$ model.
+That screen showed that participant-specific successive-choice and stable-order variation could absorb similar predictive structure when fitted separately.
+The final joint model estimates pragmatic optimality, successive-choice weight, and stable-order weight simultaneously.
+Relative to the otherwise matched shared-$\kappa$ model, the joint hierarchy gained $351.425$ ELPD under context-fixed semantics, 95\% credible interval $[239.353,503.120]$, and $352.150$ ELPD under sequential context updating, 95\% credible interval $[240.022,504.081]$.
+Its sampler and PSIS diagnostics passed the registered thresholds.
+The participant-level posterior correlations were $.001$ for $\alpha_i$ with $\kappa_i$, $-.080$ for $\alpha_i$ with $\beta_i$, and $.291$ for $\kappa_i$ with $\beta_i$.
+Descriptive correlations and tail-group predictions decode the latent parameters within the fitted model and provide no independent validation.
 
 \section{Endpoint Identity and Architecture Audit}
 \label{sec:appendix:normalisation-audit}

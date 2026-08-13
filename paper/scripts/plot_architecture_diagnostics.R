@@ -1,4 +1,4 @@
-# Figures 7--9: overall PPC, architecture residuals, and participant variation.
+# Figures 7--10: architecture comparison, overall PPC, residuals, and participant variation.
 # Run from paper/ after export_v10_ppc.py and export_participant_figure_data.py.
 
 suppressPackageStartupMessages({
@@ -35,12 +35,19 @@ response_labels <- c(
   F = "F", FD = "FS", FDC = "FSC", FC = "FC", FCD = "FCS"
 )
 
-ppc <- read_csv("data/production_v10_ppc_summary.csv", show_col_types = FALSE)
+ppc_architecture <- read_csv(
+  "data/production_v10_ppc_summary.csv",
+  show_col_types = FALSE
+)
+ppc_best <- read_csv(
+  "data/production_v18_best_ppc_summary.csv",
+  show_col_types = FALSE
+)
 
 # -----------------------------------------------------------------------------
-# Figure 7: full-distribution posterior-predictive adequacy.
+# Full-distribution posterior-predictive adequacy.
 # -----------------------------------------------------------------------------
-ppc_exact <- ppc %>%
+ppc_exact <- ppc_best %>%
   filter(summary_type == "Exact response") %>%
   mutate(
     family = recode(combination, !!!family_labels),
@@ -59,10 +66,11 @@ ppc_exact <- ppc %>%
     response = factor(unname(response_labels[category]), levels = unname(response_labels))
   )
 
-empirical_intervals_all <- read_csv(
+empirical_intervals <- read_csv(
   "data/production_v10_ppc_empirical_intervals.csv",
   show_col_types = FALSE
-) %>%
+)
+empirical_intervals_all <- empirical_intervals %>%
   filter(summary_type == "Exact response")
 
 correlation_input <- ppc_exact %>%
@@ -130,7 +138,7 @@ ppc_bar_data <- bind_rows(
       as.character(response),
       levels = rev(intersect(unname(response_labels), retained_responses))
     ),
-    source = factor(source, levels = c("Observed", "Plan-guided"))
+    source = factor(source, levels = c("Plan-guided", "Observed"))
   )
 write_csv(ppc_bar_data, "data/production_v10_ppc_size_colour_bars.csv")
 ppc_bar_data <- read_csv(
@@ -144,7 +152,7 @@ ppc_bar_data <- read_csv(
     ),
     discriminability = factor(discriminability, levels = c("High", "Low")),
     response = factor(response, levels = rev(intersect(unname(response_labels), retained_responses))),
-    source = factor(source, levels = c("Observed", "Plan-guided"))
+    source = factor(source, levels = c("Plan-guided", "Observed"))
   )
 
 p_full_distribution <- ggplot(
@@ -168,6 +176,7 @@ p_full_distribution <- ggplot(
       "Observed" = CSP_COLORS[["main"]],
       "Plan-guided" = CSP_COLORS[["green"]]
     ),
+    breaks = c("Observed", "Plan-guided"),
     labels = c("Observed", "Plan-guided (best model)"),
     name = NULL
   ) +
@@ -211,203 +220,152 @@ p_correlation <- ggplot(correlation_input, aes(x = observed_proportion, y = pred
   theme_csp() +
   theme(legend.position = "none")
 
-ordering_fit <- ppc %>%
-  filter(
-    model == "Plan-guided",
-    summary_type == "Exact response",
-    combination == "dimension_color",
-    relevant_property == "both",
-    category %in% c("DC", "CD")
-  ) %>%
-  summarise(
-    observed = sum(
-      observed_proportion[category == "DC"] *
-        observation_count[category == "DC"]
-    ) / sum(observed_proportion * observation_count),
-    predicted = sum(
-      predicted_mean[category == "DC"] *
-        observation_count[category == "DC"]
-    ) / sum(predicted_mean * observation_count),
-    .groups = "drop"
-  ) %>%
-  mutate(
-    outcome = "Conditional size-first order",
-    condition = "Both necessary"
-  ) %>%
-  select(outcome, condition, observed, predicted)
-
-redundancy_fit <- ppc %>%
-  filter(
-    model == "Plan-guided",
-    summary_type == "Response length",
-    combination == "dimension_color",
-    (relevant_property %in% c("first", "second") & category %in% c("2", "3")) |
-      (relevant_property == "both" & category == "3")
-  ) %>%
-  group_by(relevant_property, sharpness) %>%
-  summarise(
-    observed = sum(observed_proportion),
-    predicted = sum(predicted_mean),
-    .groups = "drop"
-  ) %>%
-  mutate(
-    outcome = "Redundant adjective use",
-    condition = paste(
-      recode(
-        relevant_property,
-        first = "Size sufficient",
-        both = "Both necessary",
-        second = "Colour sufficient"
-      ),
-      recode(sharpness, blurred = "Low", sharp = "High"),
-      sep = " · "
-    )
-  ) %>%
-  select(outcome, condition, observed, predicted)
-
-theory_fit <- bind_rows(ordering_fit, redundancy_fit) %>%
-  pivot_longer(
-    cols = c(observed, predicted),
-    names_to = "source",
-    values_to = "proportion"
-  ) %>%
-  mutate(
-    source = recode(source, observed = "Observed", predicted = "Plan-guided"),
-    source = factor(source, levels = c("Plan-guided", "Observed")),
-    outcome = factor(
-      outcome,
-      levels = c("Conditional size-first order", "Redundant adjective use")
-    ),
-    condition = factor(
-      condition,
-      levels = c(
-        "Both necessary",
-        "Colour sufficient · Low", "Colour sufficient · High",
-        "Both necessary · Low", "Both necessary · High",
-        "Size sufficient · Low", "Size sufficient · High"
-      )
-    )
-  )
-write_csv(theory_fit, "data/production_v10_ppc_theory_outcomes.csv")
 theory_fit <- read_csv(
-  "data/production_v10_ppc_theory_outcomes.csv",
+  "data/production_v18_ppc_theory_outcomes.csv",
   show_col_types = FALSE
 ) %>%
   mutate(
     source = factor(source, levels = c("Plan-guided", "Observed")),
     outcome = factor(
       outcome,
-      levels = c("Conditional size-first order", "Redundant adjective use")
+      levels = c("Size-initial responses", "Redundant adjective use")
     ),
-    condition = factor(
-      condition,
-      levels = c(
-        "Both necessary",
-        "Colour sufficient · Low", "Colour sufficient · High",
-        "Both necessary · Low", "Both necessary · High",
-        "Size sufficient · Low", "Size sufficient · High"
-      )
-    )
+    context = factor(
+      context,
+      levels = c("Colour sufficient", "Both necessary", "Size sufficient")
+    ),
+    discriminability = factor(discriminability, levels = c("High", "Low"))
   )
 
-theory_outcome_panel <- function(data, title, show_x_title = TRUE) {
-  ggplot(data, aes(x = proportion, y = condition, fill = source)) +
-    geom_col(position = position_dodge(.7), width = .58, alpha = .88) +
-    scale_fill_manual(
-      values = c(
-        "Observed" = CSP_COLORS[["main"]],
-        "Plan-guided" = CSP_COLORS[["green"]]
-      ),
-      name = NULL
-    ) +
-    scale_x_continuous(
-      labels = percent_format(accuracy = 1),
-      limits = c(0, 1),
-      breaks = seq(0, 1, .25),
-      expand = expansion(mult = c(0, .02))
-    ) +
-    labs(
-      title = title,
-      x = if (show_x_title) "Proportion" else NULL,
-      y = NULL
-    ) +
-    theme_csp() +
-    theme(
-      legend.position = "none",
-      panel.grid.major.y = element_blank(),
-      axis.text.y = element_text(size = 11.5),
-      plot.title = element_text(size = 14, hjust = .5),
-      plot.margin = margin(2, 6, 2, 6)
+p_theory_fit <- ggplot(
+  theory_fit,
+  aes(x = proportion, y = context, fill = source)
+) +
+  geom_col(position = position_dodge(.7), width = .58, alpha = .88) +
+  geom_errorbar(
+    aes(xmin = lower, xmax = upper),
+    orientation = "y",
+    position = position_dodge(.7),
+    width = .20,
+    linewidth = .45
+  ) +
+  facet_grid(
+    discriminability ~ outcome,
+    labeller = labeller(
+      outcome = c(
+        "Size-initial responses" = "Size-initial\nresponses",
+        "Redundant adjective use" = "Redundant\nadjective use"
+      )
     )
-}
+  ) +
+  scale_fill_manual(
+    values = c(
+      "Observed" = CSP_COLORS[["main"]],
+      "Plan-guided" = CSP_COLORS[["green"]]
+    ),
+    name = NULL
+  ) +
+  scale_x_continuous(
+    labels = percent_format(accuracy = 1),
+    limits = c(0, 1),
+    breaks = seq(0, 1, .5),
+    expand = expansion(mult = c(.03, .08))
+  ) +
+  labs(x = "Proportion", y = NULL) +
+  theme_csp() +
+  theme(
+    legend.position = "none",
+    panel.grid.major.y = element_blank(),
+    axis.text.x = element_text(size = 11.5),
+    axis.text.y = element_text(size = 10.5),
+    strip.text = element_text(size = 14, face = "bold"),
+    panel.spacing.x = unit(1.35, "lines"),
+    panel.spacing.y = unit(.65, "lines")
+  )
 
-p_ordering_fit <- theory_outcome_panel(
-  theory_fit %>% filter(outcome == "Conditional size-first order"),
-  "Conditional size-first order",
-  FALSE
-)
-p_redundancy_fit <- theory_outcome_panel(
-  theory_fit %>% filter(outcome == "Redundant adjective use"),
-  "Redundant adjective use"
-)
-p_theory_fit <- wrap_elements(
-  full = p_ordering_fit / p_redundancy_fit +
-    plot_layout(heights = c(.58, 1.72))
-)
+figure_7_bottom <- (p_correlation | p_theory_fit) +
+  plot_layout(widths = c(.85, 1.25))
 
-figure_7 <- p_full_distribution / (p_correlation | p_theory_fit) +
-  plot_layout(heights = c(1.45, 1.05), widths = c(1, 1.18)) +
+figure_7 <- (p_full_distribution / figure_7_bottom) +
+  plot_layout(heights = c(1.45, 1.05)) +
   plot_annotation(tag_levels = "A")
 save_csp_pdf(figure_7, "figures/production_architecture_ppc.pdf", 9.4, 8.1)
 
 # -----------------------------------------------------------------------------
-# Figure 8: predictive comparison and magnified architecture residuals.
+# Architecture comparison and theory-linked endpoint residuals.
 # -----------------------------------------------------------------------------
-architecture_models <- read_csv(
+matched_plan_guided <- read_csv(
   "../analysis_revision/14_final_architecture/ho_architecture_model_table_v10.csv",
   show_col_types = FALSE
 )
-architecture_contrasts <- read_csv(
-  "../analysis_revision/14_final_architecture/ho_architecture_contrasts_v10.csv",
+factorial_statistics <- read_csv(
+  "data/production_architecture_factorial_statistics_v16.csv",
   show_col_types = FALSE
 )
 architecture_plot_data <- bind_rows(
-  tibble(
-    panel = "Production architecture",
-    label = c("Plan-guided", "Global", "Fully incremental"),
-    estimate = c(
-      0,
-      architecture_contrasts$delta_elpd_loo[architecture_contrasts$comparison == "K-HO_minus_G-HO"],
-      architecture_contrasts$delta_elpd_loo[architecture_contrasts$comparison == "K-HO_minus_I-HO"]
+  factorial_statistics %>%
+    filter(row_type == "factorial_cell") %>%
+    transmute(
+      panel = "Factorial predictive loss",
+      label = architecture,
+      semantic_regime,
+      estimate = estimate_elpd,
+      lower = credible_lower_95,
+      upper = credible_upper_95
     ),
-    lower = c(
-      0,
-      architecture_contrasts$participant_bootstrap_total_q025[architecture_contrasts$comparison == "K-HO_minus_G-HO"],
-      architecture_contrasts$participant_bootstrap_total_q025[architecture_contrasts$comparison == "K-HO_minus_I-HO"]
-    ),
-    upper = c(
-      0,
-      architecture_contrasts$participant_bootstrap_total_q975[architecture_contrasts$comparison == "K-HO_minus_G-HO"],
-      architecture_contrasts$participant_bootstrap_total_q975[architecture_contrasts$comparison == "K-HO_minus_I-HO"]
-    )
-  ),
-  architecture_models %>%
+  matched_plan_guided %>%
     filter(model == "K-HO") %>%
     transmute(
       panel = "Successive-choice contribution", label = "kappa",
+      semantic_regime = NA_character_,
       estimate = kappa_mean, lower = kappa_q025, upper = kappa_q975
+    ),
+  factorial_statistics %>%
+    filter(estimand %in% c(
+      "semantic_regime_main_effect",
+      "semantic_regime_simple_effect"
+    )) %>%
+    transmute(
+      panel = "Semantic architecture",
+      label = recode(
+        label,
+        `Average across production architectures` = "Average across architectures"
+      ),
+      semantic_regime = NA_character_,
+      estimate = estimate_elpd,
+      lower = credible_lower_95,
+      upper = credible_upper_95
     )
 )
 write_csv(architecture_plot_data, "data/production_architecture_figure_data.csv")
 architecture_plot_data <- read_csv("data/production_architecture_figure_data.csv", show_col_types = FALSE)
 
 p_architecture <- architecture_plot_data %>%
-  filter(panel == "Production architecture") %>%
-  mutate(label = factor(label, levels = rev(c("Plan-guided", "Global", "Fully incremental")))) %>%
-  ggplot(aes(x = estimate, y = label)) +
+  filter(panel == "Factorial predictive loss") %>%
+  mutate(
+    label = factor(
+      label,
+      levels = c("Fully incremental", "Global", "Plan-guided")
+    ),
+    semantic_regime = factor(
+      semantic_regime,
+      levels = c("Context-fixed", "Sequential context updating")
+    )
+  ) %>%
+  ggplot(aes(
+    x = estimate, y = label,
+    colour = label, shape = semantic_regime,
+    group = semantic_regime
+  )) +
   geom_vline(xintercept = 0, colour = CSP_COLORS[["grey"]], linewidth = .6) +
-  geom_errorbar(aes(xmin = lower, xmax = upper), orientation = "y", width = .14, linewidth = .75) +
-  geom_point(aes(colour = label), size = 3.7) +
+  geom_errorbar(
+    aes(xmin = lower, xmax = upper),
+    orientation = "y",
+    position = position_dodge(width = .42),
+    width = .12,
+    linewidth = .7
+  ) +
+  geom_point(position = position_dodge(width = .42), size = 3.7, stroke = 1.1) +
   scale_colour_manual(
     values = c(
       "Plan-guided" = CSP_COLORS[["green"]],
@@ -416,10 +374,21 @@ p_architecture <- architecture_plot_data %>%
     ),
     guide = "none"
   ) +
-  scale_x_continuous(limits = c(-20, 680), breaks = seq(0, 600, 200)) +
-  labs(x = "Predictive loss", y = NULL) +
+  scale_shape_manual(
+    values = c("Context-fixed" = 1, "Sequential context updating" = 16),
+    name = NULL
+  ) +
+  scale_x_continuous(limits = c(-20, 480), breaks = seq(0, 400, 100)) +
+  labs(
+    x = "Effect of incremental\npragmatic production\n(ELPD, lower is better)",
+    y = NULL
+  ) +
   theme_csp() +
-  theme(panel.grid.major.y = element_blank(), axis.ticks.y = element_blank())
+  theme(
+    legend.position = "top",
+    panel.grid.major.y = element_blank(),
+    axis.ticks.y = element_blank()
+  )
 
 p_kappa <- architecture_plot_data %>%
   filter(panel == "Successive-choice contribution") %>%
@@ -433,81 +402,363 @@ p_kappa <- architecture_plot_data %>%
     linewidth = 1.1, colour = CSP_COLORS[["green"]]
   ) +
   geom_point(size = 4.5, colour = CSP_COLORS[["green"]]) +
-  annotate("text", x = .4472, y = 1.22, label = expression(kappa == .447), size = 5) +
+  annotate("text", x = .4472, y = 1.24, label = expression(kappa == .447), size = 5) +
   scale_x_continuous(
     limits = c(-.12, 1.12), breaks = c(0, 1),
     labels = c("Global", "Fully\nincremental")
   ) +
-  scale_y_continuous(NULL, breaks = NULL) +
+  scale_y_continuous(NULL, breaks = NULL, limits = c(.72, 1.38)) +
   labs(x = "Successive-choice weight") +
-  theme_csp() +
-  theme(panel.grid = element_blank())
-
-residual_examples <- ppc %>%
-  filter(
-    (summary_type == "Initial adjective" & combination == "dimension_color" &
-       relevant_property == "both" & sharpness == "blurred" & category == "C") |
-      (summary_type == "Response length" & combination == "color_form" &
-         relevant_property == "second" & sharpness == "blurred" & category == "2") |
-      (summary_type == "Exact response" & combination == "color_form" &
-         relevant_property == "both" & sharpness == "blurred" & category == "FC")
-  ) %>%
-  mutate(
-    outcome = case_when(
-      summary_type == "Initial adjective" ~ "Colour initial\nSize-colour, both necessary",
-      summary_type == "Response length" ~ "Two adjectives\nColour-form, form sufficient",
-      TRUE ~ "Form-colour utterance\nColour-form, both necessary"
-    ),
-    outcome = factor(
-      outcome,
-      levels = c(
-        "Colour initial\nSize-colour, both necessary",
-        "Two adjectives\nColour-form, form sufficient",
-        "Form-colour utterance\nColour-form, both necessary"
-      )
-    ),
-    model = factor(model, levels = model_levels[-1]),
-    residual_percentage_points = 100 * (predicted_mean - observed_proportion)
-  ) %>%
-  select(outcome, model, observed_proportion, predicted_mean, residual_percentage_points)
-write_csv(residual_examples, "data/production_architecture_residual_examples.csv")
-residual_examples <- read_csv("data/production_architecture_residual_examples.csv", show_col_types = FALSE) %>%
-  mutate(
-    outcome = factor(outcome, levels = levels(residual_examples$outcome)),
-    model = factor(model, levels = model_levels[-1])
-  )
-
-p_residual_examples <- ggplot(
-  residual_examples,
-  aes(x = residual_percentage_points, y = outcome, colour = model, shape = model)
-) +
-  geom_vline(xintercept = 0, colour = CSP_COLORS[["grey"]], linewidth = .7) +
-  geom_segment(
-    aes(x = 0, xend = residual_percentage_points, yend = outcome),
-    position = position_dodge(width = .55), linewidth = .55, alpha = .7
-  ) +
-  geom_point(position = position_dodge(width = .55), size = 3.2) +
-  scale_colour_manual(values = model_palette[-1], name = NULL) +
-  scale_shape_manual(values = model_shapes[-1], name = NULL) +
-  scale_x_continuous(
-    limits = c(-5.5, 5.5), breaks = seq(-5, 5, 2.5),
-    labels = label_number(suffix = " pp")
-  ) +
-  labs(x = "Prediction minus observation", y = NULL) +
+  coord_cartesian(clip = "off") +
   theme_csp() +
   theme(
-    legend.position = "top",
-    panel.grid.major.y = element_blank(),
-    axis.ticks.y = element_blank()
+    panel.grid = element_blank(),
+    plot.margin = margin(18, 12, 8, 12)
   )
 
-figure_8 <- (p_architecture | p_kappa) / p_residual_examples +
-  plot_layout(heights = c(.9, 1.2), widths = c(1.2, 1)) +
-  plot_annotation(tag_levels = "A")
-save_csp_pdf(figure_8, "figures/production_architecture_results.pdf", 9.4, 7.8)
+p_semantics <- architecture_plot_data %>%
+  filter(panel == "Semantic architecture") %>%
+  mutate(label = factor(
+    label,
+    levels = c(
+      "Fully incremental", "Plan-guided", "Global", "Average across architectures"
+    )
+  )) %>%
+  ggplot(aes(x = estimate, y = label, colour = label)) +
+  geom_vline(
+    xintercept = c(-4, 4), linetype = "dashed",
+    colour = CSP_COLORS[["grey"]], linewidth = .65
+  ) +
+  geom_vline(xintercept = 0, colour = CSP_COLORS[["grey"]], linewidth = .8) +
+  geom_errorbar(
+    aes(xmin = lower, xmax = upper), orientation = "y", width = .14,
+    linewidth = 1.0
+  ) +
+  geom_point(size = 3.8) +
+  scale_colour_manual(
+    values = c(
+      "Global" = CSP_COLORS[["text"]],
+      "Plan-guided" = CSP_COLORS[["green"]],
+      "Fully incremental" = CSP_COLORS[["text"]],
+      "Average across architectures" = CSP_COLORS[["emphasis"]]
+    ),
+    guide = "none"
+  ) +
+  scale_x_continuous(
+    limits = c(-4.5, 4.5),
+    breaks = c(-4, -2, 0, 2, 4),
+    expand = expansion(mult = c(.01, .01))
+  ) +
+  labs(
+    x = "Effect of hierarchical\nsemantic composition\n(ELPD, updating - fixed)",
+    y = NULL
+  ) +
+  theme_csp() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.text.y = element_text(size = 10.5)
+  )
+
+architecture_source_palette <- c(
+  "Observed" = CSP_COLORS[["main"]],
+  "Global" = CSP_COLORS[["text"]],
+  "Plan-guided" = CSP_COLORS[["green"]],
+  "Fully incremental" = CSP_COLORS[["emphasis"]]
+)
+architecture_source_shapes <- c(
+  "Observed" = 16,
+  "Global" = 1,
+  "Plan-guided" = 17,
+  "Fully incremental" = 15
+)
+initial_spread_threshold <- .067
+utterance_spread_threshold <- .05
+architecture_dodge <- 1.0
+condition_diagnostics <- read_csv(
+  "data/production_architecture_condition_tv_diagnostics.csv",
+  show_col_types = FALSE
+)
+cell_diagnostics <- read_csv(
+  "data/production_architecture_cell_spread_diagnostics.csv",
+  show_col_types = FALSE
+)
+initial_focus_cells <- cell_diagnostics %>%
+  filter(
+    summary_type == "Initial adjective",
+    architecture_spread >= initial_spread_threshold
+  ) %>%
+  select(combination, relevant_property, sharpness, category)
+
+initial_predictions <- ppc_architecture %>%
+  filter(summary_type == "Initial adjective") %>%
+  semi_join(
+    initial_focus_cells,
+    by = c("combination", "relevant_property", "sharpness", "category")
+  ) %>%
+  transmute(
+    combination, relevant_property, sharpness, category,
+    source = model,
+    proportion = predicted_mean,
+    lower = predicted_q025,
+    upper = predicted_q975
+  )
+initial_observed <- empirical_intervals %>%
+  filter(summary_type == "Initial adjective") %>%
+  semi_join(
+    initial_focus_cells,
+    by = c("combination", "relevant_property", "sharpness", "category")
+  ) %>%
+  transmute(
+    combination, relevant_property, sharpness, category,
+    source = "Observed",
+    proportion = observed_mean,
+    lower = observed_lower,
+    upper = observed_upper
+  )
+initial_architecture_data <- bind_rows(initial_observed, initial_predictions) %>%
+  mutate(
+    context = case_when(
+      combination == "dimension_color" & relevant_property == "first" ~ "Size sufficient",
+      combination == "dimension_color" & relevant_property == "second" ~ "Colour sufficient",
+      combination == "dimension_form" & relevant_property == "first" ~ "Size sufficient",
+      combination == "dimension_form" & relevant_property == "second" ~ "Form sufficient",
+      combination == "color_form" & relevant_property == "first" ~ "Colour sufficient",
+      combination == "color_form" & relevant_property == "second" ~ "Form sufficient",
+      combination == "dimension_color" & relevant_property == "both" ~ "Both size and colour necessary",
+      combination == "dimension_form" & relevant_property == "both" ~ "Both size and form necessary",
+      combination == "color_form" & relevant_property == "both" ~ "Both colour and form necessary"
+    ),
+    initial_adjective = recode(category, D = "Size", C = "Colour", F = "Form"),
+    discriminability = recode(
+      sharpness,
+      sharp = "High size discrim.",
+      blurred = "Low size discrim."
+    ),
+    source = factor(source, levels = model_levels),
+    panel = factor(
+      paste(context, discriminability, sep = ",\n"),
+      levels = c(
+        "Both size and colour necessary,\nHigh size discrim.",
+        "Both size and form necessary,\nHigh size discrim.",
+        "Both colour and form necessary,\nHigh size discrim.",
+        "Size sufficient,\nLow size discrim.",
+        "Both size and form necessary,\nLow size discrim.",
+        "Both colour and form necessary,\nLow size discrim."
+      )
+    ),
+    row_label = category,
+    row_id = paste(panel, row_label, sep = "|")
+  )
+initial_row_levels <- initial_architecture_data %>%
+  distinct(panel, relevant_property, category, row_id) %>%
+  mutate(
+    context_order = match(relevant_property, c("second", "both", "first")),
+    adjective_order = match(category, c("F", "C", "D"))
+  ) %>%
+  arrange(panel, context_order, adjective_order) %>%
+  pull(row_id)
+initial_architecture_data <- initial_architecture_data %>%
+  mutate(row_id = factor(row_id, levels = unique(initial_row_levels))) %>%
+  group_by(panel) %>%
+  mutate(panel_rows = n_distinct(category)) %>%
+  ungroup()
+write_csv(
+  initial_architecture_data,
+  "data/production_architecture_initial_adjective_predictions.csv"
+)
+
+make_initial_architecture_panel <- function(plot_data, x_title = NULL, y_expand = .55) {
+  ggplot(
+    plot_data,
+    aes(x = proportion, y = row_id, colour = source, shape = source)
+  ) +
+    geom_errorbar(
+      aes(xmin = lower, xmax = upper),
+      orientation = "y",
+      position = position_dodge(width = architecture_dodge),
+      width = .12,
+      linewidth = .55
+    ) +
+    geom_point(position = position_dodge(width = architecture_dodge), size = 3.2, stroke = 1.0) +
+    facet_wrap(~panel, nrow = 1, scales = "free") +
+    scale_y_discrete(
+      labels = function(values) sub("^.*\\|", "", values),
+      expand = expansion(add = y_expand)
+    ) +
+    scale_colour_manual(values = architecture_source_palette, name = NULL) +
+    scale_shape_manual(values = architecture_source_shapes, name = NULL) +
+    scale_x_continuous(
+      labels = percent_format(accuracy = 1),
+      breaks = scales::breaks_pretty(n = 4),
+      expand = expansion(mult = c(.02, .04))
+    ) +
+    labs(x = x_title, y = "Initial adjective") +
+    theme_csp() +
+    theme(
+      legend.position = "top",
+      panel.grid.major.y = element_blank(),
+      axis.ticks.y = element_blank(),
+      axis.text.y = element_text(size = 11),
+      strip.text = element_text(size = 10.5, face = "bold"),
+      panel.spacing.x = unit(1.1, "lines")
+    )
+}
+
+p_initial_single <- make_initial_architecture_panel(
+  filter(initial_architecture_data, panel_rows == 1),
+  y_expand = .55
+)
+p_initial_dual <- make_initial_architecture_panel(
+  filter(initial_architecture_data, panel_rows == 2),
+  x_title = "Proportion",
+  y_expand = .12
+) +
+  theme(legend.position = "none")
+p_initial_architectures <- wrap_plots(
+  p_initial_single + labs(tag = "A"),
+  p_initial_dual,
+  ncol = 1,
+  heights = c(.62, 1.5),
+  axis_titles = "collect_y"
+)
+
+focus_conditions <- condition_diagnostics %>%
+  slice_max(maximum_pairwise_tv, n = 3, with_ties = FALSE) %>%
+  select(all_of(c("combination", "relevant_property", "sharpness")))
+focus_responses <- cell_diagnostics %>%
+  filter(
+    summary_type == "Exact response",
+    architecture_spread >= utterance_spread_threshold
+  ) %>%
+  semi_join(focus_conditions, by = c("combination", "relevant_property", "sharpness")) %>%
+  select(combination, relevant_property, sharpness, category)
+
+focus_predictions <- ppc_architecture %>%
+  filter(summary_type == "Exact response") %>%
+  semi_join(
+    focus_responses,
+    by = c("combination", "relevant_property", "sharpness", "category")
+  ) %>%
+  transmute(
+    combination, relevant_property, sharpness, category,
+    source = model,
+    proportion = predicted_mean,
+    lower = predicted_q025,
+    upper = predicted_q975
+  )
+focus_observed <- empirical_intervals %>%
+  filter(summary_type == "Exact response") %>%
+  semi_join(
+    focus_responses,
+    by = c("combination", "relevant_property", "sharpness", "category")
+  ) %>%
+  transmute(
+    combination, relevant_property, sharpness, category,
+    source = "Observed",
+    proportion = observed_mean,
+    lower = observed_lower,
+    upper = observed_upper
+  )
+focus_architecture_data <- bind_rows(focus_observed, focus_predictions) %>%
+  mutate(
+    context = case_when(
+      combination == "dimension_form" & relevant_property == "first" ~ "Size sufficient",
+      combination == "color_form" & relevant_property == "both" ~ "Both colour and form necessary"
+    ),
+    discriminability = recode(
+      sharpness,
+      sharp = "High size discrim.",
+      blurred = "Low size discrim."
+    ),
+    panel = factor(
+      paste(context, discriminability, sep = ",\n"),
+      levels = c(
+        "Size sufficient,\nLow size discrim.",
+        "Both colour and form necessary,\nHigh size discrim.",
+        "Both colour and form necessary,\nLow size discrim."
+      )
+    ),
+    response = recode(category, !!!response_labels),
+    row_id = paste(panel, response, sep = "|"),
+    source = factor(source, levels = model_levels)
+  )
+focus_row_levels <- focus_architecture_data %>%
+  distinct(panel, response, row_id) %>%
+  group_by(panel) %>%
+  arrange(response, .by_group = TRUE) %>%
+  ungroup() %>%
+  pull(row_id)
+focus_architecture_data <- focus_architecture_data %>%
+  mutate(row_id = factor(row_id, levels = rev(unique(focus_row_levels))))
+write_csv(
+  focus_architecture_data,
+  "data/production_architecture_focus_utterance_predictions.csv"
+)
+
+p_focus_utterances <- ggplot(
+  focus_architecture_data,
+  aes(x = proportion, y = row_id, colour = source, shape = source)
+) +
+  geom_errorbar(
+    aes(xmin = lower, xmax = upper),
+    orientation = "y",
+    position = position_dodge(width = architecture_dodge),
+    width = .12,
+    linewidth = .55
+  ) +
+  geom_point(position = position_dodge(width = architecture_dodge), size = 3.2, stroke = 1.0) +
+  facet_wrap(~panel, nrow = 1, scales = "free") +
+  scale_y_discrete(
+    labels = function(values) sub("^.*\\|", "", values),
+    expand = expansion(add = .65)
+  ) +
+  scale_colour_manual(values = architecture_source_palette, name = NULL) +
+  scale_shape_manual(values = architecture_source_shapes, name = NULL) +
+  scale_x_continuous(
+    labels = percent_format(accuracy = 1),
+    breaks = scales::breaks_pretty(n = 4),
+    expand = expansion(mult = c(.02, .04))
+  ) +
+  labs(x = "Proportion", y = "Completed utterance") +
+  theme_csp() +
+  theme(
+    legend.position = "none",
+    panel.grid.major.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    strip.text = element_text(size = 10.5, face = "bold"),
+    panel.spacing.x = unit(1.0, "lines")
+  )
+
+p_architecture_predictions <- (
+  wrap_elements(full = p_initial_architectures) /
+    (p_focus_utterances + labs(tag = "B"))
+) +
+  plot_layout(heights = c(1.55, .72))
+
+architecture_comparison_figure <- (
+  (p_architecture + labs(tag = "A")) |
+    ((p_kappa + labs(tag = "B")) / (p_semantics + labs(tag = "C")) +
+       plot_layout(heights = c(1, 1.05)))
+) +
+  plot_layout(widths = c(1.2, 1), guides = "collect") &
+  theme(legend.position = "top")
+save_csp_pdf(
+  architecture_comparison_figure,
+  "figures/production_architecture_comparison.pdf",
+  9.4,
+  5.6
+)
+
+save_csp_pdf(
+  p_architecture_predictions,
+  "figures/production_architecture_residuals.pdf",
+  9.4,
+  7.8
+)
 
 # -----------------------------------------------------------------------------
-# Figure 9: participant heterogeneity and its unresolved source.
+# Participant heterogeneity and its unresolved source.
 # -----------------------------------------------------------------------------
 parameter_path <- "data/production_participant_parameter_intervals.csv"
 if (!file.exists(parameter_path)) {
@@ -517,10 +768,19 @@ participant_parameters <- read_csv(parameter_path, show_col_types = FALSE) %>%
   mutate(
     parameter = recode(
       parameter,
-      `Successive-choice contribution` = "Participant kappa",
-      `Successive-choice kappa` = "Participant kappa",
-      `Stable-order weighting` = "Stable-order weight",
-      `Stable-order weight` = "Stable-order weight"
+      `Pragmatic optimality` = "atop('Pragmatic optimality', alpha[i])",
+      `Successive-choice contribution` = "atop('Successive-choice weight', kappa[i])",
+      `Successive-choice kappa` = "atop('Successive-choice weight', kappa[i])",
+      `Stable-order weighting` = "atop('Stable-order weight', beta[i])",
+      `Stable-order weight` = "atop('Stable-order weight', beta[i])"
+    ),
+    parameter = factor(
+      parameter,
+      levels = c(
+        "atop('Pragmatic optimality', alpha[i])",
+        "atop('Successive-choice weight', kappa[i])",
+        "atop('Stable-order weight', beta[i])"
+      )
     )
   ) %>%
   group_by(parameter) %>%
@@ -532,150 +792,70 @@ write_csv(
   "data/production_participant_parameter_intervals_ranked.csv"
 )
 
-participant_raw <- read_csv(
-  "../analysis_revision/12_deterministic_encoding/model_input_raw_observed_9100.csv",
+participant_prediction_threshold <- .20
+participant_prediction_summary <- read_csv(
+  "data/production_participant_prediction_summary.csv",
   show_col_types = FALSE
 )
-participant_loo <- read_csv(
-  "../analysis_revision/13_form_identification/v9_hierarchy/participant_hierarchy_pointwise_loo_v9.csv",
+participant_prediction_gaps <- read_csv(
+  "data/production_participant_prediction_gaps.csv",
   show_col_types = FALSE
 )
+selected_participant_conditions <- participant_prediction_gaps %>%
+  filter(absolute_gap >= participant_prediction_threshold) %>%
+  group_by(parameter, combination, relevant_property, sharpness) %>%
+  summarise(condition_maximum_gap = max(absolute_gap), .groups = "drop") %>%
+  group_by(parameter) %>%
+  slice_max(condition_maximum_gap, n = 3, with_ties = FALSE) %>%
+  ungroup() %>%
+  select(parameter, combination, relevant_property, sharpness)
+selected_participant_cells <- participant_prediction_gaps %>%
+  filter(absolute_gap >= participant_prediction_threshold) %>%
+  semi_join(
+    selected_participant_conditions,
+    by = c("parameter", "combination", "relevant_property", "sharpness")
+  ) %>%
+  select(parameter, combination, relevant_property, sharpness, category)
 
-participant_trials <- participant_raw %>%
-  left_join(participant_loo, by = "canonical_row_position") %>%
-  mutate(
-    response_length = nchar(annotation),
-    initial = substr(annotation, 1, 1),
-    canonical_order = vapply(
-      strsplit(annotation, ""),
-      function(value) all(diff(match(value, c("D", "C", "F"))) > 0),
-      logical(1)
-    ),
-    gain_hk = HK - H0,
-    gain_ho = HO - H0,
-    hk_minus_ho = HK - HO
-  )
-
-participant_profiles <- participant_trials %>%
-  group_by(id) %>%
-  summarise(
-    gain_participant_kappa = sum(gain_hk),
-    gain_stable_order = sum(gain_ho),
-    kappa_minus_order = sum(hk_minus_ho),
-    one_adjective = mean(response_length == 1),
-    three_adjectives = mean(response_length == 3),
-    size_initial_multi = mean(initial[response_length > 1] == "D"),
-    canonical_multi = mean(canonical_order[response_length > 1]),
-    .groups = "drop"
+participant_prediction_data <- participant_prediction_summary %>%
+  filter(parameter_group %in% c("Lower 15%", "Upper 15%")) %>%
+  semi_join(
+    selected_participant_cells,
+    by = c("parameter", "combination", "relevant_property", "sharpness", "category")
   ) %>%
   mutate(
-    pattern = case_when(
-      kappa_minus_order <= quantile(kappa_minus_order, .15) ~ "Stable order favoured",
-      kappa_minus_order >= quantile(kappa_minus_order, .85) ~ "Successive choice favoured",
-      TRUE ~ "Middle 70%"
-    )
-  )
-write_csv(participant_profiles, "data/production_participant_predictive_profiles.csv")
-participant_profiles <- read_csv(
-  "data/production_participant_predictive_profiles.csv",
-  show_col_types = FALSE
-)
-
-profile_summary <- participant_profiles %>%
-  select(pattern, one_adjective, three_adjectives, size_initial_multi, canonical_multi) %>%
-  pivot_longer(-pattern, names_to = "measure", values_to = "value") %>%
-  group_by(pattern, measure) %>%
-  summarise(mean = mean(value), .groups = "drop") %>%
-  mutate(
-    pattern = factor(
-      pattern,
-      levels = c("Stable order favoured", "Middle 70%", "Successive choice favoured")
+    context = case_when(
+      combination == "dimension_color" & relevant_property == "first" ~ "Size sufficient",
+      combination == "dimension_color" & relevant_property == "second" ~ "Colour sufficient",
+      combination == "dimension_color" & relevant_property == "both" ~ "Both size and colour necessary",
+      combination == "dimension_form" & relevant_property == "first" ~ "Size sufficient",
+      combination == "dimension_form" & relevant_property == "second" ~ "Form sufficient",
+      combination == "dimension_form" & relevant_property == "both" ~ "Both size and form necessary",
+      combination == "color_form" & relevant_property == "first" ~ "Colour sufficient",
+      combination == "color_form" & relevant_property == "second" ~ "Form sufficient",
+      combination == "color_form" & relevant_property == "both" ~ "Both colour and form necessary"
     ),
-    measure = recode(
-      measure,
-      one_adjective = "One adjective",
-      three_adjectives = "Three adjectives",
-      size_initial_multi = "Size initial | multi-adjective",
-      canonical_multi = "Canonical order | multi-adjective"
-    )
-  )
-write_csv(profile_summary, "data/production_participant_pattern_summary.csv")
-profile_summary <- read_csv("data/production_participant_pattern_summary.csv", show_col_types = FALSE) %>%
-  mutate(pattern = factor(pattern, levels = levels(profile_summary$pattern)))
-
-participant_profile_observations <- participant_profiles %>%
-  select(id, pattern, one_adjective, three_adjectives, size_initial_multi, canonical_multi) %>%
-  pivot_longer(
-    c(one_adjective, three_adjectives, size_initial_multi, canonical_multi),
-    names_to = "measure",
-    values_to = "value"
-  ) %>%
-  mutate(
-    pattern = factor(
-      pattern,
-      levels = c("Stable order favoured", "Middle 70%", "Successive choice favoured")
+    discriminability = recode(
+      sharpness,
+      sharp = "High size discrim.",
+      blurred = "Low size discrim."
     ),
-    measure = recode(
-      measure,
-      one_adjective = "One adjective",
-      three_adjectives = "Three adjectives",
-      size_initial_multi = "Size initial",
-      canonical_multi = "Canonical order"
-    )
+    panel_id = paste(combination, relevant_property, sharpness, sep = "|"),
+    panel_label = paste(context, discriminability, sep = "\n"),
+    response = recode(category, !!!response_labels),
+    row_id = paste(panel_id, response, sep = "|"),
+    parameter_group = factor(parameter_group, levels = c("Lower 15%", "Upper 15%"))
   )
-write_csv(
-  participant_profile_observations,
-  "data/production_participant_profile_observations.csv"
-)
-participant_profile_observations <- read_csv(
-  "data/production_participant_profile_observations.csv",
-  show_col_types = FALSE
-) %>%
-  mutate(
-    pattern = factor(
-      pattern,
-      levels = c("Stable order favoured", "Middle 70%", "Successive choice favoured")
-    )
-  )
-
-participant_residual_observations <- participant_trials %>%
-  inner_join(participant_profiles %>% select(id, pattern), by = "id") %>%
-  transmute(
-    id,
-    pattern,
-    response_length = paste(response_length, "adjective"),
-    initial = recode(initial, D = "Size initial", C = "Colour initial", F = "Form initial"),
-    hk_minus_ho
+participant_gap_segments <- participant_prediction_gaps %>%
+  filter(absolute_gap >= participant_prediction_threshold) %>%
+  semi_join(
+    selected_participant_conditions,
+    by = c("parameter", "combination", "relevant_property", "sharpness")
   ) %>%
-  pivot_longer(c(response_length, initial), names_to = "dimension", values_to = "cell") %>%
-  group_by(id, pattern, dimension, cell) %>%
-  summarise(participant_mean_difference = mean(hk_minus_ho), .groups = "drop")
-
-participant_residuals <- participant_residual_observations %>%
-  group_by(pattern, dimension, cell) %>%
-  summarise(
-    mean_log_score_difference = mean(participant_mean_difference),
-    se = sd(participant_mean_difference) / sqrt(n()),
-    lower = mean_log_score_difference - qt(.975, df = n() - 1) * se,
-    upper = mean_log_score_difference + qt(.975, df = n() - 1) * se,
-    participants = n(),
-    .groups = "drop"
-  ) %>%
-  mutate(
-    pattern = factor(
-      pattern,
-      levels = c("Stable order favoured", "Middle 70%", "Successive choice favoured")
-    ),
-    dimension = recode(dimension, response_length = "Utterance length", initial = "Initial adjective")
-  )
-write_csv(participant_residuals, "data/production_participant_residual_localisation.csv")
-participant_residuals <- read_csv(
-  "data/production_participant_residual_localisation.csv",
-  show_col_types = FALSE
-) %>%
-  mutate(
-    pattern = factor(pattern, levels = levels(participant_residuals$pattern)),
-    dimension = factor(dimension, levels = c("Utterance length", "Initial adjective"))
+  inner_join(
+    participant_prediction_data %>%
+      distinct(parameter, combination, relevant_property, sharpness, category, panel_id, panel_label, row_id),
+    by = c("parameter", "combination", "relevant_property", "sharpness", "category")
   )
 
 p_parameter_intervals <- ggplot(
@@ -687,174 +867,163 @@ p_parameter_intervals <- ggplot(
     colour = CSP_COLORS[["grey"]], linewidth = .35
   ) +
   geom_point(colour = CSP_COLORS[["green"]], size = 1.25) +
-  facet_wrap(~ parameter, scales = "free_y", ncol = 1) +
+  facet_wrap(
+    ~ parameter,
+    scales = "free_y",
+    ncol = 3,
+    labeller = labeller(parameter = label_parsed)
+  ) +
   labs(x = "Participant rank", y = "Posterior estimate") +
   theme_csp() +
   theme(
     panel.grid.minor = element_blank(),
-    panel.spacing.y = unit(.65, "lines")
+    panel.spacing.x = unit(1.1, "lines"),
+    strip.text = element_text(size = 9.5, face = "bold")
   )
 
-p_participant_gains <- ggplot(
-  participant_profiles %>%
+make_participant_prediction_plot <- function(parameter_name, model_title, ncol) {
+  plot_data <- participant_prediction_data %>%
+    filter(parameter == parameter_name)
+  panel_levels <- plot_data %>%
+    distinct(combination, relevant_property, sharpness, panel_id) %>%
     mutate(
-      pattern_display = recode(
-        pattern,
-        `Stable order favoured` = "Stable order",
-        `Middle 70%` = "Middle 70%",
-        `Successive choice favoured` = "Successive choice"
-      )
-    ),
-  aes(x = gain_participant_kappa, y = gain_stable_order)
-) +
-  geom_abline(intercept = 0, slope = 1, linetype = "dashed", colour = CSP_COLORS[["grey"]]) +
-  geom_hline(yintercept = 0, colour = CSP_COLORS[["grey"]], linewidth = .4) +
-  geom_vline(xintercept = 0, colour = CSP_COLORS[["grey"]], linewidth = .4) +
-  geom_point(aes(colour = pattern_display), size = 2.5, alpha = .8) +
-  scale_colour_manual(
-    values = c(
-      "Stable order" = CSP_COLORS[["main"]],
-      "Middle 70%" = CSP_COLORS[["grey"]],
-      "Successive choice" = CSP_COLORS[["emphasis"]]
-    ),
-    name = NULL
-  ) +
-  labs(
-    x = "Gain: successive choice",
-    y = "Gain: stable order"
-  ) +
-  theme_csp() +
-  theme(legend.position = "right") +
-  guides(colour = guide_legend(ncol = 1, byrow = TRUE))
-
-p_profile <- ggplot(
-  participant_profile_observations,
-  aes(x = value, y = measure, colour = pattern)
-) +
-  geom_point(
-    position = position_jitter(height = .12, width = 0),
-    size = 1.35,
-    alpha = .22,
-    show.legend = FALSE
-  ) +
-  geom_point(
-    data = profile_summary %>%
+      family_order = match(combination, c("dimension_color", "dimension_form", "color_form")),
+      context_order = match(relevant_property, c("first", "both", "second")),
+      sharpness_order = match(sharpness, c("sharp", "blurred"))
+    ) %>%
+    arrange(family_order, context_order, sharpness_order) %>%
+    pull(panel_id)
+  panel_labels <- plot_data %>%
+    distinct(panel_id, panel_label) %>%
+    {setNames(.$panel_label, .$panel_id)}
+  row_levels <- plot_data %>%
+    distinct(panel_id, category, row_id) %>%
     mutate(
-      measure = recode(
-        measure,
-        `Size initial | multi-adjective` = "Size initial",
-        `Canonical order | multi-adjective` = "Canonical order"
-      )
-    ),
-    aes(x = mean, y = measure, colour = pattern, shape = pattern),
-    position = position_dodge(width = .55),
-    size = 3.2,
-    inherit.aes = FALSE
-  ) +
-  scale_colour_manual(
-    values = c(
-      "Stable order favoured" = CSP_COLORS[["main"]],
-      "Middle 70%" = CSP_COLORS[["grey"]],
-      "Successive choice favoured" = CSP_COLORS[["emphasis"]]
-    ),
-    name = NULL
-  ) +
-  scale_shape_manual(values = c(16, 17, 15), name = NULL) +
-  scale_x_continuous(
-    labels = percent_format(accuracy = 1), limits = c(0, 1), breaks = c(0, .5, 1)
-  ) +
-  labs(x = "Observed response proportion", y = NULL) +
-  theme_csp() +
-  theme(
-    legend.position = "top",
-    panel.grid.major.y = element_blank(),
-    axis.ticks.y = element_blank(),
-    axis.text.y = element_text(size = 12)
-  ) +
-  guides(
-    colour = guide_legend(nrow = 2, byrow = TRUE),
-    shape = guide_legend(nrow = 2, byrow = TRUE)
-  )
-
-p_residual_localisation <- ggplot(
-  participant_residuals %>%
+      panel_order = match(panel_id, panel_levels),
+      response_order = match(category, names(response_labels))
+    ) %>%
+    arrange(panel_order, response_order) %>%
+    pull(row_id)
+  plot_data <- plot_data %>%
     mutate(
-      pattern_display = recode(
-        as.character(pattern),
-        `Stable order favoured` = "Stable order",
-        `Middle 70%` = "Middle 70%",
-        `Successive choice favoured` = "Successive choice"
+      panel_id = factor(panel_id, levels = panel_levels),
+      row_id = factor(row_id, levels = rev(row_levels))
+    )
+  segment_data <- participant_gap_segments %>%
+    filter(parameter == parameter_name) %>%
+    mutate(
+      panel_id = factor(panel_id, levels = panel_levels),
+      row_id = factor(row_id, levels = rev(row_levels))
+    )
+  observed_data <- plot_data %>%
+    distinct(parameter_group, panel_id, row_id, observed_proportion)
+
+  ggplot(
+    plot_data,
+    aes(
+      x = predicted_mean,
+      y = row_id,
+      colour = parameter_group,
+      group = parameter_group
+    )
+  ) +
+    geom_errorbar(
+      aes(xmin = predicted_q025, xmax = predicted_q975),
+      orientation = "y",
+      position = position_dodge(width = .52),
+      width = .12,
+      linewidth = .5
+    ) +
+    geom_point(
+      aes(shape = "Model prediction"),
+      position = position_dodge(width = .52),
+      size = 2.8
+    ) +
+    geom_point(
+      data = observed_data,
+      aes(
+        x = observed_proportion,
+        y = row_id,
+        colour = parameter_group,
+        group = parameter_group,
+        shape = "Observed"
       ),
-      pattern_display = factor(pattern_display, levels = c("Stable order", "Middle 70%", "Successive choice")),
-      dimension = recode(
-        as.character(dimension),
-        `Utterance length` = "Length",
-        `Initial adjective` = "Initial"
+      inherit.aes = FALSE,
+      position = position_dodge(width = .52),
+      size = 2.8,
+      stroke = 1.0
+    ) +
+    facet_wrap(
+      ~panel_id,
+      ncol = ncol,
+      scales = "free",
+      labeller = as_labeller(panel_labels)
+    ) +
+    scale_y_discrete(labels = function(values) sub("^.*\\|", "", values)) +
+    scale_colour_manual(
+      values = c(
+        "Lower 15%" = CSP_COLORS[["main"]],
+        "Upper 15%" = CSP_COLORS[["emphasis"]]
       ),
-      cell = recode(
-        cell,
-        `1 adjective` = "1 adj.",
-        `2 adjective` = "2 adj.",
-        `3 adjective` = "3 adj.",
-        `Colour initial` = "Colour",
-        `Form initial` = "Form",
-        `Size initial` = "Size"
-      ),
-      dimension = factor(dimension, levels = c("Length", "Initial")),
-      response = paste(dimension, cell, sep = " - "),
-      response = factor(
-        response,
-        levels = rev(c(
-          "Length - 1 adj.", "Length - 2 adj.", "Length - 3 adj.",
-          "Initial - Colour", "Initial - Form", "Initial - Size"
-        ))
-      )
-    ),
-  aes(
-    x = mean_log_score_difference,
-    y = response,
-    colour = pattern_display,
-    shape = pattern_display
-  )
+      labels = c("Lower 15%" = "Lower 15%", "Upper 15%" = "Upper 15%"),
+      name = "Participant group"
+    ) +
+    scale_shape_manual(
+      values = c("Model prediction" = 15, "Observed" = 1),
+      name = "Estimate"
+    ) +
+    scale_x_continuous(
+      labels = percent_format(accuracy = 1),
+      breaks = scales::breaks_pretty(n = 4),
+      expand = expansion(mult = c(.03, .06))
+    ) +
+    labs(
+      title = model_title,
+      x = "Response proportion",
+      y = "Completed utterance"
+    ) +
+    theme_csp() +
+    theme(
+      plot.title = element_text(size = 12.5, face = "bold", hjust = 0),
+      legend.position = "top",
+      panel.grid.major.y = element_blank(),
+      axis.ticks.y = element_blank(),
+      axis.text.y = element_text(size = 10.5),
+      strip.text = element_text(size = 9.2, face = "bold"),
+      panel.spacing.x = unit(.9, "lines"),
+      panel.spacing.y = unit(.75, "lines")
+    )
+}
+
+p_kappa_prediction_gaps <- make_participant_prediction_plot(
+  "Successive-choice contribution",
+  expression("Successive-choice weight" ~ (kappa[i])),
+  ncol = 3
+)
+p_alpha_prediction_gaps <- make_participant_prediction_plot(
+  "Pragmatic optimality",
+  expression("Pragmatic optimality" ~ (alpha[i])),
+  ncol = 3
+)
+p_beta_prediction_gaps <- make_participant_prediction_plot(
+  "Stable-order weighting",
+  expression("Stable-order weight" ~ (beta[i])),
+  ncol = 3
+)
+p_participant_prediction_gaps <- wrap_plots(
+  p_alpha_prediction_gaps,
+  p_kappa_prediction_gaps,
+  p_beta_prediction_gaps,
+  ncol = 1,
+  heights = c(1, 1, 1),
+  guides = "collect"
+) & theme(legend.position = "top")
+
+figure_10 <- (
+  (p_parameter_intervals + labs(tag = "A")) /
+    wrap_elements(full = p_participant_prediction_gaps) + labs(tag = "B")
 ) +
-  geom_vline(xintercept = 0, colour = CSP_COLORS[["grey"]], linewidth = .7) +
-  geom_errorbar(
-    aes(xmin = lower, xmax = upper),
-    orientation = "y",
-    position = position_dodge(width = .55),
-    width = .12,
-    linewidth = .55
-  ) +
-  geom_point(position = position_dodge(width = .55), size = 2.7) +
-  scale_colour_manual(
-    values = c(
-      "Stable order" = CSP_COLORS[["main"]],
-      "Middle 70%" = CSP_COLORS[["grey"]],
-      "Successive choice" = CSP_COLORS[["emphasis"]]
-    ),
-    name = NULL
-  ) +
-  scale_shape_manual(values = c(16, 17, 15), name = NULL) +
-  scale_x_continuous(
-    breaks = c(-.5, 0, .25),
-    limits = c(-.65, .35)
-  ) +
-  labs(
-    x = "Mean log-score difference\n(successive choice - stable order)",
-    y = NULL
-  ) +
-  theme_csp() +
-  theme(
-    panel.grid.major.y = element_blank(),
-    axis.ticks.y = element_blank(),
-    axis.text.y = element_text(size = 11),
-    legend.position = "none"
-  )
+  plot_layout(heights = c(.72, 2.55))
+save_csp_pdf(figure_10, "figures/production_participant_variation.pdf", 9.4, 12.4)
 
-figure_9 <- (p_parameter_intervals | p_participant_gains) /
-  (p_profile | p_residual_localisation) +
-  plot_layout(heights = c(1.1, .9), widths = c(.95, 1.25)) +
-  plot_annotation(tag_levels = "A")
-save_csp_pdf(figure_9, "figures/production_participant_variation.pdf", 9.4, 8.6)
-
-cat("Wrote Figures 7--9 and their supporting CSVs.\n")
+cat("Wrote architecture comparison, PPC, residual, and participant figures with supporting CSVs.\n")

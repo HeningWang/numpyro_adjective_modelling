@@ -5,13 +5,21 @@ Usage:
         --num_warmup 500 --num_samples 500 --num_chains 4
 """
 import os
-# Default to CPU with 4 host devices, but honour env overrides so callers
-# can switch to GPU mode via `JAX_PLATFORMS='' XLA_FLAGS='' python ...`.
+
+# Production inference and its deterministic gates require 64-bit JAX math.
+# This must be set before importing JAX or the model library.
+os.environ["JAX_ENABLE_X64"] = "true"
+
+# Default local runs to CPU with 4 host devices, but honour env overrides.
+# Server runs should set `JAX_PLATFORMS=cuda` before launching this script.
 os.environ.setdefault("JAX_PLATFORMS", "cpu")
-os.environ.setdefault("XLA_FLAGS", "--xla_force_host_platform_device_count=4")
 os.environ["JAX_TRACEBACK_FILTERING"] = "off"
+if os.environ.get("JAX_PLATFORMS", "").lower() == "cpu":
+    os.environ.setdefault("XLA_FLAGS", "--xla_force_host_platform_device_count=4")
 
 import argparse
+import string
+import subprocess
 import numpy as np
 import arviz as az
 import jax
@@ -22,6 +30,20 @@ from numpyro.infer import MCMC, NUTS, Predictive
 
 from helper import import_dataset, import_dataset_hier
 from modelSpecification import (
+    DISCOVERY_CANDIDATE_IDS,
+    DISCOVERY_CANDIDATE_MODELS,
+    FOUNDATION_2X2_MODELS,
+    FOUNDATION_VARIANT_B_MODELS,
+    FORM_SEMANTIC_MODELS,
+    STOP_LOCAL_MODELS,
+    V8_FIXED_FORM_MODELS,
+    V8_ORDER_SOURCE_MODELS,
+    V8_POLICY_LIGHT_MODELS,
+    V9_PARTICIPANT_MODELS,
+    V10_ORDER_MODELS,
+    V10_ORDER_UPD_MODELS,
+    V11_JOINT_PARTICIPANT_MODELS,
+    V12_UPDATING_JOINT_PARTICIPANT_MODELS,
     canonicalize_speaker_type,
     likelihood_function_global_speaker,
     likelihood_function_incremental_speaker,
@@ -50,6 +72,44 @@ from modelSpecification import (
     likelihood_function_principled_salience_stop_regularized_2x2_glob_static_hier,
     likelihood_function_principled_salience_stop_regularized_2x2_glob_rec_fixedeps_hier,
     likelihood_function_principled_salience_stop_regularized_2x2_glob_static_fixedeps_hier,
+    likelihood_function_principled_salience_stop_regularized_tmcc_2x2_inc_rec_hier,
+    likelihood_function_principled_salience_stop_regularized_tmcc_2x2_inc_static_hier,
+    likelihood_function_principled_salience_stop_regularized_plannedprefix_2x2_inc_rec_hier,
+    likelihood_function_principled_salience_stop_regularized_plannedprefix_2x2_inc_static_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_inc_rec_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_inc_static_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_glob_rec_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_glob_static_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_inc_rec_fixedeps_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_inc_static_fixedeps_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_glob_rec_fixedeps_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_glob_static_fixedeps_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_rec_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_static_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_rec_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_static_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_rec_fixedeps_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_static_fixedeps_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_sharpform_2x2_inc_rec_fixedeps_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_sharpform_2x2_inc_static_fixedeps_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_inc_rec_fixedeps_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_inc_static_fixedeps_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_glob_rec_fixedeps_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_glob_static_fixedeps_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_rec_fixedeps_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_static_fixedeps_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_inc_rec_fixedeps_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_inc_static_fixedeps_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_glob_rec_fixedeps_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_glob_static_fixedeps_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_glob_rec_fixedeps_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_glob_static_fixedeps_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_rec_fixedeps_hier,
+    likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_static_fixedeps_hier,
+    likelihood_function_principled_salience_stop_regularized_tmcc_2x2_glob_rec_hier,
+    likelihood_function_principled_salience_stop_regularized_tmcc_2x2_glob_static_hier,
+    likelihood_function_principled_salience_stop_regularized_tmcc_2x2_glob_rec_fixedeps_hier,
+    likelihood_function_principled_salience_stop_regularized_tmcc_2x2_glob_static_fixedeps_hier,
     likelihood_function_principled_salience_stop_strong_regularized_hier,
     likelihood_function_contextual_freewf_hier,
     likelihood_function_contextual_anchored_hier,
@@ -139,6 +199,44 @@ HIER_MODELS = {
     "principled_salience_stop_regularized_2x2_glob_static": (likelihood_function_principled_salience_stop_regularized_2x2_glob_static_hier, 0.85, 5),
     "principled_salience_stop_regularized_2x2_glob_rec_fixedeps": (likelihood_function_principled_salience_stop_regularized_2x2_glob_rec_fixedeps_hier, 0.85, 5),
     "principled_salience_stop_regularized_2x2_glob_static_fixedeps": (likelihood_function_principled_salience_stop_regularized_2x2_glob_static_fixedeps_hier, 0.85, 5),
+    "principled_salience_stop_regularized_tmcc_2x2_inc_rec": (likelihood_function_principled_salience_stop_regularized_tmcc_2x2_inc_rec_hier, 0.85, 5),
+    "principled_salience_stop_regularized_tmcc_2x2_inc_static": (likelihood_function_principled_salience_stop_regularized_tmcc_2x2_inc_static_hier, 0.85, 5),
+    "principled_salience_stop_regularized_plannedprefix_2x2_inc_rec": (likelihood_function_principled_salience_stop_regularized_plannedprefix_2x2_inc_rec_hier, 0.85, 5),
+    "principled_salience_stop_regularized_plannedprefix_2x2_inc_static": (likelihood_function_principled_salience_stop_regularized_plannedprefix_2x2_inc_static_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_2x2_inc_rec": (likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_inc_rec_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_2x2_inc_static": (likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_inc_static_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_2x2_glob_rec": (likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_glob_rec_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_2x2_glob_static": (likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_glob_static_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_2x2_inc_rec_fixedeps": (likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_inc_rec_fixedeps_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_2x2_inc_static_fixedeps": (likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_inc_static_fixedeps_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_2x2_glob_rec_fixedeps": (likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_glob_rec_fixedeps_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_2x2_glob_static_fixedeps": (likelihood_function_principled_salience_stop_regularized_responsepolicy_2x2_glob_static_fixedeps_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_rec": (likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_rec_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_static": (likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_static_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_rec": (likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_rec_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_static": (likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_static_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_rec_fixedeps": (likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_rec_fixedeps_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_static_fixedeps": (likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_static_fixedeps_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_boundedform_sharpform_2x2_inc_rec_fixedeps": (likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_sharpform_2x2_inc_rec_fixedeps_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_boundedform_sharpform_2x2_inc_static_fixedeps": (likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_sharpform_2x2_inc_static_fixedeps_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_inc_rec_fixedeps": (likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_inc_rec_fixedeps_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_inc_static_fixedeps": (likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_inc_static_fixedeps_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_glob_rec_fixedeps": (likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_glob_rec_fixedeps_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_glob_static_fixedeps": (likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_glob_static_fixedeps_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_rec_fixedeps": (likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_rec_fixedeps_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_static_fixedeps": (likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_static_fixedeps_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_inc_rec_fixedeps": (likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_inc_rec_fixedeps_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_inc_static_fixedeps": (likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_inc_static_fixedeps_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_glob_rec_fixedeps": (likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_glob_rec_fixedeps_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_glob_static_fixedeps": (likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_glob_static_fixedeps_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_glob_rec_fixedeps": (likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_glob_rec_fixedeps_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_glob_static_fixedeps": (likelihood_function_principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_glob_static_fixedeps_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_rec_fixedeps": (likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_rec_fixedeps_hier, 0.85, 5),
+    "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_static_fixedeps": (likelihood_function_principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_static_fixedeps_hier, 0.85, 5),
+    "principled_salience_stop_regularized_tmcc_2x2_glob_rec": (likelihood_function_principled_salience_stop_regularized_tmcc_2x2_glob_rec_hier, 0.85, 5),
+    "principled_salience_stop_regularized_tmcc_2x2_glob_static": (likelihood_function_principled_salience_stop_regularized_tmcc_2x2_glob_static_hier, 0.85, 5),
+    "principled_salience_stop_regularized_tmcc_2x2_glob_rec_fixedeps": (likelihood_function_principled_salience_stop_regularized_tmcc_2x2_glob_rec_fixedeps_hier, 0.85, 5),
+    "principled_salience_stop_regularized_tmcc_2x2_glob_static_fixedeps": (likelihood_function_principled_salience_stop_regularized_tmcc_2x2_glob_static_fixedeps_hier, 0.85, 5),
     "principled_salience_stop_strong_regularized": (likelihood_function_principled_salience_stop_strong_regularized_hier, 0.85, 5),
     "contextual_freewf": (likelihood_function_contextual_freewf_hier, 0.85, 5),
     "contextual_anchored": (likelihood_function_contextual_anchored_hier, 0.85, 5),
@@ -175,18 +273,202 @@ HIER_MODELS = {
     "v5_global_static_full": (likelihood_function_v5_global_static_full_hier, 0.85, 5),
 }
 
+HIER_MODELS.update({
+    candidate_id: (DISCOVERY_CANDIDATE_MODELS[candidate_id], 0.85, 5)
+    for candidate_id in DISCOVERY_CANDIDATE_IDS
+})
+
+HIER_MODELS.update({
+    model_id: (model, 0.85, 5)
+    for model_id, model in FOUNDATION_VARIANT_B_MODELS.items()
+})
+
+HIER_MODELS.update({
+    model_id: (model, 0.85, 5)
+    for model_id, model in STOP_LOCAL_MODELS.items()
+})
+
+HIER_MODELS.update({
+    model_id: (model, 0.85, 5)
+    for model_id, model in FORM_SEMANTIC_MODELS.items()
+})
+
+HIER_MODELS.update({
+    model_id: (model, 0.85, 5)
+    for model_id, model in V9_PARTICIPANT_MODELS.items()
+})
+
+HIER_MODELS.update({
+    model_id: (model, 0.85, 5)
+    for model_id, model in V10_ORDER_MODELS.items()
+})
+
+HIER_MODELS.update({
+    model_id: (model, 0.85, 5)
+    for model_id, model in V10_ORDER_UPD_MODELS.items()
+})
+
+HIER_MODELS.update({
+    model_id: (model, 0.90, 6)
+    for model_id, model in V11_JOINT_PARTICIPANT_MODELS.items()
+})
+
+HIER_MODELS.update({
+    model_id: (model, 0.90, 6)
+    for model_id, model in V12_UPDATING_JOINT_PARTICIPANT_MODELS.items()
+})
+
+# Explicit registry entries for the plan's shared graded-semantic comparison.
+# Stable names keep K-FIX/K-UPD analysis independent of the older discovery
+# candidate naming scheme.
+HIER_MODELS.update({
+    "foundation_kappa_free_inc_static_fixedeps": (
+        FOUNDATION_2X2_MODELS["foundation_kappa_free_inc_static_fixedeps"],
+        0.85,
+        5,
+    ),
+    "foundation_kappa_free_inc_recursive_fixedeps": (
+        FOUNDATION_2X2_MODELS["foundation_kappa_free_inc_recursive_fixedeps"],
+        0.85,
+        5,
+    ),
+})
+
+SPEAKER_CHOICES = sorted(set(FLAT_MODELS) | set(HIER_MODELS) | {"incremental_frozen"})
+
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+
+def artifact_tag_suffix(artifact_tag: str = "") -> str:
+    """Return a safe filename suffix for optional artifact-provenance tags."""
+    if not artifact_tag:
+        return ""
+    allowed = set(string.ascii_letters + string.digits + "_.-")
+    if any(ch not in allowed for ch in artifact_tag):
+        raise ValueError("--artifact-tag may only contain letters, digits, '_', '.', or '-'.")
+    return f"_{artifact_tag}"
+
+
+def git_value(args: list[str]) -> str:
+    try:
+        return subprocess.check_output(
+            ["git", *args],
+            cwd=REPO_ROOT,
+            stderr=subprocess.DEVNULL,
+            text=True,
+        ).strip()
+    except Exception:
+        return "unknown"
+
+
+def git_dirty_state() -> str:
+    try:
+        unstaged = subprocess.run(
+            ["git", "diff", "--quiet"],
+            cwd=REPO_ROOT,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        ).returncode
+        staged = subprocess.run(
+            ["git", "diff", "--cached", "--quiet"],
+            cwd=REPO_ROOT,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        ).returncode
+        return "true" if unstaged or staged else "false"
+    except Exception:
+        return "unknown"
+
+
+def run_metadata(**fields) -> dict[str, str]:
+    metadata = {
+        "project_git_commit": git_value(["rev-parse", "--short", "HEAD"]),
+        "project_git_dirty": git_dirty_state(),
+        **fields,
+    }
+    return {key: "" if value is None else str(value) for key, value in metadata.items()}
+
+
+def attach_run_metadata(idata, metadata: dict[str, str]) -> None:
+    for group in ("posterior", "sample_stats", "prior", "posterior_predictive", "observed_data"):
+        dataset = getattr(idata, group, None)
+        if dataset is not None:
+            dataset.attrs.update(metadata)
+
+
+def build_hierarchical_arviz_schema(
+    posterior_samples,
+    n_items: int,
+    n_participants: int,
+    n_conditions: int | None = None,
+    condition_labels=None,
+):
+    """Build ArviZ coordinates and dimensions for hierarchical variables."""
+    coords = {"item": np.arange(n_items)}
+    dims = {"obs": ["item"]}
+
+    if "delta" in posterior_samples:
+        delta_shape = posterior_samples["delta"].shape
+        if len(delta_shape) == 2:
+            coords["participants"] = np.arange(n_participants)
+            dims["delta"] = ["participants"]
+        elif len(delta_shape) == 3:
+            coords["participants"] = np.arange(n_participants)
+            coords["conditions"] = (
+                condition_labels
+                or np.arange(n_conditions or delta_shape[2]).tolist()
+            )
+            dims["delta"] = ["participants", "conditions"]
+
+    if "delta_raw" in posterior_samples:
+        draw_shape = posterior_samples["delta_raw"].shape
+        if len(draw_shape) == 2:
+            coords["participants"] = coords.get(
+                "participants",
+                np.arange(n_participants),
+            )
+            dims["delta_raw"] = ["participants"]
+        elif len(draw_shape) == 3:
+            coords["participants"] = coords.get(
+                "participants",
+                np.arange(n_participants),
+            )
+            coords["conditions"] = coords.get(
+                "conditions",
+                condition_labels
+                or np.arange(n_conditions or draw_shape[2]).tolist(),
+            )
+            dims["delta_raw"] = ["participants", "conditions"]
+
+    for variable_name in (
+        "z_alpha",
+        "alpha_by_participant",
+        "z_kappa",
+        "kappa_by_participant",
+    ):
+        if variable_name in posterior_samples:
+            coords["participants"] = coords.get(
+                "participants",
+                np.arange(n_participants),
+            )
+            dims[variable_name] = ["participants"]
+
+    return coords, dims
+
 
 def run_inference(
     speaker_type: str = "global",
     num_warmup: int = 100,
     num_samples: int = 250,
     num_chains: int = 4,
+    artifact_tag: str = "",
 ):
     canonical_speaker_type = canonicalize_speaker_type(speaker_type)
 
+    run_tag = artifact_tag_suffix(artifact_tag)
     output_file_name = (
         f"./inference_data/mcmc_results_{canonical_speaker_type}_speaker"
-        f"_warmup{num_warmup}_samples{num_samples}_chains{num_chains}.nc"
+        f"{run_tag}_warmup{num_warmup}_samples{num_samples}_chains{num_chains}.nc"
     )
     if os.path.exists(output_file_name):
         os.remove(output_file_name)
@@ -232,6 +514,21 @@ def run_inference(
         coords={"item": np.arange(N)},
         dims={"obs": ["item"]},
     )
+    attach_run_metadata(
+        numpyro_data,
+        run_metadata(
+            dataset="production",
+            run_kind="flat",
+            speaker_type=speaker_type,
+            canonical_speaker_type=canonical_speaker_type,
+            num_warmup=num_warmup,
+            num_samples=num_samples,
+            num_chains=num_chains,
+            artifact_tag=artifact_tag,
+            artifact_file=os.path.basename(output_file_name),
+            n_observations=N,
+        ),
+    )
     numpyro_data.to_netcdf(output_file_name)
     print(f"Saved: {output_file_name}")
 
@@ -243,6 +540,8 @@ def run_inference_hier(
     num_chains: int = 4,
     min_proportion: float = 0.0,
     condition_subset: str = "",
+    state_encoding: str = "target_match",
+    artifact_tag: str = "",
 ):
     """Run MCMC for the hierarchical (random participant alpha) speaker model.
 
@@ -262,15 +561,20 @@ def run_inference_hier(
         subset_codes = None
 
     tag = f"_top" if min_proportion > 0 else ""
+    run_tag = artifact_tag_suffix(artifact_tag)
     output_file_name = (
         f"./inference_data/mcmc_results_{canonical_speaker_type}_speaker_hier{tag}{subset_tag}"
-        f"_warmup{num_warmup}_samples{num_samples}_chains{num_chains}.nc"
+        f"{run_tag}_warmup{num_warmup}_samples{num_samples}_chains{num_chains}.nc"
     )
     if os.path.exists(output_file_name):
         os.remove(output_file_name)
         print(f"Deleted existing file: {output_file_name}")
 
-    data = import_dataset_hier(min_proportion=min_proportion)
+    data = import_dataset_hier(
+        min_proportion=min_proportion,
+        state_encoding=state_encoding,
+    )
+    print(f"  [encoding] state_encoding={state_encoding}")
 
     if subset_codes is not None:
         df = data["df"]
@@ -350,6 +654,44 @@ def run_inference_hier(
         "principled_salience_stop_regularized_2x2_glob_static",
         "principled_salience_stop_regularized_2x2_glob_rec_fixedeps",
         "principled_salience_stop_regularized_2x2_glob_static_fixedeps",
+        "principled_salience_stop_regularized_tmcc_2x2_inc_rec",
+        "principled_salience_stop_regularized_tmcc_2x2_inc_static",
+        "principled_salience_stop_regularized_plannedprefix_2x2_inc_rec",
+        "principled_salience_stop_regularized_plannedprefix_2x2_inc_static",
+        "principled_salience_stop_regularized_responsepolicy_2x2_inc_rec",
+        "principled_salience_stop_regularized_responsepolicy_2x2_inc_static",
+        "principled_salience_stop_regularized_responsepolicy_2x2_glob_rec",
+        "principled_salience_stop_regularized_responsepolicy_2x2_glob_static",
+        "principled_salience_stop_regularized_responsepolicy_2x2_inc_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_2x2_inc_static_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_2x2_glob_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_2x2_glob_static_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_rec",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_static",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_rec",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_static",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_static_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_sharpform_2x2_inc_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_sharpform_2x2_inc_static_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_inc_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_inc_static_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_glob_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_glob_static_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_static_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_inc_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_inc_static_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_glob_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_glob_static_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_glob_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_glob_static_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_static_fixedeps",
+        "principled_salience_stop_regularized_tmcc_2x2_glob_rec",
+        "principled_salience_stop_regularized_tmcc_2x2_glob_static",
+        "principled_salience_stop_regularized_tmcc_2x2_glob_rec_fixedeps",
+        "principled_salience_stop_regularized_tmcc_2x2_glob_static_fixedeps",
         "principled_salience_stop_strong_regularized",
         "contextual_freewf",
         "contextual_anchored",
@@ -399,8 +741,73 @@ def run_inference_hier(
         "contextual_pcalpha_canon_parsimony_2x2_glob_rec",
         "contextual_pcalpha_canon_parsimony_2x2_glob_static",
     }
+    CONTEXTUAL_FAMILY.update(DISCOVERY_CANDIDATE_IDS)
+    CONTEXTUAL_FAMILY.update({
+        "foundation_kappa_free_inc_static_fixedeps",
+        "foundation_kappa_free_inc_recursive_fixedeps",
+    })
+    CONTEXTUAL_FAMILY.update(FOUNDATION_VARIANT_B_MODELS)
+    CONTEXTUAL_FAMILY.update(STOP_LOCAL_MODELS)
+    CONTEXTUAL_FAMILY.update(FORM_SEMANTIC_MODELS)
+    CONTEXTUAL_FAMILY.update(V8_FIXED_FORM_MODELS)
+    CONTEXTUAL_FAMILY.update(V8_ORDER_SOURCE_MODELS)
+    CONTEXTUAL_FAMILY.update(V8_POLICY_LIGHT_MODELS)
+    CONTEXTUAL_FAMILY.update(V9_PARTICIPANT_MODELS)
+    CONTEXTUAL_FAMILY.update(V10_ORDER_MODELS)
+    CONTEXTUAL_FAMILY.update(V10_ORDER_UPD_MODELS)
+    CONTEXTUAL_FAMILY.update(V11_JOINT_PARTICIPANT_MODELS)
+    CONTEXTUAL_FAMILY.update(V12_UPDATING_JOINT_PARTICIPANT_MODELS)
     is_v5 = canonical_speaker_type in V5_FAMILY
     is_contextual = canonical_speaker_type in CONTEXTUAL_FAMILY
+    RESPONSE_POLICY_FAMILY = {
+        "principled_salience_stop_regularized_responsepolicy_2x2_inc_rec",
+        "principled_salience_stop_regularized_responsepolicy_2x2_inc_static",
+        "principled_salience_stop_regularized_responsepolicy_2x2_glob_rec",
+        "principled_salience_stop_regularized_responsepolicy_2x2_glob_static",
+        "principled_salience_stop_regularized_responsepolicy_2x2_inc_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_2x2_inc_static_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_2x2_glob_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_2x2_glob_static_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_rec",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_static",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_rec",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_static",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_inc_static_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_sharpform_2x2_inc_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_sharpform_2x2_inc_static_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_inc_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_inc_static_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_glob_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_sizesharp_2x2_glob_static_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_inc_static_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_inc_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_inc_static_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_glob_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_orderplan_2x2_glob_static_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_glob_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_reliabilitybackup_2x2_glob_static_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_rec_fixedeps",
+        "principled_salience_stop_regularized_responsepolicy_boundedform_2x2_glob_static_fixedeps",
+    }
+    RESPONSE_POLICY_FAMILY.update(DISCOVERY_CANDIDATE_IDS)
+    RESPONSE_POLICY_FAMILY.update({
+        "foundation_kappa_free_inc_static_fixedeps",
+        "foundation_kappa_free_inc_recursive_fixedeps",
+    })
+    RESPONSE_POLICY_FAMILY.update(FOUNDATION_VARIANT_B_MODELS)
+    RESPONSE_POLICY_FAMILY.update(STOP_LOCAL_MODELS)
+    RESPONSE_POLICY_FAMILY.update(FORM_SEMANTIC_MODELS)
+    RESPONSE_POLICY_FAMILY.update(V8_FIXED_FORM_MODELS)
+    RESPONSE_POLICY_FAMILY.update(V8_ORDER_SOURCE_MODELS)
+    RESPONSE_POLICY_FAMILY.update(V8_POLICY_LIGHT_MODELS)
+    RESPONSE_POLICY_FAMILY.update(V9_PARTICIPANT_MODELS)
+    RESPONSE_POLICY_FAMILY.update(V10_ORDER_MODELS)
+    RESPONSE_POLICY_FAMILY.update(V10_ORDER_UPD_MODELS)
+    RESPONSE_POLICY_FAMILY.update(V11_JOINT_PARTICIPANT_MODELS)
+    RESPONSE_POLICY_FAMILY.update(V12_UPDATING_JOINT_PARTICIPANT_MODELS)
+    is_response_policy = canonical_speaker_type in RESPONSE_POLICY_FAMILY
 
     print(f"Hierarchical model: {n_participants} participants, {len(states_train)} observations")
     print(f"Output file: {output_file_name}")
@@ -448,6 +855,12 @@ def run_inference_hier(
         base_kwargs["sufficient_dim"] = sufficient_dim
         base_kwargs["has_one_word_solution"] = has_one_word_solution
         base_kwargs["is_sharp"] = is_sharp
+    if is_response_policy:
+        if is_colour_sufficient is None:
+            raise RuntimeError(
+                "response-policy model requires is_colour_sufficient in data dict"
+            )
+        base_kwargs["is_colour_sufficient"] = is_colour_sufficient
     if canonical_speaker_type in PCALPHA_FAMILY:
         if condition_idx is None or n_conditions is None:
             raise RuntimeError(
@@ -456,7 +869,17 @@ def run_inference_hier(
         base_kwargs["condition_idx"] = condition_idx
         base_kwargs["n_conditions"] = n_conditions
 
-    mcmc.run(rng_key_, **base_kwargs)
+    mcmc.run(
+        rng_key_,
+        extra_fields=(
+            "energy",
+            "potential_energy",
+            "num_steps",
+            "accept_prob",
+            "mean_accept_prob",
+        ),
+        **base_kwargs,
+    )
     mcmc.print_summary(exclude_deterministic=False)
 
     posterior_samples = mcmc.get_samples()
@@ -466,31 +889,13 @@ def run_inference_hier(
     prior = Predictive(model, num_samples=500)(PRNGKey(2), **pp_kwargs)
 
     N = states_train.shape[0]
-    coords = {"item": np.arange(N)}
-    dims   = {"obs": ["item"]}
-    if "delta" in posterior_samples:
-        delta_shape = posterior_samples["delta"].shape  # (chains*samples, ...)
-        if len(delta_shape) == 2:
-            coords["participants"] = np.arange(n_participants)
-            dims["delta"] = ["participants"]
-        elif len(delta_shape) == 3:
-            coords["participants"] = np.arange(n_participants)
-            coords["conditions"] = (data.get("condition_labels")
-                                    or np.arange(n_conditions or delta_shape[2]).tolist())
-            dims["delta"] = ["participants", "conditions"]
-    # Non-centered "delta_raw" gets the same shape coords if present.
-    if "delta_raw" in posterior_samples:
-        draw_shape = posterior_samples["delta_raw"].shape
-        if len(draw_shape) == 2:
-            coords["participants"] = coords.get("participants", np.arange(n_participants))
-            dims["delta_raw"] = ["participants"]
-        elif len(draw_shape) == 3:
-            coords["participants"] = coords.get("participants", np.arange(n_participants))
-            coords["conditions"] = coords.get(
-                "conditions",
-                data.get("condition_labels") or np.arange(n_conditions or draw_shape[2]).tolist(),
-            )
-            dims["delta_raw"] = ["participants", "conditions"]
+    coords, dims = build_hierarchical_arviz_schema(
+        posterior_samples=posterior_samples,
+        n_items=N,
+        n_participants=n_participants,
+        n_conditions=n_conditions,
+        condition_labels=data.get("condition_labels"),
+    )
 
     numpyro_data = az.from_numpyro(
         mcmc,
@@ -498,6 +903,27 @@ def run_inference_hier(
         posterior_predictive=posterior_predictive,
         coords=coords,
         dims=dims,
+    )
+    attach_run_metadata(
+        numpyro_data,
+        run_metadata(
+            dataset="production",
+            run_kind="hierarchical",
+            speaker_type=speaker_type,
+            canonical_speaker_type=canonical_speaker_type,
+            num_warmup=num_warmup,
+            num_samples=num_samples,
+            num_chains=num_chains,
+            artifact_tag=artifact_tag,
+            artifact_file=os.path.basename(output_file_name),
+            state_encoding=state_encoding,
+            condition_subset=condition_subset,
+            subset_tag=subset_tag,
+            min_proportion=min_proportion,
+            n_observations=N,
+            n_participants=n_participants,
+            n_conditions=n_conditions,
+        ),
     )
     numpyro_data.to_netcdf(output_file_name)
     assert os.path.exists(output_file_name), f"Save failed: {output_file_name} not found"
@@ -507,54 +933,7 @@ def run_inference_hier(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run speaker inference with NumPyro.")
     parser.add_argument("--speaker_type", type=str,
-                        choices=["global", "incremental", "global_static", "incremental_static",
-                                 "incremental_frozen", "incremental_lm_only",
-                                 "incremental_rsa_only", "incremental_lookahead",
-                                 "incremental_extended", "incremental_mixture",
-                                 "incremental_mixture_simple",
-                                 "reported", "reported_lowcol", "incremental_lowcol",
-                                 "contextual", "contextual_lambdaunc",
-                                 "simplified_lm_resid", "simplified_lm_raw",
-                                 "simplified_hand_order", "simplified_no_frontload",
-                                 "simplified_no_uncertainty_len", "simplified_no_order",
-                                 "principled", "principled_no_order",
-                                 "principled_no_salience",
-                                 "principled_no_uncertainty_len",
-                                 "principled_salience_stop",
-                                 "principled_salience_stop_regularized",
-                                 "principled_salience_stop_regularized_2x2_inc_rec",
-                                 "principled_salience_stop_regularized_2x2_inc_static",
-                                 "principled_salience_stop_regularized_2x2_glob_rec",
-                                 "principled_salience_stop_regularized_2x2_glob_static",
-                                 "principled_salience_stop_regularized_2x2_glob_rec_fixedeps",
-                                 "principled_salience_stop_regularized_2x2_glob_static_fixedeps",
-                                 "principled_salience_stop_strong_regularized",
-                                 "contextual_freewf", "contextual_anchored",
-                                 "contextual_freewf_anchored",
-                                 "contextual_anchored_gamma",
-                                 "contextual_anchored_gamma_fixedwf",
-                                 "contextual_anchored_gamma_fixedwf_pcalpha",
-                                 "contextual_pcalpha_gammasharp",
-                                 "contextual_pcalpha_formmod",
-                                 "contextual_pcalpha_canon",
-                                 "contextual_pcalpha_canon_betafixed",
-                                 "contextual_pcalpha_canon_parsimony",
-                                 "contextual_pcalpha_canon_parsimony_no_gammasharp",
-                                 "contextual_pcalpha_canon_parsimony_no_lambdasuff",
-                                 "contextual_pcalpha_canon_parsimony_no_alphaF",
-                                 "contextual_pcalpha_canon_parsimony_no_alphaF_freecsv",
-                                 "contextual_pcalpha_canon_parsimony_no_alphaF_freefsv",
-                                 "contextual_pcalpha_canon_parsimony_no_alphaF_freek",
-                                 "contextual_pcalpha_canon_parsimony_no_alphaF_freewf",
-                                 "contextual_pcalpha_canon_parsimony_no_alphaF_freeall4",
-                                 "contextual_pcalpha_canon_parsimony_no_alphaF_csv059",
-                                 "contextual_pcalpha_canon_parsimony_2x2_inc_rec",
-                                 "contextual_pcalpha_canon_parsimony_2x2_inc_static",
-                                 "contextual_pcalpha_canon_parsimony_2x2_glob_rec",
-                                 "contextual_pcalpha_canon_parsimony_2x2_glob_static",
-                                 "v5", "v5_no_lm", "v5a", "v5b",
-                                 "v5_inc_static", "v5_global", "v5_global_static",
-                                 "v5_global_full", "v5_global_static_full"],
+                        choices=SPEAKER_CHOICES,
                         default="incremental",
                         help="Choose the speaker model type.")
     parser.add_argument("--num_samples", type=int, default=500, help="Number of posterior samples.")
@@ -573,6 +952,18 @@ if __name__ == "__main__":
         "--condition-subset", type=str, default="",
         help="Comma-separated condition codes (e.g. 'erdc,zrdc,brdc') to filter trials. Empty = all 9.",
     )
+    parser.add_argument(
+        "--state-encoding", type=str, default="target_match",
+        choices=["target_match", "canonical"],
+        help="State encoding for colour/form features. Default target_match.",
+    )
+    parser.add_argument(
+        "--artifact-tag", type=str, default="",
+        help=(
+            "Optional safe token appended to inference artifact filenames "
+            "before the warmup/sample/chains tag."
+        ),
+    )
 
     args = parser.parse_args()
 
@@ -587,6 +978,8 @@ if __name__ == "__main__":
             num_chains=args.num_chains,
             min_proportion=args.min_proportion,
             condition_subset=args.condition_subset,
+            state_encoding=args.state_encoding,
+            artifact_tag=args.artifact_tag,
         )
     else:
         run_inference(
@@ -594,4 +987,5 @@ if __name__ == "__main__":
             num_samples=args.num_samples,
             num_warmup=args.num_warmup,
             num_chains=args.num_chains,
+            artifact_tag=args.artifact_tag,
         )

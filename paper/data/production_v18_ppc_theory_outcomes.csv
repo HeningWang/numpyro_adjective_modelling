@@ -1,25 +1,25 @@
 outcome,context,discriminability,source,proportion,lower,upper
 Size-initial responses,Both necessary,Low,Observed,0.49165120593692024,0.4267161410018553,0.5584415584415584
-Size-initial responses,Both necessary,Low,Plan-guided,0.4732073283858998,0.43042671614100186,0.5157699443413729
+Size-initial responses,Both necessary,Low,Plan-guided,0.475115491651206,0.4322820037105751,0.5176252319109462
 Redundant adjective use,Both necessary,Low,Observed,0.4025974025974026,0.3351851851851852,0.4712430426716141
-Redundant adjective use,Both necessary,Low,Plan-guided,0.27270686456400745,0.23376623376623376,0.313543599257885
+Redundant adjective use,Both necessary,Low,Plan-guided,0.2715125231910946,0.23376623376623376,0.3098330241187384
 Size-initial responses,Both necessary,High,Observed,0.6449579831932774,0.570230607966457,0.7179095532950023
-Size-initial responses,Both necessary,High,Plan-guided,0.5204201680672268,0.47478991596638653,0.5672268907563025
+Size-initial responses,Both necessary,High,Plan-guided,0.513984768907563,0.46638655462184875,0.5588235294117647
 Redundant adjective use,Both necessary,High,Observed,0.37184873949579833,0.3058910726182545,0.4378947368421053
-Redundant adjective use,Both necessary,High,Plan-guided,0.29656880252100837,0.25210084033613445,0.3403361344537815
+Redundant adjective use,Both necessary,High,Plan-guided,0.2944679621848739,0.25210084033613445,0.3382352941176471
 Size-initial responses,Size sufficient,Low,Observed,0.793168880455408,0.7267552182163188,0.8522072936660269
-Size-initial responses,Size sufficient,Low,Plan-guided,0.7269454459203036,0.6888045540796964,0.7647058823529411
+Size-initial responses,Size sufficient,Low,Plan-guided,0.7503576850094876,0.7096774193548387,0.7874762808349146
 Redundant adjective use,Size sufficient,Low,Observed,0.8975332068311196,0.856603593203218,0.9338374291115312
-Redundant adjective use,Size sufficient,Low,Plan-guided,0.8521579696394685,0.8197343453510436,0.8842504743833017
+Redundant adjective use,Size sufficient,Low,Plan-guided,0.8557220113851993,0.825426944971537,0.8861480075901328
 Size-initial responses,Size sufficient,High,Observed,0.7642105263157895,0.6934418693481621,0.8252723352498894
-Size-initial responses,Size sufficient,High,Plan-guided,0.8424315789473684,0.8063157894736842,0.8736842105263158
+Size-initial responses,Size sufficient,High,Plan-guided,0.8545505263157895,0.8189473684210526,0.8863157894736842
 Redundant adjective use,Size sufficient,High,Observed,0.6252631578947369,0.5433403805496829,0.7037815126050421
-Redundant adjective use,Size sufficient,High,Plan-guided,0.6827457894736843,0.6357894736842106,0.728421052631579
+Redundant adjective use,Size sufficient,High,Plan-guided,0.6833326315789473,0.6378947368421053,0.7305263157894737
 Size-initial responses,Colour sufficient,Low,Observed,0.04259259259259259,0.011111111111111112,0.08148148148148149
-Size-initial responses,Colour sufficient,Low,Plan-guided,0.12100231481481481,0.09444444444444444,0.15
+Size-initial responses,Colour sufficient,Low,Plan-guided,0.10657222222222222,0.08148148148148149,0.13333333333333333
 Redundant adjective use,Colour sufficient,Low,Observed,0.3388888888888889,0.25,0.43333333333333335
-Redundant adjective use,Colour sufficient,Low,Plan-guided,0.24452916666666666,0.20925925925925926,0.2814814814814815
+Redundant adjective use,Colour sufficient,Low,Plan-guided,0.23480925925925925,0.2,0.2722222222222222
 Size-initial responses,Colour sufficient,High,Observed,0.010482180293501049,0.0,0.025157232704402517
-Size-initial responses,Colour sufficient,High,Plan-guided,0.10932232704402514,0.08176100628930817,0.13836477987421383
+Size-initial responses,Colour sufficient,High,Plan-guided,0.10192138364779874,0.07547169811320754,0.129979035639413
 Redundant adjective use,Colour sufficient,High,Observed,0.2641509433962264,0.18029350104821804,0.35639412997903563
-Redundant adjective use,Colour sufficient,High,Plan-guided,0.20850890985324946,0.1719077568134172,0.24528301886792453
+Redundant adjective use,Colour sufficient,High,Plan-guided,0.20644444444444446,0.16981132075471697,0.2431865828092243
