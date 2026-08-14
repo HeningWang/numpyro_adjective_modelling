@@ -1,0 +1,19 @@
+"family","context","size_discriminability","n","one_adjective_rate","three_adjective_rate","sufficient_property_initial_rate"
+"Colour-form","Both properties necessary","High",477,0.010482180293501,0.134171907756813,NA
+"Colour-form","Both properties necessary","Low",540,0.0240740740740741,0.103703703703704,NA
+"Colour-form","First property sufficient","High",477,0.70020964360587,0.0545073375262056,0.909853249475891
+"Colour-form","First property sufficient","Low",540,0.637037037037037,0.0703703703703703,0.890740740740741
+"Colour-form","Second property sufficient","High",477,0.737945492662473,0.0377358490566037,0.767295597484277
+"Colour-form","Second property sufficient","Low",540,0.674074074074074,0.0537037037037036,0.712962962962963
+"Size-colour","Both properties necessary","High",476,0.0840336134453783,0.371848739495798,NA
+"Size-colour","Both properties necessary","Low",539,0.128014842300556,0.402597402597403,NA
+"Size-colour","First property sufficient","High",475,0.374736842105263,0.237894736842105,0.76421052631579
+"Size-colour","First property sufficient","Low",527,0.10246679316888,0.387096774193548,0.793168880455408
+"Size-colour","Second property sufficient","High",477,0.735849056603774,0.0125786163522013,0.947589098532495
+"Size-colour","Second property sufficient","Low",540,0.661111111111111,0.0481481481481482,0.890740740740741
+"Size-form","Both properties necessary","High",477,0.115303983228512,0.285115303983228,NA
+"Size-form","Both properties necessary","Low",531,0.0320150659133709,0.372881355932203,NA
+"Size-form","First property sufficient","High",475,0.338947368421052,0.263157894736842,0.772631578947368
+"Size-form","First property sufficient","Low",516,0.218992248062016,0.335271317829457,0.637596899224806
+"Size-form","Second property sufficient","High",476,0.75,0.0252100840336135,0.67436974789916
+"Size-form","Second property sufficient","Low",540,0.696296296296296,0.0277777777777779,0.674074074074074

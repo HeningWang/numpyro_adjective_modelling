@@ -83,7 +83,7 @@
 \newcommand{\param}[1]{\ensuremath{#1}}
 
 % ---- title matter -----------------------------------------------------------
-\title{Communicative Efficiency in Adjective Ordering: Plan-Guided Production between Hierarchical Semantic Composition and Incremental Pragmatic Choice}
+\title{Communicative Efficiency in Adjective Ordering: Plan-Guided Production between Hierarchical Composition and Incremental Pragmatics}
 \author[1]{Hening Wang}
 \author[1]{Fabian Schlotterbeck}
 \author[1]{Michael Franke}
@@ -300,12 +300,17 @@ A separate simulation asks when sequential context updating within hierarchical 
 \label{sec:experiments}
 % =============================================================================
 
-The three studies expose different aspects of the same empirical problem.
-Studies~1a and (HW: its direct replication 1b) ask participants to compare two completed size--colour orders directly (HW: using sliders).
-Study~2 instead elicits an utterance via direct production and therefore reveals (HW: richer structure of adjective use in referential communication under our experimental setting of adjective ordering, adjective selection and redundant use of adjectives) (DELETE:whether speakers mention size, colour, or form, how many adjectives they produce, and only then how selected adjectives are ordered).
-The two experiments are complementary in the sense of ...
-Throughout experiments, we carefully control the relative communicative efficiency between size and color in a specific referential szene, as well as the overall discriminability of size adjetive through blurring the gap between comparison class.
-Comparing the two tasks lets us ask whether the same context manipulations affect both direct judgments between competing orders and speakers' own adjective choices that ordering is conditional on.
+The three studies expose different aspects of the same empirical problem.\
+Study~1a and its direct replication, Study~1b, ask participants to compare two completed size--colour orders directly using sliders.\
+Study~2 instead elicits utterances through direct production and therefore reveals the richer structure of adjective use in referential communication under our experimental manipulation, including adjective selection, redundant adjective use, utterance length, and ordering conditional on the selected adjectives.\
+The two tasks are complementary: the slider task isolates preferences between two available orders, while the production task situates those preferences within the preceding choices of which adjectives to use and how many to produce.\
+The shared design connects these task formats to the empirical pressures motivating our first research question.\
+Referential context manipulates the relative communicative efficiency of size and colour within a particular scene by varying whether size, colour, or both are sufficient to identify the target.\
+This manipulation operationalises discriminatory strength, which has been argued to favour placing the more useful property earlier in the surface sequence \citep{fukumura2018ordering,rubio2020incrementality,rubio2021wordorder}.\
+Size discriminability separately manipulates the overall perceptual reliability of size by varying the size differences within the relevant comparison class.\
+Because size is gradable and interpreted relative to a comparison class, this manipulation provides a diagnostic of whether the reliability of size affects the size-first preference associated with subjectivity and hierarchical semantic composition \citep{scontras2019grammatical,schlotterbeck2023incremental}.\
+In direct production, it may also affect whether size is selected and whether speakers add redundant adjective material.\
+Crossing these factors allows us to ask how a stable size-first preference is modulated by scene-specific usefulness and perceptual reliability, both in direct judgements between competing orders and in the production choices on which ordering is conditional.\
 
 
 
@@ -401,29 +406,25 @@ Left--right presentation of the two orders was randomised across trials.
 Each participant saw one of six lists built from the 27 underlying scenes, yielding 81 critical trials and 99 filler and control trials (180 total).
 The filler and control items discouraged fixed response strategies and ensured attention to the referential task.
 Responses were reoriented so that larger values favoured the size-first order and rescaled from 0--100 to 0--1.
-For the descriptive figure and linear mixed model, we then subtracted $0.5$, yielding a centred scale from $-0.5$ to $0.5$ with zero as the neutral point.
-The Bayesian predictive analysis retained the same size-first orientation; neutrality corresponds to the midpoint of the response scale.
+We then subtracted $0.5$, yielding a centred scale from $-0.5$ to $0.5$ with zero as the neutral point.
 
 \subsubsection{Results}
 
 \Cref{fig:slider-empirical} shows a clear referential-context gradient in size-first ratings.
-We analysed centred slider ratings with linear mixed-effects models fit in R using \texttt{lme4::lmer} \citep{bates2014fitting}.
-The reported model included referential context, size discriminability, and their interaction as fixed effects, together with participant intercepts and participant slopes for referential context.
-Effects were evaluated by likelihood-ratio comparisons between nested models, and planned marginal contrasts were computed with \texttt{emmeans}.
-We complemented these tests with a Bayesian predictive analysis using the same fixed effects and participant-level random-effects structure.
-The Bayesian analysis evaluates the planned hypotheses through predicted ratings for a new participant and reports posterior medians, $95\%$ credible intervals, and directional posterior probabilities.
+We analysed the centred ratings with a Bayesian Gaussian hierarchical model containing referential context, size discriminability, and their interaction, together with correlated participant intercepts and participant slopes for referential context.
+Planned hypotheses were evaluated through population-level expected ratings; we report posterior medians, $95\%$ credible intervals, and directional posterior probabilities.
 
-Referential context had a significant effect, $\chi^2(2) = 72.2$, $p < .001$.
 Mean centred ratings, indexing preference for size-first orderings, were highest in size-sufficient displays, lower in both-necessary displays, and lowest in colour-sufficient displays.
 Mean centred ratings remained above zero in colour-sufficient contexts, yielding no qualitative reversal.
-Planned contrasts preserved this gradient: size-sufficient ratings exceeded colour-sufficient ratings by $0.268$, Bonferroni-corrected $95\%$ CI $[0.201, 0.335]$, and both-necessary ratings exceeded colour-sufficient ratings by $0.172$, $[0.126, 0.218]$.
-The marginal colour-sufficient estimate was positive at $0.053$, and its $95\%$ CI narrowly included zero, $[-0.001, 0.106]$, $p=.056$.
-The Bayesian predictive analysis assigned posterior probability greater than $.999$ to the graded context order.
+The posterior contrast between size-sufficient and both-necessary displays was $.094$, $95\%$ credible interval $[.061,.127]$, and the contrast between both-necessary and colour-sufficient displays was $.171$, $[.131,.208]$.
+The posterior probability of this graded context order was greater than $.999$.
 It estimated a colour-sufficient preference of $.054$, $95\%$ credible interval $[.003,.109]$, with posterior probability $.982$ of exceeding the neutral point.
 
-Size discriminability made a smaller contribution through a significant crossover interaction, $\chi^2(2) = 7.36$, $p = .025$.
-The planned high--low contrasts within each context included zero, and Study~1b provides the direct test of whether this secondary pattern recurs.
-The Bayesian predictive discriminability contrasts likewise showed no consistent direction across the three contexts.
+The high-minus-low discriminability contrast was $.042$, $95\%$ credible interval $[-.013,.099]$, in size-sufficient displays, $-.043$, $[-.118,.028]$, in both-necessary displays, and $-.021$, $[-.129,.082]$, in colour-sufficient displays.
+The interaction contrast comparing the high-minus-low effect in both-necessary with size-sufficient displays was $-.085$, $95\%$ credible interval $[-.151,-.022]$, with posterior probability $.995$ of being below zero.
+The corresponding colour-sufficient versus size-sufficient interaction contrast was $-.063$, $95\%$ credible interval $[-.172,.039]$, with posterior probability $.885$ of being below zero.
+The descriptive crossover is therefore concentrated in the difference between size-sufficient and both-necessary contexts, while the colour-sufficient component remains uncertain.
+Study~1b provides the direct test of whether this interaction pattern recurs.
 The central result is therefore a size-first preference graded by referential usefulness: it was strongest when size alone identified the target, weakest when colour alone did, and remained slightly positive in the colour-sufficient condition.
 
 \begin{figure}[H]
@@ -442,20 +443,23 @@ The central result is therefore a size-first preference graded by referential us
 
 The replication retained 104 of 132 participants after applying the Study~1a exclusions to an independent participant sample.
 The cleaned file contains the same 1{,}080 list--item--condition design tuples as Study~1a and 8{,}379 critical observations.
+The size--colour subset contained 2{,}786 observations.
 The complete exclusion and preprocessing record appears in \Cref{sec:appendix:methods-transparency}.
 
 \subsubsection{Results}
 
-We fitted the same mixed-effects specification as in Study~1a to the replication ratings.
-Referential context was again significant, $\chi^2(2) = 38.651$, $p < .001$.
+We fitted the same Bayesian Gaussian hierarchical model as in Study~1a to the replication ratings.
 Mean centred ratings were $0.272$ in size-sufficient contexts, $0.197$ when both properties were necessary, and $0.054$ in colour-sufficient contexts.
-The corresponding $95\%$ confidence intervals were $[0.235,0.309]$, $[0.154,0.240]$, and $[-0.005,0.113]$.
-All three Bonferroni-corrected context contrasts were significant.
-The colour-sufficient point estimate virtually reproduced Study~1a ($.054$ vs.\ $.053$), and both confidence intervals narrowly include zero.
-The matched Bayesian predictive analysis assigned posterior probability $.999$ to the graded context order.
+The posterior contrast between size-sufficient and both-necessary displays was $.073$, $95\%$ credible interval $[.029,.115]$, and the contrast between both-necessary and colour-sufficient displays was $.140$, $[.090,.190]$.
+The posterior probability of the graded context order was $.999$.
 It estimated the colour-sufficient preference at $.057$, $95\%$ credible interval $[.001,.116]$, with posterior probability $.977$ of exceeding neutrality.
 Study~1b therefore directly replicates the primary context gradient and supplies convergent evidence for a small positive colour-sufficient preference.
-The weak Study~1a crossover did not recur, so size discriminability remains secondary to the replicated context pattern.
+High discriminability was associated with higher ratings in all three contexts, by $.090$, $95\%$ credible interval $[.014,.160]$, in size-sufficient displays, $.076$, $[-.011,.161]$, in both-necessary displays, and $.124$, $[.016,.240]$, in colour-sufficient displays.
+The interaction contrast comparing both-necessary with size-sufficient displays was $-.014$, $95\%$ credible interval $[-.097,.071]$, with posterior probability $.623$ of being below zero.
+The corresponding colour-sufficient versus size-sufficient interaction contrast was $.034$, $95\%$ credible interval $[-.082,.157]$, with posterior probability $.715$ of exceeding zero.
+The Study~1a crossover therefore does not recur.
+Study~1b shows a broadly shared high-discriminability shift across contexts.
+Size discriminability therefore remains secondary to the replicated context gradient.
 
 \begin{figure}[H]
   \centering
@@ -476,7 +480,7 @@ Further exclusion criteria were: completion times more than two standard deviati
 The canonical production table contains 9{,}100 annotated observations across all three adjective-pair families.
 The model comparison retains the native fifteen-category response space across size--colour, size--form, and colour--form trials.
 Adjective family is a structured dimension of the materials that specifies which two properties support reference; the primary experimental factors remain referential context and size discriminability.
-The targeted frequentist analysis uses size--colour to align directly with the slider studies, while size--form provides generalisation to a second size-containing family and colour--form provides a control for the full-data model comparison.
+The targeted Bayesian hypothesis tests use the 3{,}034 size--colour trials to align directly with the slider studies, while size--form provides generalisation to a second size-containing family and colour--form provides a control for the full-data model comparison.
 Mean completion time was 32.4 minutes.
 Compensation followed the same Prolific rate as Study~1a.
 
@@ -494,7 +498,9 @@ Misspellings and transparent lexical alternatives were normalised when their sem
 The dependent variable for the Bayesian model comparison is the categorical utterance label $y_i \in \{1, \ldots, 15\}$ for each trial $i$.
 For supplementary comparison with the slider studies, we also tracked two derived binary projections: whether an utterance was size-initial and whether it contained more adjective material than the minimally sufficient property set.
 These projections combine several underlying choices and are not treated as direct measures of adjective order.
-For the mixed-effects logistic regressions, trials satisfying the coded outcome were coded as $1$ and all other annotated trials were coded as $0$.
+Each projection was analysed with a Bayesian Bernoulli hierarchical model containing referential context, size discriminability, and their interaction, correlated participant intercepts and participant slopes for referential context, and an item intercept.
+Trials satisfying the coded outcome were coded as $1$ and all other annotated size--colour trials were coded as $0$.
+The planned interaction contrasts were evaluated through posterior-predictive response probabilities for a new participant and item.
 
 
 
@@ -513,16 +519,18 @@ The resulting unordered adjective-set distribution separates one-property respon
 Lower size discriminability increased the probability of additional adjective material most clearly when size alone would otherwise have been sufficient.
 \Cref{fig:production-recodings}A isolates this pattern through the over-informative-response recoding used in the targeted hypothesis test.
 In the supplementary binary projection, over-informative responses were more frequent under low than high size discriminability in size-sufficient displays ($.90$ vs.\ $.63$).
-The Bayesian predictive difference was $.234$, 95\% credible interval $[.151,.318]$, and the targeted interaction against the other contexts was $.153$, $[.072,.236]$.
-The visual manipulation therefore bears most clearly on adjective selection and utterance length rather than on a stable ordering preference.
+The posterior-predictive low-minus-high difference was $.234$, $95\%$ credible interval $[.151,.318]$, with posterior probability greater than $.999$ of exceeding zero.
+The planned interaction compared this difference with the mean low-minus-high difference in the both-necessary and colour-sufficient contexts; it was $.153$, $95\%$ credible interval $[.072,.236]$, with posterior probability greater than $.999$ of exceeding zero.
+The visual manipulation therefore bears most clearly on adjective selection and utterance length, with weaker evidence for a stable ordering preference.
 
 \paragraph{Initial adjective and conditional order.}
 Initial-adjective probabilities reflect both whether an adjective is selected and where it occurs.
-For this reason, size-initiality is a useful descriptive projection of the complete response space but not a direct counterpart of the slider outcome.
+For this reason, size-initiality provides a useful descriptive projection of the complete response space whose probability reflects more choices than the slider outcome.
 \Cref{fig:production-recodings}B shows the size-initial recoding used in the targeted hypothesis test.
-Within the size--colour trials, the context-by-discriminability interaction for size-initial responses was significant, $\chi^2(2)=11.7$, $p=.003$.
-High discriminability increased size-initial responses in both-necessary displays ($.49$ vs.\ $.65$), with a Bayesian predictive difference of $.141$, 95\% credible interval $[.036,.242]$.
-The corresponding effects were small in the two one-property-sufficient contexts.
+High discriminability increased size-initial responses in both-necessary displays ($.49$ vs.\ $.65$), with a posterior-predictive difference of $.141$, $95\%$ credible interval $[.036,.242]$, and posterior probability $.997$ of exceeding zero.
+The planned interaction compared this difference with the mean high-minus-low difference in the two one-property-sufficient contexts; it was $.169$, $95\%$ credible interval $[.077,.256]$, with posterior probability greater than $.999$ of exceeding zero.
+The corresponding difference was $-.021$, $95\%$ credible interval $[-.101,.057]$, in size-sufficient displays and $-.032$, $[-.068,-.006]$, in colour-sufficient displays.
+This interaction concerns the joint outcome of selecting size and placing it initially in the completed response.
 Conditional on producing both size and colour, size-first descriptions remained more frequent than colour-first descriptions; colour-before-size reversals were comparatively rare.
 That conditional subset is selected by the prior decision to mention both properties and is therefore reported separately from adjective selection and length.
 The same distinction applies to size--form, colour--form, and three-adjective responses.
@@ -547,31 +555,64 @@ The same distinction applies to size--form, colour--form, and three-adjective re
   \label{fig:production-recodings}
 \end{figure}
 
-\subsection{Behavioural Synthesis}
+\subsection{Discussion}
 
-The slider studies establish a replicated context gradient in explicit order preference.
+The two response formats expose different stages at which communicative efficiency can affect adjective ordering.
+The slider studies establish a replicated context gradient in explicit comparisons between two completed size--colour orders.
 Ratings are highest when size identifies the target, lowest when colour does, and retain a small positive size-first estimate in the colour-sufficient condition.
-The size-discriminability interaction in Study~1a does not replicate and remains secondary.
+Direct production allows the same referential context to affect earlier choices about adjective selection and utterance length.
+When one property identifies the target, speakers frequently produce a single adjective and stop before an order among multiple adjectives becomes observable.
+The context manipulation can therefore shift direct judgements between completed orders and also determine whether production reaches an ordering choice at all.
 
-Production exposes a different decision structure.
-Scene-specific usefulness affects adjective selection and utterance length, and one-adjective descriptions frequently resolve reference before an order among two adjectives arises.
-The size-discriminability manipulation primarily changes whether speakers add material, especially in size-sufficient scenes.
-Initial-adjective summaries inherit both these selection effects and any subsequent ordering preference.
-The formal model must therefore predict the complete fifteen-category response distribution rather than an isolated size-first/colour-first choice.
+The interaction between size discriminability and referential context differs across tasks and production outcomes.
+In Study~1a, the interaction is concentrated in the contrast between size-sufficient and both-necessary displays, with weaker evidence for the colour-sufficient component.
+Study~1b shows a broadly shared high-discriminability shift across contexts, and both interaction contrasts remain uncertain.
+The slider studies therefore replicate the referential-context gradient while providing limited evidence for a stable discriminability-by-context interaction in explicit order judgements.
+Study~2 shows stronger outcome-specific interactions within direct production.
+Lower size discriminability increases additional adjective material most clearly in size-sufficient scenes, whereas higher size discriminability increases size-initial responses most clearly when both size and colour are necessary.
+These production interactions locate the effect in adjective selection, utterance length, and initial position before order is examined conditional on a fixed adjective set.
+Their magnitudes are expressed on response-probability scales, while the slider interactions are expressed on the centred-rating scale.
+The reported production hypothesis tests and \Cref{fig:production-distribution,fig:production-recodings} are restricted to the size--colour trials, preserving direct comparability with the slider studies.
+A descriptive check of the complete production data shows that the between-participant manipulation also changes responses in the colour--form family, where colour and form define the referential contrast.
+In form-sufficient displays, for example, form-initial responses are more frequent in the high- than in the low-discriminability group ($.77$ vs.\ $.71$).
+This cross-family pattern is consistent with a broader amplification of scene-specific sufficiency and indicates that the manipulation may capture task-wide differences between participant groups alongside changes in the perceptual reliability of size.
+The behavioural manipulation therefore cannot by itself identify the contribution of sequential context updating within hierarchical semantic composition.
+This limitation motivates the controlled simulation, which varies the semantic consequences of sequential context updating directly and asks when they are sufficient to generate an ordering asymmetry.
+
+Production also reveals substantial use of maximal three-adjective utterances and pronounced participant heterogeneity in how often these longer utterances occur.
+Three-adjective responses are theoretically informative because speakers continue beyond the material required for unique reference and traverse multiple adjective positions before completing the utterance.
+Participant heterogeneity further raises the possibility that the pressures governing adjective selection, length, and successive adjective choice differ across speakers.
+These qualitative patterns motivate a model of the complete fifteen-category response distribution with participant-level variation.
+An isolated size-first/colour-first contrast captures only the responses in which both adjectives have already been selected.
 
 
 % =============================================================================
-\section{Modelling the Full Production Distribution}
+\section{Formal Modelling Framework}
 \label{sec:model}
 % =============================================================================
 
-The modelling follows the research questions in two steps.
-The production comparison asks whether speakers evaluate complete utterances globally, choose adjectives fully incrementally, or combine an advance utterance plan with successive adjective choices.
-The semantic comparison asks whether sequential context updating within hierarchical semantic composition contributes to prediction when a noun-adjacent adjective restricts the comparison class for gradable size.
-The main text reports these scientifically interpretable comparisons.
-The Appendix documents the common display representation, stable-order control, task link for adjective selection and utterance length, and supporting robustness analyses.
+The formal framework of the current paper builds on the central intuition of the Rational Speech Act (RSA) model: rational communication links comprehension and production, such that a listener interprets an utterance to infer the speaker's intended referent and a pragmatic speaker assigns greater probability to utterances that guide the listener successfully to the target \citep{frank2012predicting}.\
+In the vanilla RSA model, the speaker evaluates a fixed set of completed utterances according to their communicative efficiency.\
+The present model extends the vanilla RSA model in three respects.\
+First, it expands the response space to all fifteen ordered one-, two-, and three-adjective utterances available in the experiment, bringing adjective selection, utterance length, and ordering into a single production distribution.\
+This extends the two fixed size--colour orders modelled by \citet{schlotterbeck2023incremental} to the richer structure of adjective use observed in direct production.\
+Second, it allows recursive updating of the listener state as adjectives modification computes within hierarchical semantic composition.\
+Third, it extends the speaker to incremental production by allowing adjective choices to be evaluated successively along the surface linear sequence.\
 
-\subsection{Complete Responses and the Literal Listener}
+The last two extensions represent the two directions through which communicative efficiency may shape adjective ordering.\
+Along the surface linear sequence, each adjective changes the alternatives available at the next position.\
+The production architecture determines how strongly these successive evaluations contribute to the probability of the completed utterance, ranging from global evaluation through plan-guided production to fully incremental adjective choice.\
+Within hierarchical semantic composition, adjectival modification proceeds from the noun outwards.\
+Sequential context updating allows a noun-adjacent adjective to restrict the comparison class relative to which gradable size is interpreted.\
+
+The section develops these components in the following steps.\
+We first define the utterance space, visual state space, and literal listener that are shared by all models.\
+We then formalise global, plan-guided, and fully incremental production as alternative ways of assigning probabilities to completed utterances.\
+Finally, we define how size is interpreted under context-fixed semantics and sequential context updating within hierarchical semantic composition.\
+Additionally, all models include shared components that account for task-specific production patterns in adjective selection and utterance length, together with stable order expectations and perceptual salience.\
+Their complete parameterisation and supporting robustness analyses are documented in the Appendix.\
+
+\subsection{Utterance Space, State Space and the Literal Listener}
 \label{sec:model:response-space}
 
 The model assigns probabilities to all fifteen ordered strings formed from size, colour, and form: three one-adjective utterances, six two-adjective utterances, and six three-adjective utterances.
@@ -695,12 +736,20 @@ The threshold construction and further semantic details appear in \Cref{sec:appe
 \label{sec:model:extended}
 % =============================================================================
 
-Section~4 specified a linking model from hierarchical semantic composition and successive adjective choices to a probability distribution over completed utterances.
-The analyses address three levels of inference.
-Matched model comparisons test which production and semantic architectures improve prediction.
-The best-fitted model then characterises how its parameters shape completed responses and how these effects vary across participants.
-Parameter estimates locate degrees within an architecture.
-Matched predictive contrasts assess whether the architecture earns predictive accuracy.
+Section~4 formalised how hierarchical semantic composition and successive adjective choice redistribute probability across the same fifteen completed utterances as a function of communicative efficiency.
+Within this account, production architecture and semantic regime define two factors in a $3\times2$ design: the production factor ranges from 1. global through 2. plan-guided to 3. fully incremental production, and the semantic factor determines whether the comparison class for size is 1. updated during hierarchical composition or 2. held constant across one given visual szene.
+This factorial structure makes the two proposed directions of communicative efficiency directly comparable.
+Their contribution to the observed production distribution must now be established through predictive evidence.
+
+In this section, the analysis proceeds from controlled model comparison to model adequacy and interpretation.
+The inference setup first separates the two theoretical factors from the shared response space, participant structure, and task-specific components for adjective selection and utterance length, and then specifies the Bayesian inference and predictive-comparison procedures.
+Matched predictive contrasts then use approximate leave-one-out expected log predictive density (ELPD) to compare the six cells of the factorial design while holding these shared components constant.
+ELPD measures how much probability a model assigns to responses when each response is treated in turn as held out, with higher values indicating better expected prediction of unseen responses.
+These contrasts determine whether the completed-utterance distribution favours global, plan-guided, or fully incremental pragmatic production and whether sequential context updating adds predictive accuracy in the present materials.
+Posterior predictive checks next compare the posterior predictions of the best-fitted model with the observed distribution, testing whether the selected computational account recovers the broader structure of adjective use established in Study~2.
+Dedicated localisation analyses then identify the completed responses for which the best-fitted plan-guided model makes qualitatively different predictions from the global and fully incremental endpoints.
+Finally, participant-level random-effects analyses assess how the fitted contribution of successive adjective choice varies across speakers and whether modelling this heterogeneity improves prediction.
+
 
 \subsection{Inference Setup}
 \label{sec:model:development}
@@ -1057,10 +1106,10 @@ Study 1a slider ratings & $150 \rightarrow 134$ & $8$ with more than three missi
 Reported size--colour slider subset: $3{,}485$ observations. \\
 Study 1b slider replication & $132 \rightarrow 104$ & $6$ missing-list failures; $1$ duration failure; $3$ control failures; $24$ experimental none-fit failures; $28$ unique participants excluded.
 & Cleaned replication table: $8{,}379$ critical observations.
-Exact design-equivalent tuples: $1{,}080$. \\
+Reported size--colour slider subset: $2{,}786$ observations. \\
 Production study & $149 \rightarrow 113$ & $8$ with extreme completion time; $25$ with more than $80\%$ identical responses; $7$ with more than $10\%$ missing or unannotatable responses; $36$ unique participants excluded.
 & Canonical full-data table: $9{,}100$ annotated observations.
-All three adjective-family pairings enter the final production-model comparison. \\
+Reported size--colour behavioural subset: $3{,}034$ observations. \\
 \hline
 \end{tabularx}
 \end{table}
@@ -1110,31 +1159,34 @@ Three adjectives & \texttt{DCF}, \texttt{DFC}, \texttt{CDF}, \texttt{CFD}, \text
 \end{tabularx}
 \end{table}
 
-The behavioural hypotheses were evaluated through parallel frequentist mixed-effects tests and Bayesian predictive contrasts.
-Both analyses used the same fixed-effects design and random-effects structure.
-The later Bayesian production-model comparison addresses predictive differences among the proposed computational mechanisms over the complete response space.
-For the slider analysis, ratings were reoriented toward size-first, divided by 100, and centred by subtracting $0.5$.
-The reported linear mixed-effects model included fixed effects of referential context, size discriminability, and their interaction, plus participant intercepts and context slopes:
+The behavioural hypotheses were evaluated with Bayesian hierarchical models.
+All analyses used the size--colour subsets reported in the main experiment figures: 3{,}485 observations in Study~1a, 2{,}786 in Study~1b, and 3{,}034 in Study~2.
+The later production-model comparison addresses predictive differences among the proposed computational mechanisms over the complete fifteen-category response space and all 9{,}100 production trials.
+For the slider analyses, ratings were reoriented toward size-first, divided by 100, and centred by subtracting $0.5$.
+Let $\mathbf{x}_{ij}$ encode referential context, size discriminability, and their interaction, and let $\mathbf{z}_{ij}$ encode the participant intercept and context slopes.
+The slider models used a Gaussian likelihood with
 \[
-  y_{\text{slider}} \sim \text{context} \times \text{size discriminability} + (1 + \text{context} \mid \text{participant}).
+  y_{ij}\sim\operatorname{Normal}(\mu_{ij},\sigma),
+  \qquad
+  \mu_{ij}=\mathbf{x}_{ij}^{\mathsf T}\boldsymbol\beta+\mathbf{z}_{ij}^{\mathsf T}\mathbf{b}_{i},
+  \qquad
+  \mathbf{b}_{i}\sim\operatorname{MVN}(\mathbf{0},\boldsymbol\Sigma_{\mathrm{participant}}).
 \]
-Adding an item intercept yielded an estimated variance of zero and a singular fit.
-The reported participant-slope model converged without a singularity.
-In Study~1b, the context-by-discriminability interaction was small, $\chi^2(2)=1.178$, $p=.555$.
-For production size-initiality, the logistic mixed-effects model used a binary outcome indicating whether the coded response began with the size adjective:
+For production, size-initiality indicated whether the coded response began with the size adjective.
+Over-informativeness indicated a three-adjective response in both-necessary contexts or a multi-adjective response in one-property-sufficient contexts.
+Both binary outcomes used a Bernoulli likelihood with a logit link and an item intercept $c_k$:
 \[
-  y_{\text{size-initial}} \sim \text{context} \times \text{size discriminability} + (1 + \text{context} \mid \text{participant}) + (1 \mid \text{item}).
+  y_{ijk}\sim\operatorname{Bernoulli}(\pi_{ijk}),
+  \qquad
+  \operatorname{logit}(\pi_{ijk})=\mathbf{x}_{ijk}^{\mathsf T}\boldsymbol\beta+\mathbf{z}_{ijk}^{\mathsf T}\mathbf{b}_{i}+c_k,
+  \qquad
+  c_k\sim\operatorname{Normal}(0,\sigma_{\mathrm{item}}).
 \]
-For production over-informativeness, the descriptive model used the same fixed and random structure with a binary outcome indicating a three-adjective response in both-necessary contexts or a multi-adjective response in one-property-sufficient contexts:
-\[
-  y_{\text{over-informative}} \sim \text{context} \times \text{size discriminability} + (1 + \text{context} \mid \text{participant}) + (1 \mid \text{item}).
-\]
-The two production models converged without singular fits.
-For size-initiality, the planned discriminability contrast was supported in the both-necessary context ($p=.004$) and uncertain in the size- and colour-sufficient contexts ($p=.36$ and $p=.60$).
-For over-informativeness, the corresponding contrast was supported in the size-sufficient context ($p<.001$) and uncertain in the other two contexts ($p=.43$ and $p=.11$).
-The analysis script \path{paper/scripts/behavioural_robustness.R} writes the reported marginal estimates, planned contrasts, likelihood-ratio tests, and convergence checks to four CSV files under \path{paper/data/}.
+For the slider studies, the interaction was represented by two posterior contrasts: the high-minus-low discriminability effect in the both-necessary context minus the corresponding effect in the size-sufficient context, and the high-minus-low effect in the colour-sufficient context minus the effect in the size-sufficient context.
+The production interactions were planned contrasts on the posterior-predictive probability scale.
+For size-initiality, the contrast was the high-minus-low discriminability effect in the both-necessary context minus the mean effect in the two one-property-sufficient contexts.
+For over-informativeness, the contrast was the low-minus-high discriminability effect in the size-sufficient context minus the mean effect in the both-necessary and colour-sufficient contexts.
 
-The complementary Bayesian analyses retained these outcome definitions and random-effects structures.
 The slider models used a Gaussian likelihood, correlated participant intercepts and context slopes, $\operatorname{Normal}(0,.30)$ priors on fixed effects, $\operatorname{HalfNormal}(.20)$ priors on participant standard deviations, and a $\operatorname{HalfNormal}(.25)$ prior on residual standard deviation.
 The production models used Bernoulli likelihoods, the same correlated participant effects, an item intercept, a $\operatorname{Normal}(0,2)$ intercept prior, $\operatorname{Normal}(0,1.5)$ priors on the remaining fixed effects, and $\operatorname{HalfNormal}(1)$ priors on participant and item standard deviations.
 Participant-effect correlations received an LKJ$(2)$ prior.
@@ -1142,7 +1194,7 @@ Four vectorized chains each provided $1{,}000$ retained draws after $1{,}000$ wa
 All four fits had zero divergences, no maximum-tree-depth hits, $\widehat{R}\leq1.01$, and minimum effective sample sizes above $900$.
 For each posterior draw, posterior-predictive cell expectations were computed for a new participant and, in production, a new item by integrating over the fitted random-effects distributions.
 The planned predictive hypotheses were then evaluated on the rating or response-probability scale.
-The script \path{analysis/behavioural_bayes.py} writes the cell predictions, planned hypothesis contrasts, and inference diagnostics to \path{paper/data/behavioural_bayesian_predictions.csv}, \path{paper/data/behavioural_bayesian_hypotheses.csv}, and \path{paper/data/behavioural_bayesian_diagnostics.csv}.
+The analysis records cell predictions, planned hypothesis contrasts, and inference diagnostics for all four fits.
 
 
 
