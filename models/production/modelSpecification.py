@@ -47,7 +47,11 @@ import arviz as az
 # Global Variables (Setup)
 # ========================
 # Utterance list shape: (15, 3), int-coded; -1 = padding, 0=D, 1=C, 2=F
-utterance_list = import_dataset()["unique_utterances"]  # shape (U,3)
+utterance_list = jnp.asarray([
+    [0, -1, -1], [0, 1, -1], [0, 1, 2], [0, 2, -1], [0, 2, 1],
+    [1, -1, -1], [1, 0, -1], [1, 0, 2], [1, 2, -1], [1, 2, 0],
+    [2, -1, -1], [2, 0, -1], [2, 0, 1], [2, 1, -1], [2, 1, 0],
+], dtype=jnp.int32)
 
 UTTERANCE_LABELS = [  
     "D", "DC", "DCF", "DF", "DFC",  
@@ -127,11 +131,6 @@ def compute_size_semantics(
     z     = (sizes - theta_k) / denom  
     return 0.5 * (1.0 + lax.erf(z / jnp.sqrt(2.0)))    # (n_obj,) 
 
-
-# ── Pre compute size semantic values ──────────────────────────────────────────────────────  
-# Precompute sizes as a JAX constant — avoids re-slicing inside vmap  
-states = import_dataset()["states_train"]  # (N, 3)
-SIZES = jnp.array(np.array(states)[:, :, 0])   # (N, n_obj) — fixed at trace time  
 
 def compute_size_semantics_fast(
     sizes:     jnp.ndarray,        # (n_obj,)
@@ -2420,6 +2419,102 @@ def incremental_speaker_principled(
     return (1.0 - epsilon) * model_probs + epsilon / n_utt
 
 
+def principled_prefix_log_listeners(
+    states, color_semval=0.59, form_semval=0.50, k=0.50, wf=0.6856,
+    recursive=True,
+):
+    """Interpret each permitted prefix once, from the noun outwards.
+
+    Explicit float64 inputs keep scalar weak typing from changing thresholds
+    between inference and posterior replay. Each prefix starts at the same
+    uniform object prior; only updating size semantics uses the carried
+    compositional posterior.
+    """
+    states, color_semval, form_semval, k, wf = (
+        jnp.asarray(x, dtype=jnp.float64)
+        for x in (states, color_semval, form_semval, k, wf)
+    )
+    eps = 1e-8
+    prior = jnp.ones(states.shape[0], dtype=jnp.float64) / states.shape[0]
+    sizes = states[:, 0]
+    idx = jnp.argsort(sizes)
+
+    def size_meaning(post):
+        return jnp.clip(compute_size_semantics_fast_presorted(
+            sizes, idx, sizes[idx], post, k, wf,
+        ), eps)
+
+    static_size = size_meaning(prior)
+    colour = jnp.where(states[:, 1] == 1, color_semval, 1 - color_semval) + eps
+    form = jnp.where(states[:, 2] == 1, form_semval, 1 - form_semval) + eps
+
+    def interpret(tokens):
+        def step(post, token):
+            size = size_meaning(post) if recursive else static_size
+            meaning = jnp.stack([size, colour, form])[jnp.maximum(token, 0)]
+            updated = post * meaning
+            updated = updated / jnp.sum(updated)
+            return jnp.where(token >= 0, updated, post), None
+
+        return lax.scan(step, prior, tokens[::-1])[0]
+
+    listeners = jax.vmap(interpret)(utterance_list)
+    return jnp.log(jnp.clip(listeners[:, 0], eps))
+
+
+# Every valid candidate prefix is itself one of the fifteen response strings.
+_prefix_lookup = {
+    tuple(int(a) for a in row if a >= 0): i
+    for i, row in enumerate(np.asarray(utterance_list))
+}
+_prefix_indices = np.zeros(prefix_utts_np.shape[:-1], dtype=np.int32)
+for _index in np.ndindex(_prefix_indices.shape):
+    _prefix = tuple(int(a) for a in prefix_utts_np[_index] if a >= 0)
+    _prefix_indices[_index] = _prefix_lookup.get(_prefix, 0)
+PREFIX_LISTENER_INDICES = jnp.asarray(_prefix_indices)
+
+
+def principled_path_components_from_features(log_target, salience, alpha, lambda_salience):
+    """Score corrected prefixes using reusable semantic and salience features."""
+    alpha, lambda_salience = (
+        jnp.asarray(x, dtype=jnp.float64) for x in (alpha, lambda_salience)
+    )
+    scores = (alpha * log_target[PREFIX_LISTENER_INDICES]
+              + lambda_salience * salience[None, None, :])
+    scores = jnp.where(CANDIDATE_MASK, scores, -jnp.inf)
+    inert = jnp.full_like(scores, -jnp.inf).at[:, :, 0].set(0.0)
+    scores = jnp.where(ACTIVE_POS[:, :, None], scores, inert)
+    chosen = jnp.sum(jnp.where(ACTUAL_TOK_ONEHOT > 0, scores, 0.0), axis=-1)
+    norms = jax.scipy.special.logsumexp(scores, axis=-1)
+    chosen = jnp.where(ACTIVE_POS, chosen, 0.0)
+    norms = jnp.where(ACTIVE_POS, norms, 0.0)
+    probabilities = jnp.sum(jax.nn.softmax(scores, axis=-1) * ACTUAL_TOK_ONEHOT, axis=-1)
+    probabilities = jnp.where(ACTIVE_POS, probabilities, 1.0)
+    floor = (jnp.where(ACTIVE_POS, jnp.log(jnp.clip(probabilities, 1e-8)), 0.0)
+             - (chosen - norms))
+    return jnp.sum(chosen, axis=0), jnp.sum(norms, axis=0), jnp.sum(floor, axis=0)
+
+
+def precompute_principled_discovery_features(states, is_sharp, *, recursive):
+    """Precompute the fixed F0 semantics for unique encoded scenes.
+
+    The returned arrays retain the original observation order. This function
+    runs outside the inference trace; participant responses are never pooled.
+    """
+    scene_array = np.asarray(states, dtype=np.float64)
+    unique, inverse = np.unique(scene_array.reshape(len(scene_array), -1),
+                                axis=0, return_inverse=True)
+    unique = jnp.asarray(unique.reshape(-1, *scene_array.shape[1:]))
+    log_target = jax.jit(jax.vmap(lambda scene: principled_prefix_log_listeners(
+        scene, recursive=recursive,
+    )))(unique)[inverse]
+    salience = jax.jit(jax.vmap(_visual_salience_scores))(
+        jnp.asarray(scene_array), jnp.asarray(is_sharp, dtype=jnp.float64),
+    )
+    stop_load = jax.vmap(_salience_continuation_load)(salience)
+    return {"log_target": log_target, "salience": salience, "stop_load": stop_load}
+
+
 def principled_incremental_path_components(
     states:               jnp.ndarray,
     is_sharp:             float,
@@ -2453,6 +2548,18 @@ def principled_incremental_path_components(
         raise ValueError(
             "Prefix Variant C is defined for posterior-state updating; "
             "comparison-class updating has no carried candidate-only state."
+        )
+
+    if prefix_mode == "B" and size_context_mode == "posterior":
+        states = jnp.asarray(states, dtype=jnp.float64)
+        log_target = principled_prefix_log_listeners(
+            states, color_semval, form_semval, k, wf, recursive,
+        )
+        salience = _visual_salience_scores(
+            states, jnp.asarray(is_sharp, dtype=jnp.float64), base_visual_salience,
+        )
+        return principled_path_components_from_features(
+            log_target, salience, alpha, lambda_salience,
         )
 
     eps = 1e-8
@@ -2799,6 +2906,11 @@ def incremental_speaker_principled_discovery(
     the matched raw path utility ``S`` at zero and the legacy clipped
     incremental path score ``S - C + B`` at one.
     """
+    if prefix_mode == "B" and size_context_mode == "posterior":
+        states, is_sharp, nu_F, color_semval, size_threshold_k, wf, epsilon = (
+            jnp.asarray(x, dtype=jnp.float64)
+            for x in (states, is_sharp, nu_F, color_semval, size_threshold_k, wf, epsilon)
+        )
     (
         raw_path_score,
         local_log_normalizer,
@@ -2859,6 +2971,32 @@ def incremental_speaker_principled_discovery(
         has_one_word_solution,
         is_colour_sufficient,
         lambda_order_planning,
+    )
+
+
+@jax.jit
+def precomputed_principled_discovery_probabilities(
+    features, sufficient_dim, has_one_word_solution, is_sharp,
+    is_colour_sufficient, alpha, beta_order, kappa, lambda_salience,
+    rho_salience_stop, lambda_sufficient_single, lambda_reliability_form,
+    lambda_three_word_penalty, lambda_size_reliability_single_bonus,
+    lambda_size_reliability_form_pair_tradeoff, epsilon,
+):
+    """Exact precomputed forward map for the F0/O0/full-policy primary grid."""
+    raw, normalizers, floor = jax.vmap(
+        principled_path_components_from_features, in_axes=(0, 0, 0, None),
+    )(features["log_target"], features["salience"], alpha, lambda_salience)
+    response_policy = jax.vmap(
+        principled_reliability_response_logits,
+        in_axes=(0, 0, 0, 0, None, None, None, None, None),
+    )(sufficient_dim, has_one_word_solution, is_sharp, is_colour_sufficient,
+      lambda_sufficient_single, lambda_reliability_form, lambda_three_word_penalty,
+      lambda_size_reliability_single_bonus, lambda_size_reliability_form_pair_tradeoff)
+    terminal = (beta_order[:, None] * LOG_LM_ORDER_ONLY_15
+                - rho_salience_stop * features["stop_load"] + response_policy)
+    return normalization_path_distribution(
+        raw, normalizers - floor, terminal, kappa[:, None],
+        jnp.asarray(epsilon, dtype=jnp.float64),
     )
 
 
@@ -4816,18 +4954,6 @@ def jitted_global_speaker_static_v5_hier(
     )
 
 
-# Warm up JIT with dummy values
-_dummy_states = jnp.ones((len(states), 6, 3))
-try:
-    _ = jitted_speaker(_dummy_states, 3.0, 3.0, 3.0, 0.95, 0.80, 0.5, 1.0, 1.0, 0.0, 0.01)
-    _.block_until_ready()
-    _ = jitted_speaker_frozen(_dummy_states, 3.0, 3.0, 3.0, 0.95, 0.80, 0.5, 1.0, 1.0, 0.0, 0.01)
-    _.block_until_ready()
-except Exception as e:
-    print(f"JIT warmup skipped: {e}")
-
-
-
 # =============================================================================
 # HIERARCHICAL VMAPS  (map over states AND alpha — one alpha per trial)
 # =============================================================================
@@ -5626,7 +5752,13 @@ def _make_discovery_model(
         has_one_word_solution=None,
         is_sharp=None,
         is_colour_sufficient=None,
+        precomputed_features=None,
     ):
+        if precomputed_features is not None and not (
+            prefix_mode == "B" and form_spec == "F0" and order_source == "O0"
+            and not policy_light and variant in participant_order_variants
+        ):
+            raise ValueError("Precomputation is restricted to the primary F0/O0/full grid")
         alpha = numpyro.sample(
             "alpha",
             dist.HalfNormal(priors["alpha_scale"]),
@@ -5888,36 +6020,46 @@ def _make_discovery_model(
         )
 
         with numpyro.plate("data", len(states)):
-            probs = jitted_speaker_principled_discovery_hier(
-                states,
-                sufficient_dim,
-                has_one_word_solution,
-                is_sharp,
-                is_colour_sufficient,
-                alpha_per_trial,
-                beta_order,
-                lambda_salience,
-                rho_salience_stop,
-                lambda_sufficient_single,
-                lambda_reliability_form,
-                lambda_three_word_penalty,
-                lambda_size_reliability_single_bonus,
-                lambda_size_reliability_form_pair_tradeoff,
-                0.0,
-                lambda_length,
-                kappa_per_trial,
-                nu_F,
-                0.59,
-                0.50,
-                0.6856,
-                epsilon,
-                order_scores,
-                BASE_VISUAL_SALIENCE,
-                recursive=recursive,
-                size_context_mode="posterior",
-                prefix_mode=prefix_mode,
-                lambda_order_planning=lambda_order_planning,
-            )
+            if precomputed_features is None:
+                probs = jitted_speaker_principled_discovery_hier(
+                    states,
+                    sufficient_dim,
+                    has_one_word_solution,
+                    is_sharp,
+                    is_colour_sufficient,
+                    alpha_per_trial,
+                    beta_order,
+                    lambda_salience,
+                    rho_salience_stop,
+                    lambda_sufficient_single,
+                    lambda_reliability_form,
+                    lambda_three_word_penalty,
+                    lambda_size_reliability_single_bonus,
+                    lambda_size_reliability_form_pair_tradeoff,
+                    0.0,
+                    lambda_length,
+                    kappa_per_trial,
+                    nu_F,
+                    0.59,
+                    0.50,
+                    0.6856,
+                    epsilon,
+                    order_scores,
+                    BASE_VISUAL_SALIENCE,
+                    recursive=recursive,
+                    size_context_mode="posterior",
+                    prefix_mode=prefix_mode,
+                    lambda_order_planning=lambda_order_planning,
+                )
+            else:
+                probs = precomputed_principled_discovery_probabilities(
+                    precomputed_features, sufficient_dim, has_one_word_solution,
+                    is_sharp, is_colour_sufficient, alpha_per_trial, beta_order,
+                    kappa_per_trial, lambda_salience, rho_salience_stop,
+                    lambda_sufficient_single, lambda_reliability_form,
+                    lambda_three_word_penalty, lambda_size_reliability_single_bonus,
+                    lambda_size_reliability_form_pair_tradeoff, epsilon,
+                )
             if empirical is None:
                 numpyro.sample("obs", dist.Categorical(probs=probs))
             else:

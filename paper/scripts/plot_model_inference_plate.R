@@ -105,7 +105,7 @@ plate <- ggplot() +
   annotate("text", x = 7.9, y = 6.92, label = "atop(mu[log~beta], tau[beta])", parse = TRUE, size = 3.8) +
   annotate("text", x = 10.6, y = 6.92, label = "bold(lambda)", parse = TRUE, size = 4.4) +
   annotate("text", x = 12.2, y = 6.95, label = "A", size = 4.6, fontface = "bold") +
-  annotate("text", x = 14.0, y = 6.95, label = "S", size = 4.6, fontface = "bold") +
+  annotate("text", x = 14.0, y = 6.95, label = "R", size = 4.6, fontface = "bold") +
   annotate("text", x = 2.1, y = 5.0, label = "alpha[i]", parse = TRUE, size = 4.5) +
   annotate("text", x = 5.0, y = 5.0, label = "kappa[i]", parse = TRUE, size = 4.5) +
   annotate("text", x = 7.9, y = 5.0, label = "beta[i]", parse = TRUE, size = 4.5) +

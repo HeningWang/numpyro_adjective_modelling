@@ -1,2 +1,2 @@
 estimand,pearson_r,posterior_mean,posterior_median,credible_lower_95,credible_upper_95,probability_positive,participant_count,posterior_draws,posterior_method
-Correlation between participant ELPD gain and distance from shared kappa,0.605896391135424,0.6271021536904573,0.624682334752062,0.5121313022814077,0.755995372654737,1.0,113,200000,"participant-level Dirichlet(1,...,1) Bayesian bootstrap"
+Correlation between participant ELPD gain and distance from shared kappa,0.6183653796738738,0.6386656373891126,0.6366721322109742,0.5254547445250788,0.7634674798870938,1.0,113,200000,"participant-level Dirichlet(1,...,1) Bayesian bootstrap"

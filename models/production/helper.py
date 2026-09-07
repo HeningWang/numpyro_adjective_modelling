@@ -296,7 +296,10 @@ def build_utterance_prior_jax(
 # ========================
 # Global Variables (Setup)
 # ========================
-utterance_list = import_dataset()["unique_utterances"]  # shape (U,3)
+utterance_list = jnp.asarray([
+    [SYMBOL_TO_INDEX[c] for c in label] + [-1] * (MAX_UTTERANCE_LEN - len(label))
+    for label in FLAT_TO_CATEGORIES.values()
+], dtype=jnp.int32)
 utterance_prior = build_utterance_prior_jax(utterance_list)
 
 # ========================

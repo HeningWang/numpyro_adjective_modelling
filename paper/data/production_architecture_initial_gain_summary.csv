@@ -1,0 +1,4 @@
+grouping_type,combination,n_observations,total_plan_vs_average_endpoints,mean_plan_vs_average_endpoints,total_plan_vs_global,total_plan_vs_fully_incremental,relevant_property,sharpness,annotation,initial_adjective,response_length,percentage_of_total
+initial_adjective,,4106,328.9117047835328,0.0801051399862476,490.67725980417134,167.14614976289425,,,,C,,81.68129887756076
+initial_adjective,,3108,58.72013746498881,0.0188932231225832,-83.1325927577147,200.5728676876923,,,,D,,14.582445770866762
+initial_adjective,,1886,15.045036429139069,0.0079772197397343,-150.6660282968053,180.75610115508343,,,,F,,3.736255351572467

@@ -211,7 +211,7 @@ p_correlation <- ggplot(correlation_input, aes(x = observed_proportion, y = pred
     "text", x = .035, y = .865, hjust = 0, vjust = 1, size = 4.2,
     colour = CSP_COLORS[["text"]],
     label = sprintf(
-      "r = %.3f\np < .001",
+      "r = %.3f",
       correlation_stats$pearson_r
     )
   ) +
@@ -295,7 +295,7 @@ save_csp_pdf(figure_7, "figures/production_architecture_ppc.pdf", 9.4, 8.1)
 # Architecture comparison and theory-linked endpoint residuals.
 # -----------------------------------------------------------------------------
 matched_plan_guided <- read_csv(
-  "../analysis_revision/14_final_architecture/ho_architecture_model_table_v10.csv",
+  "data/production_corrected_kappa.csv",
   show_col_types = FALSE
 )
 factorial_statistics <- read_csv(
@@ -378,9 +378,9 @@ p_architecture <- architecture_plot_data %>%
     values = c("Context-fixed" = 1, "Sequential context updating" = 16),
     name = NULL
   ) +
-  scale_x_continuous(limits = c(-20, 480), breaks = seq(0, 400, 100)) +
+  scale_x_continuous(breaks = scales::breaks_pretty(5)) +
   labs(
-    x = "Effect of incremental\npragmatic production\n(ELPD, lower is better)",
+    x = "Predictive loss relative to\nplan-guided updating\n(ELPD)",
     y = NULL
   ) +
   theme_csp() +
@@ -402,7 +402,7 @@ p_kappa <- architecture_plot_data %>%
     linewidth = 1.1, colour = CSP_COLORS[["green"]]
   ) +
   geom_point(size = 4.5, colour = CSP_COLORS[["green"]]) +
-  annotate("text", x = .4472, y = 1.24, label = expression(kappa == .447), size = 5) +
+  geom_text(aes(x = estimate, y = 1.24, label = sprintf("kappa = %.3f", estimate)), size = 5) +
   scale_x_continuous(
     limits = c(-.12, 1.12), breaks = c(0, 1),
     labels = c("Global", "Fully\nincremental")
@@ -425,10 +425,6 @@ p_semantics <- architecture_plot_data %>%
     )
   )) %>%
   ggplot(aes(x = estimate, y = label, colour = label)) +
-  geom_vline(
-    xintercept = c(-4, 4), linetype = "dashed",
-    colour = CSP_COLORS[["grey"]], linewidth = .65
-  ) +
   geom_vline(xintercept = 0, colour = CSP_COLORS[["grey"]], linewidth = .8) +
   geom_errorbar(
     aes(xmin = lower, xmax = upper), orientation = "y", width = .14,
@@ -445,12 +441,11 @@ p_semantics <- architecture_plot_data %>%
     guide = "none"
   ) +
   scale_x_continuous(
-    limits = c(-4.5, 4.5),
-    breaks = c(-4, -2, 0, 2, 4),
+    breaks = scales::breaks_pretty(4),
     expand = expansion(mult = c(.01, .01))
   ) +
   labs(
-    x = "Effect of hierarchical\nsemantic composition\n(ELPD, updating - fixed)",
+    x = "Semantic updating effect\n(ELPD, updating - fixed)",
     y = NULL
   ) +
   theme_csp() +
@@ -525,9 +520,7 @@ initial_architecture_data <- bind_rows(initial_observed, initial_predictions) %>
       combination == "dimension_form" & relevant_property == "second" ~ "Form sufficient",
       combination == "color_form" & relevant_property == "first" ~ "Colour sufficient",
       combination == "color_form" & relevant_property == "second" ~ "Form sufficient",
-      combination == "dimension_color" & relevant_property == "both" ~ "Both size and colour necessary",
-      combination == "dimension_form" & relevant_property == "both" ~ "Both size and form necessary",
-      combination == "color_form" & relevant_property == "both" ~ "Both colour and form necessary"
+      relevant_property == "both" ~ "Both necessary"
     ),
     initial_adjective = recode(category, D = "Size", C = "Colour", F = "Form"),
     discriminability = recode(
@@ -536,20 +529,11 @@ initial_architecture_data <- bind_rows(initial_observed, initial_predictions) %>
       blurred = "Low size discrim."
     ),
     source = factor(source, levels = model_levels),
-    panel = factor(
-      paste(context, discriminability, sep = ",\n"),
-      levels = c(
-        "Both size and colour necessary,\nHigh size discrim.",
-        "Both size and form necessary,\nHigh size discrim.",
-        "Both colour and form necessary,\nHigh size discrim.",
-        "Size sufficient,\nLow size discrim.",
-        "Both size and form necessary,\nLow size discrim.",
-        "Both colour and form necessary,\nLow size discrim."
-      )
-    ),
-    row_label = category,
+    panel = factor(paste(unname(family_labels[combination]), context, discriminability, sep = "\n")),
+    row_label = unname(response_labels[category]),
     row_id = paste(panel, row_label, sep = "|")
   )
+stopifnot(!anyNA(initial_architecture_data$panel))
 initial_row_levels <- initial_architecture_data %>%
   distinct(panel, relevant_property, category, row_id) %>%
   mutate(
@@ -663,26 +647,21 @@ focus_observed <- empirical_intervals %>%
 focus_architecture_data <- bind_rows(focus_observed, focus_predictions) %>%
   mutate(
     context = case_when(
+      combination == "dimension_color" & relevant_property == "first" ~ "Size sufficient",
+      combination == "dimension_color" & relevant_property == "second" ~ "Colour sufficient",
       combination == "dimension_form" & relevant_property == "first" ~ "Size sufficient",
-      combination == "color_form" & relevant_property == "both" ~ "Both colour and form necessary"
+      combination == "dimension_form" & relevant_property == "second" ~ "Form sufficient",
+      combination == "color_form" & relevant_property == "first" ~ "Colour sufficient",
+      combination == "color_form" & relevant_property == "second" ~ "Form sufficient",
+      relevant_property == "both" ~ "Both necessary"
     ),
-    discriminability = recode(
-      sharpness,
-      sharp = "High size discrim.",
-      blurred = "Low size discrim."
-    ),
-    panel = factor(
-      paste(context, discriminability, sep = ",\n"),
-      levels = c(
-        "Size sufficient,\nLow size discrim.",
-        "Both colour and form necessary,\nHigh size discrim.",
-        "Both colour and form necessary,\nLow size discrim."
-      )
-    ),
+    discriminability = recode(sharpness, sharp = "High size discrim.", blurred = "Low size discrim."),
+    panel = factor(paste(unname(family_labels[combination]), context, discriminability, sep = "\n")),
     response = recode(category, !!!response_labels),
     row_id = paste(panel, response, sep = "|"),
     source = factor(source, levels = model_levels)
   )
+stopifnot(!anyNA(focus_architecture_data$panel))
 focus_row_levels <- focus_architecture_data %>%
   distinct(panel, response, row_id) %>%
   group_by(panel) %>%

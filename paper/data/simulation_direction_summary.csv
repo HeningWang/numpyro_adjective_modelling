@@ -1,0 +1,9 @@
+scope,speaker,semantics,groups,minimum_mean,maximum_mean,negative_means_below_tolerance,positive_means_above_tolerance
+Individual grid cells,global_speaker,recursive,3000,-0.002873396071833,0.2829031497889114,159,2841
+Individual grid cells,global_speaker,static,3000,-6.8278716014447134e-18,8.1601392309949e-18,0,0
+Individual grid cells,incremental_speaker,recursive,3000,-0.1090737311357457,0.3410645520839754,1956,1044
+Individual grid cells,incremental_speaker,static,3000,-0.1106885714405317,0.1193994511066504,2187,813
+Parameter-averaged context groups,global_speaker,recursive,24,0.0003899821088378,0.0852501441956619,0,24
+Parameter-averaged context groups,global_speaker,static,24,-1.4712675522332574e-18,1.1282086376240842e-18,0,0
+Parameter-averaged context groups,incremental_speaker,recursive,24,-0.0512843625268565,0.1055306054190209,9,15
+Parameter-averaged context groups,incremental_speaker,static,24,-0.0671849043259226,0.0218834148129473,22,2

@@ -1,109 +1,201 @@
 combination,relevant_property,sharpness,category,source,proportion,lower,upper,context,initial_adjective,discriminability,panel,row_label,row_id,panel_rows
-color_form,both,blurred,C,Observed,0.7777777777777778,0.7203703703703703,0.8278240740740742,Both colour and form necessary,Colour,Low size discrim.,"Both colour and form necessary,
-Low size discrim.",C,"Both colour and form necessary,
+color_form,both,blurred,C,Observed,0.7777777777777778,0.7203703703703703,0.8278240740740742,Both necessary,Colour,Low size discrim.,"Colour-form
+Both necessary
+Low size discrim.",C,"Colour-form
+Both necessary
 Low size discrim.|C",2
-color_form,both,blurred,F,Observed,0.07777777777777778,0.04074074074074074,0.12222222222222222,Both colour and form necessary,Form,Low size discrim.,"Both colour and form necessary,
-Low size discrim.",F,"Both colour and form necessary,
+color_form,both,blurred,F,Observed,0.07777777777777778,0.04074074074074074,0.12222222222222222,Both necessary,Form,Low size discrim.,"Colour-form
+Both necessary
+Low size discrim.",F,"Colour-form
+Both necessary
 Low size discrim.|F",2
-color_form,both,sharp,C,Observed,0.7295597484276729,0.6540880503144654,0.7987421383647799,Both colour and form necessary,Colour,High size discrim.,"Both colour and form necessary,
-High size discrim.",C,"Both colour and form necessary,
+color_form,both,sharp,C,Observed,0.7295597484276729,0.6540880503144654,0.7987421383647799,Both necessary,Colour,High size discrim.,"Colour-form
+Both necessary
+High size discrim.",C,"Colour-form
+Both necessary
 High size discrim.|C",2
-color_form,both,sharp,F,Observed,0.06918238993710692,0.03563941299790356,0.1111111111111111,Both colour and form necessary,Form,High size discrim.,"Both colour and form necessary,
-High size discrim.",F,"Both colour and form necessary,
+color_form,both,sharp,F,Observed,0.06918238993710692,0.03563941299790356,0.1111111111111111,Both necessary,Form,High size discrim.,"Colour-form
+Both necessary
+High size discrim.",F,"Colour-form
+Both necessary
 High size discrim.|F",2
-dimension_color,both,sharp,C,Observed,0.24579831932773108,0.18736842105263157,0.31092436974789917,Both size and colour necessary,Colour,High size discrim.,"Both size and colour necessary,
-High size discrim.",C,"Both size and colour necessary,
+dimension_color,both,blurred,F,Observed,0.1614100185528757,0.12430426716141002,0.20037105751391465,Both necessary,Form,Low size discrim.,"Size-colour
+Both necessary
+Low size discrim.",F,"Size-colour
+Both necessary
+Low size discrim.|F",1
+dimension_color,both,sharp,C,Observed,0.24579831932773108,0.18736842105263157,0.31092436974789917,Both necessary,Colour,High size discrim.,"Size-colour
+Both necessary
+High size discrim.",C,"Size-colour
+Both necessary
 High size discrim.|C",1
-dimension_form,both,blurred,C,Observed,0.21092278719397364,0.1641509433962264,0.26276987364441357,Both size and form necessary,Colour,Low size discrim.,"Both size and form necessary,
-Low size discrim.",C,"Both size and form necessary,
+dimension_form,both,blurred,C,Observed,0.21092278719397364,0.1641509433962264,0.26276987364441357,Both necessary,Colour,Low size discrim.,"Size-form
+Both necessary
+Low size discrim.",C,"Size-form
+Both necessary
 Low size discrim.|C",2
-dimension_form,both,blurred,F,Observed,0.03766478342749529,0.01512287334593572,0.06641681878197128,Both size and form necessary,Form,Low size discrim.,"Both size and form necessary,
-Low size discrim.",F,"Both size and form necessary,
+dimension_form,both,blurred,F,Observed,0.03766478342749529,0.01512287334593572,0.06641681878197128,Both necessary,Form,Low size discrim.,"Size-form
+Both necessary
+Low size discrim.",F,"Size-form
+Both necessary
 Low size discrim.|F",2
-dimension_form,both,sharp,C,Observed,0.36268343815513626,0.3039832285115304,0.42348008385744235,Both size and form necessary,Colour,High size discrim.,"Both size and form necessary,
-High size discrim.",C,"Both size and form necessary,
+dimension_form,both,sharp,C,Observed,0.36268343815513626,0.3039832285115304,0.42348008385744235,Both necessary,Colour,High size discrim.,"Size-form
+Both necessary
+High size discrim.",C,"Size-form
+Both necessary
 High size discrim.|C",1
-dimension_form,first,blurred,C,Observed,0.33527131782945735,0.2868001728195323,0.3889944005994565,Size sufficient,Colour,Low size discrim.,"Size sufficient,
-Low size discrim.",C,"Size sufficient,
+dimension_form,first,blurred,C,Observed,0.33527131782945735,0.2868001728195323,0.3889944005994565,Size sufficient,Colour,Low size discrim.,"Size-form
+Size sufficient
+Low size discrim.",C,"Size-form
+Size sufficient
 Low size discrim.|C",1
-color_form,both,blurred,C,Global,0.42296990740740736,0.3814814814814815,0.46296296296296297,Both colour and form necessary,Colour,Low size discrim.,"Both colour and form necessary,
-Low size discrim.",C,"Both colour and form necessary,
+color_form,both,blurred,C,Global,0.4071521990740741,0.3666666666666666,0.4481481481481481,Both necessary,Colour,Low size discrim.,"Colour-form
+Both necessary
+Low size discrim.",C,"Colour-form
+Both necessary
 Low size discrim.|C",2
-color_form,both,blurred,F,Global,0.25324074074074077,0.21851851851851853,0.28893518518518535,Both colour and form necessary,Form,Low size discrim.,"Both colour and form necessary,
-Low size discrim.",F,"Both colour and form necessary,
+color_form,both,blurred,F,Global,0.2482939814814815,0.2111111111111111,0.2851851851851852,Both necessary,Form,Low size discrim.,"Colour-form
+Both necessary
+Low size discrim.",F,"Colour-form
+Both necessary
 Low size discrim.|F",2
-color_form,both,sharp,C,Global,0.45352044025157234,0.4109014675052411,0.4968553459119497,Both colour and form necessary,Colour,High size discrim.,"Both colour and form necessary,
-High size discrim.",C,"Both colour and form necessary,
+color_form,both,sharp,C,Global,0.4368744758909853,0.3941299790356394,0.480083857442348,Both necessary,Colour,High size discrim.,"Colour-form
+Both necessary
+High size discrim.",C,"Colour-form
+Both necessary
 High size discrim.|C",2
-color_form,both,sharp,F,Global,0.3038233752620545,0.2640985324947589,0.34591194968553457,Both colour and form necessary,Form,High size discrim.,"Both colour and form necessary,
-High size discrim.",F,"Both colour and form necessary,
+color_form,both,sharp,F,Global,0.2993861373165619,0.2578616352201258,0.3417190775681342,Both necessary,Form,High size discrim.,"Colour-form
+Both necessary
+High size discrim.",F,"Colour-form
+Both necessary
 High size discrim.|F",2
-dimension_color,both,sharp,C,Global,0.25585609243697477,0.21638655462184875,0.296218487394958,Both size and colour necessary,Colour,High size discrim.,"Both size and colour necessary,
-High size discrim.",C,"Both size and colour necessary,
+dimension_color,both,blurred,F,Global,0.2163832328385899,0.1818181818181818,0.2523191094619666,Both necessary,Form,Low size discrim.,"Size-colour
+Both necessary
+Low size discrim.",F,"Size-colour
+Both necessary
+Low size discrim.|F",1
+dimension_color,both,sharp,C,Global,0.2526089810924369,0.2142857142857142,0.2920168067226891,Both necessary,Colour,High size discrim.,"Size-colour
+Both necessary
+High size discrim.",C,"Size-colour
+Both necessary
 High size discrim.|C",1
-dimension_form,both,blurred,C,Global,0.3911365348399247,0.3502824858757062,0.4331450094161959,Both size and form necessary,Colour,Low size discrim.,"Both size and form necessary,
-Low size discrim.",C,"Both size and form necessary,
+dimension_form,both,blurred,C,Global,0.382146774952919,0.3408662900188324,0.423728813559322,Both necessary,Colour,Low size discrim.,"Size-form
+Both necessary
+Low size discrim.",C,"Size-form
+Both necessary
 Low size discrim.|C",2
-dimension_form,both,blurred,F,Global,0.1716671374764595,0.1393596986817326,0.20527306967984937,Both size and form necessary,Form,Low size discrim.,"Both size and form necessary,
-Low size discrim.",F,"Both size and form necessary,
+dimension_form,both,blurred,F,Global,0.1762734227871939,0.1450094161958568,0.2090395480225988,Both necessary,Form,Low size discrim.,"Size-form
+Both necessary
+Low size discrim.",F,"Size-form
+Both necessary
 Low size discrim.|F",2
-dimension_form,both,sharp,C,Global,0.3315780922431866,0.2893081761006289,0.3752620545073375,Both size and form necessary,Colour,High size discrim.,"Both size and form necessary,
-High size discrim.",C,"Both size and form necessary,
+dimension_form,both,sharp,C,Global,0.3184840146750524,0.2767295597484276,0.360587002096436,Both necessary,Colour,High size discrim.,"Size-form
+Both necessary
+High size discrim.",C,"Size-form
+Both necessary
 High size discrim.|C",1
-dimension_form,first,blurred,C,Global,0.24887984496124027,0.21124031007751937,0.2868217054263566,Size sufficient,Colour,Low size discrim.,"Size sufficient,
-Low size discrim.",C,"Size sufficient,
+dimension_form,first,blurred,C,Global,0.2583508963178295,0.2209302325581395,0.2965116279069767,Size sufficient,Colour,Low size discrim.,"Size-form
+Size sufficient
+Low size discrim.",C,"Size-form
+Size sufficient
 Low size discrim.|C",1
-color_form,both,blurred,C,Plan-guided,0.4844500000000001,0.4425925925925926,0.5259259259259259,Both colour and form necessary,Colour,Low size discrim.,"Both colour and form necessary,
-Low size discrim.",C,"Both colour and form necessary,
+color_form,both,blurred,C,Plan-guided,0.4738444444444444,0.4314814814814814,0.5166666666666667,Both necessary,Colour,Low size discrim.,"Colour-form
+Both necessary
+Low size discrim.",C,"Colour-form
+Both necessary
 Low size discrim.|C",2
-color_form,both,blurred,F,Plan-guided,0.19697546296296295,0.16296296296296298,0.23148148148148148,Both colour and form necessary,Form,Low size discrim.,"Both colour and form necessary,
-Low size discrim.",F,"Both colour and form necessary,
+color_form,both,blurred,F,Plan-guided,0.197223611111111,0.1629629629629629,0.2314814814814814,Both necessary,Form,Low size discrim.,"Colour-form
+Both necessary
+Low size discrim.",F,"Colour-form
+Both necessary
 Low size discrim.|F",2
-color_form,both,sharp,C,Plan-guided,0.5202028301886792,0.4779874213836478,0.5660377358490566,Both colour and form necessary,Colour,High size discrim.,"Both colour and form necessary,
-High size discrim.",C,"Both colour and form necessary,
+color_form,both,sharp,C,Plan-guided,0.5114119496855345,0.4675052410901467,0.5555555555555556,Both necessary,Colour,High size discrim.,"Colour-form
+Both necessary
+High size discrim.",C,"Colour-form
+Both necessary
 High size discrim.|C",2
-color_form,both,sharp,F,Plan-guided,0.24356394129979037,0.20545073375262057,0.2830188679245283,Both colour and form necessary,Form,High size discrim.,"Both colour and form necessary,
-High size discrim.",F,"Both colour and form necessary,
+color_form,both,sharp,F,Plan-guided,0.2441367924528301,0.2054507337526205,0.2830188679245283,Both necessary,Form,High size discrim.,"Colour-form
+Both necessary
+High size discrim.",F,"Colour-form
+Both necessary
 High size discrim.|F",2
-dimension_color,both,sharp,C,Plan-guided,0.2892326680672268,0.24789915966386555,0.32983193277310924,Both size and colour necessary,Colour,High size discrim.,"Both size and colour necessary,
-High size discrim.",C,"Both size and colour necessary,
+dimension_color,both,blurred,F,Plan-guided,0.1898334879406308,0.1576994434137291,0.2244897959183673,Both necessary,Form,Low size discrim.,"Size-colour
+Both necessary
+Low size discrim.",F,"Size-colour
+Both necessary
+Low size discrim.|F",1
+dimension_color,both,sharp,C,Plan-guided,0.2858860294117646,0.245798319327731,0.3256302521008403,Both necessary,Colour,High size discrim.,"Size-colour
+Both necessary
+High size discrim.",C,"Size-colour
+Both necessary
 High size discrim.|C",1
-dimension_form,both,blurred,C,Plan-guided,0.485292372881356,0.4406779661016949,0.5291902071563088,Both size and form necessary,Colour,Low size discrim.,"Both size and form necessary,
-Low size discrim.",C,"Both size and form necessary,
+dimension_form,both,blurred,C,Plan-guided,0.4816021657250471,0.4387947269303202,0.5235404896421846,Both necessary,Colour,Low size discrim.,"Size-form
+Both necessary
+Low size discrim.",C,"Size-form
+Both necessary
 Low size discrim.|C",2
-dimension_form,both,blurred,F,Plan-guided,0.12729802259887008,0.09792843691148775,0.15630885122410546,Both size and form necessary,Form,Low size discrim.,"Both size and form necessary,
-Low size discrim.",F,"Both size and form necessary,
+dimension_form,both,blurred,F,Plan-guided,0.1304067796610169,0.1016949152542373,0.160075329566855,Both necessary,Form,Low size discrim.,"Size-form
+Both necessary
+Low size discrim.",F,"Size-form
+Both necessary
 Low size discrim.|F",2
-dimension_form,both,sharp,C,Plan-guided,0.4082866876310272,0.36268343815513626,0.4549266247379455,Both size and form necessary,Colour,High size discrim.,"Both size and form necessary,
-High size discrim.",C,"Both size and form necessary,
+dimension_form,both,sharp,C,Plan-guided,0.3984785115303983,0.3563941299790356,0.4444444444444444,Both necessary,Colour,High size discrim.,"Size-form
+Both necessary
+High size discrim.",C,"Size-form
+Both necessary
 High size discrim.|C",1
-dimension_form,first,blurred,C,Plan-guided,0.3235833333333334,0.28294573643410853,0.3643410852713178,Size sufficient,Colour,Low size discrim.,"Size sufficient,
-Low size discrim.",C,"Size sufficient,
+dimension_form,first,blurred,C,Plan-guided,0.331656492248062,0.2906976744186046,0.374031007751938,Size sufficient,Colour,Low size discrim.,"Size-form
+Size sufficient
+Low size discrim.",C,"Size-form
+Size sufficient
 Low size discrim.|C",1
-color_form,both,blurred,C,Fully incremental,0.5106189814814815,0.4685185185185185,0.5518518518518518,Both colour and form necessary,Colour,Low size discrim.,"Both colour and form necessary,
-Low size discrim.",C,"Both colour and form necessary,
+color_form,both,blurred,C,Fully incremental,0.5096430555555556,0.4685185185185185,0.5500462962962965,Both necessary,Colour,Low size discrim.,"Colour-form
+Both necessary
+Low size discrim.",C,"Colour-form
+Both necessary
 Low size discrim.|C",2
-color_form,both,blurred,F,Fully incremental,0.13826851851851854,0.10925925925925926,0.1685185185185185,Both colour and form necessary,Form,Low size discrim.,"Both colour and form necessary,
-Low size discrim.",F,"Both colour and form necessary,
+color_form,both,blurred,F,Fully incremental,0.138699537037037,0.1092592592592592,0.1685185185185185,Both necessary,Form,Low size discrim.,"Colour-form
+Both necessary
+Low size discrim.",F,"Colour-form
+Both necessary
 Low size discrim.|F",2
-color_form,both,sharp,C,Fully incremental,0.5617431865828092,0.5157232704402516,0.6037735849056604,Both colour and form necessary,Colour,High size discrim.,"Both colour and form necessary,
-High size discrim.",C,"Both colour and form necessary,
+color_form,both,sharp,C,Fully incremental,0.5609512578616352,0.5157232704402516,0.6058700209643606,Both necessary,Colour,High size discrim.,"Colour-form
+Both necessary
+High size discrim.",C,"Colour-form
+Both necessary
 High size discrim.|C",2
-color_form,both,sharp,F,Fully incremental,0.16880398322851153,0.13417190775681342,0.20335429769392033,Both colour and form necessary,Form,High size discrim.,"Both colour and form necessary,
-High size discrim.",F,"Both colour and form necessary,
+color_form,both,sharp,F,Fully incremental,0.1680948637316561,0.1341719077568134,0.2033542976939203,Both necessary,Form,High size discrim.,"Colour-form
+Both necessary
+High size discrim.",F,"Colour-form
+Both necessary
 High size discrim.|F",2
-dimension_color,both,sharp,C,Fully incremental,0.32340283613445375,0.2815126050420168,0.36554621848739494,Both size and colour necessary,Colour,High size discrim.,"Both size and colour necessary,
-High size discrim.",C,"Both size and colour necessary,
+dimension_color,both,blurred,F,Fully incremental,0.1475505565862708,0.1168831168831168,0.1781076066790352,Both necessary,Form,Low size discrim.,"Size-colour
+Both necessary
+Low size discrim.",F,"Size-colour
+Both necessary
+Low size discrim.|F",1
+dimension_color,both,sharp,C,Fully incremental,0.3273487394957983,0.2857142857142857,0.3698004201680674,Both necessary,Colour,High size discrim.,"Size-colour
+Both necessary
+High size discrim.",C,"Size-colour
+Both necessary
 High size discrim.|C",1
-dimension_form,both,blurred,C,Fully incremental,0.5130819209039548,0.4689265536723164,0.5574387947269304,Both size and form necessary,Colour,Low size discrim.,"Both size and form necessary,
-Low size discrim.",C,"Both size and form necessary,
+dimension_form,both,blurred,C,Fully incremental,0.5120108286252355,0.4689265536723164,0.5574387947269304,Both necessary,Colour,Low size discrim.,"Size-form
+Both necessary
+Low size discrim.",C,"Size-form
+Both necessary
 Low size discrim.|C",2
-dimension_form,both,blurred,F,Fully incremental,0.09850847457627118,0.07344632768361582,0.12434086629001902,Both size and form necessary,Form,Low size discrim.,"Both size and form necessary,
-Low size discrim.",F,"Both size and form necessary,
+dimension_form,both,blurred,F,Fully incremental,0.0995197740112994,0.0753295668549905,0.1261770244821092,Both necessary,Form,Low size discrim.,"Size-form
+Both necessary
+Low size discrim.",F,"Size-form
+Both necessary
 Low size discrim.|F",2
-dimension_form,both,sharp,C,Fully incremental,0.443877358490566,0.39832285115303984,0.49056603773584906,Both size and form necessary,Colour,High size discrim.,"Both size and form necessary,
-High size discrim.",C,"Both size and form necessary,
+dimension_form,both,sharp,C,Fully incremental,0.4427007337526205,0.3983228511530398,0.4863731656184486,Both necessary,Colour,High size discrim.,"Size-form
+Both necessary
+High size discrim.",C,"Size-form
+Both necessary
 High size discrim.|C",1
-dimension_form,first,blurred,C,Fully incremental,0.3534951550387597,0.31007751937984496,0.39728682170542634,Size sufficient,Colour,Low size discrim.,"Size sufficient,
-Low size discrim.",C,"Size sufficient,
+dimension_form,first,blurred,C,Fully incremental,0.3529500968992248,0.3100775193798449,0.3972868217054263,Size sufficient,Colour,Low size discrim.,"Size-form
+Size sufficient
+Low size discrim.",C,"Size-form
+Size sufficient
 Low size discrim.|C",1

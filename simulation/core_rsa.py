@@ -17,7 +17,7 @@ import numpyro.distributions as dist
 from numpyro import handlers
 from numpyro.infer import MCMC, NUTS
 from sklearn.model_selection import train_test_split
-numpyro.set_platform("cpu")
+# The simulation runner selects its backend before importing this library.
 
 print(jax.__version__)
 jax.devices()

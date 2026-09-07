@@ -1,12 +1,12 @@
 panel,label,semantic_regime,estimate,lower,upper
-Factorial predictive loss,Global,Context-fixed,229.7540046729173,50.67628663993828,369.1780445337638
-Factorial predictive loss,Plan-guided,Context-fixed,0.149088794236377,-1.4733142278202649,1.7542462971330222
-Factorial predictive loss,Fully incremental,Context-fixed,422.5363050756096,233.96120339575327,657.177920414858
-Factorial predictive loss,Global,Sequential context updating,230.87517210918668,52.05141629199153,370.1155233646533
+Factorial predictive loss,Global,Context-fixed,203.4852112728804,19.078848687319805,349.958410349208
+Factorial predictive loss,Plan-guided,Context-fixed,-61.68291613446854,-80.85541504683279,-43.52406702515778
+Factorial predictive loss,Fully incremental,Context-fixed,505.7373319811304,308.6252536358889,752.0202713854549
+Factorial predictive loss,Global,Sequential context updating,248.5891500919552,67.8242135646282,392.8708485030936
 Factorial predictive loss,Plan-guided,Sequential context updating,0,0,0
-Factorial predictive loss,Fully incremental,Sequential context updating,422.25135142162617,233.54135558514903,657.0116501323738
-Successive-choice contribution,kappa,NA,0.4472138155779787,0.4035759122333988,0.4897156277835954
-Semantic architecture,Average across architectures,NA,-0.229041662683206,-1.270636331204984,0.8078231283413059
-Semantic architecture,Global,NA,-1.1211674362693884,-2.692148845219799,0.5083841447773009
-Semantic architecture,Plan-guided,NA,0.149088794236377,-1.4733142278202649,1.7542462971330222
-Semantic architecture,Fully incremental,NA,0.28495365398339345,-0.9391165194369024,1.512309338289742
+Factorial predictive loss,Fully incremental,Sequential context updating,529.5299890957413,333.9789877254772,773.6914904618363
+Successive-choice contribution,kappa,NA,0.4459711585225396,0.4072315645330528,0.4861958539575372
+Semantic architecture,Average across architectures,NA,-43.52650402271805,-56.00524146239864,-31.77022576641101
+Semantic architecture,Global,NA,-45.10393881907476,-60.18810989619415,-30.17392575717177
+Semantic architecture,Plan-guided,NA,-61.68291613446854,-80.85541504683279,-43.52406702515778
+Semantic architecture,Fully incremental,NA,-23.792657114610847,-32.408584367443424,-16.075237837346602

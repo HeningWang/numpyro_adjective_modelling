@@ -297,13 +297,13 @@
       <div class="evidence-split">
         <div class="evidence-card">
           <div class="et">Held-out prediction</div>
-          <div class="em">Factorial model comparison<br>Participant-level PSIS-LOO + posterior prediction</div>
+          <div class="em">Response-level PSIS-LOO<br>Participant-level uncertainty<br>Posterior prediction</div>
           <span class="claim">Predictive contribution in observed production</span>
         </div>
         <div class="evidence-card">
           <div class="et">Controlled simulation</div>
           <div class="em">Broader range of randomly generated scenes</div>
-          <span class="claim">Generative sufficiency under selected conditions</span>
+          <span class="claim">Conditions for an ordering advantage</span>
         </div>
       </div>
     </div>
@@ -340,19 +340,19 @@
             <div class="mt">Global</div>
             <div class="kappa">&kappa; = 0</div>
             <div class="utterance-unit">big&nbsp; blue&nbsp; N</div>
-            <div class="mc">Complete utterances compete as single plans.</div>
+            <div class="mc">Complete utterances compete through their accumulated utility.</div>
           </div>
 
           <div class="speaker-card plan">
             <div class="mt">Plan-guided</div>
             <div class="kappa">0 &lt; &kappa; &lt; 1</div>
             <div class="plan-shell">
-              <div class="plan-label">advance utterance plan</div>
+              <div class="plan-label">utterance-level evaluation</div>
               <div class="word-flow">
                 <span class="word">big</span><span class="word-arrow">&#8594;</span><span class="word">blue</span><span class="word-arrow">&#8594;</span><span class="word">N</span>
               </div>
             </div>
-            <div class="mc">The plan constrains the utterance while successive choices continue to matter.</div>
+            <div class="mc">Whole-utterance utility combines with successive choice.</div>
           </div>
 
           <div class="speaker-card">
@@ -364,7 +364,7 @@
             <div class="mc">Each successive choice is evaluated against prefix-specific alternatives.</div>
           </div>
         </div>
-        <div class="common-response">All three architectures predict the same distribution over completed responses.</div>
+        <div class="common-response">All three architectures assign probabilities to the same completed responses.</div>
       </div>
     </div>
   </div>
@@ -390,7 +390,7 @@
         <div class="fh"><b>Referential context</b> &middot; within participant</div>
         <div class="factor-row">
           <div><b>Size</b>size sufficient</div>
-          <div><b>Both</b>both sufficient</div>
+          <div><b>Both</b>both necessary</div>
           <div><b>Colour</b>colour sufficient</div>
         </div>
       </div>
@@ -410,7 +410,7 @@
 
   <div class="panel p-results">
     <div class="panel-label">d</div>
-    <div class="panel-title">Division of Labour</div>
+    <div class="panel-title">Predictive Findings</div>
     <div class="result-body">
       <div class="result-col">
         <div class="result-head">Production architecture</div>
@@ -423,8 +423,8 @@
           <div class="arch-node best">
             <div class="an">Plan-guided</div>
             <div class="marker"></div>
-            <div class="ak">&kappa; = .447</div>
-            <div class="result-tag">best prediction</div>
+            <div class="ak">&kappa; = .446</div>
+            <div class="result-tag">best matched model</div>
           </div>
           <div class="arch-node">
             <div class="an">Fully<br>incremental</div>
@@ -433,30 +433,30 @@
           </div>
         </div>
         <div class="plan-equation">
-          <div class="plan-chip">advance plan</div><div class="plus">+</div><div class="plan-chip">successive choices</div><div class="gives">&#8594;</div><div class="plan-chip">completed response</div>
+          <div class="plan-chip">utterance utility</div><div class="plus">+</div><div class="plan-chip">local competition</div><div class="gives">&#8594;</div><div class="plan-chip">response probability</div>
         </div>
       </div>
 
       <div class="result-col">
-        <div class="result-head">Sequential context updating</div>
+        <div class="result-head">Semantic comparison</div>
         <div class="update-map">
-          <div class="update-source">Sequential context updating</div>
+          <div class="update-source">Context-fixed and context-updating</div>
           <div class="branch-stem"></div>
           <div class="outcome-row">
             <div class="outcome">
               <div class="oh">Fitted production</div>
-              <div class="main">No predictive gain</div>
+              <div class="main">Context-fixed predicts better</div>
             </div>
             <div class="outcome">
               <div class="oh">Controlled simulation</div>
-              <div class="main">Order asymmetry</div>
-              <div class="qual">with stronger semantic consequences</div>
+              <div class="main">Size-first advantage</div>
+              <div class="qual">under both semantic regimes</div>
             </div>
           </div>
         </div>
       </div>
       <div class="omnibus">
-        Across the opposing directions of communicative efficiency, <span class="op">plan-guided incremental production</span> best predicts the observed response distribution; <span class="os">sequential context updating</span> can generate an order asymmetry under restricted simulation assumptions and adds no predictive gain in the production data.
+        <span class="op">Plan-guided incremental production</span> best predicts the observed response distribution. Simulated order advantages depend on <span class="os">prefix evaluation, utterance alternatives, and semantic parameters</span>.
       </div>
     </div>
   </div>
