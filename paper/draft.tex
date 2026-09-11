@@ -130,24 +130,24 @@ Together, the results connect adjective ordering to the joint evaluation of what
 Adjective ordering provides a window onto how stable order preferences interact with scene-specific informativeness in referential communication.
 In languages with prenominal modification, robust ordering preferences favour size-first sequences such as \emph{the big blue sticker} over \emph{the blue big sticker} \citep{sproat1991,scontras2023adjective}.
 Yet the first adjective is also the listener's first descriptive cue to the target.
-In a scene where colour alone identifies the intended sticker, \emph{blue} would provide the decisive information sooner.
-A colour-first sequence would, however, conflict with the canonical size-first preference.
+In a scene where colour alone identifies the intended sticker, \emph{blue} would provide the decisive information sooner, even though a colour-first sequence conflicts with the canonical size-first preference \citep{fukumura2018ordering,rubio2021wordorder}.
 The order that sounds most natural may therefore differ from the order that guides the listener most efficiently through the scene.
 
-What counts as efficient---and therefore early---depends on the direction in which an adjective string is evaluated.
-One line of work concerns adjective subjectivity.
+But what counts as efficient---and therefore early---for the listener in a complex referential setting?
+One relevant line of work concerns adjective subjectivity.
 More subjective adjectives tend to precede less subjective adjectives in prenominal sequences \citep{scontras2017subjectivity}.
-Under hierarchical semantic composition, the adjective next to the noun combines with the noun before an adjective farther away.
-In \emph{the big blue sticker}, \emph{blue} therefore combines with \emph{sticker} before the gradable adjective \emph{big} is interpreted.
-Because colour is typically less subjective than size, this restriction can provide a more stable comparison class for interpreting size and thereby contribute to a size-first surface preference \citep{franke2019subjectivity,scontras2019grammatical,scontras2020incremental}.
+Some subjectivity-based proposals connect this tendency to hierarchical semantic composition, under which the noun-adjacent adjective composes before adjectives farther from the noun.
+In \emph{the big blue sticker}, the noun-adjacent adjective \emph{blue} therefore combines with \emph{sticker} before the linearly earlier \emph{big}, narrowing the comparison class against which the gradable size adjective is interpreted.
+Because \emph{blue} is typically less subjective than \emph{big}, its noun-adjacent position may provide a comparatively stable restriction before the size adjective is interpreted, potentially contributing to the surface size-first preference \citep{franke2019subjectivity,scontras2019grammatical,scontras2020incremental}.
+A separate line of referential work suggests that adjective order is also sensitive to the discriminatory strength of each property in the current scene \citep{fukumura2018ordering,rubio2021wordorder}.
+When colour distinguishes the target more effectively than size, colour-first orders may become more acceptable or more likely, consistent with a pressure to provide contextually useful information earlier in the surface sequence.
 
-In reference games \citep{franke2009signal,frank2012predicting}, communicative efficiency concerns how an utterance guides the listener to the target as its words unfold.
-Referential usefulness therefore assigns priority through the surface linear sequence.
-Listeners encounter the first spoken adjective before the rest of the utterance and can use it to begin restricting the set of possible referents \citep{tanenhaus1995integration,sedivy1999achieving,rubio2020incrementality}.
-When colour distinguishes the target more effectively than size, placing colour first can make the decisive information available sooner \citep{fukumura2018ordering,rubio2021wordorder}.
-A listener hearing \emph{the big blue sticker} encounters \emph{big} before \emph{blue}.
-Communicative efficiency can favour different surface orders depending on whether it operates through hierarchical semantic composition or surface linear ordering.
-Different mechanisms can generate the same surface distribution, making their separate contributions difficult to identify.
+Depending on which perspective is taken, communicative efficiency may support conflicting adjective-ordering predictions.
+This tension is especially consequential in reference games \citep{franke2009signal,frank2012predicting}, where successful communication depends both on the completed description and on how information becomes available as that description unfolds.
+Work on incremental language processing emphasizes the latter: listeners integrate partial linguistic input with visual context to restrict candidate referents before the noun phrase is complete \citep{tanenhaus1995integration,sedivy1999achieving}.
+On this view, placing the most discriminating modifier early in the linear sequence may facilitate identification before the remaining words are heard \citep{rubio2020incrementality}.
+On the other hand, the subjectivity-based account emphasizes the former by evaluating a completed adjective sequence through the listener's hierarchical interpretation.
+From this comprehension-oriented perspective, an order is efficient when the noun-adjacent adjective provides a more reliable restriction for interpreting the outer adjective \citep{franke2019subjectivity,scontras2019grammatical,scontras2020incremental}.
 
 Moreover, the ordering choices available to a speaker depend on which properties are selected and how much information the description includes.
 In a colour-sufficient scene, \emph{the blue sticker} may complete the utterance, so competition between size--colour and colour--size orders may never arise.
@@ -191,6 +191,7 @@ They share controls for stable order expectations, visual salience, adjective se
 
 Predictive model comparison asks which components improve prediction of the observed production distribution \citep{vehtari2017practical}.
 A separate simulation compares the semantic regimes on the same randomly generated contexts to ask when updating generates an ordering asymmetry and whether that asymmetry also arises under context-fixed semantics.
+By introducing the production model's utterance evaluation and broader alternatives in controlled steps, it examines how the communicative advantage changes when ordering is considered together with adjective selection and utterance length.
 
 Empirically, the slider studies reveal a replicated context gradient: size-first preferences are strongest when size identifies the target and weakest when colour does.
 A small residual size-first preference remains when colour alone identifies the target.
@@ -376,7 +377,7 @@ Stimulus construction, trial counts, exclusions, and coding details appear in \C
 
 Study~1a uses the same dataset reported by \citet{schlotterbeck2023incremental}.
 The retained sample comprised 134 participants (70 in the low- and 64 in the high-discriminability group), recruited via Prolific and reporting German as their native language.
-Exclusions addressed missing records, extreme completion times, and failures on control or task-relevance checks (\Cref{tab:exclusion-transparency}).
+Exclusions addressed missing records, extreme completion times, and failures on control or task-relevance checks.
 The size--colour analysis contained 3{,}485 observations.
 
 \subsubsection{Procedure}
@@ -398,7 +399,7 @@ Size-first preferences were strongest when size alone identified the target, wea
 Even in colour-sufficient displays, the estimated preference remained slightly size-first.
 Thus, referential usefulness modulated the strength of the ordering preference without producing an overall colour-first reversal.
 These conclusions were evaluated with a Bayesian hierarchical model containing context, discriminability, and their interaction.
-The complete estimates and planned contrasts are reported in \Cref{tab:slider-behavioural-contrasts}; model specifications appear in \Cref{sec:appendix:methods-transparency}.
+Model specifications appear in \Cref{sec:appendix:methods-transparency}.
 
 \subsection{Study 1b: Direct Slider Replication}
 \label{sec:exp:slider-replication}
@@ -407,7 +408,6 @@ The complete estimates and planned contrasts are reported in \Cref{tab:slider-be
 
 The replication used the same task and materials with an independent participant sample.
 Applying the Study~1a exclusion criteria retained 104 of 132 participants and 2{,}786 size--colour observations.
-The complete exclusion record appears in \Cref{tab:exclusion-transparency}.
 
 \subsubsection{Results}
 
@@ -419,7 +419,6 @@ The estimated directions therefore differed from the crossover in Study~1a.
 The referential-context gradient was replicated: size-first preferences were strongest in size-sufficient displays, intermediate when both properties were needed, and weakest in colour-sufficient displays.
 A small positive size-first preference also remained when colour alone identified the target.
 Together, the slider studies provide consistent evidence that referential usefulness modulates explicit ordering preferences, while the context-dependent influence of size discriminability was less consistent across studies.
-\Cref{tab:slider-behavioural-contrasts} reports the full statistical results.
 
 \begin{figure}[!htbp]
   \centering
@@ -474,7 +473,6 @@ Higher discriminability increased size-initial responses most clearly when both 
 The increase exceeded the average high--low difference in the two one-property-sufficient contexts by 16.9 percentage points ($95\%$ credible interval $[7.7,25.6]$).
 The corresponding effects were small in size-sufficient displays and negative in colour-sufficient displays.
 Thus, making size more distinct particularly favoured beginning with size when the description needed both properties.
-\Cref{tab:production-behavioural-contrasts} reports all within-context effects and planned interaction contrasts.
 
 Conditional on producing both size and colour, size-first descriptions remained more frequent than colour-first descriptions; colour-before-size reversals were comparatively rare.
 This conditional preference describes responses containing both properties, while size-initiality also includes the decision to use size alone.
@@ -599,7 +597,7 @@ The parameter $\kappa$ determines how strongly competition at successive adjecti
 With $\kappa=0$, the local normalisers drop out and the \emph{global} speaker normalises over the fifteen completed paths.
 With $\kappa=1$, the \emph{fully incremental} speaker retains the complete contribution of locally normalised adjective choices.
 An interior value defines the \emph{plan-guided} speaker: complete-utterance utility and competition among locally available adjectives jointly determine the response probability.
-The fitted global model therefore compares complete utterances using their accumulated prefix utilities; \Cref{sec:simulation} additionally considers terminal evaluation, which scores only the completed utterance.
+The global model therefore compares complete utterances using their accumulated prefix utilities.
 
 The remaining terms capture stable order expectations through $\beta\Omega(u)$ and task-specific pressures on adjective selection and utterance length through $T(u,X)$.
 They extend the informativity--cost trade-off of a vanilla RSA speaker: target-directed utility is balanced against conventional order preferences and task-specific production costs.
@@ -641,7 +639,7 @@ Under sequential context updating, the threshold is recomputed from the context 
 When this restriction makes the target more distinctive in size, sequential context updating can give the size-first order a referential advantage.
 The literal listener applies this noun-outward computation to each available surface prefix, linking semantic interpretation to the successive adjective utilities defined above.
 The comparison therefore asks whether recomputing the size comparison class adds predictive accuracy in the observed production data.
-The simulation examines how this operation interacts with the evaluation rule and utterance space across a broader range of contexts.
+The simulation examines how this operation contributes to an ordering advantage across production models and a broader range of contexts.
 The threshold construction and further semantic details appear in \Cref{sec:appendix:model-specification,sec:appendix:semantic-details}.
 
 \section{Model Comparison and Predictive Evidence}
@@ -683,7 +681,6 @@ The largest differences among architecture predictions occurred in form-involvin
 Colour-initial responses contributed most of the plan-guided model's advantage over the average endpoint.
 Different opening adjectives create different sets of plausible continuations, so competition at later positions redistributes probability among the completed utterances that share each initial adjective.
 The broader production response space thus supplies evidence about successive adjective choice beyond the motivating size--colour order contrast.
-Detailed response-level comparisons appear in \Cref{fig:production-architecture-residuals}.
 
 \paragraph{Hierarchical semantic composition.}
 Context-fixed semantics predicted the complete response distribution better than sequential context updating under all three production architectures.
@@ -711,7 +708,7 @@ Full contrasts and the decomposition appear in \Cref{sec:semantic-score-decompos
 
 Allowing the contribution of successive adjective choice to vary across participants further improved prediction.
 The refinement retains the existing hierarchies for pragmatic optimality and stable-order weight while replacing the shared $\kappa$ with participant-specific weights $\kappa_i$.
-It gained $364.742$ ELPD under context-fixed semantics, with a 95\% credible interval of $[248.178,520.967]$; the gain under sequential context updating was similar (\Cref{tab:final-architecture-contrasts}).
+It gained $364.742$ ELPD under context-fixed semantics, with a 95\% credible interval of $[248.178,520.967]$; the gain under sequential context updating was similar.
 The population location of the successive-choice weights remained intermediate between the global and fully incremental endpoints, with a broad distribution across participants.
 
 The hierarchy improved prediction for two- and three-adjective utterances, with a smaller loss for single-adjective responses.
@@ -744,22 +741,23 @@ Additional response-level checks and descriptive measures of fit appear in \Cref
 \FloatBarrier
 
 These predictive comparisons leave open how a communicative advantage for size-first order arises under each semantic regime.
-The following simulation examines how semantic interpretation, utterance evaluation, and the alternatives available to a speaker jointly generate this advantage.
+The following simulation examines how this advantage arises and how it changes when adjective selection and utterance length enter the speaker's alternatives.
 
 \section{Simulation and Generative Conditions for an Order Asymmetry}
 \label{sec:simulation}
 % =============================================================================
 
-The production comparison evaluates how semantic interpretation and successive adjective choice predict the descriptions that speakers produce.
-The simulation examines how semantic interpretation and utterance alternatives contribute to an ordering advantage in listener target recovery.
-Earlier Monte Carlo simulations found an average referential advantage for orders that place more subjective adjectives farther from the noun, motivating a communicative pressure that could gradually stabilise ordering preferences across repeated language use \citep{franke2019subjectivity}.
-This account raises a further question about the conditions under which that advantage depends on semantic updating.
-In a pragmatic model, an utterance's contribution to reference also depends on how the speaker evaluates it and which other descriptions are available.
+A communicative account of adjective ordering seeks to explain why one order can be more useful for identifying a referent than another.
+Earlier Monte Carlo simulations found an average referential advantage for orders that place more subjective adjectives farther from the noun, motivating a pressure that could gradually stabilise ordering preferences across repeated language use \citep{franke2019subjectivity}.
+Sequential context updating provides a mechanism for this advantage: the noun-adjacent adjective restricts the context in which an outer, more subjective adjective is interpreted.
+The present production findings place this proposal within a broader set of choices, because speakers also decide which adjectives to include and how much to say.
+The theoretical question is therefore how the proposed ordering advantage changes when the speaker evaluates successive adjective information and can choose descriptions of different lengths.
 
-The present simulation evaluates the two size--colour orders with a pragmatic listener in randomly generated reference games.
-Across model conditions, the comparisons preserve the same random scenes and target-recovery measure while changing terminal versus prefix evaluation, the utterance space, and semantic parameters.
-Holding scenes and the evaluation measure constant allows changes in the ordering advantage to be attributed to these computational assumptions.
-The simulation thus connects the proposed communicative benefit of semantic updating to the broader choices among descriptions examined in the production study.
+The simulation addresses this question through controlled changes on the same randomly generated reference scenes.
+It begins with a comparison of the two size--colour orders based on their completed meanings, then introduces the utterance evaluation used by the production model and expands the alternatives to include single adjectives and the full production utterance space.
+The original scene distribution and listener target-recovery measure remain fixed throughout.
+This comparison identifies the conditions under which the advantage depends on semantic updating and those under which it also arises with fixed meanings.
+Although the symmetry of fixed meanings in the completed-utterance baseline can be derived directly, the simulation establishes the average direction and magnitude of the advantage as these production assumptions change across scenes.
 
 \subsection{Simulation Design and Size-First Advantage}
 \label{sec:simulation:boundary}
@@ -773,23 +771,18 @@ The same displays are reused across all comparisons.
 The scene-generation procedure and semantic parameter grid appear in \Cref{sec:appendix:sim-params}.
 
 The semantic regimes follow the distinction in \Cref{sec:model}: size is interpreted relative to the full scene under context-fixed semantics and relative to the context established by inner modifiers under sequential context updating.
-The simulation additionally distinguishes two ways of evaluating an utterance.
-A terminal-evaluation model scores the completed utterance by the literal listener's target probability.
-A prefix-evaluation model accumulates this value over the surface prefixes:
-\begin{align}
- U_{\mathrm{term}}(u,o,X)&=\alpha\log L(o\mid u,X),\\
- U_{\mathrm{prefix}}(u,o,X)&=\alpha\sum_{t=1}^{|u|}\log L(o\mid u_{1:t},X).
- \label{eq:simulation-evaluation}
-\end{align}
-Both models globally normalise their scores over the available completed responses.
-The prefix model corresponds to the global endpoint ($\kappa=0$) of the production architecture, with the shared order, salience, and task terms removed.
-This comparison isolates the contribution of evaluating information along the surface sequence before varying the alternatives against which an utterance competes.
+The initial baseline chooses between \emph{big blue} and \emph{blue big} using only the literal listener's target probability after the completed utterance.
+The next comparison uses the global production model ($\kappa=0$), which accumulates listener log probabilities over the successive adjectives before choosing among completed utterances.
+For \emph{big blue}, this includes the information supplied by \emph{big} as well as the completed description.
+Both comparisons use global choice; the difference is which information contributes to the utterance's utility.
+Holding the choice architecture fixed isolates the contribution of successive adjective information.
 
-The initial comparison uses the two completed orders, \emph{big blue} and \emph{blue big}.
-The prefix comparison then adds the one-adjective responses \emph{big} and \emph{blue}, before expanding to the fifteen responses used in production.
-These additions allow the speaker to select a sufficient single adjective or include other properties, bringing the utterance space closer to the choices observed in the experiment.
-A final comparison retains the fifteen-response prefix model and replaces the semantic parameter grid with the constants used in production.
-The remaining model settings and additional controls are reported in \Cref{sec:appendix:controlled-simulation}.
+The global model is then given four alternatives by adding \emph{big} and \emph{blue}, followed by the fifteen one-, two-, and three-adjective utterances used in production.
+These changes allow the speaker to select a sufficient single adjective or include other properties.
+The first four comparisons average over the same grid of 125 semantic parameter settings.
+The final comparison retains the fifteen utterances and substitutes the semantic constants used in production.
+Pragmatic optimality remains $\alpha=1$, with order, salience, and task-specific terms set to zero and final Laplace smoothing omitted.
+The additional architecture comparisons and full computational specification appear in \Cref{sec:appendix:controlled-simulation}.
 
 The pragmatic listener $L^{\mathrm{prag}}$ applies Bayes' rule to the speaker distribution: an object receives more probability when a speaker intending that object would be more likely to produce the observed utterance.
 All objects have equal prior probability.
@@ -806,35 +799,40 @@ Because the listener reasons about the speaker's choice, other available descrip
 \subsection{Conditions under which an Order Asymmetry Emerges}
 \label{sec:simulation:conditions}
 
-Sequential context updating generated a size-first advantage under terminal evaluation (\Cref{fig:simulation-controlled}).
-With context-fixed meanings and equal costs, the two orders yield the same target probability.
-Updating can break this symmetry because the noun-adjacent colour adjective changes the comparison class for size.
-Across the semantic parameter grid, the mean advantage was approximately $1.1$ percentage points with updating and zero with fixed semantics.
+In the completed-utterance baseline, sequential context updating generated a mean size-first advantage of approximately $1.1$ percentage points, while context-fixed semantics yielded no difference between the orders (\Cref{fig:simulation-controlled}).
+With fixed meanings, the two adjective orders have the same completed interpretation and therefore the same target probability.
+Updating breaks this symmetry because colour restricts the comparison class for size.
+This baseline recovers the proposed communicative contribution of hierarchical restriction.
 
-Prefix evaluation made the direction of the ordering advantage depend on the available descriptions.
-Even when completed utterances have identical fixed meanings, their first adjectives can have different target probabilities, which contribute to the accumulated prefix scores.
-With only the two completed orders available, prefix evaluation yielded a mean colour-first advantage under both semantic regimes.
-Adding the one-adjective responses changed the mean direction to size-first, and expanding to fifteen responses retained this advantage.
-The additional utterances change how the speaker distributes probability over descriptions for each referent, which in turn changes the pragmatic listener's inference about the target.
-Thus, the utterance space can change the direction of the ordering advantage while the scenes and adjective meanings remain fixed.
+Including successive adjective information changed the result.
+With only the two orders available, the global production model yielded a mean colour-first advantage under both semantic regimes: approximately $2.7$ percentage points with fixed meanings and $1.8$ with updating.
+The first adjectives can differ in informativeness even when the completed meanings coincide, allowing an ordering asymmetry under fixed semantics.
+Its direction, however, depends on the alternatives available for reference.
+Adding the single-adjective responses changed the mean advantage to size-first under both regimes, to approximately $2.3$ and $2.8$ percentage points, respectively.
+The speaker can now identify a referent with one adjective, changing how probability is distributed over the two-adjective descriptions and how the pragmatic listener interprets their use.
+Adjective selection and utterance length thus affect the communicative value of an order even when the two orders themselves remain unchanged.
 
 \begin{figure}[!htbp]
   \centering
   \includegraphics[width=0.96\textwidth]{simulation_controlled_comparison.pdf}
   \caption{Controlled changes in the size-first pragmatic target-recovery advantage on the same 24{,}000 random scenes.
-  The first four rows use the semantic parameter grid; the final row uses the production constants.
-  Terminal evaluation scores the completed utterance; prefix evaluation accumulates its prefix scores.
-  The four-response space adds single adjectives to the two orders, and the fifteen-response space contains all production responses.
-  Points show scene-averaged target-probability differences; positive values favour size-first.
+  The completed-utterance baseline scores only the final literal-listener target probability.
+  The remaining rows use the global production model ($\kappa=0$), which accumulates listener log probabilities over successive adjectives.
+  The four-utterance space adds single adjectives to the two orders; the fifteen-utterance space contains all production responses.
+  The first four rows average over the semantic parameter grid; the final row uses the production semantic constants.
+  Points show scene-averaged target-probability differences; positive values favour size-first and negative values favour colour-first.
   Intervals are $\pm1.96$ Monte Carlo standard errors, calculated after averaging parameter settings within scenes.}
   \label{fig:simulation-controlled}
 \end{figure}
 
-At the semantic constants used in production, the two fifteen-response prefix models yielded almost identical mean size-first advantages of approximately $1.9$ percentage points.
-The full numerical contrasts and additional comparisons appear in \Cref{sec:appendix:controlled-simulation}.
-These results show how semantic updating can generate an ordering advantage and how the same direction can arise with fixed meanings through prefix evaluation and competition among a broader set of utterances.
-An order's communicative advantage therefore depends jointly on semantic interpretation and the alternatives available for reference.
-This dependence connects the simulation to the empirical finding that adjective selection and utterance length are central to evaluating the proposed mechanisms of adjective ordering.
+Expanding to fifteen utterances retained the mean size-first advantage, at approximately $2.6$ percentage points with fixed semantics and $3.1$ with updating.
+At the semantic constants used in production, both regimes yielded almost identical advantages of approximately $1.9$ percentage points.
+Updating's additional contribution therefore depends on the semantic settings, while the broader utterance space supports a size-first advantage under either regime.
+
+The simulation shows how the interpretation and selection of adjectives jointly determine the communicative advantage of an order.
+Semantic updating can generate an advantage when comparing completed meanings; evaluating successive adjective information and allowing shorter descriptions changes both the source and direction of that advantage.
+The availability of single-adjective utterances is consequential for the behaviour of the same two-adjective orders.
+This result provides a computational motivation for the paper's central empirical choice: to examine adjective order within the full distribution of adjective selection, utterance length, and order.
 \FloatBarrier
 
 
@@ -876,11 +874,13 @@ The predictive difference is concentrated in adjective content and length, with 
 The semantic comparison therefore bears on how interpretations affect the selection of a description as a whole.
 Evaluating only the relative frequency of the two size--colour orders would leave much of this difference unobserved.
 
-The simulation connects this empirical comparison to the proposed communicative benefit of semantic updating.
-Updating can generate a size-first target-recovery advantage under terminal evaluation, consistent with the possibility that hierarchical restriction creates an ordering pressure \citep{franke2019subjectivity}.
-Prefix evaluation and the available utterances also shape this advantage: adding single-adjective alternatives can reverse its mean direction, and the broader production space yields size-first advantages under both semantic regimes.
-An order's communicative value thus depends both on the interpretation of its words and on how its use compares with the other utterances a speaker could produce.
-The simulation and fitted comparison together motivate evaluating semantic composition within an account of adjective selection, length, and order.
+The simulation clarifies how the proposed communicative benefit of semantic updating depends on the production choices under consideration.
+Updating creates a size-first advantage when the two orders are evaluated through their completed meanings, consistent with the contribution proposed for hierarchical restriction \citep{franke2019subjectivity}.
+Once successive adjective information enters the global model's utility, the two-order comparison instead favours colour-first on average under both semantic regimes.
+Allowing single-adjective alternatives reverses this average direction, and the broader production space sustains a size-first advantage even with fixed meanings.
+The meaning of a completed description therefore supplies only part of its communicative value: the listener also reasons about why the speaker chose it from the available alternatives.
+This connects the simulation directly to the observed prevalence of single-adjective responses and the joint modelling of adjective selection, length, and order.
+The fitted advantage of context-fixed semantics can thus coexist with a communicative ordering advantage; predicting speakers' complete choices provides evidence about the contribution of updating in the present task.
 
 \subsection{Participant Variation and Production Planning}
 
@@ -1632,6 +1632,16 @@ The parameter sweeps in \Cref{fig:sim-k,fig:sim-wf,fig:sim-csv} show that the sa
 \subsection{Controlled Changes on the Same Random Scenes}
 \label{sec:appendix:controlled-simulation}
 
+The completed-utterance control, labelled terminal evaluation below, uses a different utility from the global production model:
+\begin{align}
+ U_{\mathrm{term}}(u,o,X)&=\alpha\log L(o\mid u,X),\\
+ U_{\mathrm{prefix}}(u,o,X)&=\alpha\sum_{t=1}^{|u|}\log L(o\mid u_{1:t},X).
+ \label{eq:simulation-evaluation}
+\end{align}
+Both scores are globally normalised over completed utterances.
+The prefix score with $\kappa=0$ is the global model used in the main text; $\kappa=.5$ and $\kappa=1$ give the plan-guided and fully incremental simulation models.
+The terminal score supplies a control for the additional contribution of intermediate adjective information.
+
 The controlled comparisons reuse all 24{,}000 scenes from the original sweep and the target-recovery measure in \Cref{eq:simulation-advantage}.
 Each adjective retains the same extension when the intended referent changes; the referent prior is uniform.
 The response spaces contain two orders, four size--colour responses including the single adjectives, or the fifteen production responses.
@@ -1644,10 +1654,11 @@ This isolates the computational components without assigning fitted participant 
 
 The main comparison holds pragmatic optimality at $\alpha=1$ and excludes stable-order expectations, salience, task-specific response terms, and final Laplace smoothing.
 Form reliability is fixed at $.50$.
-All prefix-evaluation rows in the main comparison use $\kappa=0$, so they accumulate prefix utility without local normalisation.
-The final row uses the production constants: colour reliability $.59$, threshold selectivity $.50$, and perceptual blur $.6856$.
-\Cref{tab:controlled-simulation-means} reports the mean advantages shown in \Cref{fig:simulation-controlled}.
-At the production constants, the paired updating-minus-fixed difference was $0.0037$ percentage points, with a Monte Carlo interval of $[0.0007,0.0067]$.
+The main figure isolates successive adjective information and utterance-space changes while holding global choice fixed.
+Its four global-model rows use $\kappa=0$; the full architecture comparison additionally includes fixed weights $\kappa=.5$ and $\kappa=1$ for plan-guided and fully incremental production.
+The production constants are colour reliability $.59$, threshold selectivity $.50$, and perceptual blur $.6856$.
+\Cref{tab:controlled-simulation-means} reports the mean advantages shown in \Cref{fig:simulation-controlled}; its prefix-evaluation rows use the global model ($\kappa=0$).
+For the fifteen-response global model at the production constants, the paired updating-minus-fixed difference was $0.0037$ percentage points, with a Monte Carlo interval of $[0.0007,0.0067]$.
 
 \begin{table}[H]
   \centering
@@ -1669,7 +1680,7 @@ At the production constants, the paired updating-minus-fixed difference was $0.0
 
 The main figure uses the production semantic implementation throughout.
 As a separate implementation control, substituting its lexical calculation into the original two-order global rule reduces the mean updating advantage from $1.465$ to $1.142$ percentage points across the original grid.
-The production terminal score additionally retains its listener log-probability floor, giving the $1.141$-point advantage in \Cref{fig:simulation-controlled}.
+The terminal control additionally retains the production listener log-probability floor, giving the $1.141$-point advantage in \Cref{tab:controlled-simulation-means}.
 The implementations differ in probability floors and numerical normalisation around weighted quantiles; the control measures their combined impact.
 The original curves are retained in \Cref{fig:sim-nobj}.
 
