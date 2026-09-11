@@ -13,7 +13,7 @@ import modelSpecification as ms
 
 
 ROOT = Path(__file__).resolve().parents[3]
-DATA = ROOT / "analysis_revision/12_deterministic_encoding/model_input_raw_observed_9100.csv"
+DATA = ROOT / "data/production_model_input.csv"
 
 
 def _arguments(n_rows=16):

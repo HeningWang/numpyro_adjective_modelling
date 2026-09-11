@@ -1,0 +1,5 @@
+study,divergences,draws_per_chain,max_rhat,maximum_num_steps,min_bfmi,min_ess_bulk,min_ess_tail,n_chains,tree_depth_hits
+study1a_slider,0,1000,1.01,191,0.6528614517199051,930.0,1262.0,4,0
+study1b_slider,0,1000,1.0,255,0.5929151384753821,994.0,1319.0,4,0
+production_size_initial,0,1000,1.01,31,0.7110079665843999,932.0,1295.0,4,0
+production_overinformative,0,1000,1.0,127,0.6899635204812314,1224.0,1988.0,4,0

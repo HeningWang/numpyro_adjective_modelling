@@ -24,12 +24,12 @@ def load(relative):
 def main(campaign, out):
     out.mkdir(parents=True, exist_ok=True)
     src = campaign / "summaries"
-    participants = load("analysis_revision/18_revised_factorial/export_v18_participant_figure_data.py")
+    participants = load("analysis/exports/participant_predictions.py")
     participants.ARTIFACT = campaign / "primary/K-HKO.nc"
     for attr in ["PARAMETER_OUTPUT", "PREDICTION_OUTPUT", "GAP_OUTPUT", "POPULATION_OUTPUT", "DEPENDENCE_OUTPUT"]:
         setattr(participants, attr, out / getattr(participants, attr).name)
     participants.main()
-    hierarchy = load("analysis_revision/18_revised_factorial/export_kappa_hierarchy_diagnostics.py")
+    hierarchy = load("analysis/exports/kappa_hierarchy.py")
     hierarchy.SHARED = hierarchy.JOINT = src / "corrected_inputs/pointwise.csv"
     hierarchy.PARAMETERS = participants.PARAMETER_OUTPUT
     hierarchy.SHARED_MODEL, hierarchy.JOINT_MODEL = "K-HO", "K-HKO"
@@ -49,8 +49,8 @@ def main(campaign, out):
                  "production_architecture_cell_spread_diagnostics.csv", "production_architecture_elpd_localization.csv"]:
         target = "production_architecture_factorial_statistics_v16.csv" if name == "shared_factorial_statistics.csv" else name
         pd.read_csv(src/name).to_csv(out/target, index=False)
-    subprocess.run([sys.executable, str(ROOT/"analysis_revision/14_final_architecture/export_v10_theory_ppc.py"),
-        "--data", str(ROOT/"analysis_revision/12_deterministic_encoding/model_input_raw_observed_9100.csv"),
+    subprocess.run([sys.executable, str(ROOT/"analysis/exports/behavioural_predictions.py"),
+        "--data", str(ROOT/"data/production_model_input.csv"),
         "--inference", str(campaign/"primary/K-HKO.nc"), "--output", str(out/"production_v18_ppc_theory_outcomes.csv")], check=True)
     receipt = dict(best_model="K-HKO", shared_model="K-HO", complete=True,
         sources={str(Path(m.__file__).relative_to(ROOT)):hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest()

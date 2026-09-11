@@ -1,79 +1,45 @@
-# macOS
+# Local operating-system and editor files
 .DS_Store
+.idea/
+.vscode/
+*~
 
-# LaTeX build artifacts
+# TeX build products (the manuscript PDF is tracked)
 paper/build/
-paper/**/*.aux
-paper/**/*.fdb_latexmk
-paper/**/*.fls
-paper/**/*.log
-paper/**/*.out
-paper/**/*.synctex.gz
-paper/**/*.bbl
-paper/**/*.blg
-paper/**/*.fff
-paper/**/*.ttt
-paper/**/*.nav
-paper/**/*.snm
-paper/**/*.toc
-/*.aux
-/*.fdb_latexmk
-/*.fls
-/*.log
-/*.out
+*.aux
+*.bcf
+*.run.xml
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
+*.fff
+*.ttt
+*.nav
+*.snm
 
-# R
-.Rproj.user
-.Rhistory
-.RData
-
-# Python
+# Python and R environments/caches
+.venv/
 __pycache__/
-*.pyc
+*.py[cod]
+.pytest_cache/
+.Rproj.user/
+.Rhistory
+.Rapp.history
+.RData
+Rplots.pdf
 
-# MCMC inference data (large .nc files, regenerable).
-# The eight paper-reported cells are tracked via git-lfs; everything else is local.
-models/slider/inference_data/*.nc
-!models/slider/inference_data/mcmc_results_incremental_speaker_hier_warmup500_samples500_chains4.nc
-!models/slider/inference_data/mcmc_results_incremental_static_speaker_hier_warmup500_samples500_chains4.nc
-!models/slider/inference_data/mcmc_results_global_speaker_hier_warmup500_samples500_chains4.nc
-!models/slider/inference_data/mcmc_results_global_static_speaker_hier_warmup500_samples500_chains4.nc
-models/production/inference_data/*.nc
-!models/production/inference_data/mcmc_results_2x2best_incremental_recursive_warmup5000_samples2000_chains4.nc
-!models/production/inference_data/mcmc_results_2x2best_incremental_static_warmup5000_samples2000_chains4.nc
-!models/production/inference_data/mcmc_results_2x2best_global_recursive_warmup5000_samples2000_chains4.nc
-!models/production/inference_data/mcmc_results_2x2best_global_static_warmup5000_samples2000_chains4.nc
-
-# Simulation output CSVs (large, regenerable)
+# Regenerable inference and simulation outputs
+*.nc
+models/production/inference_data/
+models/production/results*/
+analysis/results*/
+simulation/results*/
 simulation/simulation_full_run*.csv
 simulation/simulation_test*.csv
-
-# Posterior-analysis output (regenerable from .nc files)
-models/slider/results/
-models/production/results/
-
-# Local tooling config and working notes (per-project, never tracked).
-CLAUDE.md
-.mcp.json
-.claude/
-.github/skills/
-
-# Internal working logs (specs, plans, brainstorm/design docs)
-docs/superpowers/
-
-# Paper-side working notes (memos, literature-note drafts)
-paper/memos/
-paper/literature-notes/
-paper/*_memo.md
-paper/*_memo.pdf
-paper/extension_v5_synthesis.md
-paper/session_start.md
-paper/analysis_plan.md
-paper/sword_model_analysis.md
-meeting-agenda-*.md
-
-# Personal MSc thesis + local literature library (moved out of the repo;
-# kept ignored in case they reappear under paper/)
-paper/Masterarbeit_*/
-paper/literatures/
-AGENTS.md
+output/
+tmp/

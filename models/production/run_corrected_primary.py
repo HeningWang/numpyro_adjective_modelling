@@ -23,7 +23,7 @@ import modelSpecification as ms
 from helper import import_dataset_hier
 
 ROOT = Path(__file__).resolve().parents[2]
-DATA = ROOT/"analysis_revision/12_deterministic_encoding/model_input_raw_observed_9100.csv"
+DATA = ROOT/"data/production_model_input.csv"
 DATA_SHA256 = "44a41b44b83dfef7a2d1788c6ac399a637cb9cb48b63eb3751339ed849bf4ac1"
 MODELS = {**ms.V10_ORDER_MODELS, **ms.V10_ORDER_UPD_MODELS,
           **ms.V11_JOINT_PARTICIPANT_MODELS, **ms.V12_UPDATING_JOINT_PARTICIPANT_MODELS}

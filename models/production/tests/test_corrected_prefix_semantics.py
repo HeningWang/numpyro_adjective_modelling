@@ -118,7 +118,7 @@ def test_registered_intervention_and_interpolation():
 
 def test_full_data_precomputation_and_replay(encoded_data=None):
     if encoded_data is None:
-        data=import_dataset_hier(file_path=ROOT/"analysis_revision/12_deterministic_encoding/model_input_raw_observed_9100.csv",
+        data=import_dataset_hier(file_path=ROOT/"data/production_model_input.csv",
                                  state_encoding="target_match")
     else:
         with np.load(encoded_data,allow_pickle=False) as f:

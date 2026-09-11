@@ -3,14 +3,18 @@ LATEXMKRC := $(LATEX_DIR)/.latexmkrc
 DRAFT_TEX := $(LATEX_DIR)/draft.tex
 DRAFT_PDF := $(LATEX_DIR)/draft.pdf
 BUILD_DIR := $(LATEX_DIR)/build
+DRAFT_AUX := $(addprefix $(LATEX_DIR)/draft.,aux bbl bcf blg fdb_latexmk fls log out run.xml synctex.gz toc)
 
-.PHONY: draft clean-draft
+.PHONY: draft clean clean-draft
 
 draft:
 	mkdir -p $(BUILD_DIR)
-	latexmk -cd -r $(LATEXMKRC) -pdf $(DRAFT_TEX)
+	latexmk -g -cd -r $(LATEXMKRC) -pdf $(DRAFT_TEX)
 	cp $(BUILD_DIR)/draft.pdf $(DRAFT_PDF)
 
-clean-draft:
-	latexmk -cd -r $(LATEXMKRC) -C $(DRAFT_TEX)
+clean:
+	rm -rf $(BUILD_DIR)
+	rm -f $(DRAFT_AUX)
+
+clean-draft: clean
 	rm -f $(DRAFT_PDF)
