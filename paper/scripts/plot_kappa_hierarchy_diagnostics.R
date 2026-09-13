@@ -41,7 +41,7 @@ p_participant_gain <- ggplot(
     labels = c("0\nGlobal", ".5", "1\nFully incremental")
   ) +
   labs(
-    x = expression("Participant successive-choice weight " * kappa[i]),
+    x = expression("Participant incremental-choice weight " * kappa[i]),
     y = expression(Delta * "ELPD by participant")
   ) +
   theme_csp() +

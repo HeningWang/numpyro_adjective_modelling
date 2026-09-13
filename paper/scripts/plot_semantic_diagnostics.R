@@ -7,6 +7,7 @@ suppressPackageStartupMessages({
 })
 source("scripts/csp_figure_style.R")
 
+if (!("--sweeps-only" %in% commandArgs(trailingOnly=TRUE))) {
 model_labels <- c(`G-HO`="Global", `I-HO`="Fully incremental",
                   `K-HO`="Plan-guided: shared weight", `K-HKO`="Plan-guided: participant weights")
 factor_labels <- c(response="Complete response", length="Length",
@@ -44,9 +45,12 @@ bridge_plot <- panel("speaker_size_first_given_set", "P(size-first | size-colour
   plot_layout(guides="collect") + plot_annotation(tag_levels="A")
 save_csp_pdf(bridge_plot, "figures/simulation_fitted_bridge.pdf", 8.8, 7.2)
 
+}
+
 sweep <- read_csv("data/simulation_size_first_advantage_summary.csv",show_col_types=FALSE) %>%
   mutate(semantics=recode(semantics,static="Context-fixed",recursive="Sequential context updating"),
-         speaker=recode(speaker,global_speaker="Global",incremental_speaker="Fully incremental"),
+         speaker=factor(recode(speaker,global_speaker="Original global",incremental_speaker="Original incremental"),
+                        levels=c("Original incremental","Original global")),
          spread=factor(sd_spread,levels=c(2,7.75,15)))
 p <- ggplot(sweep,aes(x=nobj,y=mean_advantage,colour=spread,fill=spread)) +
   geom_hline(yintercept=0,colour=CSP_COLORS[["grey"]],linetype="dashed") +
@@ -62,7 +66,8 @@ save_csp_pdf(p,"figures/sim_advantage_nobj.pdf",9,6.8)
 
 marginal <- read_csv("data/simulation_parameter_summary.csv",show_col_types=FALSE) %>%
   mutate(semantics=recode(semantics,static="Context-fixed",recursive="Sequential context updating"),
-         speaker=recode(speaker,global_speaker="Global",incremental_speaker="Fully incremental"))
+         speaker=factor(recode(speaker,global_speaker="Original global",incremental_speaker="Original incremental"),
+                        levels=c("Original incremental","Original global")))
 for (parameter_name in c("k","wf","color_semvalue")) {
   x_label <- c(k="Threshold parameter k",wf="Perceptual blur",color_semvalue="Colour reliability")[[parameter_name]]
   p <- ggplot(filter(marginal,parameter==parameter_name),aes(x=value,y=mean,colour=order,fill=order)) +

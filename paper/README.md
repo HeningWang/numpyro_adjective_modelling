@@ -14,10 +14,10 @@ Run R scripts from this directory. Each reads the supplied summaries in `data/`.
 | 2: trial, discriminability, and design | Layout in `draft.tex`; screenshot in `figures/experiment_trial_snapshot.png`; `scripts/plot_size_discriminability.R` |
 | 3: slider studies | `scripts/plot_slider_interactions.R` |
 | 4–5: production behaviour | `scripts/plot_revision_figures.R` |
-| 6–7: model comparison and predictive checks | `scripts/plot_production_main_figures.R` |
-| 8: controlled simulation | `scripts/plot_controlled_simulation.R --main-only` |
+| 6: inference structure | `scripts/plot_model_inference_plate.R` |
+| 7–9: model comparison and predictive checks | `scripts/plot_production_main_figures.R` |
+| 10: controlled simulation | `scripts/plot_controlled_simulation.R --main-only` |
 | Appendix: observed slider ratings | `scripts/plot_slider_empirical.R` |
-| Appendix: model structure | `scripts/plot_model_inference_plate.R` |
 | Appendix: architecture residuals | `scripts/plot_architecture_diagnostics.R` |
 | Appendix: participant hierarchy | `scripts/plot_kappa_hierarchy_diagnostics.R` |
 | Appendix: semantic decomposition, fitted-display predictions, and parameter sweeps | `scripts/plot_semantic_diagnostics.R` |

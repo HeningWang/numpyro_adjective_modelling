@@ -9,6 +9,7 @@ No inference is needed to compile the paper or draw its figures.
 | `../models/production/run_corrected_primary.py` | The eight production fits reported in the manuscript |
 | `../models/production/diagnose_corrected_primary.py` | Sampling diagnostics and response-wise PSIS-LOO |
 | `semantic_diagnostics.py` | Decomposition of the semantic predictive contrast |
+| `summarize_semantic_residuals.py` | Observed-minus-predicted response residuals for the participant-weight semantic pair, using the frozen condition predictions in `../paper/data/semantic_condition_predictions.csv` |
 | `reconcile_primary_exports.py` | Export selected production predictions and participant summaries from a completed run |
 | `exports/` | Helpers called by the production exporter |
 | `../simulation/run_reproducible_sweep.py` | Original two-order random-scene simulation |

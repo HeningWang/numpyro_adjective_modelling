@@ -23,6 +23,7 @@ model_palette <- c(
 )
 model_shapes <- c("Observed" = 21, "Global" = 16, "Plan-guided" = 17, "Fully incremental" = 15)
 
+if (!("--architecture-only" %in% commandArgs(trailingOnly = TRUE))) {
 family_labels <- c(
   dimension_color = "Size-colour",
   dimension_form = "Size-form",
@@ -237,6 +238,8 @@ save_csp_pdf(
   5.5
 )
 
+}
+
 # The exported comparison preserves its original reference model and intervals.
 architecture_plot_data <- read_csv("data/production_architecture_figure_data.csv", show_col_types = FALSE)
 
@@ -312,7 +315,7 @@ p_kappa <- architecture_plot_data %>%
     labels = c("Global", "Fully\nincremental")
   ) +
   scale_y_continuous(NULL, breaks = NULL, limits = c(.72, 1.38)) +
-  labs(x = "Successive-choice\nweight") +
+  labs(x = "Incremental-choice\nweight") +
   coord_cartesian(clip = "off") +
   theme_csp() +
   theme(
