@@ -106,16 +106,12 @@
 \maketitle
 
 \begin{abstract}
-Communicative efficiency has been invoked to explain both stable adjective-order preferences and their sensitivity to referential context.
+Communicative efficiency has been proposed as an explanation for both stable adjective-order preferences and their sensitivity to referential context.
 However, these accounts differ in how adjective order supports efficient communication. Under hierarchical composition, a reliable modifier near the noun can help the listener interpret a more subjective adjective. During incremental production, a discriminating modifier early in the utterance can help the listener identify the referent sooner. These benefits can favour opposing orders, raising the question of how speakers reconcile them when selecting and ordering adjectives.
 We propose a plan-guided incremental speaker model that jointly predicts adjective selection, utterance length, and order by combining utterance-level utility with competition during incremental adjective choice.
-Bayesian comparison of theory-informed probabilistic pragmatic models fitted to German production data favoured this account over global and fully incremental alternatives.
-Within this framework, context-fixed semantics predicted responses more accurately than sequential context updating, chiefly through better predictions of adjective selection and length.
-Across two German slider studies, size-first preference was strongest when size alone identified the target and weakest when colour alone did, with a small size-first preference remaining in the latter context.
-In production, speakers often selected a single sufficient adjective; when both size and colour were included, size-first order remained more frequent.
-Lower size discriminability increased redundant adjective use most clearly when size was sufficient.
-Controlled simulations showed that allowing single-adjective alternatives changed the average listener advantage from colour-first to size-first under both semantic regimes: the availability of shorter descriptions changed how the listener interpreted the two-adjective utterances.
-Together, these findings support a unified account in which stable ordering preferences and contextual flexibility interact through the selection of a description's content, length, and adjective order.
+We evaluate this account by combining two German slider-rating studies and a production study with Bayesian model comparison and controlled simulations.
+Among models predicting the production responses, plan-guided incremental production provided better predictions than global and fully incremental alternatives.
+Together, these findings motivate an account of boundedly rational communication in which partial planning supports good-enough production: speakers anticipate the communicative value of a description while resolving individual word choices incrementally.
 
 \noindent\textbf{Keywords:} adjective ordering, reference production, Rational Speech Act, incremental production, Bayesian cognitive modelling
 \end{abstract}
@@ -928,6 +924,10 @@ An utterance-level plan could specify properties relevant to identifying the tar
 Local choices could then remain sensitive to the developing description and the properties still available for mention.
 This organisation would allow speakers to anticipate the contribution of later information while limiting the scope of each decision.
 It accords with evidence that conceptual planning and linguistic formulation can proceed with different scopes during production \citep{griffin2000eyes,ferreira2002incremental,konopka2014priming}.
+
+This proposal connects bounded planning in production to the idea of good-enough processing, in which representations can remain partial while serving the current task \citep{ferreira2002goodenough}.
+Applied to reference production, a plan could establish enough descriptive content to guide the listener while leaving some choices unresolved until formulation.
+The relevant question is how much advance specification is sufficient for successful reference under a given set of task demands.
 
 The present model specifies a probability distribution over completed utterances and evaluates the full response space.
 Developing this account at the process level requires specifying how speakers generate candidate descriptions and allocate computation to their evaluation.
