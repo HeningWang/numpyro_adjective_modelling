@@ -43,7 +43,7 @@
     font-size:var(--fs-letter); font-weight:800; line-height:1;
   }
   .panel-title {
-    font-size:var(--fs-ptitle); font-weight:700; text-align:center; margin-bottom:10px;
+    font-size:var(--fs-ptitle); font-weight:700; text-align:center; margin-bottom:12px;
   }
   .sect {
     font-size:var(--fs-sect); font-weight:700; color:var(--sub);
@@ -52,26 +52,27 @@
   }
   .sect.sem { color:var(--sem); }
   .sect.spk { color:var(--spk); }
-  .smallcaps { text-transform:uppercase; letter-spacing:.35px; font-weight:700; }
 
-  /* Panel A: method and evidential pipeline */
+  /* Panel A: studies and analyses */
   .p-pipeline { grid-column:1; grid-row:1; background:#fcfcfc; }
-  .pipeline { flex:1; display:flex; flex-direction:column; justify-content:flex-start; }
+  .a-grid {
+    flex:1; display:grid; grid-template-columns:1fr 1fr; column-gap:12px;
+    grid-template-rows:auto 27px auto 27px auto; align-content:center;
+  }
   .pipe-card {
     border:1.4px solid var(--line); border-radius:5px; background:#fff;
-    padding:10px 12px; text-align:center;
+    padding:9px 9px; text-align:center;
   }
-  .pipe-card .pt { font-size:var(--fs-title); font-weight:700; margin-bottom:5px; }
-  .pipe-card .pc { font-size:var(--fs-body); line-height:1.28; color:var(--sub); }
-  .study-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
-  .study {
-    border:1px solid var(--hair); border-radius:4px; background:var(--soft);
-    padding:7px 5px; font-size:var(--fs-min); line-height:1.25; color:var(--sub);
+  .pipe-card .tag {
+    display:block; color:var(--faint); font-size:12px; font-weight:700;
+    text-transform:uppercase; letter-spacing:.25px; margin-bottom:3px;
   }
-  .study b { display:block; color:var(--ink); font-size:var(--fs-body); margin-bottom:2px; }
-  .down {
-    height:27px; position:relative; flex:none;
-  }
+  .pipe-card .pt { font-size:var(--fs-title); font-weight:700; margin-bottom:4px; }
+  .pipe-card .pc { font-size:var(--fs-min); line-height:1.27; color:var(--sub); }
+  .model-card { border-left:6px solid var(--spk-edge); }
+  .model-card .pt { color:var(--spk); }
+  .sim-card { border-style:dashed; }
+  .down { position:relative; }
   .down::before {
     content:""; position:absolute; left:50%; top:3px; height:16px;
     border-left:2px solid #9a9a9a;
@@ -81,43 +82,38 @@
     border-left:6px solid transparent; border-right:6px solid transparent;
     border-top:8px solid #9a9a9a;
   }
-  .model-card { border-left:6px solid var(--spk-edge); }
-  .model-card .pc b { color:var(--spk); }
-  .evidence-split { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
-  .evidence-card {
-    border:1.4px solid var(--line); border-radius:5px; background:#fff;
-    padding:9px 8px; text-align:center; min-height:115px;
-  }
-  .evidence-card .et { font-size:var(--fs-body); font-weight:700; margin-bottom:5px; }
-  .evidence-card .em { font-size:var(--fs-min); color:var(--sub); line-height:1.24; }
-  .evidence-card .claim {
-    display:block; margin-top:7px; padding-top:6px; border-top:1px solid var(--hair);
-    font-size:var(--fs-min); font-weight:700; color:var(--ink);
-  }
 
   /* Panel B: model space */
   .p-model { grid-column:2; grid-row:1; }
-  .model-body { flex:1; display:flex; flex-direction:column; gap:12px; }
+  .model-body { flex:1; display:flex; flex-direction:column; gap:10px; }
   .semantic-row { display:grid; grid-template-columns:1fr 1fr; gap:11px; }
   .semantic-card {
-    min-height:140px; border:1.4px solid var(--sem-edge); border-left:6px solid var(--sem-edge);
-    border-radius:5px; background:var(--sem-tint); padding:8px 10px; text-align:center;
+    border:1.4px solid var(--sem-edge); border-left:6px solid var(--sem-edge);
+    border-radius:5px; background:var(--sem-tint); padding:8px 10px 9px; text-align:center;
   }
   .semantic-card .mt { color:var(--sem); font-size:var(--fs-title); font-weight:700; }
-  .semantic-card .mc { color:var(--sub); font-size:var(--fs-min); line-height:1.25; margin-top:4px; }
+  .semantic-card .mc { color:var(--sub); font-size:var(--fs-min); line-height:1.25; margin-top:2px; }
   .sem-flow {
-    height:58px; display:flex; align-items:center; justify-content:center; gap:4px;
-    margin-top:5px;
+    height:46px; display:flex; align-items:center; justify-content:center; gap:5px;
   }
   .context {
     border:1.3px solid var(--sem-edge); background:#fff; color:var(--sem);
-    border-radius:4px; padding:4px 6px; font-size:13px; font-weight:700;
+    border-radius:4px; padding:4px 7px; font-size:14px; font-weight:700;
   }
-  .inner-context { width:96px; line-height:1.15; }
   .arrow { color:var(--sem); font-size:20px; font-weight:700; line-height:1; }
+  .plan-axis {
+    display:flex; align-items:center; gap:8px; margin:-2px 4px 8px;
+    color:var(--spk); font-size:var(--fs-min); font-weight:700;
+  }
+  .plan-axis .bar { flex:1; height:2px; background:var(--spk-edge); position:relative; }
+  .plan-axis .bar::before, .plan-axis .bar::after {
+    content:""; position:absolute; top:-5px; border-top:6px solid transparent; border-bottom:6px solid transparent;
+  }
+  .plan-axis .bar::before { left:-2px; border-right:9px solid var(--spk-edge); }
+  .plan-axis .bar::after { right:-2px; border-left:9px solid var(--spk-edge); }
   .speaker-row { display:grid; grid-template-columns:1fr 1.18fr 1fr; gap:10px; }
   .speaker-card {
-    min-height:200px; border:1.4px solid var(--spk-edge); border-left:6px solid var(--spk-edge);
+    min-height:178px; border:1.4px solid var(--spk-edge); border-left:6px solid var(--spk-edge);
     border-radius:5px; background:var(--spk-tint); padding:8px 8px; text-align:center;
     display:flex; flex-direction:column; align-items:center;
   }
@@ -125,25 +121,24 @@
     border:2px solid var(--best); border-left:7px solid var(--best);
     background:var(--best-tint);
   }
-  .speaker-card .mt { color:var(--spk); font-size:var(--fs-title); font-weight:700; }
+  .speaker-card .mt { color:var(--spk); font-size:var(--fs-title); font-weight:700; line-height:1.15; }
+  .speaker-card .mt small { display:block; font-size:var(--fs-min); font-weight:600; }
   .speaker-card.plan .mt { color:var(--best); }
-  .kappa {
-    margin-top:4px; font-size:var(--fs-min); font-weight:700; color:var(--sub);
-  }
+  .kappa { margin-top:3px; font-size:var(--fs-min); font-weight:700; color:var(--sub); }
   .utterance-unit {
     width:88%; border:1.4px solid var(--spk-edge); border-radius:5px; background:#fff;
-    padding:8px 5px; margin-top:18px; color:var(--spk); font-size:var(--fs-body); font-weight:700;
+    padding:7px 5px; margin-top:12px; color:var(--spk); font-size:var(--fs-body); font-weight:700;
   }
   .word-flow {
-    width:100%; display:flex; align-items:center; justify-content:center; gap:3px; margin-top:18px;
+    width:100%; display:flex; align-items:center; justify-content:center; gap:3px; margin-top:12px;
   }
   .word {
     min-width:39px; border:1.3px solid var(--spk-edge); background:#fff; border-radius:4px;
-    padding:7px 4px; color:var(--spk); font-size:var(--fs-min); font-weight:700;
+    padding:6px 4px; color:var(--spk); font-size:var(--fs-min); font-weight:700;
   }
   .word-arrow { color:var(--spk); font-size:18px; }
   .plan-shell {
-    width:100%; margin-top:10px; padding:8px 5px 6px;
+    width:100%; margin-top:8px; padding:6px 5px 6px;
     border:1.5px dashed var(--best-edge); border-radius:6px; background:#fff;
   }
   .plan-label { font-size:12px; color:var(--best); font-weight:700; margin-bottom:4px; }
@@ -155,125 +150,61 @@
   }
   .speaker-card.plan .mc { color:var(--best); font-weight:600; }
   .common-response {
-    text-align:center; color:var(--sub); font-size:var(--fs-min); font-style:italic; margin-top:7px;
+    text-align:center; color:var(--sub); font-size:var(--fs-min); font-style:italic; margin-top:6px;
   }
 
-  /* Panel C: design */
+  /* Panel C: referential task */
   .p-design { grid-column:1; grid-row:2; background:#fcfcfc; }
+  .c-body { flex:1; display:flex; flex-direction:column; justify-content:center; }
   .scene {
     background:#fff; border:1.4px solid var(--hair); border-radius:5px;
-    padding:7px 8px 6px; text-align:center;
+    padding:12px 10px 10px; text-align:center;
   }
   .scene-grid {
-    display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(2,44px);
+    display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(2,62px);
     justify-items:center; align-items:center;
   }
-  .scene-cap { font-size:var(--fs-body); font-style:italic; margin-top:4px; }
-  .scene-sub { font-size:var(--fs-min); color:var(--faint); margin-top:2px; }
-  .design { flex:1; display:flex; flex-direction:column; margin-top:9px; gap:8px; }
-  .design-h { font-size:var(--fs-title); font-weight:700; text-align:center; }
-  .factor .fh { font-size:var(--fs-min); font-weight:700; color:var(--faint); margin-bottom:5px; }
-  .factor .fh b { color:var(--sub); text-transform:uppercase; letter-spacing:.3px; }
-  .factor-row { display:flex; gap:6px; }
-  .factor-row > div {
-    flex:1; text-align:center; font-size:var(--fs-min); color:var(--sub);
-    background:var(--soft); border:1px solid var(--hair); border-radius:4px; padding:5px 3px;
+  .scene-sub { font-size:var(--fs-min); color:var(--faint); margin-top:6px; }
+  .scene-note { font-size:var(--fs-min); color:var(--sub); margin-top:3px; }
+  .resp-h {
+    margin-top:14px; font-size:var(--fs-sect); font-weight:700; color:var(--sub);
+    text-transform:uppercase; letter-spacing:.35px; text-align:center;
   }
-  .factor-row > div b { display:block; color:var(--ink); font-size:var(--fs-body); margin-bottom:1px; }
-  .measure-row { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
-  .measure {
+  .resp-row { display:flex; flex-wrap:wrap; justify-content:center; gap:5px; margin-top:9px; }
+  .resp {
     border:1.3px solid var(--line); border-radius:4px; background:#fff;
-    padding:7px 5px; text-align:center; font-size:var(--fs-min); color:var(--sub); line-height:1.22;
+    padding:4px 7px; font-size:15px; font-style:italic; color:var(--ink);
   }
-  .measure b { display:block; color:var(--ink); font-size:var(--fs-body); margin-bottom:2px; }
-  .study-tag {
-    display:block; color:var(--faint); font-size:12px; font-weight:700;
-    text-transform:uppercase; letter-spacing:.25px; margin-bottom:2px;
-  }
+  .resp-cap { text-align:center; font-size:var(--fs-min); color:var(--sub); line-height:1.3; margin-top:10px; }
 
-  /* Panel D: comparison and interpretation */
+  /* Panel D: findings */
   .p-results { grid-column:2; grid-row:2; }
   .result-body {
-    flex:1; display:grid; grid-template-columns:1.08fr .92fr; grid-template-rows:auto auto;
-    column-gap:16px; row-gap:22px; align-content:center; align-items:center;
+    flex:1; display:grid; grid-template-columns:1.25fr .75fr; grid-template-rows:auto auto;
+    column-gap:16px; row-gap:14px; align-content:center; align-items:start;
   }
   .result-col { display:flex; flex-direction:column; }
   .result-head {
     font-size:var(--fs-sect); text-transform:uppercase; letter-spacing:.3px;
-    font-weight:700; color:var(--sub); text-align:center; margin-bottom:8px;
+    font-weight:700; color:var(--sub); text-align:center; margin-bottom:6px;
   }
-  .arch-scale {
-    position:relative; height:164px; display:grid; grid-template-columns:1fr 1fr 1fr;
-    align-items:start; padding-top:8px;
-  }
-  .arch-scale::before {
-    content:""; position:absolute; left:15%; right:15%; top:73px;
-    height:3px; border-radius:3px; background:#cfcfcf;
-  }
-  .arch-node {
-    position:relative; z-index:1; display:flex; flex-direction:column; align-items:center;
-    text-align:center; color:var(--sub);
-  }
-  .arch-node .an { min-height:42px; font-size:var(--fs-body); font-weight:700; line-height:1.15; }
-  .arch-node .marker {
-    width:21px; height:21px; margin-top:12px; border:3px solid #8f8f8f;
-    border-radius:50%; background:#fff;
-  }
-  .arch-node .ak { margin-top:7px; font-size:var(--fs-min); color:var(--faint); }
-  .arch-node.best { color:var(--best); }
-  .arch-node.best .marker {
-    width:31px; height:31px; margin-top:7px; border:4px solid var(--best); background:var(--best-tint);
-    position:relative;
-  }
-  .arch-node.best .marker::after {
-    content:"\2605"; position:absolute; inset:-2px 0 0; color:var(--best); font-size:18px; line-height:25px;
-  }
-  .arch-node.best .ak { color:var(--best); font-weight:800; }
-  .arch-node .result-tag {
-    margin-top:5px; font-size:12px; font-weight:700; color:var(--best);
-  }
-  .plan-equation {
-    margin-top:8px; display:flex; align-items:center; justify-content:center; gap:7px;
-    padding:10px 8px; border:1.4px solid var(--best-edge); border-radius:5px; background:#f6faf7;
-  }
-  .plan-chip {
-    border:1px solid var(--best-edge); border-radius:4px; background:#fff;
-    padding:7px 8px; color:var(--best); font-size:var(--fs-min); font-weight:700; text-align:center;
-  }
-  .plus, .gives { color:var(--best); font-size:19px; font-weight:800; }
-  .update-map {
-    flex:1; display:flex; flex-direction:column; align-items:center; padding-top:8px;
-  }
-  .update-source {
-    width:82%; border:2px solid var(--sem); border-radius:5px; background:var(--sem-tint);
-    padding:10px 8px; text-align:center; color:var(--sem); font-size:var(--fs-body); font-weight:700;
-  }
-  .branch-stem { width:2px; height:25px; background:var(--sem-edge); }
-  .outcome-row {
-    width:100%; position:relative; display:grid; grid-template-columns:1fr 1fr; gap:9px; padding-top:12px;
-  }
-  .outcome-row::before {
-    content:""; position:absolute; left:25%; right:25%; top:0; height:2px; background:var(--sem-edge);
-  }
+  .result-head.best { color:var(--best); }
+  .result-head.sem { color:var(--sem); }
+  .rug-note { text-align:center; font-size:var(--fs-min); color:var(--sub); line-height:1.3; margin-top:2px; }
   .outcome {
-    position:relative; min-height:130px; border:1.4px solid var(--sem-edge); border-radius:5px;
-    background:var(--sem-tint); padding:11px 7px; text-align:center;
-    display:flex; flex-direction:column; justify-content:center;
+    border:1.4px solid var(--sem-edge); border-radius:5px;
+    background:var(--sem-tint); padding:10px 8px; text-align:center;
   }
-  .outcome::before {
-    content:""; position:absolute; left:50%; top:-12px; height:12px; border-left:2px solid var(--sem-edge);
-  }
-  .outcome .oh { color:var(--sem); font-size:var(--fs-min); font-weight:700; margin-bottom:9px; }
-  .outcome .main { color:var(--ink); font-size:var(--fs-body); font-weight:800; line-height:1.18; }
-  .outcome .qual { color:var(--sub); font-size:12px; line-height:1.2; margin-top:7px; }
+  .outcome .oh { color:var(--sem); font-size:var(--fs-min); font-weight:700; margin-bottom:5px; }
+  .outcome .main { color:var(--ink); font-size:var(--fs-body); font-weight:800; line-height:1.2; }
+  .outcome.minor { background:#fff; border-style:dashed; margin-top:9px; padding:8px 8px; }
+  .outcome.minor .main { font-size:var(--fs-min); font-weight:700; }
   .omnibus {
-    grid-column:1 / -1; border:1.4px solid var(--line); border-radius:5px;
-    background:linear-gradient(90deg,#f6faf7 0%,#fff 50%,#f3f7fa 100%);
-    padding:11px 16px; text-align:center; color:var(--ink);
+    grid-column:1 / -1; border:1.4px solid var(--best-edge); border-radius:5px;
+    background:#f6faf7; padding:11px 16px; text-align:center; color:var(--ink);
     font-size:var(--fs-body); line-height:1.3;
   }
   .omnibus .op { color:var(--best); font-weight:800; }
-  .omnibus .os { color:var(--sem); font-weight:800; }
 </style>
 </head>
 <body>
@@ -282,181 +213,171 @@
 
   <div class="panel p-pipeline">
     <div class="panel-label">A</div>
-    <div class="panel-title">Studies and Model Comparisons</div>
-    <div class="pipeline">
+    <div class="panel-title">Studies and Analyses</div>
+    <div class="a-grid">
       <div class="pipe-card">
-        <div class="pt">Behavioural experiments</div>
-        <div class="pc">Slider rating and production task</div>
+        <span class="tag">Studies 1a/1b</span>
+        <div class="pt">Slider ratings</div>
+        <div class="pc">Participants compare two complete descriptions</div>
+      </div>
+      <div class="pipe-card">
+        <span class="tag">Study 2</span>
+        <div class="pt">Production</div>
+        <div class="pc">Participants type their own descriptions</div>
       </div>
       <div class="down"></div>
+      <div class="down"></div>
+      <div class="pipe-card">
+        <div class="pt">Behavioural models</div>
+        <div class="pc">Order preferences across referential contexts</div>
+      </div>
       <div class="pipe-card model-card">
-        <div class="pt">Computational cognitive model</div>
-        <div class="pc">Model the <b>full utterance distribution</b> within the Rational Speech Act framework</div>
+        <div class="pt">RSA production models</div>
+        <div class="pc">Full distribution of the fifteen possible descriptions</div>
       </div>
+      <div></div>
       <div class="down"></div>
-      <div class="evidence-split">
-        <div class="evidence-card">
-          <div class="et">Held-out prediction</div>
-          <div class="em">Response-level PSIS-LOO<br>Participant-level uncertainty<br>Posterior prediction</div>
-          <span class="claim">Predictive contribution in observed production</span>
-        </div>
-        <div class="evidence-card">
-          <div class="et">Controlled simulation</div>
-          <div class="em">Broader range of randomly generated scenes</div>
-          <span class="claim">Conditions for an ordering advantage</span>
-        </div>
+      <div class="pipe-card sim-card">
+        <div class="pt">Controlled simulation</div>
+        <div class="pc">When does an order help the listener?</div>
+      </div>
+      <div class="pipe-card">
+        <div class="pt">Held-out prediction</div>
+        <div class="pc">How well each model predicts each response</div>
       </div>
     </div>
   </div>
 
   <div class="panel p-model">
     <div class="panel-label">B</div>
-    <div class="panel-title">Two Directions of Communicative Efficiency</div>
+    <div class="panel-title">Size Semantics &times; Degree of Planning</div>
     <div class="model-body">
       <div>
-        <div class="sect sem">Hierarchical Semantic Composition</div>
+        <div class="sect sem">Size semantics</div>
         <div class="semantic-row">
           <div class="semantic-card">
             <div class="mt">Context-fixed</div>
             <div class="sem-flow">
-              <span class="context">size meaning</span><span class="arrow">&#8592;</span><span class="context">original scene</span>
+              <span class="context">big</span><span class="arrow">&#8592;</span><span class="context">whole scene</span>
             </div>
-            <div class="mc">Size remains anchored to the original scene.</div>
+            <div class="mc"><i>big</i> is judged against the whole scene.</div>
           </div>
           <div class="semantic-card">
             <div class="mt">Sequential context updating</div>
             <div class="sem-flow">
-              <span class="context">size</span><span class="arrow">&#8592;</span><span class="context">restricted context</span><span class="arrow">&#8592;</span><span class="context inner-context">inner adjective<br>+ N</span>
+              <span class="context">big</span><span class="arrow">&#8592;</span><span class="context">blue objects</span><span class="arrow">&#8592;</span><span class="context">blue + N</span>
             </div>
-            <div class="mc">An inner property can change the context for interpreting size.</div>
+            <div class="mc"><i>big</i> is judged among the blue objects.</div>
           </div>
         </div>
       </div>
 
       <div>
-        <div class="sect spk">Pragmatic Production</div>
+        <div class="sect spk">Degree of planning</div>
+        <div class="plan-axis"><span>more planning</span><span class="bar"></span><span>less planning</span></div>
         <div class="speaker-row">
           <div class="speaker-card">
-            <div class="mt">Global</div>
+            <div class="mt">Global<small>(fully planned)</small></div>
             <div class="kappa">&kappa; = 0</div>
             <div class="utterance-unit">big&nbsp; blue&nbsp; N</div>
-            <div class="mc">Complete utterances compete through their accumulated utility.</div>
+            <div class="mc">Complete descriptions are evaluated as wholes.</div>
           </div>
 
           <div class="speaker-card plan">
-            <div class="mt">Plan-guided</div>
+            <div class="mt">Plan-guided<small>&nbsp;</small></div>
             <div class="kappa">0 &lt; &kappa; &lt; 1</div>
             <div class="plan-shell">
-              <div class="plan-label">utterance-level evaluation</div>
+              <div class="plan-label">value of the complete description</div>
               <div class="word-flow">
                 <span class="word">big</span><span class="word-arrow">&#8594;</span><span class="word">blue</span><span class="word-arrow">&#8594;</span><span class="word">N</span>
               </div>
             </div>
-            <div class="mc">Whole-utterance utility combines with incremental choice.</div>
+            <div class="mc">The complete description guides each adjective.</div>
           </div>
 
           <div class="speaker-card">
-            <div class="mt">Fully incremental</div>
+            <div class="mt">Fully incremental<small>&nbsp;</small></div>
             <div class="kappa">&kappa; = 1</div>
             <div class="word-flow">
               <span class="word">big</span><span class="word-arrow">&#8594;</span><span class="word">blue</span><span class="word-arrow">&#8594;</span><span class="word">N</span>
             </div>
-            <div class="mc">Incremental choice is evaluated against prefix-specific alternatives.</div>
+            <div class="mc">Each adjective is compared with those available at that point.</div>
           </div>
         </div>
-        <div class="common-response">All three architectures assign probabilities to the same completed responses.</div>
+        <div class="common-response">All models assign probabilities to the same fifteen descriptions.</div>
       </div>
     </div>
   </div>
 
   <div class="panel p-design">
     <div class="panel-label">C</div>
-    <div class="panel-title">Experimental Design</div>
+    <div class="panel-title">Referential Task</div>
+    <div class="c-body">
     <div class="scene">
       <div class="scene-grid">
-        <div><svg width="46" height="46"><circle cx="23" cy="23" r="18" fill="#56B4E9" stroke="#0072B2" stroke-width="1.3"/><rect x="1" y="1" width="44" height="44" rx="4" fill="none" stroke="#1f1f1f" stroke-width="2.1" stroke-dasharray="6 4"/></svg></div>
-        <div><svg width="27" height="27"><rect x="3" y="3" width="21" height="21" rx="3" fill="#56B4E9" stroke="#0072B2" stroke-width="1.1"/></svg></div>
-        <div><svg width="35" height="35"><circle cx="17.5" cy="17.5" r="14" fill="#E69F00" stroke="#CC7A00" stroke-width="1.1"/></svg></div>
-        <div><svg width="34" height="34"><polygon points="17,3 32,31 2,31" fill="#E69F00" stroke="#CC7A00" stroke-width="1.1"/></svg></div>
-        <div><svg width="23" height="23"><rect x="2" y="2" width="19" height="19" rx="2" fill="#009E73" stroke="#007A57" stroke-width="1.1"/></svg></div>
-        <div><svg width="32" height="32"><circle cx="16" cy="16" r="12" fill="#009E73" stroke="#007A57" stroke-width="1.1"/></svg></div>
+        <div><svg width="58" height="58"><circle cx="29" cy="29" r="23" fill="#56B4E9" stroke="#0072B2" stroke-width="1.3"/><rect x="1" y="1" width="56" height="56" rx="4" fill="none" stroke="#1f1f1f" stroke-width="2.1" stroke-dasharray="6 4"/></svg></div>
+        <div><svg width="34" height="34"><rect x="4" y="4" width="26" height="26" rx="3" fill="#56B4E9" stroke="#0072B2" stroke-width="1.1"/></svg></div>
+        <div><svg width="44" height="44"><circle cx="22" cy="22" r="17" fill="#E69F00" stroke="#CC7A00" stroke-width="1.1"/></svg></div>
+        <div><svg width="42" height="42"><polygon points="21,4 39,38 3,38" fill="#E69F00" stroke="#CC7A00" stroke-width="1.1"/></svg></div>
+        <div><svg width="30" height="30"><rect x="3" y="3" width="24" height="24" rx="2" fill="#009E73" stroke="#007A57" stroke-width="1.1"/></svg></div>
+        <div><svg width="40" height="40"><circle cx="20" cy="20" r="15" fill="#009E73" stroke="#007A57" stroke-width="1.1"/></svg></div>
       </div>
-      <div class="scene-cap">&ldquo;the big blue circle sticker&rdquo;</div>
-      <div class="scene-sub">target = dashed frame &middot; 6 objects</div>
+      <div class="scene-sub">Six objects &middot; target in the dashed frame</div>
+      <div class="scene-note">Here, size alone identifies the target.</div>
     </div>
-    <div class="design">
-      <div class="design-h">Factorial design</div>
-      <div class="factor">
-        <div class="fh"><b>Referential context</b> &middot; within participant</div>
-        <div class="factor-row">
-          <div><b>Size</b>size sufficient</div>
-          <div><b>Both</b>both necessary</div>
-          <div><b>Colour</b>colour sufficient</div>
-        </div>
-      </div>
-      <div class="factor">
-        <div class="fh"><b>Size discriminability</b> &middot; between participants</div>
-        <div class="factor-row">
-          <div><b>High</b>strong contrast</div>
-          <div><b>Low</b>weak contrast</div>
-        </div>
-      </div>
-      <div class="measure-row">
-        <div class="measure"><b>Studies 1a/1b</b>Slider order judgements</div>
-        <div class="measure"><b>Study 2</b>Direct production: selection, length, and conditional order</div>
-      </div>
+    <div class="resp-h">Possible descriptions</div>
+    <div class="resp-row">
+      <span class="resp">big</span>
+      <span class="resp">blue</span>
+      <span class="resp">big blue</span>
+      <span class="resp">blue big</span>
+      <span class="resp">big blue round</span>
+      <span class="resp">&hellip;</span>
+    </div>
+    <div class="resp-cap">One to three adjectives in any order:<br>fifteen ordered categories of size, colour, and form</div>
     </div>
   </div>
 
   <div class="panel p-results">
     <div class="panel-label">D</div>
-    <div class="panel-title">Predictive Findings</div>
+    <div class="panel-title">Main Findings</div>
     <div class="result-body">
       <div class="result-col">
-        <div class="result-head">Production architecture</div>
-        <div class="arch-scale">
-          <div class="arch-node">
-            <div class="an">Global</div>
-            <div class="marker"></div>
-            <div class="ak">&kappa; = 0</div>
-          </div>
-          <div class="arch-node best">
-            <div class="an">Plan-guided</div>
-            <div class="marker"></div>
-            <div class="ak">&kappa; = .446</div>
-            <div class="result-tag">best matched model</div>
-          </div>
-          <div class="arch-node">
-            <div class="an">Fully<br>incremental</div>
-            <div class="marker"></div>
-            <div class="ak">&kappa; = 1</div>
-          </div>
-        </div>
-        <div class="plan-equation">
-          <div class="plan-chip">utterance utility</div><div class="plus">+</div><div class="plan-chip">local competition</div><div class="gives">&#8594;</div><div class="plan-chip">response probability</div>
-        </div>
+        <div class="result-head best">Degree of planning</div>
+        <svg width="100%" viewBox="0 0 440 150" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+          <text x="62" y="22" font-size="16" font-weight="700" fill="#555" text-anchor="middle">Global</text>
+          <text x="62" y="40" font-size="13" fill="#7b7b7b" text-anchor="middle">fully planned</text>
+          <text x="202.9" y="40" font-size="16" font-weight="700" fill="#1b6b3a" text-anchor="middle">Plan-guided</text>
+          <text x="378" y="22" font-size="16" font-weight="700" fill="#555" text-anchor="middle">Fully</text>
+          <text x="378" y="40" font-size="16" font-weight="700" fill="#555" text-anchor="middle">incremental</text>
+          <line x1="62" y1="80" x2="378" y2="80" stroke="#cfcfcf" stroke-width="3" stroke-linecap="round"/><line x1="121.9" y1="70" x2="121.9" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="172.0" y1="70" x2="172.0" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="186.7" y1="70" x2="186.7" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="372.2" y1="70" x2="372.2" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="68.3" y1="70" x2="68.3" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="68.2" y1="70" x2="68.2" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="362.8" y1="70" x2="362.8" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="164.8" y1="70" x2="164.8" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="358.1" y1="70" x2="358.1" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="236.8" y1="70" x2="236.8" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="111.8" y1="70" x2="111.8" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="153.7" y1="70" x2="153.7" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="162.2" y1="70" x2="162.2" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="339.6" y1="70" x2="339.6" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="156.7" y1="70" x2="156.7" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="374.1" y1="70" x2="374.1" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="249.8" y1="70" x2="249.8" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="331.6" y1="70" x2="331.6" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="82.5" y1="70" x2="82.5" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="215.5" y1="70" x2="215.5" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="109.1" y1="70" x2="109.1" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="87.0" y1="70" x2="87.0" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="277.7" y1="70" x2="277.7" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="244.8" y1="70" x2="244.8" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="130.0" y1="70" x2="130.0" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="79.9" y1="70" x2="79.9" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="186.4" y1="70" x2="186.4" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="169.4" y1="70" x2="169.4" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="75.7" y1="70" x2="75.7" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="344.6" y1="70" x2="344.6" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="64.9" y1="70" x2="64.9" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="83.8" y1="70" x2="83.8" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="304.0" y1="70" x2="304.0" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="127.6" y1="70" x2="127.6" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="228.6" y1="70" x2="228.6" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="196.8" y1="70" x2="196.8" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="159.9" y1="70" x2="159.9" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="99.1" y1="70" x2="99.1" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="372.5" y1="70" x2="372.5" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="95.5" y1="70" x2="95.5" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="131.3" y1="70" x2="131.3" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="86.9" y1="70" x2="86.9" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="188.7" y1="70" x2="188.7" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="366.4" y1="70" x2="366.4" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="366.1" y1="70" x2="366.1" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="364.9" y1="70" x2="364.9" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="376.0" y1="70" x2="376.0" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="64.5" y1="70" x2="64.5" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="92.3" y1="70" x2="92.3" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="132.3" y1="70" x2="132.3" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="137.3" y1="70" x2="137.3" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="362.4" y1="70" x2="362.4" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="104.0" y1="70" x2="104.0" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="140.0" y1="70" x2="140.0" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="366.6" y1="70" x2="366.6" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="118.1" y1="70" x2="118.1" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="313.4" y1="70" x2="313.4" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="353.4" y1="70" x2="353.4" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="94.8" y1="70" x2="94.8" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="342.9" y1="70" x2="342.9" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="370.2" y1="70" x2="370.2" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="130.5" y1="70" x2="130.5" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="259.7" y1="70" x2="259.7" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="90.2" y1="70" x2="90.2" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="251.7" y1="70" x2="251.7" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="107.3" y1="70" x2="107.3" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="360.2" y1="70" x2="360.2" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="277.8" y1="70" x2="277.8" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="83.4" y1="70" x2="83.4" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="352.9" y1="70" x2="352.9" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="139.2" y1="70" x2="139.2" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="110.7" y1="70" x2="110.7" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="334.2" y1="70" x2="334.2" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="246.7" y1="70" x2="246.7" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="222.7" y1="70" x2="222.7" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="356.6" y1="70" x2="356.6" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="208.8" y1="70" x2="208.8" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="94.1" y1="70" x2="94.1" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="249.1" y1="70" x2="249.1" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="215.5" y1="70" x2="215.5" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="181.4" y1="70" x2="181.4" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="159.3" y1="70" x2="159.3" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="75.4" y1="70" x2="75.4" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="89.2" y1="70" x2="89.2" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="127.6" y1="70" x2="127.6" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="260.3" y1="70" x2="260.3" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="358.9" y1="70" x2="358.9" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="100.9" y1="70" x2="100.9" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="134.4" y1="70" x2="134.4" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="209.9" y1="70" x2="209.9" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="331.3" y1="70" x2="331.3" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="100.6" y1="70" x2="100.6" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="308.1" y1="70" x2="308.1" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="370.6" y1="70" x2="370.6" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="371.3" y1="70" x2="371.3" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="227.1" y1="70" x2="227.1" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="372.5" y1="70" x2="372.5" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="120.8" y1="70" x2="120.8" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="349.3" y1="70" x2="349.3" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="189.2" y1="70" x2="189.2" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="299.8" y1="70" x2="299.8" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="89.7" y1="70" x2="89.7" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="360.5" y1="70" x2="360.5" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="288.7" y1="70" x2="288.7" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="98.2" y1="70" x2="98.2" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="99.4" y1="70" x2="99.4" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="131.1" y1="70" x2="131.1" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="169.5" y1="70" x2="169.5" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="152.4" y1="70" x2="152.4" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="193.3" y1="70" x2="193.3" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="296.7" y1="70" x2="296.7" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="371.1" y1="70" x2="371.1" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/><line x1="135.3" y1="70" x2="135.3" y2="90" stroke="#1b6b3a" stroke-opacity=".38" stroke-width="1.4"/>
+          
+          <circle cx="62" cy="80" r="9" fill="#fff" stroke="#8f8f8f" stroke-width="3"/>
+          <circle cx="378" cy="80" r="9" fill="#fff" stroke="#8f8f8f" stroke-width="3"/>
+          <circle cx="202.9" cy="80" r="14" fill="#e7f1ea" stroke="#1b6b3a" stroke-width="3.5"/>
+          <text x="202.9" y="86" font-size="17" fill="#1b6b3a" text-anchor="middle">&#9733;</text>
+          <text x="62" y="112" font-size="14" fill="#7b7b7b" text-anchor="middle">&#954; = 0</text>
+          <text x="202.9" y="112" font-size="14" font-weight="800" fill="#1b6b3a" text-anchor="middle">&#954; = .446</text>
+          <text x="202.9" y="129" font-size="12" font-weight="700" fill="#1b6b3a" text-anchor="middle">best-predicting model</text>
+          <text x="378" y="112" font-size="14" fill="#7b7b7b" text-anchor="middle">&#954; = 1</text>
+        </svg>
+        <div class="rug-note">Each tick is one speaker&rsquo;s estimated &kappa;: speakers differ in how much they plan.</div>
       </div>
 
       <div class="result-col">
-        <div class="result-head">Semantic comparison</div>
-        <div class="update-map">
-          <div class="update-source">Context-fixed and context-updating</div>
-          <div class="branch-stem"></div>
-          <div class="outcome-row">
-            <div class="outcome">
-              <div class="oh">Fitted production</div>
-              <div class="main">Context-fixed predicts better</div>
-            </div>
-            <div class="outcome">
-              <div class="oh">Controlled simulation</div>
-              <div class="main">Size-first advantage</div>
-              <div class="qual">under both semantic regimes</div>
-            </div>
-          </div>
+        <div class="result-head sem">Size semantics</div>
+        <div class="outcome">
+          <div class="oh">Fitted production</div>
+          <div class="main">Context-fixed predicts better than updating</div>
+        </div>
+        <div class="outcome minor">
+          <div class="oh">Controlled simulation</div>
+          <div class="main">Size-first advantage under both semantics</div>
         </div>
       </div>
+
       <div class="omnibus">
-        <span class="op">Plan-guided incremental production</span> best predicts the observed response distribution. Simulated order advantages depend on <span class="os">utterance evaluation, available alternatives, and semantic parameters</span>.
+        <span class="op">An intermediate degree of planning</span>, varying across speakers, best predicts which descriptions speakers produce.
       </div>
     </div>
   </div>

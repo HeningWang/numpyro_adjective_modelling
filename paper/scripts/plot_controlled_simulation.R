@@ -14,9 +14,9 @@ settings <- tibble(
  parameter_set = 'original_grid',
  order = 'neutral',
  setting = c('Complete-utterance evaluation\n2 orders',
-             'Incremental evaluation\n2 orders',
-             'Incremental evaluation\n4 utterances',
-             'Incremental evaluation\n15 utterances'))
+             'Prefix evaluation\n2 orders',
+             'Prefix evaluation\n4 utterances',
+             'Prefix evaluation\n15 utterances'))
 main_a <- settings %>%
  inner_join(summaries, by = c('rule', 'support', 'parameter_set', 'order')) %>%
  prepare() %>% mutate(panel = 'A', setting = factor(setting, levels = rev(settings$setting)))
