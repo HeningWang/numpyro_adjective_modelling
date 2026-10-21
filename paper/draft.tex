@@ -94,7 +94,7 @@
 \newcommand{\param}[1]{\ensuremath{#1}}
 
 % ---- title matter -----------------------------------------------------------
-\title{How Much Do Speakers Plan?\\ Adjective Ordering and Plan-Guided Reference Production}
+\title{Communicative Efficiency in Adjective Ordering:\\ Hierarchical Composition and Incremental Pragmatics in Reference Production}
 \author{Hening Wang}
 \author{Fabian Schlotterbeck}
 \author{Michael Franke}
@@ -106,12 +106,16 @@
 \maketitle
 
 \begin{abstract}
-Adjective ordering preferences, such as placing size before colour, have mainly been explained by properties of the adjectives or by the benefit of an order to the listener.
-These explanations leave open a basic question about production: do speakers decide on an order before they begin, or does the order emerge as they speak?
-Because adjectives are produced incrementally, both are possible: a speaker may plan several adjectives and then arrange them, or begin with a salient or discriminating adjective and let the order follow from what is added next.
-We develop a plan-guided production model that lies between fully planned and fully incremental production: a partial plan of the complete description guides each adjective, while immediate cues still compete.
-Bayesian model comparison on German production data favoured an intermediate degree of planning, which also varied across speakers.
-These findings motivate an account of bounded rational communication in which partial planning supports good-enough production: speakers anticipate the communicative value of a description while producing individual words incrementally.
+Adjective ordering preferences, such as placing size before colour, have been explained by two accounts of communicative efficiency.
+Hierarchical composition favours placing less subjective adjectives closer to the noun, where they restrict the interpretation of more subjective ones; incremental pragmatics favours placing more discriminating adjectives earlier, where they help the listener narrow down the referent sooner.
+The two accounts conflict whenever the less subjective adjective is also the more discriminating one.
+What, then, do speakers evaluate when choosing an adjective: the complete description, or the adjective given the words before it?
+The answer may lie in between.
+We develop Rational Speech Act models of adjective production that formalise both accounts and span this range, from a global speaker, who evaluates complete descriptions, to an incremental speaker, who evaluates each adjective in turn.
+Between these extremes, a plan-guided speaker chooses each adjective for its immediate usefulness while looking ahead to the complete description, so that both benefits can shape the order.
+We found that the plan-guided speaker best predicted German production data, whereas modelling hierarchical composition added no predictive benefit.
+Simulations nevertheless showed that composition can favour placing the less subjective adjective closer to the noun, but only when that adjective substantially changes which objects the more subjective one applies to.
+Together, these findings motivate an account of boundedly rational communication in which partial planning supports good-enough production: speakers anticipate the communicative value of a description while resolving individual word choices incrementally.
 
 \noindent\textbf{Keywords:} adjective ordering, production planning, reference production, Rational Speech Act, Bayesian cognitive modelling
 \end{abstract}
@@ -406,8 +410,9 @@ Plan-guided with participant variation & $\kappa_i$, estimated for each particip
 \label{sec:modelcomparison}
 \label{sec:model:extended}
 
-The empirical evidence connects explicit preferences between adjective orders to the distribution of descriptions that speakers produce.
-We first summarise the participant samples and observed patterns, then compare the production models and examine their predictions.
+This section evaluates the production models against the German data.
+The slider studies show how referential context shapes preferences between two complete orders; the production study additionally shows which properties speakers select and how long their descriptions are, and it therefore provides the data for model comparison.
+After summarising the samples and observed patterns, we ask which degree of planning best predicts production, whether planning varies across speakers, and whether updating the comparison class for size improves prediction, before checking the predictions of the best-predicting model.
 Full experimental methods, behavioural analyses, and secondary results appear in \Cref{sec:appendix:methods-transparency}.
 
 \subsection{Studies and Observed Responses}
