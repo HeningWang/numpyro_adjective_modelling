@@ -53,11 +53,15 @@
   .sect.sem { color:var(--sem); }
   .sect.spk { color:var(--spk); }
 
-  /* Panel A: studies and analyses */
+  /* Panel A: approach */
   .p-pipeline { grid-column:1; grid-row:1; background:#fcfcfc; }
   .a-grid {
     flex:1; display:grid; grid-template-columns:1fr 1fr; column-gap:12px;
     grid-template-rows:auto 27px auto 27px auto; align-content:center;
+  }
+  .a-grid.a-single {
+    grid-template-columns:1fr; grid-template-rows:auto 27px auto 27px auto 22px auto;
+    padding:0 48px;
   }
   .pipe-card {
     border:1.4px solid var(--line); border-radius:5px; background:#fff;
@@ -213,37 +217,26 @@
 
   <div class="panel p-pipeline">
     <div class="panel-label">A</div>
-    <div class="panel-title">Studies and Analyses</div>
-    <div class="a-grid">
+    <div class="panel-title">Approach</div>
+    <div class="a-grid a-single">
       <div class="pipe-card">
-        <span class="tag">Studies 1a/1b</span>
-        <div class="pt">Slider ratings</div>
-        <div class="pc">Participants compare two complete descriptions</div>
-      </div>
-      <div class="pipe-card">
-        <span class="tag">Study 2</span>
-        <div class="pt">Production</div>
+        <div class="pt">Production study</div>
         <div class="pc">Participants type their own descriptions</div>
       </div>
       <div class="down"></div>
-      <div class="down"></div>
-      <div class="pipe-card">
-        <div class="pt">Behavioural models</div>
-        <div class="pc">Order preferences across referential contexts</div>
-      </div>
       <div class="pipe-card model-card">
         <div class="pt">RSA production models</div>
         <div class="pc">Full distribution of the fifteen possible descriptions</div>
       </div>
-      <div></div>
       <div class="down"></div>
-      <div class="pipe-card sim-card">
-        <div class="pt">Controlled simulation</div>
-        <div class="pc">When does an order help the listener?</div>
-      </div>
       <div class="pipe-card">
         <div class="pt">Held-out prediction</div>
         <div class="pc">How well each model predicts each response</div>
+      </div>
+      <div></div>
+      <div class="pipe-card sim-card">
+        <div class="pt">Controlled simulation</div>
+        <div class="pc">When does an order help the listener?</div>
       </div>
     </div>
   </div>
@@ -372,7 +365,7 @@
         </div>
         <div class="outcome minor">
           <div class="oh">Controlled simulation</div>
-          <div class="main">Size-first advantage under both semantics</div>
+          <div class="main">Composition favours size-first order only under restricted conditions</div>
         </div>
       </div>
 
