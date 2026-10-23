@@ -19,8 +19,19 @@ def diagnose(artifact: Path, output: Path, encoded: Path):
     idata = az.from_netcdf(artifact)
     role = idata.attrs.get("artifact_role")
     recovery = role == "recovery" and name in {"G-HO", "G-UPD-HO"}
+    if role == "ablation" and (manifest.get("artifact_role") != role
+            or manifest.get("drop_condition_terms") is not True
+            or idata.attrs.get("drop_condition_terms") != 1
+            or any(site in idata.posterior for site in (
+                "lambda_size_reliability_single_bonus",
+                "lambda_size_reliability_form_pair_tradeoff"))):
+        raise ValueError("Ablation artifact has inconsistent condition-term metadata or latents")
+    if role == "sensitivity" and (name not in {"K-HO", "K-UPD-HO"}
+            or manifest.get("colour_reliability_override") is None
+            or manifest.get("colour_reliability") != idata.attrs.get("colour_reliability")):
+        raise ValueError("Sensitivity artifact has inconsistent colour metadata")
     expected_draws, expected_depth = (4000, 8) if recovery else (1000, 6)
-    if role not in {"primary", "recovery"} or (role == "recovery" and not recovery):
+    if role not in {"primary", "recovery", "sensitivity", "ablation"} or (role == "recovery" and not recovery):
         raise ValueError("Timing pilots cannot enter primary summaries")
     if (manifest["warmup"], manifest["samples"], manifest["max_tree_depth"]) != (1000, expected_draws, expected_depth):
         raise ValueError("Artifact does not match its approved sampler contract")
@@ -66,6 +77,8 @@ def diagnose(artifact: Path, output: Path, encoded: Path):
         mean_acceptance=float(stats.accept_prob.values.mean()),
         finite_diagnostics=bool(np.isfinite(summary[["r_hat", "ess_bulk", "ess_tail"]]).all().all()),
         pointwise_reconstruction_error=float(abs(pointwise.sum()-loo.elpd_loo)),
+        colour_reliability=manifest.get("colour_reliability", .59),
+        drop_condition_terms=manifest.get("drop_condition_terms", False),
         artifact_sha256=digest)
     row["sampler_gate_pass"] = bool(row["finite_diagnostics"] and row["divergences"] == 0
         and row["max_rhat"] < 1.01 and row["min_bulk_ess"] > 400

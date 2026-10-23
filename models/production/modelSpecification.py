@@ -2495,7 +2495,9 @@ def principled_path_components_from_features(log_target, salience, alpha, lambda
     return jnp.sum(chosen, axis=0), jnp.sum(norms, axis=0), jnp.sum(floor, axis=0)
 
 
-def precompute_principled_discovery_features(states, is_sharp, *, recursive):
+def precompute_principled_discovery_features(
+    states, is_sharp, *, recursive, color_semval=0.59,
+):
     """Precompute the fixed F0 semantics for unique encoded scenes.
 
     The returned arrays retain the original observation order. This function
@@ -2506,7 +2508,7 @@ def precompute_principled_discovery_features(states, is_sharp, *, recursive):
                                 axis=0, return_inverse=True)
     unique = jnp.asarray(unique.reshape(-1, *scene_array.shape[1:]))
     log_target = jax.jit(jax.vmap(lambda scene: principled_prefix_log_listeners(
-        scene, recursive=recursive,
+        scene, color_semval=color_semval, recursive=recursive,
     )))(unique)[inverse]
     salience = jax.jit(jax.vmap(_visual_salience_scores))(
         jnp.asarray(scene_array), jnp.asarray(is_sharp, dtype=jnp.float64),
@@ -5691,8 +5693,11 @@ def _make_discovery_model(
     form_spec: str | None = None,
     order_source: str = "O0",
     policy_light: bool = False,
+    color_semval: float = 0.59,
 ):
     """Factory for isolated incremental-static reliability-backup candidates."""
+    if not np.isfinite(color_semval) or not 0.5 <= color_semval <= 1.0:
+        raise ValueError("Colour reliability must be finite and in [0.5, 1.0]")
     valid_variants = {
         "fixed_kappa_1",
         "fixed_kappa_0",
@@ -6040,7 +6045,7 @@ def _make_discovery_model(
                     lambda_length,
                     kappa_per_trial,
                     nu_F,
-                    0.59,
+                    color_semval,
                     0.50,
                     0.6856,
                     epsilon,
@@ -6380,6 +6385,17 @@ V10_ORDER_UPD_MODELS = {
         form_spec="F0", order_source="O0", policy_light=False,
     ),
 }
+
+
+def colour_reliability_model(model_name, color_semval):
+    """Create a sensitivity cell while preserving every registered default."""
+    if model_name not in {"K-HO", "K-UPD-HO"}:
+        raise ValueError("Colour sensitivity supports K-HO and K-UPD-HO only")
+    return _make_discovery_model(
+        "participant_order", recursive=model_name == "K-UPD-HO", prefix_mode="B",
+        form_spec="F0", order_source="O0", policy_light=False,
+        color_semval=color_semval,
+    )
 
 DISCOVERY_CANDIDATE_MODELS = dict(
     zip(

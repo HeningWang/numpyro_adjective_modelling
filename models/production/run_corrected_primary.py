@@ -27,6 +27,16 @@ DATA = ROOT/"data/production_model_input.csv"
 DATA_SHA256 = "44a41b44b83dfef7a2d1788c6ac399a637cb9cb48b63eb3751339ed849bf4ac1"
 MODELS = {**ms.V10_ORDER_MODELS, **ms.V10_ORDER_UPD_MODELS,
           **ms.V11_JOINT_PARTICIPANT_MODELS, **ms.V12_UPDATING_JOINT_PARTICIPANT_MODELS}
+CONDITION_TERMS = ("lambda_size_reliability_single_bonus",
+                   "lambda_size_reliability_form_pair_tradeoff")
+
+
+def model_for_run(name, colour_reliability=None, drop_condition_terms=False):
+    model = (MODELS[name] if colour_reliability is None else
+             ms.colour_reliability_model(name, colour_reliability))
+    if drop_condition_terms:
+        model = handlers.condition(model, data={site: jnp.asarray(0.) for site in CONDITION_TERMS})
+    return model
 
 
 def sha256(path):
@@ -37,6 +47,10 @@ def sha256(path):
 
 
 def run(args):
+    colour = .59 if args.colour_reliability is None else args.colour_reliability
+    model = model_for_run(args.model, args.colour_reliability, args.drop_condition_terms)
+    if args.drop_condition_terms and args.recovery:
+        raise ValueError("Ablation uses the standard contract, without recovery")
     if args.recovery and (args.model not in {"G-HO", "G-UPD-HO"}
             or (args.warmup, args.samples, args.max_tree_depth) != (1000, 4000, 8)):
         raise ValueError("Recovery must match the approved two-model sampler contract")
@@ -59,12 +73,22 @@ def run(args):
         warmup=args.warmup,samples=args.samples,chains=4,seed=4711,
         target_accept=.9,max_tree_depth=args.max_tree_depth,chain_method="vectorized",
         artifact_role="recovery" if args.recovery else ("timing_pilot" if args.warmup!=1000 or args.samples!=1000 else "primary"),
+        colour_reliability=colour, colour_reliability_override=args.colour_reliability,
         backend=jax.default_backend(),x64=jax.config.x64_enabled,
         devices=[str(x) for x in jax.devices()],jax=jax.__version__,numpyro=numpyro.__version__,
         source_hashes={p.name:sha256(p) for p in (Path(__file__),Path(ms.__file__),
             Path(__file__).with_name("helper.py"),Path(__file__).with_name("discovery.py"),
             Path(__file__).with_name("principled_features.py"))},
         stage="initializing",complete=False,stage_seconds=stages)
+    if args.colour_reliability is not None:
+        manifest["artifact_role"] = ("sensitivity" if
+            (args.warmup, args.samples, args.max_tree_depth) == (1000, 1000, 6)
+            else "timing_pilot")
+    manifest["drop_condition_terms"] = args.drop_condition_terms
+    if args.drop_condition_terms:
+        manifest["artifact_role"] = ("ablation" if
+            (args.warmup, args.samples, args.max_tree_depth) == (1000, 1000, 6)
+            else "timing_pilot")
     def mark(stage,t0=None):
         if t0 is not None:stages[stage]=time.perf_counter()-t0
         manifest.update(stage=stage,total_seconds=time.perf_counter()-start)
@@ -87,10 +111,10 @@ def run(args):
         sufficient_dim=d["sufficient_dim"],has_one_word_solution=d["has_one_word_solution"],
         is_sharp=d["sharpness_idx"],is_colour_sufficient=d["is_colour_sufficient"])
     kwargs["precomputed_features"]=ms.precompute_principled_discovery_features(
-        kwargs["states"],kwargs["is_sharp"],recursive="UPD" in args.model)
+        kwargs["states"],kwargs["is_sharp"],recursive="UPD" in args.model,
+        color_semval=colour)
     jax.block_until_ready(kwargs["precomputed_features"])
     mark("precompute",t0)
-    model=MODELS[args.model]
     kernel=NUTS(model,target_accept_prob=.9,max_tree_depth=args.max_tree_depth)
     mcmc=MCMC(kernel,num_warmup=args.warmup,num_samples=args.samples,num_chains=4,
               chain_method="vectorized",progress_bar=False)
@@ -149,7 +173,8 @@ def run(args):
         coords={"participants":np.arange(d["n_participants"]),"item":np.arange(9100)})
     idata.attrs.update(source_sha256=manifest["source_hashes"]["modelSpecification.py"],
         dataset_sha256=DATA_SHA256,model=args.model,semantic_contract="prefix_once_right_to_left_float64",
-        seed=4711,artifact_role=manifest["artifact_role"])
+        seed=4711,artifact_role=manifest["artifact_role"],colour_reliability=colour,
+        drop_condition_terms=int(args.drop_condition_terms))
     t0=time.perf_counter();idata.to_netcdf(artifact);mark("serialization",t0)
     manifest.update(artifact_sha256=sha256(artifact),complete=True)
     mark("complete")
@@ -162,6 +187,10 @@ if __name__=="__main__":
     p.add_argument("--batch",type=int,default=32)
     p.add_argument("--max-tree-depth",type=int,default=6)
     p.add_argument("--recovery",action="store_true")
+    p.add_argument("--drop-condition-terms", action="store_true",
+                   help="M5 ablation: fix both size-reliability condition terms at zero")
     p.add_argument("--input",type=Path)
     p.add_argument("--input-sha256")
+    p.add_argument("--colour-reliability", type=float,
+                   help="Fixed nu_C sensitivity override for K-HO/K-UPD-HO; default .59")
     run(p.parse_args())
