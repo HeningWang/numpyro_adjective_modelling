@@ -315,7 +315,7 @@ p_kappa <- architecture_plot_data %>%
     labels = c("Global", "Fully\nincremental")
   ) +
   scale_y_continuous(NULL, breaks = NULL, limits = c(.72, 1.38)) +
-  labs(x = "Incremental-choice\nweight") +
+  labs(x = expression(kappa)) +
   coord_cartesian(clip = "off") +
   theme_csp() +
   theme(

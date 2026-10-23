@@ -8,7 +8,7 @@ suppressPackageStartupMessages({
 source('scripts/csp_figure_style.R')
 plot_data <- read_csv('data/slider_interaction_figure_summary.csv', show_col_types=FALSE) %>%
   mutate(study=factor(study,levels=c('study1a_slider','study1b_slider'),
-                      labels=c('Study 1a','Study 1b')),
+                      labels=c('Original study','Replication')),
          context=factor(context,levels=c('size_sufficient','both_necessary','colour_sufficient'),
                         labels=c('Size\nsufficient','Both\nnecessary','Colour\nsufficient')),
          discriminability=factor(discriminability,levels=c('low','high'),labels=c('Low','High')))

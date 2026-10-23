@@ -83,19 +83,13 @@ p_distribution <- size_colour_distribution_summary %>%
     expand = expansion(mult = c(0, .02))
   ) +
   labs(x = "Proportion of responses", y = "Produced adjective string") +
+  labs(tag = "A") +
   theme_csp() +
   theme(
     legend.position = "top",
     panel.grid.major.y = element_blank(),
     strip.text = element_text(size = 14, face = "plain")
   )
-
-save_csp_pdf(
-  p_distribution,
-  "figures/production_distribution.pdf",
-  8.4,
-  5.4
-)
 
 hypothesis_recodings <- read_csv(
   "data/production_hypothesis_recodings_summary.csv",
@@ -144,30 +138,33 @@ recode_panel <- function(data, y_label, tag) {
     )
 }
 
-p_overinformative <- recode_panel(
+recode_text <- theme(axis.text.x = element_text(size = 11, lineheight = .9))
+
+p_redundant <- recode_panel(
   hypothesis_recodings %>% filter(outcome == "Over-informative responses"),
-  "Over-informative responses",
-  "A"
-)
+  "Redundant adjective use",
+  "B"
+) + recode_text
 p_size_initial <- recode_panel(
   hypothesis_recodings %>% filter(outcome == "Size-initial responses"),
   "Size-initial responses",
-  "B"
-)
+  "C"
+) + recode_text
 
-production_hypothesis_recodings <- (p_overinformative | p_size_initial) +
-  plot_layout(guides = "collect") &
+# Response distribution (A) above the two hypothesis outcomes (B, C).
+production_responses <- p_distribution / wrap_plots(p_redundant, p_size_initial, ncol = 2) +
+  plot_layout(heights = c(1.25, 1), guides = "collect") &
   theme(legend.position = "top")
 
 save_csp_pdf(
-  production_hypothesis_recodings,
-  "figures/production_hypothesis_recodings.pdf",
+  production_responses,
+  "figures/production_responses.pdf",
   8.4,
-  4.7
+  9.4
 )
 
 # -----------------------------------------------------------------------------
-# Study 1a/1b replication figure, redrawn at the Figure 3 typography standard.
+# Original slider study and replication figure, redrawn at the Figure 3 typography standard.
 # -----------------------------------------------------------------------------
 source("scripts/plot_slider_interactions.R")
 

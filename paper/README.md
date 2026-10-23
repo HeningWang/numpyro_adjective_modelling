@@ -11,7 +11,7 @@ Run R scripts from this directory. Each reads the supplied summaries in `data/`.
 | Manuscript figure | Source |
 |---|---|
 | 1: overview | `figures/overview_figure.html` |
-| 2: trial, discriminability, and design | Layout in `draft.tex`; screenshot in `figures/experiment_trial_snapshot.png`; `scripts/plot_size_discriminability.R` |
+| 2: trial, discriminability, and design | Layout in `draft.tex`; screenshot in `figures/production_trial_snapshot.png`; `scripts/plot_size_discriminability.R` |
 | 3: slider studies | `scripts/plot_slider_interactions.R` |
 | 4–5: production behaviour | `scripts/plot_revision_figures.R` |
 | 6: inference structure | `scripts/plot_model_inference_plate.R` |
@@ -35,6 +35,12 @@ visual style is defined in `scripts/csp_figure_style.R`.
 
 The overview has an editable HTML source and supplied PDF and PNG exports.
 Its optional `figures/render_overview.sh` helper uses Chrome and ImageMagick.
+
+The production-trial screenshot was captured in Chrome from the original
+`taishan/web/index.php` interface, using list 1, item 1, condition `brdc`
+(high size discriminability; stimulus `pictures/l1pic1brdc.svg`). The image is
+cropped to the trial content and retains the original styling and empty response
+field. The earlier slider screenshot remains in `figures/experiment_trial_snapshot.png`.
 
 Some summary filenames retain version identifiers for compatibility with the
 export scripts. Each retained table supports the current manuscript; these
