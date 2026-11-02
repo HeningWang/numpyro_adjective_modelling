@@ -93,6 +93,9 @@
 \newcommand{\utter}[1]{\textsf{#1}}
 \newcommand{\param}[1]{\ensuremath{#1}}
 
+% ---- convenience commands ---------------------------------------------------
+\newcommand{\mf}[1]{\textcolor{shimmer-main}{[\texbf{MF: }{#1}]}}
+
 % ---- title matter -----------------------------------------------------------
 \title{Communicative Efficiency in Adjective Ordering:\\ Between Hierarchical Composition and Incremental Pragmatics}
 \author{Hening Wang}
@@ -106,14 +109,14 @@
 \maketitle
 
 \begin{abstract}
-Adjective ordering preferences, such as placing size before colour, have been explained by two accounts of communicative efficiency.
+Adjective ordering preferences, such as placing size before colour (\emph{big brown box} vs.~\emph{brown big box}), have been explained by two accounts of communicative efficiency.
 Hierarchical composition favours placing less subjective adjectives closer to the noun, where they restrict the interpretation of more subjective ones in the complete utterance; incremental pragmatics favours placing more discriminating adjectives earlier, where each adjective helps the listener narrow down the referent sooner.
 However, the two accounts can favour competing orders when the context makes the less subjective adjective the more discriminating one.
 Do speakers resolve this competition by evaluating the complete utterance, or each adjective as they produce it?
-We develop Rational Speech Act production models that formalise both accounts and span this range, from a global to an incremental speaker.
+To address this question in a data-driven way, we develop Rational Speech Act production models that formalise both accounts and span this range, from a global to an incremental speaker.
 Between these endpoints, a plan-guided speaker chooses each adjective for its immediate usefulness while looking ahead to the complete utterance, so that both pressures can influence adjective order.
 We found that the plan-guided speaker best predicted German production data, whereas modelling hierarchical composition added no predictive benefit.
-In simulations beyond the experimental displays, a size-first advantage nevertheless emerged under hierarchical composition, and even more so once speakers could choose among all the utterances they produced, under every degree of planning, with or without composition.
+In simulations beyond the experimental displays \mf{unclear}, a size-first advantage \mf{unclear} nevertheless emerged under hierarchical composition, and even more so once speakers could choose among all the utterances they produced, under every degree of planning, with or without composition.
 Together, these findings motivate an account of boundedly rational communication in which partial planning supports good-enough production.
 
 \noindent\textbf{Keywords:} adjective ordering, communicative efficiency, reference production, Rational Speech Act, Bayesian cognitive modelling
@@ -126,7 +129,7 @@ Together, these findings motivate an account of boundedly rational communication
 \label{sec:background}
 % =============================================================================
 
-Adjective ordering provides a window onto how stable order preferences interact with what is informative in a particular context.
+Adjective ordering provides a window into how stable ordering preferences interact with what is informative in a particular context. \mf{stress this perspective also in the abstract!}
 In languages with prenominal modification, robust ordering preferences favour size-first sequences such as \emph{the big blue sticker} over \emph{the blue big sticker} \citep{sproat1991,trotzke2019,scontras2023adjective}.
 Communicative efficiency has been proposed as an explanation for both stable adjective-order preferences and their sensitivity to referential context \citep{scontras2017subjectivity,franke2019subjectivity,Hahn_information_2018,futrell-etal-2020-determines}.
 
@@ -144,7 +147,7 @@ Listeners use partial linguistic input and visual context to restrict candidate 
 Placing the more discriminating property first can facilitate this process, favouring colour-first order when colour identifies the target sooner \citep{fukumura2018ordering,rubio2020incrementality,rubio2021wordorder}.
 
 The two accounts can therefore favour competing orders when the less subjective property is also the more discriminating one.
-When we apply both accounts to a context where colour alone identifies the target,\footnote{We call such contexts \emph{colour-sufficient}. Together with size-sufficient contexts and contexts in which both properties are necessary, they form the three levels of one experimental factor, referential context (\Cref{sec:production-experiment}).} composition can still favour \emph{the big blue sticker}, whereas incremental pragmatics favours \emph{the blue big sticker}.
+When we apply both accounts to a context where colour alone identifies the target,\footnote{We call such contexts \emph{colour-sufficient}. Together with size-sufficient contexts and contexts in which both properties are necessary, they form the three levels of one experimental factor, referential context (\Cref{sec:production-experiment}).} composition can still favour \emph{the big blue sticker}, whereas incremental pragmatics favours \emph{the blue big sticker}. \mf{Is this really about hierarchical vs.~incremental, or is this not rather about \emph{local} vs.~\emph{global} efficiency?}
 The compositional benefit of size-first order depends on the complete phrase, whereas the incremental benefit of colour-first order depends on each adjective as it is produced.
 \citet[p.~7:19]{scontras2019grammatical} noted that composition from the noun outwards stands at odds with the incremental uptake of words during reference resolution.
 Evidence for hierarchical composition comes mainly from ordering preferences in ratings and corpora \citep{scontras2017subjectivity,trainin2023subjectivity,scontras2023adjective}.
@@ -160,9 +163,10 @@ Redundancy also occurs in size-sufficient contexts, where speakers may produce \
 Redundant colour, however, is far more common than redundant size, an asymmetry that has been attributed to the higher salience and lower context-dependence of colour \citep{tarenskeen2015overspecification,rubio2016redundant,degen2020redundancy,tourtouri2021rational}.
 Utterances with both adjectives may therefore arise mostly in size-sufficient contexts, and less often in the colour-sufficient contexts where the two accounts favour competing orders.
 Adding colour can help the listener, especially when size differences are hard to perceive \citep{rubio2016redundant,degen2020redundancy}.
-This observation motivates a second factor in our experiment, size discriminability, which varies how clearly the target stands out as big relative to its comparison class (\Cref{sec:production-experiment}).
+This observation motivates a second factor in our experiment \mf{where did we introduce the first saliently?}, size discriminability, which varies how clearly the target stands out as big relative to its comparison class (\Cref{sec:production-experiment}).
 Size discriminability also separates the two accounts in contexts where both properties are needed.
 Low size discriminability makes it less certain whether the target counts as big, which favours size-first order under hierarchical composition, whereas high size discriminability makes size the more discriminating property, which favours size-first order under incremental pragmatics.
+\mf{I think it would be better to keep the introduction at a higher conceptual level, not talking about motivations for including specific factors}
 
 When speakers do produce both adjectives, previous studies show that the conventional size-first preference is so robust that, even when size is the least discriminating property, it is still preferred first, and reversed orders such as \emph{the blue big sticker} are rare \citep{danks1972prenominal,pechmann1989incremental,schlotterbeck2023incremental}.
 How can speakers keep such a stable order while adapting the content of an utterance to the context?
@@ -178,6 +182,7 @@ Research on bounded planning suggests that human speakers lie between these endp
 A speaker between these endpoints may choose each adjective for its immediate usefulness while looking ahead to the complete utterance, so that both pressures can influence adjective order.
 We call this intermediate hypothesis \emph{plan-guided production}.
 A free parameter determines the degree of planning between these endpoints.
+\mf{maybe not speak of ``parameters'' in the introduction, but keep it conceptual?}
 Planning an utterance involves selecting properties as well as ordering them \citep{fukumura2010use,van2019conceptualization}.
 The relevant production outcome is therefore the full distribution of one-, two-, and three-adjective utterances.
 
@@ -190,6 +195,7 @@ Their model compared two fixed adjective orders, which participants rated on a s
 Such ratings present both orders for comparison, so they cannot show which properties speakers would mention.
 It therefore remained open how the two accounts apply when speakers produce the utterances themselves.
 As the model combined both accounts, it also left open whether each account improves prediction on its own.
+\mf{paragraph is too technical; better keep motivation conceptual}
 
 Our central research question is: \emph{How do speakers reconcile the pressures from hierarchical semantic composition and incremental pragmatics when selecting and ordering adjectives?}
 We address this question with two matched model comparisons, which we cross in a factorial design while holding all other components constant.
@@ -207,6 +213,7 @@ Simulations that compared two complete orders found such an advantage for subjec
 However, these simulations approximated communication by presupposing a speaker and a listener.
 We therefore implement both, by adding a pragmatic listener on top of the production models, and simulate communication across randomly generated contexts, to examine under which conditions hierarchical composition can favour size-first order when the speaker can also choose other utterances.
 The simulation shows that hierarchical composition shifts the listener's preference slightly towards size-first order, and that a larger size-first preference arises from the alternatives that speakers produce.
+\mf{motivation for simulation-study is dense; readers will struggle here}
 
 \Cref{fig:overview} provides an overview of the study, including the approach, the models compared, and the main findings.
 \Cref{sec:task} presents the production experiment, followed by the models and their degrees of planning in \Cref{sec:model}.
@@ -226,7 +233,9 @@ The simulation shows that hierarchical composition shifts the listener's prefere
   (C) An example display in which size alone identifies the target, with examples of possible utterances.
   (D) Plan-guided production predicts the production data best (population mean $\mu_\kappa=.472$); ticks show each participant's estimated $\kappa$.
   Context-fixed semantics predicts better than updating.
-  In the simulations, updating shifted the size-first preference only slightly, and size-first order helped the listener with both size semantics once all fifteen utterances were available (\Cref{sec:simulation}).}
+  In the simulations, updating shifted the size-first preference only slightly, and size-first order helped the listener with both size semantics once all fifteen utterances were available (\Cref{sec:simulation}).
+  \mf{figure is dense, screams ``Claude'' and comes too early or is too detailed for appearing at the end of the introduction}
+}
   \label{fig:overview}
 \end{figure}
 
@@ -270,7 +279,7 @@ Stimulus construction, list counterbalancing, and trial structure appear in \Cre
 
 \subsubsection{Design}
 
-The experiment used a 3 (referential context: first property sufficient, second property sufficient, both necessary; within-subjects) $\times$ 2 (size discriminability: high, low; between-subjects) mixed design.
+The experiment used a 3 (referential context \mf{why ``first'' and ``second'' here, instead of ``color'' or ``size''?}: first property sufficient, second property sufficient, both necessary; within-subjects) $\times$ 2 (size discriminability: high, low; between-subjects) mixed design.
 Referential context changed which properties were needed to identify the target, for example size alone (size sufficient), colour alone (colour sufficient), or both properties (both necessary).
 Target--competitor size differences were more pronounced in the high-discriminability group than in the low-discriminability group (\Cref{fig:design}).
 The two experimental hypotheses concern the interaction between the two factors.
