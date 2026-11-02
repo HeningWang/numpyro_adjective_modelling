@@ -697,6 +697,8 @@ LOG_LM_RESID_15 = jnp.asarray(_lm_resid_np)
 # LM coefficient absorb both within-length naturalness AND length pressure.
 LOG_LM_RAW_15 = jnp.asarray(_log_lm_np)
 LOG_LM_ORDER_ONLY_15 = jnp.asarray(ORDER_ONLY_LM_RESID_15_NP, dtype=jnp.float32)
+
+
 BASE_VISUAL_SALIENCE = jnp.asarray([0.0, 1.0, 0.25], dtype=jnp.float32)
 BLUR_WF_MULTIPLIER = 2.0
 
@@ -2495,6 +2497,22 @@ def principled_path_components_from_features(log_target, salience, alpha, lambda
     return jnp.sum(chosen, axis=0), jnp.sum(norms, axis=0), jnp.sum(floor, axis=0)
 
 
+def principled_terminal_path_components_from_features(log_target, salience, alpha, lambda_salience):
+    """Score completed utterances by their final target probability only.
+
+    Salience still accumulates over positions, and the local normalizer and
+    floor are the prefix-based ones, so only the informativeness term changes.
+    """
+    _, norms, floor = principled_path_components_from_features(
+        log_target, salience, alpha, lambda_salience)
+    alpha, lambda_salience = (
+        jnp.asarray(x, dtype=jnp.float64) for x in (alpha, lambda_salience)
+    )
+    chosen_salience = jnp.sum(ACTUAL_TOK_ONEHOT * salience[None, None, :], axis=-1)
+    chosen_salience = jnp.sum(jnp.where(ACTIVE_POS, chosen_salience, 0.0), axis=0)
+    return alpha * log_target + lambda_salience * chosen_salience, norms, floor
+
+
 def precompute_principled_discovery_features(
     states, is_sharp, *, recursive, color_semval=0.59,
 ):
@@ -2976,17 +2994,19 @@ def incremental_speaker_principled_discovery(
     )
 
 
-@jax.jit
+@partial(jax.jit, static_argnames=("terminal_utility",))
 def precomputed_principled_discovery_probabilities(
     features, sufficient_dim, has_one_word_solution, is_sharp,
     is_colour_sufficient, alpha, beta_order, kappa, lambda_salience,
     rho_salience_stop, lambda_sufficient_single, lambda_reliability_form,
     lambda_three_word_penalty, lambda_size_reliability_single_bonus,
-    lambda_size_reliability_form_pair_tradeoff, epsilon,
+    lambda_size_reliability_form_pair_tradeoff, epsilon, terminal_utility=False,
 ):
     """Exact precomputed forward map for the F0/O0/full-policy primary grid."""
+    path_components = (principled_terminal_path_components_from_features
+                       if terminal_utility else principled_path_components_from_features)
     raw, normalizers, floor = jax.vmap(
-        principled_path_components_from_features, in_axes=(0, 0, 0, None),
+        path_components, in_axes=(0, 0, 0, None),
     )(features["log_target"], features["salience"], alpha, lambda_salience)
     response_policy = jax.vmap(
         principled_reliability_response_logits,
@@ -5694,6 +5714,8 @@ def _make_discovery_model(
     order_source: str = "O0",
     policy_light: bool = False,
     color_semval: float = 0.59,
+    terminal_utility: bool = False,
+    drop_order_term: bool = False,
 ):
     """Factory for isolated incremental-static reliability-backup candidates."""
     if not np.isfinite(color_semval) or not 0.5 <= color_semval <= 1.0:
@@ -5764,11 +5786,13 @@ def _make_discovery_model(
             and not policy_light and variant in participant_order_variants
         ):
             raise ValueError("Precomputation is restricted to the primary F0/O0/full grid")
+        if (terminal_utility or drop_order_term) and precomputed_features is None:
+            raise ValueError("Utility and order-term ablations require precomputed features")
         alpha = numpyro.sample(
             "alpha",
             dist.HalfNormal(priors["alpha_scale"]),
         )
-        if order_source in ("O2", "O3"):
+        if order_source in ("O2", "O3") or drop_order_term:
             beta_order = jnp.asarray(0.0)
         else:
             log_beta_order = numpyro.sample(
@@ -5946,7 +5970,7 @@ def _make_discovery_model(
                 )
                 z_order = (
                     numpyro.sample("z_order", dist.Normal(0.0, 1.0))
-                    if variant in participant_order_variants
+                    if variant in participant_order_variants and not drop_order_term
                     else None
                 )
         else:
@@ -5996,7 +6020,9 @@ def _make_discovery_model(
         else:
             lambda_length = jnp.asarray(0.0)
 
-        if variant in participant_order_variants:
+        if drop_order_term:
+            beta_order = jnp.zeros(len(states))
+        elif variant in participant_order_variants:
             log_beta_order_by_participant = numpyro.deterministic(
                 "log_beta_order_by_participant",
                 log_beta_order + tau_order * z_order,
@@ -6064,6 +6090,7 @@ def _make_discovery_model(
                     lambda_sufficient_single, lambda_reliability_form,
                     lambda_three_word_penalty, lambda_size_reliability_single_bonus,
                     lambda_size_reliability_form_pair_tradeoff, epsilon,
+                    terminal_utility=terminal_utility,
                 )
             if empirical is None:
                 numpyro.sample("obs", dist.Categorical(probs=probs))
@@ -6395,6 +6422,24 @@ def colour_reliability_model(model_name, color_semval):
         "participant_order", recursive=model_name == "K-UPD-HO", prefix_mode="B",
         form_spec="F0", order_source="O0", policy_light=False,
         color_semval=color_semval,
+    )
+
+
+ARCHITECTURE_VARIANTS = {"G": "participant_order_fixed_kappa_0",
+                         "I": "participant_order_fixed_kappa_1", "K": "participant_order"}
+
+
+def utility_ablation_model(model_name, *, terminal_utility=False, drop_order_term=False):
+    """Create a matched ablation cell of a registered shared-kappa model."""
+    architecture, *rest = model_name.split("-")
+    if model_name not in {**V10_ORDER_MODELS, **V10_ORDER_UPD_MODELS}:
+        raise ValueError("Utility ablations support the six shared-kappa models only")
+    if not (terminal_utility or drop_order_term):
+        raise ValueError("Select at least one ablation")
+    return _make_discovery_model(
+        ARCHITECTURE_VARIANTS[architecture], recursive="UPD" in rest, prefix_mode="B",
+        form_spec="F0", order_source="O0", policy_light=False,
+        terminal_utility=terminal_utility, drop_order_term=drop_order_term,
     )
 
 DISCOVERY_CANDIDATE_MODELS = dict(

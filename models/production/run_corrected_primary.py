@@ -31,7 +31,13 @@ CONDITION_TERMS = ("lambda_size_reliability_single_bonus",
                    "lambda_size_reliability_form_pair_tradeoff")
 
 
-def model_for_run(name, colour_reliability=None, drop_condition_terms=False):
+def model_for_run(name, colour_reliability=None, drop_condition_terms=False,
+                  terminal_utility=False, drop_order_term=False):
+    if terminal_utility or drop_order_term:
+        if colour_reliability is not None or drop_condition_terms:
+            raise ValueError("Utility ablations are not combined with other overrides")
+        return ms.utility_ablation_model(name, terminal_utility=terminal_utility,
+                                         drop_order_term=drop_order_term)
     model = (MODELS[name] if colour_reliability is None else
              ms.colour_reliability_model(name, colour_reliability))
     if drop_condition_terms:
@@ -48,8 +54,10 @@ def sha256(path):
 
 def run(args):
     colour = .59 if args.colour_reliability is None else args.colour_reliability
-    model = model_for_run(args.model, args.colour_reliability, args.drop_condition_terms)
-    if args.drop_condition_terms and args.recovery:
+    model = model_for_run(args.model, args.colour_reliability, args.drop_condition_terms,
+                          args.terminal_utility, args.drop_order_term)
+    utility_ablation = args.terminal_utility or args.drop_order_term
+    if (args.drop_condition_terms or utility_ablation) and args.recovery:
         raise ValueError("Ablation uses the standard contract, without recovery")
     if args.recovery and (args.model not in {"G-HO", "G-UPD-HO"}
             or (args.warmup, args.samples, args.max_tree_depth) != (1000, 4000, 8)):
@@ -85,7 +93,9 @@ def run(args):
             (args.warmup, args.samples, args.max_tree_depth) == (1000, 1000, 6)
             else "timing_pilot")
     manifest["drop_condition_terms"] = args.drop_condition_terms
-    if args.drop_condition_terms:
+    manifest["terminal_utility"] = args.terminal_utility
+    manifest["drop_order_term"] = args.drop_order_term
+    if args.drop_condition_terms or utility_ablation:
         manifest["artifact_role"] = ("ablation" if
             (args.warmup, args.samples, args.max_tree_depth) == (1000, 1000, 6)
             else "timing_pilot")
@@ -174,7 +184,8 @@ def run(args):
     idata.attrs.update(source_sha256=manifest["source_hashes"]["modelSpecification.py"],
         dataset_sha256=DATA_SHA256,model=args.model,semantic_contract="prefix_once_right_to_left_float64",
         seed=4711,artifact_role=manifest["artifact_role"],colour_reliability=colour,
-        drop_condition_terms=int(args.drop_condition_terms))
+        drop_condition_terms=int(args.drop_condition_terms),
+        terminal_utility=int(args.terminal_utility), drop_order_term=int(args.drop_order_term))
     t0=time.perf_counter();idata.to_netcdf(artifact);mark("serialization",t0)
     manifest.update(artifact_sha256=sha256(artifact),complete=True)
     mark("complete")
@@ -189,6 +200,10 @@ if __name__=="__main__":
     p.add_argument("--recovery",action="store_true")
     p.add_argument("--drop-condition-terms", action="store_true",
                    help="M5 ablation: fix both size-reliability condition terms at zero")
+    p.add_argument("--terminal-utility", action="store_true",
+                   help="Score completed utterances by final target probability only")
+    p.add_argument("--drop-order-term", action="store_true",
+                   help="Remove the stable order term (beta = 0)")
     p.add_argument("--input",type=Path)
     p.add_argument("--input-sha256")
     p.add_argument("--colour-reliability", type=float,

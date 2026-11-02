@@ -19,13 +19,16 @@ def diagnose(artifact: Path, output: Path, encoded: Path):
     idata = az.from_netcdf(artifact)
     role = idata.attrs.get("artifact_role")
     recovery = role == "recovery" and name in {"G-HO", "G-UPD-HO"}
+    flags = ("drop_condition_terms", "terminal_utility", "drop_order_term")
     if role == "ablation" and (manifest.get("artifact_role") != role
-            or manifest.get("drop_condition_terms") is not True
-            or idata.attrs.get("drop_condition_terms") != 1
-            or any(site in idata.posterior for site in (
+            or not any(manifest.get(flag) is True for flag in flags)
+            or any(int(manifest.get(flag, False)) != idata.attrs.get(flag, 0) for flag in flags)
+            or (manifest.get("drop_condition_terms") and any(site in idata.posterior for site in (
                 "lambda_size_reliability_single_bonus",
-                "lambda_size_reliability_form_pair_tradeoff"))):
-        raise ValueError("Ablation artifact has inconsistent condition-term metadata or latents")
+                "lambda_size_reliability_form_pair_tradeoff")))
+            or (manifest.get("drop_order_term") and any(site in idata.posterior for site in (
+                "log_beta_order", "tau_order", "z_order")))):
+        raise ValueError("Ablation artifact has inconsistent ablation metadata or latents")
     if role == "sensitivity" and (name not in {"K-HO", "K-UPD-HO"}
             or manifest.get("colour_reliability_override") is None
             or manifest.get("colour_reliability") != idata.attrs.get("colour_reliability")):
@@ -79,6 +82,8 @@ def diagnose(artifact: Path, output: Path, encoded: Path):
         pointwise_reconstruction_error=float(abs(pointwise.sum()-loo.elpd_loo)),
         colour_reliability=manifest.get("colour_reliability", .59),
         drop_condition_terms=manifest.get("drop_condition_terms", False),
+        terminal_utility=manifest.get("terminal_utility", False),
+        drop_order_term=manifest.get("drop_order_term", False),
         artifact_sha256=digest)
     row["sampler_gate_pass"] = bool(row["finite_diagnostics"] and row["divergences"] == 0
         and row["max_rhat"] < 1.01 and row["min_bulk_ess"] > 400
