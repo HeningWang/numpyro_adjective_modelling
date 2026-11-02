@@ -7,54 +7,57 @@ palette <- setNames(unname(CSP_COLORS[c('main','emphasis')]),semantics_levels)
 shapes <- setNames(c(16,17),semantics_levels)
 prepare <- function(d) d %>% mutate(semantics=factor(recode(semantics,fixed='Context-fixed',updating='Context-updating'),levels=semantics_levels),estimate=100*mean,lower=100*lower_mc95,upper=100*upper_mc95)
 if (!('--architectures-only' %in% commandArgs(trailingOnly=TRUE))) {
-# Panel A changes the utility and alternatives while global production stays fixed.
-settings <- tibble(
- rule = c('terminal', rep('prefix_k0', 3)),
- support = c('two', 'two', 'four', 'fifteen'),
- parameter_set = 'original_grid',
- order = 'neutral',
- setting = c('Terminal utility\n2 orders',
-             'Prefix utility\n2 orders',
-             'Prefix utility\n4 utterances',
-             'Prefix utility\n15 utterances'))
-main_a <- settings %>%
- inner_join(summaries, by = c('rule', 'support', 'parameter_set', 'order')) %>%
- prepare() %>% mutate(panel = 'A', setting = factor(setting, levels = rev(settings$setting)))
-# Panel B changes architecture at common production semantic constants.
-main_b <- summaries %>%
- filter(support == 'fifteen', parameter_set == 'fitted_constants', order == 'neutral',
-        rule %in% c('prefix_k0', 'prefix_k05', 'prefix_k1')) %>%
- prepare() %>%
- mutate(panel = 'B', setting = factor(rule,
-   levels = c('prefix_k1', 'prefix_k05', 'prefix_k0'),
-   labels = c('Fully incremental production', 'Plan-guided production', 'Global production')))
-stopifnot(nrow(main_a) == 8L, nrow(main_b) == 6L,
-          all(complete.cases(main_a)), all(complete.cases(main_b)))
-write_csv(bind_rows(main_a, main_b), 'data/simulation_controlled_main_figure.csv')
-comparison_panel <- function(d, title) {
- ggplot(d, aes(x = estimate, y = setting, colour = semantics, shape = semantics)) +
-  geom_vline(xintercept = 0, colour = CSP_COLORS[['text']], linetype = 'dashed', linewidth = .45) +
-  geom_errorbar(aes(xmin = lower, xmax = upper), orientation = 'y', width = .12,
-                position = position_dodge(.38), linewidth = .65) +
-  geom_point(position = position_dodge(.38), size = 2.8) +
-  scale_colour_manual(values = palette, name = NULL,
-    labels = c('Context-fixed', 'Sequential context updating')) +
-  scale_shape_manual(values = setNames(c(17, 15), semantics_levels), name = NULL,
-    labels = c('Context-fixed', 'Sequential context updating')) +
-  scale_x_continuous(limits = c(-3.2, 3.5), breaks = c(-2, 0, 2)) +
-  labs(title = title, x = NULL, y = NULL) +
-  theme_csp() +
-  theme(legend.position = 'top', panel.grid.major.y = element_blank(),
-        panel.grid.minor = element_blank(),
-        plot.title = element_text(size = 15, face = 'bold'),
-        axis.text.y = element_text(size = 12))
+# Main figure: two orders (global speaker = reproduction of the earlier simulations;
+# plan-guided and fully incremental = production models), then the six speaker models
+# under two further sets of alternatives.
+# Lines connect context-fixed and context-updating semantics within an architecture.
+group_labels <- c('Two orders', 'Two orders +\nsingle adjectives', 'Fifteen\nutterances')
+arch_levels <- c('Global', 'Plan-guided', 'Fully incremental')
+arch_colours <- c('Global' = CSP_COLORS[['emphasis']], 'Plan-guided' = CSP_COLORS[['green']],
+                  'Fully incremental' = CSP_COLORS[['gold_dark']])
+overview_data <- function(parameter_set_name) {
+ models <- summaries %>%
+  filter(order == 'neutral', parameter_set == parameter_set_name,
+         (rule %in% c('prefix_k0', 'prefix_k05', 'prefix_k1') & support %in% c('four', 'fifteen')) |
+           (rule %in% c('prefix_k05', 'prefix_k1') & support == 'two')) %>%
+  mutate(group = c(two = 1, four = 2, fifteen = 3)[support],
+         architecture = c(prefix_k0 = 'Global', prefix_k05 = 'Plan-guided', prefix_k1 = 'Fully incremental')[rule])
+ reproduction <- summaries %>%
+  filter(order == 'neutral', parameter_set == parameter_set_name, rule == 'terminal', support == 'two') %>%
+  mutate(group = 1, architecture = 'Global')
+ bind_rows(reproduction, models) %>%
+  mutate(estimate = 100 * mean,
+         architecture = factor(architecture, levels = arch_levels),
+         semantics = factor(semantics, levels = c('fixed', 'updating'),
+                            labels = c('Context-fixed', 'Context updating')),
+         x = group + (as.integer(architecture) - 2) * .24 +
+           ifelse(semantics == 'Context-fixed', -.06, .06))
 }
-p_a <- comparison_panel(main_a, 'A  Utterance utility and alternatives')
-p_b <- comparison_panel(main_b, 'B  Production architecture') +
- labs(x = 'Target-probability difference\n(size-first - colour-first; percentage points)')
-p <- patchwork::wrap_plots(p_a, p_b, ncol = 1, heights = c(4, 3.4), guides = 'collect') &
- theme(legend.position = 'top')
-save_csp_pdf(p, 'figures/simulation_controlled_comparison.pdf', 9, 7.1)
+overview_plot <- function(d) {
+ ggplot(d, aes(x = x, y = estimate, colour = architecture)) +
+  geom_hline(yintercept = 0, colour = CSP_COLORS[['text']], linewidth = .5) +
+  geom_line(aes(group = interaction(group, architecture)), linewidth = .8) +
+  geom_point(aes(shape = semantics), size = 3) +
+  annotate('text', x = .55, y = 3.45, label = 'size-first preference', hjust = 0, size = 3.5,
+           colour = CSP_COLORS[['text']]) +
+  annotate('text', x = 3.48, y = -3.05, label = 'colour-first preference', hjust = 1, size = 3.5,
+           colour = CSP_COLORS[['text']]) +
+  scale_colour_manual(values = arch_colours, name = NULL) +
+  scale_shape_manual(values = c('Context-fixed' = 16, 'Context updating' = 15), name = NULL) +
+  scale_x_continuous(breaks = 1:3, labels = group_labels, limits = c(.5, 3.5)) +
+  scale_y_continuous(limits = c(-3.2, 3.5), breaks = c(-2, 0, 2)) +
+  labs(x = NULL, y = 'Size-first preference\n(percentage points)') +
+  theme_csp() +
+  theme(legend.position = 'top', legend.box = 'vertical', legend.spacing.y = unit(0, 'pt'),
+        panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),
+        axis.text.x = element_text(size = 11))
+}
+main <- overview_data('original_grid')
+production <- overview_data('fitted_constants')
+stopifnot(nrow(main) == 18L, nrow(production) == 18L, all(complete.cases(main)))
+write_csv(bind_rows(mutate(main, setting = 'grid'), mutate(production, setting = 'production')),
+          'data/simulation_controlled_main_figure.csv')
+save_csp_pdf(overview_plot(main), 'figures/simulation_controlled_comparison.pdf', 7.5, 4.6)
 }
 if (!('--main-only' %in% commandArgs(trailingOnly=TRUE))) {
 arch <- summaries %>% filter(support=='fifteen',(parameter_set=='original_grid' & order=='neutral') | parameter_set=='fitted_constants') %>% prepare() %>% mutate(setting=case_when(parameter_set=='original_grid'~'Original parameter grid',order=='neutral'~'Production constants',TRUE~'Constants + order score'),setting=factor(setting,levels=c('Original parameter grid','Production constants','Constants + order score')),rule=factor(rule,levels=c('terminal','prefix_k0','prefix_k05','prefix_k1'),labels=c('Terminal\nutility','Global','Plan-guided','Fully\nincremental')))

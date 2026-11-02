@@ -238,6 +238,56 @@ save_csp_pdf(
   5.5
 )
 
+# The same comparison for the size-form and colour-form trials, built from the
+# frozen plan-guided predictions and participant-bootstrap observation intervals.
+form_pair_bars <- function(pair) {
+  pair_cells <- ppc_exact %>%
+    filter(combination == pair, model == "Plan-guided") %>%
+    left_join(
+      empirical_intervals_all %>%
+        select(combination, relevant_property, sharpness, category,
+               observed_lower, observed_upper),
+      by = c("combination", "relevant_property", "sharpness", "category")
+    )
+  frequent <- pair_cells %>%
+    group_by(category) %>%
+    filter(max(observed_proportion, predicted_mean) >= .05) %>%
+    ungroup()
+  bind_rows(
+    frequent %>% transmute(
+      context, context_order, discriminability, response,
+      source = "Observed", proportion = observed_proportion,
+      lower = observed_lower, upper = observed_upper
+    ),
+    frequent %>% transmute(
+      context, context_order, discriminability, response,
+      source = "Plan-guided", proportion = predicted_mean,
+      lower = predicted_q025, upper = predicted_q975
+    )
+  ) %>%
+    mutate(
+      context = factor(context, levels = unique(context[order(context_order)])),
+      discriminability = factor(discriminability, levels = c("High", "Low")),
+      response = factor(response, levels = rev(intersect(unname(response_labels), unique(as.character(response))))),
+      source = factor(source, levels = c("Plan-guided", "Observed"))
+    )
+}
+
+plot_form_pair <- function(pair) {
+  p_full_distribution %+% form_pair_bars(pair)
+}
+
+figure_form_pairs <- (plot_form_pair("dimension_form") / plot_form_pair("color_form")) +
+  plot_layout(guides = "collect") +
+  plot_annotation(tag_levels = "A") &
+  theme(legend.position = "top")
+save_csp_pdf(
+  figure_form_pairs,
+  "figures/production_ppc_form_pairs.pdf",
+  9.4,
+  10.5
+)
+
 }
 
 # The exported comparison preserves its original reference model and intervals.
@@ -245,6 +295,8 @@ architecture_plot_data <- read_csv("data/production_architecture_figure_data.csv
 
 p_architecture <- architecture_plot_data %>%
   filter(panel == "Factorial predictive loss") %>%
+  # Sign flip: ELPD difference from the reference model, so that higher is better.
+  mutate(estimate = -estimate, lower_flipped = -upper, upper = -lower, lower = lower_flipped) %>%
   mutate(
     label = factor(
       label,
@@ -283,7 +335,7 @@ p_architecture <- architecture_plot_data %>%
   ) +
   scale_x_continuous(breaks = scales::breaks_pretty(5)) +
   labs(
-    x = "ELPD loss relative to\nplan-guided updating\n(lower is better)",
+    x = "ELPD difference relative to\nplan-guided updating\n(higher is better)",
     y = NULL
   ) +
   theme_csp() +
@@ -297,19 +349,33 @@ p_architecture <- architecture_plot_data %>%
     axis.ticks.y = element_blank()
   )
 
-p_kappa <- architecture_plot_data %>%
-  filter(panel == "Successive-choice contribution") %>%
-  ggplot(aes(x = estimate, y = 1)) +
+# Panel B: population mean degree of planning in the best-predicting model,
+# with one tick per participant's posterior mean kappa_i.
+kappa_population <- read_csv("data/production_joint_model_population_parameters.csv", show_col_types = FALSE) %>%
+  filter(parameter == "Successive-choice population location")
+kappa_participants <- read_csv("data/production_participant_kappa.csv", show_col_types = FALSE)
+
+p_kappa <- ggplot() +
   geom_segment(
-    aes(x = 0, xend = 1, yend = 1), linewidth = 2.5,
+    aes(x = 0, xend = 1, y = 1, yend = 1), linewidth = 2.5,
     colour = CSP_COLORS[["grey"]], lineend = "round"
   ) +
+  geom_segment(
+    data = kappa_participants,
+    aes(x = posterior_mean, xend = posterior_mean, y = .9, yend = 1.1),
+    colour = CSP_COLORS[["green"]], alpha = .35, linewidth = .4
+  ) +
   geom_errorbar(
-    aes(xmin = lower, xmax = upper), orientation = "y", width = .15,
+    data = kappa_population,
+    aes(xmin = posterior_q025, xmax = posterior_q975, y = 1), orientation = "y", width = .15,
     linewidth = 1.1, colour = CSP_COLORS[["green"]]
   ) +
-  geom_point(size = 4.5, colour = CSP_COLORS[["green"]]) +
-  geom_text(aes(x = estimate, y = 1.24, label = sprintf("kappa == %.3f", estimate)), size = 5, parse = TRUE) +
+  geom_point(data = kappa_population, aes(x = posterior_mean, y = 1), size = 4.5, colour = CSP_COLORS[["green"]]) +
+  geom_text(
+    data = kappa_population,
+    aes(x = posterior_mean, y = 1.26, label = sprintf("mu[kappa] == %.3f", posterior_mean)),
+    size = 5, parse = TRUE
+  ) +
   scale_x_continuous(
     limits = c(-.12, 1.12), breaks = c(0, 1),
     labels = c("Global", "Fully\nincremental")

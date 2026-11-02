@@ -109,9 +109,9 @@ plate <- ggplot() +
   annotate("text", x = 2.1, y = 5.0, label = "alpha[i]", parse = TRUE, size = 4.5) +
   annotate("text", x = 5.0, y = 5.0, label = "kappa[i]", parse = TRUE, size = 4.5) +
   annotate("text", x = 7.9, y = 5.0, label = "beta[i]", parse = TRUE, size = 4.5) +
-  annotate("text", x = 2.22, y = 2.50, label = "X[it] * ',' ~ Omega(u)", parse = TRUE, size = 4.2) +
-  annotate("text", x = 8.15, y = 2.50, label = "pi[it](u)", parse = TRUE, size = 4.4) +
-  annotate("text", x = 12.25, y = 2.50, label = "y[it]", parse = TRUE, size = 4.6) +
+  annotate("text", x = 2.22, y = 2.50, label = "C[i*n] * ',' ~ Omega(u)", parse = TRUE, size = 4.2) +
+  annotate("text", x = 8.15, y = 2.50, label = "pi[i*n](u)", parse = TRUE, size = 4.4) +
+  annotate("text", x = 12.25, y = 2.50, label = "y[i*n]", parse = TRUE, size = 4.6) +
   # Labels explain the fixed model choices and the repeated units.
   annotate(
     "text", x = 12.2, y = 7.62, label = "Production\narchitecture",
@@ -128,7 +128,7 @@ plate <- ggplot() +
   ) +
   annotate(
     "text", x = 1.00, y = 3.88, hjust = 0, vjust = 1,
-    label = "trial  t = 1, ..., n_i", size = 3.65,
+    label = "trial  n = 1, ..., N_i", size = 3.65,
     colour = CSP_COLORS[["text"]]
   ) +
   coord_cartesian(xlim = c(0, 15.1), ylim = c(.55, 8.05), clip = "off") +

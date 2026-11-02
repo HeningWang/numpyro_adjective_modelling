@@ -1,25 +1,25 @@
 outcome,context,discriminability,source,proportion,lower,upper
-Size-initial responses,Both necessary,Low,Observed,0.49165120593692024,0.4267161410018553,0.5584415584415584
-Size-initial responses,Both necessary,Low,Plan-guided,0.4714090909090909,0.42857142857142855,0.5139146567717996
+Size-initial responses,Both necessary,Low,Observed,0.5638297872340425,0.49263001452676275,0.6352201257861635
+Size-initial responses,Both necessary,Low,Plan-guided,0.563197018766562,0.5169262350962777,0.609279461126735
 Redundant adjective use,Both necessary,Low,Observed,0.4025974025974026,0.3351851851851852,0.4712430426716141
 Redundant adjective use,Both necessary,Low,Plan-guided,0.2662634508348794,0.22820037105751392,0.30241187384044527
-Size-initial responses,Both necessary,High,Observed,0.6449579831932774,0.570230607966457,0.7179095532950023
-Size-initial responses,Both necessary,High,Plan-guided,0.514484243697479,0.4684873949579832,0.5609243697478992
+Size-initial responses,Both necessary,High,Observed,0.7041284403669725,0.6273089040643969,0.7775293068297655
+Size-initial responses,Both necessary,High,Plan-guided,0.6193572356608933,0.5703046875,0.667526110541372
 Redundant adjective use,Both necessary,High,Observed,0.37184873949579833,0.3058910726182545,0.4378947368421053
 Redundant adjective use,Both necessary,High,Plan-guided,0.28633981092436966,0.24579831932773108,0.32983193277310924
-Size-initial responses,Size sufficient,Low,Observed,0.793168880455408,0.7267552182163188,0.8522072936660269
-Size-initial responses,Size sufficient,Low,Plan-guided,0.7400132827324478,0.7020872865275142,0.777988614800759
+Size-initial responses,Size sufficient,Low,Observed,0.8181818181818182,0.75,0.8778015669209328
+Size-initial responses,Size sufficient,Low,Plan-guided,0.8356657436329512,0.7999891067538126,0.8694714313197384
 Redundant adjective use,Size sufficient,Low,Observed,0.8975332068311196,0.856603593203218,0.9338374291115312
 Redundant adjective use,Size sufficient,Low,Plan-guided,0.8511432637571156,0.8197343453510436,0.8823529411764706
-Size-initial responses,Size sufficient,High,Observed,0.7642105263157895,0.6934418693481621,0.8252723352498894
-Size-initial responses,Size sufficient,High,Plan-guided,0.8453473684210526,0.8105263157894737,0.8778947368421053
+Size-initial responses,Size sufficient,High,Observed,0.7878787878787878,0.6793562610229277,0.8858208449802363
+Size-initial responses,Size sufficient,High,Plan-guided,0.884252347149531,0.8478260869565217,0.9174611032531824
 Redundant adjective use,Size sufficient,High,Observed,0.6252631578947369,0.5433403805496829,0.7037815126050421
 Redundant adjective use,Size sufficient,High,Plan-guided,0.67923,0.6336842105263157,0.7242105263157895
-Size-initial responses,Colour sufficient,Low,Observed,0.04259259259259259,0.011111111111111112,0.08148148148148149
-Size-initial responses,Colour sufficient,Low,Plan-guided,0.10642916666666667,0.08148148148148149,0.13333333333333333
+Size-initial responses,Colour sufficient,Low,Observed,0.12568306010928962,0.03614302571109179,0.2368469785575049
+Size-initial responses,Colour sufficient,Low,Plan-guided,0.45223676185106504,0.3666603053435114,0.5423728813559322
 Redundant adjective use,Colour sufficient,Low,Observed,0.3388888888888889,0.25,0.43333333333333335
 Redundant adjective use,Colour sufficient,Low,Plan-guided,0.22957685185185184,0.1925925925925926,0.26666666666666666
-Size-initial responses,Colour sufficient,High,Observed,0.010482180293501049,0.0,0.025157232704402517
-Size-initial responses,Colour sufficient,High,Plan-guided,0.10121802935010481,0.07547169811320754,0.129979035639413
+Size-initial responses,Colour sufficient,High,Observed,0.03968253968253968,0.0,0.09859154929577464
+Size-initial responses,Colour sufficient,High,Plan-guided,0.48461190288072203,0.38144329896907214,0.5882516339869281
 Redundant adjective use,Colour sufficient,High,Observed,0.2641509433962264,0.18029350104821804,0.35639412997903563
 Redundant adjective use,Colour sufficient,High,Plan-guided,0.19964308176100626,0.16352201257861634,0.23689727463312368

@@ -3,10 +3,19 @@ Factorial predictive loss,Global,Context-fixed,203.4852112728804,19.078848687319
 Factorial predictive loss,Plan-guided,Context-fixed,-61.68291613446854,-80.85541504683279,-43.52406702515778
 Factorial predictive loss,Fully incremental,Context-fixed,505.7373319811304,308.6252536358889,752.0202713854549
 Factorial predictive loss,Global,Sequential context updating,248.5891500919552,67.8242135646282,392.8708485030936
-Factorial predictive loss,Plan-guided,Sequential context updating,0,0,0
+Factorial predictive loss,Plan-guided,Sequential context updating,0.0,0.0,0.0
 Factorial predictive loss,Fully incremental,Sequential context updating,529.5299890957413,333.9789877254772,773.6914904618363
-Successive-choice contribution,kappa,NA,0.4459711585225396,0.4072315645330528,0.4861958539575372
-Semantic architecture,Average across architectures,NA,-43.52650402271805,-56.00524146239864,-31.77022576641101
-Semantic architecture,Global,NA,-45.10393881907476,-60.18810989619415,-30.17392575717177
-Semantic architecture,Plan-guided,NA,-61.68291613446854,-80.85541504683279,-43.52406702515778
-Semantic architecture,Fully incremental,NA,-23.792657114610847,-32.408584367443424,-16.075237837346602
+Successive-choice contribution,kappa,,0.4459711585225396,0.4072315645330528,0.4861958539575372
+Semantic architecture,Average across architectures,,-43.52650402271805,-56.00524146239864,-31.77022576641101
+Semantic architecture,Global,,-45.10393881907476,-60.18810989619415,-30.17392575717177
+Semantic architecture,Plan-guided,,-61.68291613446854,-80.85541504683279,-43.52406702515778
+Semantic architecture,Fully incremental,,-23.792657114610847,-32.408584367443424,-16.075237837346602
+Architecture main effect,Global,Average,-256.8786387496513,-405.3706030489551,-73.8006823190969
+Architecture main effect,Plan-guided,Average,0.0,0.0,0.0
+Architecture main effect,Fully incremental,Average,-548.4751186056701,-793.4624714047226,-348.48517624566716
+Architecture main effect,Global,Context-fixed,-265.1681274073479,-417.1656217045936,-77.9020870650132
+Architecture main effect,Plan-guided,Context-fixed,0.0,0.0,0.0
+Architecture main effect,Fully incremental,Context-fixed,-567.4202481155994,-815.2822703867752,-364.0610433606124
+Architecture main effect,Global,Sequential context updating,-248.5891500919546,-393.45737396922686,-69.5986536586887
+Architecture main effect,Plan-guided,Sequential context updating,0.0,0.0,0.0
+Architecture main effect,Fully incremental,Sequential context updating,-529.5299890957405,-772.6309976377443,-332.6734384527503
