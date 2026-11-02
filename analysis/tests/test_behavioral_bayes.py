@@ -7,6 +7,7 @@ import numpy as np
 from analysis.behavioral_bayes import (
     CELL_LABELS,
     _mixed_model,
+    _prepare_production,
     hypothesis_rows,
     load_analysis_dataset,
     posterior_cell_draws,
@@ -36,13 +37,22 @@ def test_production_uses_canonical_size_colour_trials() -> None:
         REPO_ROOT, "production_overinformative"
     )
 
-    assert size_initial.n_observations == 3034
+    assert overinformative.n_observations == 3034
+    assert size_initial.n_observations == 1985
     assert size_initial.n_participants == 113
     assert size_initial.n_items == 27
     assert size_initial.item_index is not None
-    assert np.array_equal(size_initial.fixed_design, overinformative.fixed_design)
     assert set(np.unique(size_initial.outcome)) == {0.0, 1.0}
     assert set(np.unique(overinformative.outcome)) == {0.0, 1.0}
+
+
+def test_size_initiality_is_conditional_on_multiple_adjectives() -> None:
+    size_initial = load_analysis_dataset(REPO_ROOT, "production_size_initial")
+    frame, _ = _prepare_production(REPO_ROOT, "production_size_initial")
+
+    assert frame["annotation"].str.len().gt(1).all()
+    assert not frame["annotation"].eq("D").any()
+    assert len(frame) == size_initial.n_observations
 
 
 def test_binary_cell_predictions_marginalize_random_effect_variance() -> None:

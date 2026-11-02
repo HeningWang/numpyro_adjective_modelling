@@ -78,7 +78,12 @@ def main() -> None:
         raise ValueError("Response annotations do not map one-to-one to 15 codes")
     code_for = dict(zip(response_key["response"], response_key["code"]))
     responses = list(code_for)
-    size_initial_codes = [code_for[u] for u in responses if u.startswith("D")]
+    # Size-initiality is an ordering measure: size-first among responses with
+    # more than one adjective.
+    multi_codes = [code_for[u] for u in responses if len(u) > 1]
+    size_initial_codes = [
+        code_for[u] for u in responses if len(u) > 1 and u.startswith("D")
+    ]
 
     rng = np.random.default_rng(args.seed)
     rows: list[dict[str, object]] = []
@@ -92,16 +97,17 @@ def main() -> None:
         discriminability = "Low" if sharpness == "blurred" else "High"
 
         observed_size_initial = np.isin(observed_codes[idx], size_initial_codes)
+        observed_multi = np.isin(observed_codes[idx], multi_codes)
         observed_mean, observed_lower, observed_upper = participant_bootstrap(
             cell["id"].to_numpy(),
             observed_size_initial.astype(int),
-            np.ones(len(idx), dtype=int),
+            observed_multi.astype(int),
             rng,
             args.bootstrap_draws,
         )
         predicted_rates = np.isin(
             predicted_codes[:, idx], size_initial_codes
-        ).mean(axis=1)
+        ).sum(axis=1) / np.isin(predicted_codes[:, idx], multi_codes).sum(axis=1)
         rows.extend(
             [
                 {

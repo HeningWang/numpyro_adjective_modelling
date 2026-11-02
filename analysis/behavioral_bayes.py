@@ -155,6 +155,9 @@ def _prepare_production(
     )
     adjective_count = frame["annotation"].str.len()
     if fit_id == "production_size_initial":
+        # Size-initiality is an ordering measure, so it conditions on
+        # responses that contain more than one adjective.
+        frame = frame.loc[adjective_count.gt(1)].copy()
         outcome = frame["annotation"].str.startswith("D").to_numpy(dtype=float)
     else:
         outcome = (
