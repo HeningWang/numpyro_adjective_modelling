@@ -27,17 +27,27 @@ DATA = ROOT/"data/production_model_input.csv"
 DATA_SHA256 = "44a41b44b83dfef7a2d1788c6ac399a637cb9cb48b63eb3751339ed849bf4ac1"
 MODELS = {**ms.V10_ORDER_MODELS, **ms.V10_ORDER_UPD_MODELS,
           **ms.V11_JOINT_PARTICIPANT_MODELS, **ms.V12_UPDATING_JOINT_PARTICIPANT_MODELS}
+ABLATION_WARMUPS = (1000, 4000)
 CONDITION_TERMS = ("lambda_size_reliability_single_bonus",
                    "lambda_size_reliability_form_pair_tradeoff")
 
 
 def model_for_run(name, colour_reliability=None, drop_condition_terms=False,
-                  terminal_utility=False, drop_order_term=False):
-    if terminal_utility or drop_order_term:
+                  terminal_utility=False, drop_order_term=False,
+                  drop_informativeness=False, drop_prefix_salience=False,
+                  form_reliability=None):
+    if form_reliability is not None:
+        if (colour_reliability is not None or drop_condition_terms or terminal_utility
+                or drop_order_term or drop_informativeness or drop_prefix_salience):
+            raise ValueError("The form-reliability override is not combined with other overrides")
+        return ms.form_reliability_model(name, form_reliability)
+    if terminal_utility or drop_order_term or drop_informativeness or drop_prefix_salience:
         if colour_reliability is not None or drop_condition_terms:
             raise ValueError("Utility ablations are not combined with other overrides")
         return ms.utility_ablation_model(name, terminal_utility=terminal_utility,
-                                         drop_order_term=drop_order_term)
+                                         drop_order_term=drop_order_term,
+                                         drop_informativeness=drop_informativeness,
+                                         drop_prefix_salience=drop_prefix_salience)
     model = (MODELS[name] if colour_reliability is None else
              ms.colour_reliability_model(name, colour_reliability))
     if drop_condition_terms:
@@ -54,9 +64,16 @@ def sha256(path):
 
 def run(args):
     colour = .59 if args.colour_reliability is None else args.colour_reliability
-    model = model_for_run(args.model, args.colour_reliability, args.drop_condition_terms,
-                          args.terminal_utility, args.drop_order_term)
-    utility_ablation = args.terminal_utility or args.drop_order_term
+    # Theory-mapped variants (run_tuned.py) supply their own model and features.
+    model = getattr(args, "model_override", None) or model_for_run(
+        args.model, args.colour_reliability, args.drop_condition_terms,
+        args.terminal_utility, args.drop_order_term, args.drop_informativeness,
+        args.drop_prefix_salience, args.form_reliability)
+    precompute = (getattr(args, "precompute_override", None)
+                  or ms.precompute_principled_discovery_features)
+    form = .50 if args.form_reliability is None else args.form_reliability
+    utility_ablation = (args.terminal_utility or args.drop_order_term
+                        or args.drop_informativeness or args.drop_prefix_salience)
     if (args.drop_condition_terms or utility_ablation) and args.recovery:
         raise ValueError("Ablation uses the standard contract, without recovery")
     if args.recovery and (args.model not in {"G-HO", "G-UPD-HO"}
@@ -88,16 +105,25 @@ def run(args):
             Path(__file__).with_name("helper.py"),Path(__file__).with_name("discovery.py"),
             Path(__file__).with_name("principled_features.py"))},
         stage="initializing",complete=False,stage_seconds=stages)
-    if args.colour_reliability is not None:
+    manifest.update(form_reliability=form, form_reliability_override=args.form_reliability)
+    if args.colour_reliability is not None or args.form_reliability is not None:
         manifest["artifact_role"] = ("sensitivity" if
             (args.warmup, args.samples, args.max_tree_depth) == (1000, 1000, 6)
             else "timing_pilot")
     manifest["drop_condition_terms"] = args.drop_condition_terms
+    manifest["tuning"] = getattr(args, "tuning", None)
+    if manifest["tuning"] is not None:
+        manifest["artifact_role"] = "tuned_variant"
+        manifest["source_hashes"]["tuned_model.py"] = sha256(
+            Path(__file__).with_name("tuned_model.py"))
     manifest["terminal_utility"] = args.terminal_utility
     manifest["drop_order_term"] = args.drop_order_term
+    manifest["drop_informativeness"] = args.drop_informativeness
+    manifest["drop_prefix_salience"] = args.drop_prefix_salience
     if args.drop_condition_terms or utility_ablation:
-        manifest["artifact_role"] = ("ablation" if
-            (args.warmup, args.samples, args.max_tree_depth) == (1000, 1000, 6)
+        # Ablations may extend warmup for multimodal mixing; draws and depth stay fixed.
+        manifest["artifact_role"] = ("ablation" if args.warmup in ABLATION_WARMUPS
+            and (args.samples, args.max_tree_depth) == (1000, 6)
             else "timing_pilot")
     def mark(stage,t0=None):
         if t0 is not None:stages[stage]=time.perf_counter()-t0
@@ -120,9 +146,9 @@ def run(args):
         participant_idx=d["participant_idx"],n_participants=d["n_participants"],
         sufficient_dim=d["sufficient_dim"],has_one_word_solution=d["has_one_word_solution"],
         is_sharp=d["sharpness_idx"],is_colour_sufficient=d["is_colour_sufficient"])
-    kwargs["precomputed_features"]=ms.precompute_principled_discovery_features(
+    kwargs["precomputed_features"]=precompute(
         kwargs["states"],kwargs["is_sharp"],recursive="UPD" in args.model,
-        color_semval=colour)
+        color_semval=colour,form_semval=form)
     jax.block_until_ready(kwargs["precomputed_features"])
     mark("precompute",t0)
     kernel=NUTS(model,target_accept_prob=.9,max_tree_depth=args.max_tree_depth)
@@ -184,8 +210,11 @@ def run(args):
     idata.attrs.update(source_sha256=manifest["source_hashes"]["modelSpecification.py"],
         dataset_sha256=DATA_SHA256,model=args.model,semantic_contract="prefix_once_right_to_left_float64",
         seed=4711,artifact_role=manifest["artifact_role"],colour_reliability=colour,
+        form_reliability=form,
         drop_condition_terms=int(args.drop_condition_terms),
-        terminal_utility=int(args.terminal_utility), drop_order_term=int(args.drop_order_term))
+        terminal_utility=int(args.terminal_utility), drop_order_term=int(args.drop_order_term),
+        drop_informativeness=int(args.drop_informativeness),
+        drop_prefix_salience=int(args.drop_prefix_salience))
     t0=time.perf_counter();idata.to_netcdf(artifact);mark("serialization",t0)
     manifest.update(artifact_sha256=sha256(artifact),complete=True)
     mark("complete")
@@ -204,8 +233,14 @@ if __name__=="__main__":
                    help="Score completed utterances by final target probability only")
     p.add_argument("--drop-order-term", action="store_true",
                    help="Remove the stable order term (beta = 0)")
+    p.add_argument("--drop-informativeness", action="store_true",
+                   help="Remove informativeness from prefix scores (alpha = 0)")
+    p.add_argument("--drop-prefix-salience", action="store_true",
+                   help="Remove salience from prefix scores (lambda_salience = 0)")
     p.add_argument("--input",type=Path)
     p.add_argument("--input-sha256")
     p.add_argument("--colour-reliability", type=float,
                    help="Fixed nu_C sensitivity override for K-HO/K-UPD-HO; default .59")
+    p.add_argument("--form-reliability", type=float,
+                   help="Fixed nu_F sensitivity override for the six shared-kappa models; default .50")
     run(p.parse_args())

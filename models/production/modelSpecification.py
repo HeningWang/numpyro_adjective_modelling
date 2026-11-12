@@ -2514,7 +2514,7 @@ def principled_terminal_path_components_from_features(log_target, salience, alph
 
 
 def precompute_principled_discovery_features(
-    states, is_sharp, *, recursive, color_semval=0.59,
+    states, is_sharp, *, recursive, color_semval=0.59, form_semval=0.50,
 ):
     """Precompute the fixed F0 semantics for unique encoded scenes.
 
@@ -2526,7 +2526,7 @@ def precompute_principled_discovery_features(
                                 axis=0, return_inverse=True)
     unique = jnp.asarray(unique.reshape(-1, *scene_array.shape[1:]))
     log_target = jax.jit(jax.vmap(lambda scene: principled_prefix_log_listeners(
-        scene, color_semval=color_semval, recursive=recursive,
+        scene, color_semval=color_semval, form_semval=form_semval, recursive=recursive,
     )))(unique)[inverse]
     salience = jax.jit(jax.vmap(_visual_salience_scores))(
         jnp.asarray(scene_array), jnp.asarray(is_sharp, dtype=jnp.float64),
@@ -5714,12 +5714,19 @@ def _make_discovery_model(
     order_source: str = "O0",
     policy_light: bool = False,
     color_semval: float = 0.59,
+    form_semval: float = 0.50,
     terminal_utility: bool = False,
     drop_order_term: bool = False,
+    drop_informativeness: bool = False,
+    drop_prefix_salience: bool = False,
 ):
     """Factory for isolated incremental-static reliability-backup candidates."""
     if not np.isfinite(color_semval) or not 0.5 <= color_semval <= 1.0:
         raise ValueError("Colour reliability must be finite and in [0.5, 1.0]")
+    if not np.isfinite(form_semval) or not 0.5 <= form_semval <= 1.0:
+        raise ValueError("Form reliability must be finite and in [0.5, 1.0]")
+    if form_semval != 0.50 and form_spec != "F0":
+        raise ValueError("The form-reliability override applies to the F0 grid only")
     valid_variants = {
         "fixed_kappa_1",
         "fixed_kappa_0",
@@ -5786,11 +5793,15 @@ def _make_discovery_model(
             and not policy_light and variant in participant_order_variants
         ):
             raise ValueError("Precomputation is restricted to the primary F0/O0/full grid")
-        if (terminal_utility or drop_order_term) and precomputed_features is None:
+        if ((terminal_utility or drop_order_term or drop_informativeness
+                or drop_prefix_salience) and precomputed_features is None):
             raise ValueError("Utility and order-term ablations require precomputed features")
-        alpha = numpyro.sample(
-            "alpha",
-            dist.HalfNormal(priors["alpha_scale"]),
+        # Informativeness ablation: alpha = 0 removes the listener term from
+        # every prefix score, leaving salience, order and response terms.
+        alpha = (
+            jnp.asarray(0.0)
+            if drop_informativeness
+            else numpyro.sample("alpha", dist.HalfNormal(priors["alpha_scale"]))
         )
         if order_source in ("O2", "O3") or drop_order_term:
             beta_order = jnp.asarray(0.0)
@@ -5803,9 +5814,15 @@ def _make_discovery_model(
                 tau_order = numpyro.sample("tau_order", dist.HalfNormal(0.5))
             else:
                 tau_order = None
-        lambda_salience = numpyro.sample(
-            "lambda_salience",
-            dist.HalfNormal(priors["lambda_salience_scale"]),
+        # Prefix-salience ablation: salience leaves the candidate utility but
+        # keeps its continuation cost in the length and selection terms.
+        lambda_salience = (
+            jnp.asarray(0.0)
+            if drop_prefix_salience
+            else numpyro.sample(
+                "lambda_salience",
+                dist.HalfNormal(priors["lambda_salience_scale"]),
+            )
         )
         rho_salience_stop = numpyro.sample(
             "rho_salience_stop",
@@ -5907,7 +5924,7 @@ def _make_discovery_model(
         if form_spec in ("FT", "FTS"):
             nu_F = numpyro.deterministic("nu_F", jnp.asarray(0.59))
         elif form_spec == "F0":
-            nu_F = numpyro.deterministic("nu_F", jnp.asarray(0.50))
+            nu_F = numpyro.deterministic("nu_F", jnp.asarray(form_semval))
         elif variant == "form_f1":
             nu_F = numpyro.deterministic("nu_F", jnp.asarray(0.59))
         elif variant in {"form_f2", "form_f3", "form_f4"}:
@@ -5926,7 +5943,7 @@ def _make_discovery_model(
                 "tau_log_alpha",
                 dist.HalfNormal(priors["tau_scale"]),
             )
-            if participant_hierarchy
+            if participant_hierarchy and not drop_informativeness
             else None
         )
         tau_kappa = (
@@ -5955,7 +5972,7 @@ def _make_discovery_model(
                         "z_alpha",
                         dist.Normal(0.0, 1.0),
                     )
-                    if participant_hierarchy
+                    if participant_hierarchy and not drop_informativeness
                     else None
                 )
                 z_kappa = (
@@ -5979,7 +5996,9 @@ def _make_discovery_model(
             z_length = None
             z_order = None
 
-        if participant_hierarchy:
+        if drop_informativeness:
+            alpha_per_trial = jnp.zeros(len(states))
+        elif participant_hierarchy:
             alpha_by_participant = numpyro.deterministic(
                 "alpha_by_participant",
                 noncentered_participant_alpha(
@@ -6429,17 +6448,35 @@ ARCHITECTURE_VARIANTS = {"G": "participant_order_fixed_kappa_0",
                          "I": "participant_order_fixed_kappa_1", "K": "participant_order"}
 
 
-def utility_ablation_model(model_name, *, terminal_utility=False, drop_order_term=False):
+def form_reliability_model(model_name, form_semval):
+    """Create a matched shared-kappa cell with informative form semantics (nu_F)."""
+    if model_name not in {**V10_ORDER_MODELS, **V10_ORDER_UPD_MODELS}:
+        raise ValueError("Form sensitivity supports the six shared-kappa models only")
+    architecture, *rest = model_name.split("-")
+    return _make_discovery_model(
+        ARCHITECTURE_VARIANTS[architecture], recursive="UPD" in rest, prefix_mode="B",
+        form_spec="F0", order_source="O0", policy_light=False,
+        form_semval=float(form_semval),
+    )
+
+
+def utility_ablation_model(model_name, *, terminal_utility=False, drop_order_term=False,
+                           drop_informativeness=False, drop_prefix_salience=False):
     """Create a matched ablation cell of a registered shared-kappa model."""
     architecture, *rest = model_name.split("-")
     if model_name not in {**V10_ORDER_MODELS, **V10_ORDER_UPD_MODELS}:
         raise ValueError("Utility ablations support the six shared-kappa models only")
-    if not (terminal_utility or drop_order_term):
+    if not (terminal_utility or drop_order_term or drop_informativeness
+            or drop_prefix_salience):
         raise ValueError("Select at least one ablation")
+    if drop_informativeness and terminal_utility:
+        raise ValueError("Terminal utility is undefined without informativeness")
     return _make_discovery_model(
         ARCHITECTURE_VARIANTS[architecture], recursive="UPD" in rest, prefix_mode="B",
         form_spec="F0", order_source="O0", policy_light=False,
         terminal_utility=terminal_utility, drop_order_term=drop_order_term,
+        drop_informativeness=drop_informativeness,
+        drop_prefix_salience=drop_prefix_salience,
     )
 
 DISCOVERY_CANDIDATE_MODELS = dict(

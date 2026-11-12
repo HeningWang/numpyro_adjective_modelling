@@ -19,7 +19,8 @@ def diagnose(artifact: Path, output: Path, encoded: Path):
     idata = az.from_netcdf(artifact)
     role = idata.attrs.get("artifact_role")
     recovery = role == "recovery" and name in {"G-HO", "G-UPD-HO"}
-    flags = ("drop_condition_terms", "terminal_utility", "drop_order_term")
+    flags = ("drop_condition_terms", "terminal_utility", "drop_order_term",
+             "drop_informativeness", "drop_prefix_salience")
     if role == "ablation" and (manifest.get("artifact_role") != role
             or not any(manifest.get(flag) is True for flag in flags)
             or any(int(manifest.get(flag, False)) != idata.attrs.get(flag, 0) for flag in flags)
@@ -27,7 +28,10 @@ def diagnose(artifact: Path, output: Path, encoded: Path):
                 "lambda_size_reliability_single_bonus",
                 "lambda_size_reliability_form_pair_tradeoff")))
             or (manifest.get("drop_order_term") and any(site in idata.posterior for site in (
-                "log_beta_order", "tau_order", "z_order")))):
+                "log_beta_order", "tau_order", "z_order")))
+            or (manifest.get("drop_informativeness") and any(site in idata.posterior for site in (
+                "alpha", "tau_log_alpha", "z_alpha")))
+            or (manifest.get("drop_prefix_salience") and "lambda_salience" in idata.posterior)):
         raise ValueError("Ablation artifact has inconsistent ablation metadata or latents")
     if role == "sensitivity" and (name not in {"K-HO", "K-UPD-HO"}
             or manifest.get("colour_reliability_override") is None
@@ -36,7 +40,9 @@ def diagnose(artifact: Path, output: Path, encoded: Path):
     expected_draws, expected_depth = (4000, 8) if recovery else (1000, 6)
     if role not in {"primary", "recovery", "sensitivity", "ablation"} or (role == "recovery" and not recovery):
         raise ValueError("Timing pilots cannot enter primary summaries")
-    if (manifest["warmup"], manifest["samples"], manifest["max_tree_depth"]) != (1000, expected_draws, expected_depth):
+    warmups = (1000, 4000) if role == "ablation" else (1000,)
+    if (manifest["warmup"] not in warmups
+            or (manifest["samples"], manifest["max_tree_depth"]) != (expected_draws, expected_depth)):
         raise ValueError("Artifact does not match its approved sampler contract")
     with np.load(encoded, allow_pickle=False) as data:
         expected = data["empirical_seq_flat"]
@@ -84,6 +90,8 @@ def diagnose(artifact: Path, output: Path, encoded: Path):
         drop_condition_terms=manifest.get("drop_condition_terms", False),
         terminal_utility=manifest.get("terminal_utility", False),
         drop_order_term=manifest.get("drop_order_term", False),
+        drop_informativeness=manifest.get("drop_informativeness", False),
+        drop_prefix_salience=manifest.get("drop_prefix_salience", False),
         artifact_sha256=digest)
     row["sampler_gate_pass"] = bool(row["finite_diagnostics"] and row["divergences"] == 0
         and row["max_rhat"] < 1.01 and row["min_bulk_ess"] > 400

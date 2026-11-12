@@ -12,6 +12,7 @@ from run_corrected_primary import model_for_run
 
 ROOT = Path(__file__).resolve().parents[3]
 ORDER_SITES = {'log_beta_order', 'tau_order', 'z_order'}
+ALPHA_SITES = {'alpha', 'tau_log_alpha', 'z_alpha'}
 
 
 def test_utility_ablations_change_only_their_component():
@@ -47,3 +48,53 @@ def test_utility_ablations_change_only_their_component():
         assert not np.allclose(terminal['obs']['fn'].probs, default['obs']['fn'].probs)
         for result in (terminal, no_order):
             np.testing.assert_allclose(result['obs']['fn'].probs.sum(axis=1), 1, atol=1e-12)
+
+
+def test_informativeness_ablation_removes_alpha_and_semantics():
+    data = import_dataset_hier(file_path=ROOT/'data/production_model_input.csv',
+                               state_encoding='target_match')
+    args = dict(states=data['states_train'][:6], empirical=data['empirical_seq_flat'][:6],
+        participant_idx=np.zeros(6, dtype=int), n_participants=1,
+        sufficient_dim=data['sufficient_dim'][:6],
+        has_one_word_solution=data['has_one_word_solution'][:6],
+        is_sharp=data['sharpness_idx'][:6], is_colour_sufficient=data['is_colour_sufficient'][:6])
+    probs = {}
+    for name in ('K-HO', 'K-UPD-HO', 'G-HO'):
+        kwargs = dict(args, precomputed_features=ms.precompute_principled_discovery_features(
+            args['states'], args['is_sharp'], recursive='UPD' in name))
+        def trace(model):
+            return handlers.trace(handlers.seed(model, 17)).get_trace(**kwargs)
+        latents = lambda r: {k for k, v in r.items() if v['type'] == 'sample' and not v['is_observed']}
+        default = trace(model_for_run(name))
+        ablated = trace(model_for_run(name, drop_informativeness=True))
+        assert latents(ablated) == latents(default) - ALPHA_SITES
+        np.testing.assert_allclose(ablated['obs']['fn'].probs.sum(axis=1), 1, atol=1e-12)
+        probs[name] = np.asarray(ablated['obs']['fn'].probs)
+    # Without alpha the semantic regime has no route into the likelihood.
+    np.testing.assert_allclose(probs['K-HO'], probs['K-UPD-HO'], atol=1e-12)
+    try:
+        model_for_run('K-HO', terminal_utility=True, drop_informativeness=True)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError('terminal utility without informativeness must be rejected')
+
+
+def test_prefix_salience_ablation_removes_only_lambda_salience():
+    data = import_dataset_hier(file_path=ROOT/'data/production_model_input.csv',
+                               state_encoding='target_match')
+    args = dict(states=data['states_train'][:6], empirical=data['empirical_seq_flat'][:6],
+        participant_idx=np.zeros(6, dtype=int), n_participants=1,
+        sufficient_dim=data['sufficient_dim'][:6],
+        has_one_word_solution=data['has_one_word_solution'][:6],
+        is_sharp=data['sharpness_idx'][:6], is_colour_sufficient=data['is_colour_sufficient'][:6])
+    for name in ('G-HO', 'K-HO', 'I-HO'):
+        kwargs = dict(args, precomputed_features=ms.precompute_principled_discovery_features(
+            args['states'], args['is_sharp'], recursive=False))
+        def trace(model):
+            return handlers.trace(handlers.seed(model, 17)).get_trace(**kwargs)
+        latents = lambda r: {k for k, v in r.items() if v['type'] == 'sample' and not v['is_observed']}
+        default = trace(model_for_run(name))
+        ablated = trace(model_for_run(name, drop_prefix_salience=True))
+        assert latents(ablated) == latents(default) - {'lambda_salience'}
+        np.testing.assert_allclose(ablated['obs']['fn'].probs.sum(axis=1), 1, atol=1e-12)
