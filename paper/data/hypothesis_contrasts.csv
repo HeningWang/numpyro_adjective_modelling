@@ -1,0 +1,73 @@
+hypothesis,model,contrast,component,minuend,subtrahend,estimate_elpd,credible_lower_95,credible_upper_95,probability_positive
+Discriminatory efficiency,global: with vs without informativeness,G-HO__order - G-HO__no_info,Response,G-HO__order,G-HO__no_info,1014.2310211153072,827.2189349643198,1217.3581669990933,1.0
+Discriminatory efficiency,global: with vs without informativeness,G-HO__order - G-HO__no_info,Length,G-HO__order,G-HO__no_info,441.2600992064617,302.213654697106,600.5782694481877,1.0
+Discriminatory efficiency,global: with vs without informativeness,G-HO__order - G-HO__no_info,Selection,G-HO__order,G-HO__no_info,469.7427149044546,382.35601998691186,562.4796973546981,1.0
+Discriminatory efficiency,global: with vs without informativeness,G-HO__order - G-HO__no_info,Order,G-HO__order,G-HO__no_info,103.22820700439082,62.13041282084189,142.79959029377494,1.0
+Convention,global: with vs without stable term,G-HO__order - G-HO__no_order,Response,G-HO__order,G-HO__no_order,3319.510369087074,2994.7276640744603,3648.8843832265757,1.0
+Convention,global: with vs without stable term,G-HO__order - G-HO__no_order,Length,G-HO__order,G-HO__no_order,363.035204169413,265.40492829879975,456.500536046706,1.0
+Convention,global: with vs without stable term,G-HO__order - G-HO__no_order,Selection,G-HO__order,G-HO__no_order,159.82597574595638,21.42519704586728,289.53674417559034,0.98735
+Convention,global: with vs without stable term,G-HO__order - G-HO__no_order,Order,G-HO__order,G-HO__no_order,2796.649189171705,2471.332338648734,3142.4211536470048,1.0
+Availability,global: with vs without salience,G-HO__order - G-HO__no_sal,Response,G-HO__order,G-HO__no_sal,2291.2728461523084,1900.7547074952095,2715.293049143344,1.0
+Availability,global: with vs without salience,G-HO__order - G-HO__no_sal,Length,G-HO__order,G-HO__no_sal,164.58394634793416,67.51897581857024,255.27519391026053,0.99883
+Availability,global: with vs without salience,G-HO__order - G-HO__no_sal,Selection,G-HO__order,G-HO__no_sal,1574.775971183867,1297.6109483841844,1874.5822729419328,1.0
+Availability,global: with vs without salience,G-HO__order - G-HO__no_sal,Order,G-HO__order,G-HO__no_sal,551.9129286205068,444.0618466833893,662.0737394977854,1.0
+Composition without convention,"global: updating vs fixed, no stable term",G-UPD-HO__no_order - G-HO__no_order,Response,G-UPD-HO__no_order,G-HO__no_order,23.736978760862627,11.97336667144126,37.6618882668251,0.999975
+Composition without convention,"global: updating vs fixed, no stable term",G-UPD-HO__no_order - G-HO__no_order,Length,G-UPD-HO__no_order,G-HO__no_order,-18.655034029853756,-23.46346459411226,-14.079311917771832,0.0
+Composition without convention,"global: updating vs fixed, no stable term",G-UPD-HO__no_order - G-HO__no_order,Selection,G-UPD-HO__no_order,G-HO__no_order,1.2886165670635805,-1.0301518164633108,3.8421385107405603,0.85411
+Composition without convention,"global: updating vs fixed, no stable term",G-UPD-HO__no_order - G-HO__no_order,Order,G-UPD-HO__no_order,G-HO__no_order,41.103396223652794,32.13414182531304,52.31484360378958,1.0
+Composition,global: updating vs fixed,G-UPD-HO__order - G-HO__order,Response,G-UPD-HO__order,G-HO__order,-45.161782365358185,-60.15221687278786,-30.28706708401935,1e-05
+Composition,global: updating vs fixed,G-UPD-HO__order - G-HO__order,Length,G-UPD-HO__order,G-HO__order,-15.94221482159109,-25.285879309823468,-6.632135743936345,0.00068
+Composition,global: updating vs fixed,G-UPD-HO__order - G-HO__order,Selection,G-UPD-HO__order,G-HO__order,-28.172773272819082,-36.76573879715444,-20.10188661180927,0.0
+Composition,global: updating vs fixed,G-UPD-HO__order - G-HO__order,Order,G-UPD-HO__order,G-HO__order,-1.046794270948027,-4.905531589900768,3.1797190039320213,0.29222
+Planning,incremental vs global,I-HO__order - G-HO__order,Response,I-HO__order,G-HO__order,-302.9134931006331,-697.307698073031,-6.259851220382811,0.022215
+Planning,incremental vs global,I-HO__order - G-HO__order,Length,I-HO__order,G-HO__order,-434.0481344355183,-597.7584136771092,-295.5839439726649,0.0
+Planning,incremental vs global,I-HO__order - G-HO__order,Selection,I-HO__order,G-HO__order,-180.12006234273363,-261.60902517598254,-101.34488328444358,1e-05
+Planning,incremental vs global,I-HO__order - G-HO__order,Order,I-HO__order,G-HO__order,311.25470367761875,23.15379528417497,538.0772431140743,0.981095
+Discriminatory efficiency,incremental: with vs without informativeness,I-HO__order - I-HO__no_info,Response,I-HO__order,I-HO__no_info,178.75844018830853,129.53001578205638,231.7163986406475,1.0
+Discriminatory efficiency,incremental: with vs without informativeness,I-HO__order - I-HO__no_info,Length,I-HO__order,I-HO__no_info,18.062327938781557,-16.11128073485897,51.34951467667266,0.856285
+Discriminatory efficiency,incremental: with vs without informativeness,I-HO__order - I-HO__no_info,Selection,I-HO__order,I-HO__no_info,144.1991383500644,107.98420053264873,183.15271978714702,1.0
+Discriminatory efficiency,incremental: with vs without informativeness,I-HO__order - I-HO__no_info,Order,I-HO__order,I-HO__no_info,16.496973899462546,-6.829488706646575,49.69736558899531,0.895505
+Convention,incremental: with vs without stable term,I-HO__order - I-HO__no_order,Response,I-HO__order,I-HO__no_order,2829.156592471256,2437.673051406731,3269.4067984541057,1.0
+Convention,incremental: with vs without stable term,I-HO__order - I-HO__no_order,Length,I-HO__order,I-HO__no_order,437.5171250896511,306.3877988877607,591.6745904660214,1.0
+Convention,incremental: with vs without stable term,I-HO__order - I-HO__no_order,Selection,I-HO__order,I-HO__no_order,286.9927131646424,185.14849269772935,393.7830895175396,1.0
+Convention,incremental: with vs without stable term,I-HO__order - I-HO__no_order,Order,I-HO__order,I-HO__no_order,2104.6467542169626,1782.1593546042166,2452.8575536565663,1.0
+Availability,incremental: with vs without salience,I-HO__order - I-HO__no_sal,Response,I-HO__order,I-HO__no_sal,2261.3159594824997,1828.254265683091,2701.8656786303213,1.0
+Availability,incremental: with vs without salience,I-HO__order - I-HO__no_sal,Length,I-HO__order,I-HO__no_sal,187.4637591989868,120.70147002654525,254.64376696684926,1.0
+Availability,incremental: with vs without salience,I-HO__order - I-HO__no_sal,Selection,I-HO__order,I-HO__no_sal,1344.3736548642999,1085.098928650077,1623.4299804150185,1.0
+Availability,incremental: with vs without salience,I-HO__order - I-HO__no_sal,Order,I-HO__order,I-HO__no_sal,729.478545419213,424.9591582834875,960.6728067874047,0.999865
+Composition without convention,"incremental: updating vs fixed, no stable term",I-UPD-HO__no_order - I-HO__no_order,Response,I-UPD-HO__no_order,I-HO__no_order,-109.69984301564101,-146.0362373280759,-74.4014053563101,0.0
+Composition without convention,"incremental: updating vs fixed, no stable term",I-UPD-HO__no_order - I-HO__no_order,Length,I-UPD-HO__no_order,I-HO__no_order,-4.884330865932001,-13.079689214097048,3.265991878280162,0.117835
+Composition without convention,"incremental: updating vs fixed, no stable term",I-UPD-HO__no_order - I-HO__no_order,Selection,I-UPD-HO__no_order,I-HO__no_order,-24.548192195281075,-38.813025800387365,-11.282310484769317,0.000145
+Composition without convention,"incremental: updating vs fixed, no stable term",I-UPD-HO__no_order - I-HO__no_order,Order,I-UPD-HO__no_order,I-HO__no_order,-80.26731995442798,-107.55460809484586,-52.103419770360844,5e-06
+Composition,incremental: updating vs fixed,I-UPD-HO__order - I-HO__order,Response,I-UPD-HO__order,I-HO__order,-23.792657114608108,-32.38304135107206,-16.102388240470933,0.0
+Composition,incremental: updating vs fixed,I-UPD-HO__order - I-HO__order,Length,I-UPD-HO__order,I-HO__order,2.07952412568602,-0.6416444174816062,4.91989749428495,0.932015
+Composition,incremental: updating vs fixed,I-UPD-HO__order - I-HO__order,Selection,I-UPD-HO__order,I-HO__order,-28.139801271706787,-36.45203083650342,-21.145938545674692,0.0
+Composition,incremental: updating vs fixed,I-UPD-HO__order - I-HO__order,Order,I-UPD-HO__order,I-HO__order,2.2676200314126502,0.07826989270149383,4.322757980293745,0.97846
+Planning,plan-guided vs global,K-HO__order - G-HO__order,Response,K-HO__order,G-HO__order,264.50675501496556,77.28171499433181,416.48775179813447,0.994295
+Planning,plan-guided vs global,K-HO__order - G-HO__order,Length,K-HO__order,G-HO__order,-85.82865998046543,-118.52369045525872,-56.78422678862017,0.0
+Planning,plan-guided vs global,K-HO__order - G-HO__order,Selection,K-HO__order,G-HO__order,33.798580282241964,3.8327119927327375,64.90027742607096,0.98686
+Planning,plan-guided vs global,K-HO__order - G-HO__order,Order,K-HO__order,G-HO__order,316.5368347131891,151.60990288047805,452.08228173862017,0.99917
+Planning,plan-guided vs incremental,K-HO__order - I-HO__order,Response,K-HO__order,I-HO__order,567.4202481155987,364.0610433606121,815.2822703867741,1.0
+Planning,plan-guided vs incremental,K-HO__order - I-HO__order,Length,K-HO__order,I-HO__order,348.2194744550529,231.73020194722278,483.4213833536938,1.0
+Planning,plan-guided vs incremental,K-HO__order - I-HO__order,Selection,K-HO__order,I-HO__order,213.9186426249756,139.2250210586127,295.1715296669975,1.0
+Planning,plan-guided vs incremental,K-HO__order - I-HO__order,Order,K-HO__order,I-HO__order,5.282131035570361,-89.66975567427063,130.89501075326183,0.498205
+Discriminatory efficiency,plan-guided: with vs without informativeness,K-HO__order - K-HO__no_info,Response,K-HO__order,K-HO__no_info,724.4114436610716,542.8382530108091,934.5524539563204,1.0
+Discriminatory efficiency,plan-guided: with vs without informativeness,K-HO__order - K-HO__no_info,Length,K-HO__order,K-HO__no_info,353.45309790040744,232.0369813942401,492.6561695269492,1.0
+Discriminatory efficiency,plan-guided: with vs without informativeness,K-HO__order - K-HO__no_info,Selection,K-HO__order,K-HO__no_info,367.1534970438926,296.618451348533,441.57508900863445,1.0
+Discriminatory efficiency,plan-guided: with vs without informativeness,K-HO__order - K-HO__no_info,Order,K-HO__order,K-HO__no_info,3.8048487167715064,-62.497687929205036,95.06497081036004,0.491235
+Convention,plan-guided: with vs without stable term,K-HO__order - K-HO__no_order,Response,K-HO__order,K-HO__no_order,3585.33358019802,3212.398291109804,3953.575596767676,1.0
+Convention,plan-guided: with vs without stable term,K-HO__order - K-HO__no_order,Length,K-HO__order,K-HO__no_order,279.6164707075998,182.05022199570294,366.66718512347273,0.999995
+Convention,plan-guided: with vs without stable term,K-HO__order - K-HO__no_order,Selection,K-HO__order,K-HO__no_order,194.07800627364352,68.3132172758565,310.95517746372707,0.99803
+Convention,plan-guided: with vs without stable term,K-HO__order - K-HO__no_order,Order,K-HO__order,K-HO__no_order,3111.639103216776,2723.595981966066,3512.4275193627377,1.0
+Availability,plan-guided: with vs without salience,K-HO__order - K-HO__no_sal_w4000,Response,K-HO__order,K-HO__no_sal_w4000,2556.968418694968,2096.7052461397407,3046.2892588273758,1.0
+Availability,plan-guided: with vs without salience,K-HO__order - K-HO__no_sal_w4000,Length,K-HO__order,K-HO__no_sal_w4000,80.33529858823965,-10.732582212931352,160.64235073318457,0.96071
+Availability,plan-guided: with vs without salience,K-HO__order - K-HO__no_sal_w4000,Selection,K-HO__order,K-HO__no_sal_w4000,1608.8067757872277,1319.9460236477178,1921.06129872736,1.0
+Availability,plan-guided: with vs without salience,K-HO__order - K-HO__no_sal_w4000,Order,K-HO__order,K-HO__no_sal_w4000,867.8263443195004,634.9219673602646,1076.5369379074443,1.0
+Composition without convention,"plan-guided: updating vs fixed, no stable term",K-UPD-HO__no_order - K-HO__no_order,Response,K-UPD-HO__no_order,K-HO__no_order,23.547132639817235,11.73314830855248,37.490111259500054,0.99998
+Composition without convention,"plan-guided: updating vs fixed, no stable term",K-UPD-HO__no_order - K-HO__no_order,Length,K-UPD-HO__no_order,K-HO__no_order,-18.71892701485741,-23.49092173553016,-14.188492624618222,0.0
+Composition without convention,"plan-guided: updating vs fixed, no stable term",K-UPD-HO__no_order - K-HO__no_order,Selection,K-UPD-HO__no_order,K-HO__no_order,1.2013000041253226,-1.142002667043695,3.788816235580286,0.83216
+Composition without convention,"plan-guided: updating vs fixed, no stable term",K-UPD-HO__no_order - K-HO__no_order,Order,K-UPD-HO__no_order,K-HO__no_order,41.0647596505493,32.088277680111176,52.27331726653285,1.0
+Composition,plan-guided: updating vs fixed,K-UPD-HO__order - K-HO__order,Response,K-UPD-HO__order,K-HO__order,-61.68291613446655,-80.91981812434116,-43.57342313198857,0.0
+Composition,plan-guided: updating vs fixed,K-UPD-HO__order - K-HO__order,Length,K-UPD-HO__order,K-HO__order,-18.7978536137339,-28.576396352841943,-9.248911378869682,0.00017
+Composition,plan-guided: updating vs fixed,K-UPD-HO__order - K-HO__order,Selection,K-UPD-HO__order,K-HO__order,-40.45142952007274,-52.068664563939286,-30.171956431805874,0.0
+Composition,plan-guided: updating vs fixed,K-UPD-HO__order - K-HO__order,Order,K-UPD-HO__order,K-HO__order,-2.4336330006599596,-9.758340689104882,6.4502852305456635,0.254905

@@ -1,0 +1,96 @@
+contrast,architecture,model_a,model_b,measure,estimate,lower,upper,credible
+Stable order term,Global,G-HO__no_contrast,G-HO__base_no_order,Production: content,612.1349531302839,436.4400947505703,789.3753329149282,A better
+Stable order term,Global,G-HO__no_contrast,G-HO__base_no_order,Production: order,2829.637445089516,2494.7371084516667,3184.5374877358563,A better
+Stable order term,Global,G-HO__no_contrast,G-HO__base_no_order,Ratings: canonical preference,-2.560716512783446,-3.001634681540087,-2.1514140062067804,B better
+Stable order term,Global,G-HO__no_contrast,G-HO__base_no_order,Ratings: context gradient,-0.1860038240648802,-0.3593672058720036,-0.007136637602357653,B better
+Stable order term,Global,G-HO__no_contrast,G-HO__base_no_order,Ratings: R2,-0.3211694725484588,-0.3604727996479291,-0.27603442184581173,B better
+Property baseline,Global,G-HO__no_contrast,G-HO__no_sal,Production: content,1601.6657265309088,1258.5229132685342,1989.6791403582567,A better
+Property baseline,Global,G-HO__no_contrast,G-HO__no_sal,Production: order,608.9493050956163,484.7588805154505,733.3764920743877,A better
+Property baseline,Global,G-HO__no_contrast,G-HO__no_sal,Ratings: canonical preference,-1.7024823725594709,-1.9220121811194724,-1.4655785768402114,B better
+Property baseline,Global,G-HO__no_contrast,G-HO__no_sal,Ratings: context gradient,-0.07174780181458713,-0.20413248910233192,0.06692926363352535,no credible difference
+Property baseline,Global,G-HO__no_contrast,G-HO__no_sal,Ratings: R2,-0.03458135899092082,-0.05422720171435236,-0.016033327325267615,B better
+Informativeness,Global,G-HO__no_contrast,G-HO__base_no_info,Production: content,1155.6907398060503,927.7758417146551,1409.671172693012,A better
+Informativeness,Global,G-HO__no_contrast,G-HO__base_no_info,Production: order,182.54175198835037,127.18432743555533,233.8232656796988,A better
+Informativeness,Global,G-HO__no_contrast,G-HO__base_no_info,Ratings: canonical preference,-0.7144072428804364,-1.2496136595886458,-0.16482549189440837,B better
+Informativeness,Global,G-HO__no_contrast,G-HO__base_no_info,Ratings: context gradient,0.14286000846166735,-0.066849158238389,0.3628097683606665,no credible difference
+Informativeness,Global,G-HO__no_contrast,G-HO__base_no_info,Ratings: R2,0.030829087393694467,-0.011518205602526328,0.07623214458339919,no credible difference
+Sequential context updating,Global,G-UPD-HO__base_upd,G-HO__no_contrast,Production: content,-29.884857101252308,-46.603693789541836,-13.556898431950518,B better
+Sequential context updating,Global,G-UPD-HO__base_upd,G-HO__no_contrast,Production: order,0.15449890978608855,-4.2012358540127535,4.586741600030812,no credible difference
+Sequential context updating,Global,G-UPD-HO__base_upd,G-HO__no_contrast,Ratings: canonical preference,0.052122344271926635,-0.07896057116323996,0.17170735912415172,no credible difference
+Sequential context updating,Global,G-UPD-HO__base_upd,G-HO__no_contrast,Ratings: context gradient,-0.014151750445120865,-0.05671398318569073,0.03343716253562286,no credible difference
+Sequential context updating,Global,G-UPD-HO__base_upd,G-HO__no_contrast,Ratings: R2,-0.0016756958980412304,-0.00971149257746515,0.007711070428904075,no credible difference
+"Sequential context updating, no stable order term",Global,G-UPD-HO__base_no_order,G-HO__base_no_order,Production: content,-14.124300244913416,-20.629276932303792,-7.504654814540165,B better
+"Sequential context updating, no stable order term",Global,G-UPD-HO__base_no_order,G-HO__base_no_order,Production: order,46.326030676125846,36.88662965769628,58.106533127782676,A better
+"Sequential context updating, no stable order term",Global,G-UPD-HO__base_no_order,G-HO__base_no_order,Ratings: canonical preference,0.003326129996566491,-0.0003428951963347552,0.006613095933625708,no credible difference
+"Sequential context updating, no stable order term",Global,G-UPD-HO__base_no_order,G-HO__base_no_order,Ratings: context gradient,0.005772721977614889,-0.000514672498206741,0.011918618478498677,no credible difference
+"Sequential context updating, no stable order term",Global,G-UPD-HO__base_no_order,G-HO__base_no_order,Ratings: R2,-0.0003534286433622978,-0.002807518158012348,0.0020471421814122377,no credible difference
+Stable order term,Plan-guided,K-HO__no_contrast,K-HO__base_no_order_modeA,Production: content,1101.4735694789083,936.4286378996378,1284.509151626588,A better
+Stable order term,Plan-guided,K-HO__no_contrast,K-HO__base_no_order_modeA,Production: order,2045.5966322071458,1712.7628447748843,2429.759938761851,A better
+Stable order term,Plan-guided,K-HO__no_contrast,K-HO__base_no_order_modeA,Ratings: canonical preference,-3.1364737323085063,-3.57562206069169,-2.733295912968864,B better
+Stable order term,Plan-guided,K-HO__no_contrast,K-HO__base_no_order_modeA,Ratings: context gradient,-0.6582430337480919,-0.9590036633488285,-0.21543208146428805,B better
+Stable order term,Plan-guided,K-HO__no_contrast,K-HO__base_no_order_modeA,Ratings: R2,0.2594646945346521,0.19301857522497173,0.31312043873827383,A better
+Property baseline,Plan-guided,K-HO__no_contrast,K-HO__no_sal_w4000,Production: content,1661.0212503848893,1322.4719280331442,2041.3602499068747,A better
+Property baseline,Plan-guided,K-HO__no_contrast,K-HO__no_sal_w4000,Production: order,973.8712451713095,648.9971319197153,1256.2486716999986,A better
+Property baseline,Plan-guided,K-HO__no_contrast,K-HO__no_sal_w4000,Ratings: canonical preference,-1.9147063230708068,-2.1709893438688903,-1.6646199923520006,B better
+Property baseline,Plan-guided,K-HO__no_contrast,K-HO__no_sal_w4000,Ratings: context gradient,0.08496220077515866,-0.06780772966502306,0.26194313194249996,no credible difference
+Property baseline,Plan-guided,K-HO__no_contrast,K-HO__no_sal_w4000,Ratings: R2,-0.017616127428400737,-0.061247493706877564,0.029674608163354363,no credible difference
+Informativeness,Plan-guided,K-HO__no_contrast,K-HO__base_no_info,Production: content,1069.1387575174508,865.8372284720344,1295.9656282728138,A better
+Informativeness,Plan-guided,K-HO__no_contrast,K-HO__base_no_info,Production: order,34.95912837958123,-19.965213860857574,109.1375432783538,no credible difference
+Informativeness,Plan-guided,K-HO__no_contrast,K-HO__base_no_info,Ratings: canonical preference,-0.22025783005627314,-0.7741429388302898,0.3489169998142674,no credible difference
+Informativeness,Plan-guided,K-HO__no_contrast,K-HO__base_no_info,Ratings: context gradient,0.28562806816335445,0.05123051256945543,0.5486669262826186,A better
+Informativeness,Plan-guided,K-HO__no_contrast,K-HO__base_no_info,Ratings: R2,0.09941304836110447,0.03564173473580372,0.16610142651255794,A better
+Sequential context updating,Plan-guided,K-UPD-HO__base_upd,K-HO__no_contrast,Production: content,-60.888555587178175,-83.36644837937166,-39.90617032043441,B better
+Sequential context updating,Plan-guided,K-UPD-HO__base_upd,K-HO__no_contrast,Production: order,5.927546966494718,-5.427024898559644,19.497789124577743,no credible difference
+Sequential context updating,Plan-guided,K-UPD-HO__base_upd,K-HO__no_contrast,Ratings: canonical preference,0.06148500665532111,-0.06997704251705802,0.18589329507202443,no credible difference
+Sequential context updating,Plan-guided,K-UPD-HO__base_upd,K-HO__no_contrast,Ratings: context gradient,-0.07862458570534954,-0.14495655185085904,-0.017812486320419263,B better
+Sequential context updating,Plan-guided,K-UPD-HO__base_upd,K-HO__no_contrast,Ratings: R2,-0.012666464141060164,-0.029336098386173296,0.002634710305503871,no credible difference
+"Sequential context updating, no stable order term",Plan-guided,K-UPD-HO__base_no_order_modeA,K-HO__base_no_order_modeA,Production: content,-38.264755415235385,-60.94562150806005,-17.009666684443637,B better
+"Sequential context updating, no stable order term",Plan-guided,K-UPD-HO__base_no_order_modeA,K-HO__base_no_order_modeA,Production: order,-81.61642503387407,-111.89226344578215,-52.03453813811266,B better
+"Sequential context updating, no stable order term",Plan-guided,K-UPD-HO__base_no_order_modeA,K-HO__base_no_order_modeA,Ratings: canonical preference,-0.09403894451930168,-0.16830303472567298,-0.02494748443064623,B better
+"Sequential context updating, no stable order term",Plan-guided,K-UPD-HO__base_no_order_modeA,K-HO__base_no_order_modeA,Ratings: context gradient,-0.014641993181810344,-0.28476612964831416,0.34217609129257753,no credible difference
+"Sequential context updating, no stable order term",Plan-guided,K-UPD-HO__base_no_order_modeA,K-HO__base_no_order_modeA,Ratings: R2,-0.09799029677377959,-0.14753738699255123,-0.053738230302640994,B better
+Stable order term,Fully incremental,I-HO__no_contrast,I-HO__base_no_order,Production: content,663.4849823178573,537.195995207726,816.8703270428718,A better
+Stable order term,Fully incremental,I-HO__no_contrast,I-HO__base_no_order,Production: order,2020.1950588487125,1711.5982456279473,2355.134357941674,A better
+Stable order term,Fully incremental,I-HO__no_contrast,I-HO__base_no_order,Ratings: canonical preference,-2.6467919993630065,-3.09905721246244,-2.2553964423145265,B better
+Stable order term,Fully incremental,I-HO__no_contrast,I-HO__base_no_order,Ratings: context gradient,-0.543245449543811,-0.8473987070901887,-0.21550546449088281,B better
+Stable order term,Fully incremental,I-HO__no_contrast,I-HO__base_no_order,Ratings: R2,0.2205309926171132,0.1524385468286334,0.2735510433690274,A better
+Property baseline,Fully incremental,I-HO__no_contrast,I-HO__no_sal,Production: content,1504.1244015699388,1212.7823888247663,1825.723255256426,A better
+Property baseline,Fully incremental,I-HO__no_contrast,I-HO__no_sal,Production: order,816.2651924529939,452.0802736249883,1100.5277075155223,A better
+Property baseline,Fully incremental,I-HO__no_contrast,I-HO__no_sal,Ratings: canonical preference,-1.6199708660460752,-1.8715527480183602,-1.3798988787384483,B better
+Property baseline,Fully incremental,I-HO__no_contrast,I-HO__no_sal,Ratings: context gradient,-0.15346958303647695,-0.2999432377992008,-0.04866985042916579,B better
+Property baseline,Fully incremental,I-HO__no_contrast,I-HO__no_sal,Ratings: R2,-0.20327354888827398,-0.28009820625962156,-0.1357346548885732,B better
+Informativeness,Fully incremental,I-HO__no_contrast,I-HO__base_no_info,Production: content,502.774501839297,421.90987445630645,578.6563420497476,A better
+Informativeness,Fully incremental,I-HO__no_contrast,I-HO__base_no_info,Production: order,15.454747523671678,-10.295725243171852,50.63153591609659,no credible difference
+Informativeness,Fully incremental,I-HO__no_contrast,I-HO__base_no_info,Ratings: canonical preference,0.2881761410939271,-0.2651168268977592,0.8367837147471968,no credible difference
+Informativeness,Fully incremental,I-HO__no_contrast,I-HO__base_no_info,Ratings: context gradient,0.3256613179846545,0.10168952068107838,0.5404488724480617,A better
+Informativeness,Fully incremental,I-HO__no_contrast,I-HO__base_no_info,Ratings: R2,0.0546357634197847,-0.017516004467358286,0.12160487162214198,no credible difference
+Sequential context updating,Fully incremental,I-UPD-HO__base_upd,I-HO__no_contrast,Production: content,-32.14286788607458,-45.75488635864538,-20.40408183342894,B better
+Sequential context updating,Fully incremental,I-UPD-HO__base_upd,I-HO__no_contrast,Production: order,6.599347828276853,2.4831107903044156,11.027588670575014,A better
+Sequential context updating,Fully incremental,I-UPD-HO__base_upd,I-HO__no_contrast,Ratings: canonical preference,0.01614448366109504,-0.15692957814394287,0.1867519080328746,no credible difference
+Sequential context updating,Fully incremental,I-UPD-HO__base_upd,I-HO__no_contrast,Ratings: context gradient,-0.11617862708693504,-0.19142426360464293,-0.05004477166468531,B better
+Sequential context updating,Fully incremental,I-UPD-HO__base_upd,I-HO__no_contrast,Ratings: R2,-0.019127118147710006,-0.05015663528897635,0.007974494012350787,no credible difference
+"Sequential context updating, no stable order term",Fully incremental,I-UPD-HO__base_no_order,I-HO__base_no_order,Production: content,-23.777516842164438,-41.30490571696247,-7.073629032073251,B better
+"Sequential context updating, no stable order term",Fully incremental,I-UPD-HO__base_no_order,I-HO__base_no_order,Production: order,-98.30827449639398,-129.0986593272505,-64.75722915654225,B better
+"Sequential context updating, no stable order term",Fully incremental,I-UPD-HO__base_no_order,I-HO__base_no_order,Ratings: canonical preference,-0.10792931962584577,-0.13435837670936338,-0.08222450547472458,B better
+"Sequential context updating, no stable order term",Fully incremental,I-UPD-HO__base_no_order,I-HO__base_no_order,Ratings: context gradient,0.09784126091783281,-0.22580244609581823,0.39366947175560535,no credible difference
+"Sequential context updating, no stable order term",Fully incremental,I-UPD-HO__base_no_order,I-HO__base_no_order,Ratings: R2,-0.11047061893934677,-0.14626761896775162,-0.07626046800791954,B better
+Local competition (plan-guided vs global),Context-fixed,K-HO__no_contrast,G-HO__no_contrast,Production: content,57.543287312090726,-0.178946257422715,114.26076534901122,no credible difference
+Local competition (plan-guided vs global),Context-fixed,K-HO__no_contrast,G-HO__no_contrast,Production: order,365.54535908988913,117.88448924774262,572.4658723973444,A better
+Local competition (plan-guided vs global),Context-fixed,K-HO__no_contrast,G-HO__no_contrast,Ratings: canonical preference,-0.2137410180740252,-0.40776744322398917,-0.01782860501206275,B better
+Local competition (plan-guided vs global),Context-fixed,K-HO__no_contrast,G-HO__no_contrast,Ratings: context gradient,0.1578057149935927,0.07527249164141227,0.25784826684874357,A better
+Local competition (plan-guided vs global),Context-fixed,K-HO__no_contrast,G-HO__no_contrast,Ratings: R2,0.017368487171160865,-0.016051011926581284,0.053333385387131796,no credible difference
+Local competition (plan-guided vs global),Updating,K-UPD-HO__base_upd,G-UPD-HO__base_upd,Production: content,26.539588826164863,-29.422306468675504,81.30418774064533,no credible difference
+Local competition (plan-guided vs global),Updating,K-UPD-HO__base_upd,G-UPD-HO__base_upd,Production: order,371.3184071465978,136.93547933199392,568.0555382172473,A better
+Local competition (plan-guided vs global),Updating,K-UPD-HO__base_upd,G-UPD-HO__base_upd,Ratings: canonical preference,-0.20437835569063073,-0.35814366054547153,-0.03983283341023891,B better
+Local competition (plan-guided vs global),Updating,K-UPD-HO__base_upd,G-UPD-HO__base_upd,Ratings: context gradient,0.09333287973336402,0.015084142519584152,0.17656310785885182,A better
+Local competition (plan-guided vs global),Updating,K-UPD-HO__base_upd,G-UPD-HO__base_upd,Ratings: R2,0.006377718928141931,-0.023314197118428,0.035097060679672366,no credible difference
+Complete-utterance evaluation (plan-guided vs fully incremental),Context-fixed,K-HO__no_contrast,I-HO__no_contrast,Production: content,561.7303055827978,378.26615671937225,768.8421320510115,A better
+Complete-utterance evaluation (plan-guided vs fully incremental),Context-fixed,K-HO__no_contrast,I-HO__no_contrast,Production: order,24.540384853598617,-54.75342893352833,122.57379748744486,no credible difference
+Complete-utterance evaluation (plan-guided vs fully incremental),Context-fixed,K-HO__no_contrast,I-HO__no_contrast,Ratings: canonical preference,-0.4680348279865693,-0.7026936812411517,-0.24207615764315524,B better
+Complete-utterance evaluation (plan-guided vs fully incremental),Context-fixed,K-HO__no_contrast,I-HO__no_contrast,Ratings: context gradient,-0.04192000830307888,-0.2016145669583156,0.1468133006173364,no credible difference
+Complete-utterance evaluation (plan-guided vs fully incremental),Context-fixed,K-HO__no_contrast,I-HO__no_contrast,Ratings: R2,0.049009600936221254,-0.0015160591489860953,0.1082214050550968,no credible difference
+Complete-utterance evaluation (plan-guided vs fully incremental),Updating,K-UPD-HO__base_upd,I-UPD-HO__base_upd,Production: content,532.9846178816944,359.43591218754847,730.9015487982291,A better
+Complete-utterance evaluation (plan-guided vs fully incremental),Updating,K-UPD-HO__base_upd,I-UPD-HO__base_upd,Production: order,23.868583991816482,-61.96576213973216,130.69118266394685,no credible difference
+Complete-utterance evaluation (plan-guided vs fully incremental),Updating,K-UPD-HO__base_upd,I-UPD-HO__base_upd,Ratings: canonical preference,-0.4226943049923432,-0.6595516827090264,-0.19736549826149208,B better
+Complete-utterance evaluation (plan-guided vs fully incremental),Updating,K-UPD-HO__base_upd,I-UPD-HO__base_upd,Ratings: context gradient,-0.004365966921493385,-0.13890126008197481,0.15035367210719003,no credible difference
+Complete-utterance evaluation (plan-guided vs fully incremental),Updating,K-UPD-HO__base_upd,I-UPD-HO__base_upd,Ratings: R2,0.0554702549428711,0.007884137001732263,0.11022747354429752,A better

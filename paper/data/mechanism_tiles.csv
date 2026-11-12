@@ -1,0 +1,19 @@
+block,row,architecture,account,order,content
+"atop(""Informativeness"", ""gain from"" ~ alpha)",,Global,"Discriminatory efficiency, left to right (Fukumura, Rubio-Fernandez)",103.22820700439082,911.0028141109162
+"atop(""Salience"", ""gain from"" ~ lambda)",,Global,Availability (salience),551.9129286205068,1739.359917531801
+"atop(""Stable order term"", ""gain from"" ~ beta)",fixed,Global,"Lexical prediction (Hahn, Futrell)",2796.649189171705,522.8611799153693
+"atop(""Architecture"", ""vs global, fixed"")",updating,Global,"Composition (Scontras, Franke)",-1.046794270948027,-44.114988094410165
+"atop(""Stable order term"", ""gain from"" ~ beta)",updating,Global,"Lexical prediction (Hahn, Futrell)",2754.4989986771047,496.1126092837495
+"atop(""Architecture"", ""vs global, fixed"")",fixed,Fully incremental,"Discriminatory efficiency, left to right (Fukumura, Rubio-Fernandez)",311.25470367761875,-614.168196778252
+"atop(""Informativeness"", ""gain from"" ~ alpha)",,Fully incremental,"Discriminatory efficiency, left to right (Fukumura, Rubio-Fernandez)",16.496973899462546,162.26146628884595
+"atop(""Salience"", ""gain from"" ~ lambda)",,Fully incremental,Availability (salience),729.478545419213,1531.8374140632868
+"atop(""Stable order term"", ""gain from"" ~ beta)",fixed,Fully incremental,"Lexical prediction (Hahn, Futrell)",2104.6467542169626,724.5098382542935
+"atop(""Architecture"", ""vs global, fixed"")",updating,Fully incremental,Other,313.5223237090314,-640.2284739242726
+"atop(""Stable order term"", ""gain from"" ~ beta)",updating,Fully incremental,"Lexical prediction (Hahn, Futrell)",2187.181694202803,727.8820841694858
+"atop(""Architecture"", ""vs global, fixed"")",fixed,Plan-guided,Other,316.5368347131891,-52.03007969822347
+"atop(""Informativeness"", ""gain from"" ~ alpha)",,Plan-guided,"Discriminatory efficiency, left to right (Fukumura, Rubio-Fernandez)",3.8048487167715064,720.6065949443
+"atop(""Salience"", ""gain from"" ~ lambda)",,Plan-guided,Availability (salience),867.8263443195004,1689.1420743754675
+"atop(""Stable order term"", ""gain from"" ~ beta)",fixed,Plan-guided,"Lexical prediction (Hahn, Futrell)",3111.639103216776,473.69447698124327
+"atop(""Architecture"", ""vs global, fixed"")",updating,Plan-guided,Other,314.10320171252914,-111.27936283203012
+"atop(""Stable order term"", ""gain from"" ~ beta)",updating,Plan-guided,"Lexical prediction (Hahn, Futrell)",3068.140710565567,431.96282085816875
+"atop(""Architecture"", ""vs global, fixed"")",fixed,Global,Other,NA,NA

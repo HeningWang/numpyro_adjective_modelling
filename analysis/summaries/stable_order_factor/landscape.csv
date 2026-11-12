@@ -1,0 +1,16 @@
+model,architecture,semantics,condition,elpd_loo
+G-HO,global,fixed,order,-13669.833902585237
+G-UPD-HO,global,updating,order,-13714.93784140431
+K-HO,plan-guided,fixed,order,-13404.66577517789
+K-UPD-HO,plan-guided,updating,order,-13466.348691312354
+I-HO,fully incremental,fixed,order,-13972.086023293487
+I-UPD-HO,fully incremental,updating,order,-13995.878680408096
+G-HO,global,fixed,no_order,-16988.682899279927
+G-UPD-HO,global,updating,no_order,-16964.945920519065
+K-HO,plan-guided,fixed,no_order,-16989.99935537591
+K-UPD-HO,plan-guided,updating,no_order,-16966.45222273609
+I-HO,fully incremental,fixed,no_order,-16801.242615764742
+I-UPD-HO,fully incremental,updating,no_order,-16910.942458780384
+G-HO,global,fixed,no_info,-14683.403551308162
+K-HO,plan-guided,fixed,no_info,-14129.07721883896
+I-HO,fully incremental,fixed,no_info,-14150.844463481797

@@ -1,0 +1,8 @@
+account,test,contrast,estimate,lower,upper
+Language efficiency,with − without β,plan-guided: with vs without stable term,3111.639103216776,2723.595981966066,3512.4275193627377
+Composition per utterance,"updating − fixed, with β",plan-guided: updating vs fixed,-2.4336330006599596,-9.758340689104882,6.4502852305456635
+Composition per utterance,"updating − fixed, without β","plan-guided: updating vs fixed, no stable term",41.0647596505493,32.088277680111176,52.27331726653285
+Incremental pragmatics,"α on, incremental speaker",incremental: with vs without informativeness,16.496973899462546,-6.829488706646575,49.69736558899531
+Availability,with − without λ,plan-guided: with vs without salience,867.8263443195004,634.9219673602646,1076.5369379074443
+Evaluation scope,plan-guided − global,plan-guided vs global,316.5368347131891,151.60990288047805,452.08228173862017
+Evaluation scope,plan-guided − incremental,plan-guided vs incremental,5.282131035570361,-89.66975567427063,130.89501075326183

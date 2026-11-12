@@ -1,0 +1,40 @@
+account,mechanism,architecture,component,minuend,subtrahend,estimate_elpd,credible_lower_95,credible_upper_95,probability_positive
+Lexical prediction,Stable order term,Global,Number of adjectives,G-HO__order,G-HO__no_order,363.035204169413,265.40492829879975,456.500536046706,1.0
+Lexical prediction,Stable order term,Global,Which adjectives,G-HO__order,G-HO__no_order,159.82597574595638,21.42519704586728,289.53674417559034,0.98735
+Lexical prediction,Stable order term,Global,Order,G-HO__order,G-HO__no_order,2796.649189171705,2471.332338648734,3142.4211536470048,1.0
+Discriminatory efficiency,Informativeness,Global,Number of adjectives,G-HO__order,G-HO__no_info,441.2600992064617,302.213654697106,600.5782694481877,1.0
+Discriminatory efficiency,Informativeness,Global,Which adjectives,G-HO__order,G-HO__no_info,469.7427149044546,382.35601998691186,562.4796973546981,1.0
+Discriminatory efficiency,Informativeness,Global,Order,G-HO__order,G-HO__no_info,103.22820700439082,62.13041282084189,142.79959029377494,1.0
+Hierarchical composition,Context updating,Global,Number of adjectives,G-UPD-HO__order,G-HO__order,-15.94221482159109,-25.285879309823468,-6.632135743936345,0.00068
+Hierarchical composition,Context updating,Global,Which adjectives,G-UPD-HO__order,G-HO__order,-28.172773272819082,-36.76573879715444,-20.10188661180927,0.0
+Hierarchical composition,Context updating,Global,Order,G-UPD-HO__order,G-HO__order,-1.046794270948027,-4.905531589900768,3.1797190039320213,0.29222
+Availability,Prefix salience,Global,Number of adjectives,G-HO__order,G-HO__no_sal,164.58394634793416,67.51897581857024,255.27519391026053,0.99883
+Availability,Prefix salience,Global,Which adjectives,G-HO__order,G-HO__no_sal,1574.775971183867,1297.6109483841844,1874.5822729419328,1.0
+Availability,Prefix salience,Global,Order,G-HO__order,G-HO__no_sal,551.9129286205068,444.0618466833893,662.0737394977854,1.0
+Lexical prediction,Stable order term,Plan-guided,Number of adjectives,K-HO__order,K-HO__no_order,279.6164707075998,182.05022199570294,366.66718512347273,0.999995
+Lexical prediction,Stable order term,Plan-guided,Which adjectives,K-HO__order,K-HO__no_order,194.07800627364352,68.3132172758565,310.95517746372707,0.99803
+Lexical prediction,Stable order term,Plan-guided,Order,K-HO__order,K-HO__no_order,3111.639103216776,2723.595981966066,3512.4275193627377,1.0
+Discriminatory efficiency,Informativeness,Plan-guided,Number of adjectives,K-HO__order,K-HO__no_info,353.45309790040744,232.0369813942401,492.6561695269492,1.0
+Discriminatory efficiency,Informativeness,Plan-guided,Which adjectives,K-HO__order,K-HO__no_info,367.1534970438926,296.618451348533,441.57508900863445,1.0
+Discriminatory efficiency,Informativeness,Plan-guided,Order,K-HO__order,K-HO__no_info,3.8048487167715064,-62.497687929205036,95.06497081036004,0.491235
+Hierarchical composition,Context updating,Plan-guided,Number of adjectives,K-UPD-HO__order,K-HO__order,-18.7978536137339,-28.576396352841943,-9.248911378869682,0.00017
+Hierarchical composition,Context updating,Plan-guided,Which adjectives,K-UPD-HO__order,K-HO__order,-40.45142952007274,-52.068664563939286,-30.171956431805874,0.0
+Hierarchical composition,Context updating,Plan-guided,Order,K-UPD-HO__order,K-HO__order,-2.4336330006599596,-9.758340689104882,6.4502852305456635,0.254905
+Incremental planning,Architecture vs global,Plan-guided,Number of adjectives,K-HO__order,G-HO__order,-85.82865998046543,-118.52369045525872,-56.78422678862017,0.0
+Incremental planning,Architecture vs global,Plan-guided,Which adjectives,K-HO__order,G-HO__order,33.798580282241964,3.8327119927327375,64.90027742607096,0.98686
+Incremental planning,Architecture vs global,Plan-guided,Order,K-HO__order,G-HO__order,316.5368347131891,151.60990288047805,452.08228173862017,0.99917
+Lexical prediction,Stable order term,Fully incremental,Number of adjectives,I-HO__order,I-HO__no_order,437.5171250896511,306.3877988877607,591.6745904660214,1.0
+Lexical prediction,Stable order term,Fully incremental,Which adjectives,I-HO__order,I-HO__no_order,286.9927131646424,185.14849269772935,393.7830895175396,1.0
+Lexical prediction,Stable order term,Fully incremental,Order,I-HO__order,I-HO__no_order,2104.6467542169626,1782.1593546042166,2452.8575536565663,1.0
+Discriminatory efficiency,Informativeness,Fully incremental,Number of adjectives,I-HO__order,I-HO__no_info,18.062327938781557,-16.11128073485897,51.34951467667266,0.856285
+Discriminatory efficiency,Informativeness,Fully incremental,Which adjectives,I-HO__order,I-HO__no_info,144.1991383500644,107.98420053264873,183.15271978714702,1.0
+Discriminatory efficiency,Informativeness,Fully incremental,Order,I-HO__order,I-HO__no_info,16.496973899462546,-6.829488706646575,49.69736558899531,0.895505
+Hierarchical composition,Context updating,Fully incremental,Number of adjectives,I-UPD-HO__order,I-HO__order,2.07952412568602,-0.6416444174816062,4.91989749428495,0.932015
+Hierarchical composition,Context updating,Fully incremental,Which adjectives,I-UPD-HO__order,I-HO__order,-28.139801271706787,-36.45203083650342,-21.145938545674692,0.0
+Hierarchical composition,Context updating,Fully incremental,Order,I-UPD-HO__order,I-HO__order,2.2676200314126502,0.07826989270149383,4.322757980293745,0.97846
+Availability,Prefix salience,Fully incremental,Number of adjectives,I-HO__order,I-HO__no_sal,187.4637591989868,120.70147002654525,254.64376696684926,1.0
+Availability,Prefix salience,Fully incremental,Which adjectives,I-HO__order,I-HO__no_sal,1344.3736548642999,1085.098928650077,1623.4299804150185,1.0
+Availability,Prefix salience,Fully incremental,Order,I-HO__order,I-HO__no_sal,729.478545419213,424.9591582834875,960.6728067874047,0.999865
+Incremental planning,Architecture vs global,Fully incremental,Number of adjectives,I-HO__order,G-HO__order,-434.0481344355183,-597.7584136771092,-295.5839439726649,0.0
+Incremental planning,Architecture vs global,Fully incremental,Which adjectives,I-HO__order,G-HO__order,-180.12006234273363,-261.60902517598254,-101.34488328444358,1e-05
+Incremental planning,Architecture vs global,Fully incremental,Order,I-HO__order,G-HO__order,311.25470367761875,23.15379528417497,538.0772431140743,0.981095
