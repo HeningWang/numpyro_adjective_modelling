@@ -94,7 +94,7 @@
 \newcommand{\param}[1]{\ensuremath{#1}}
 
 % ---- convenience commands ---------------------------------------------------
-\newcommand{\mf}[1]{\textcolor{shimmer-main}{[\texbf{MF: }{#1}]}}
+\newcommand{\mf}[1]{\textcolor{shimmer-main}{[\textbf{MF: }{#1}]}}
 
 % ---- title matter -----------------------------------------------------------
 \title{Communicative Efficiency in Adjective Ordering:\\ Between Hierarchical Composition and Incremental Pragmatics}
@@ -486,7 +486,7 @@ At position $t+1$, the utility of producing adjective $w_{t+1}$ after the prefix
   + \lambda_{\mathrm{salience}}z_{w_{t+1}},
   \label{eq:prefix-raw-utility}
 \end{equation}
-where the pragmatic-optimality parameter $\alpha$ controls sensitivity to informativeness and $z_{w_{t+1}}$ represents the visual salience of the candidate property.
+where the pragmatic-rationality parameter $\alpha$ controls sensitivity to informativeness and $z_{w_{t+1}}$ represents the visual salience of the candidate property.
 Visually salient properties, colour in particular, are often mentioned even when they are redundant \citep[p.~2]{rubio2016redundant}, and more salient properties tend to be produced earlier \citep[p.~47]{fukumura2018ordering}.
 The salience score is higher for colour than for size and increases when a property contrasts with the other objects in the display (\Cref{sec:appendix:model-specification}).
 
@@ -569,7 +569,7 @@ Crossing the three production architectures with the two semantic regimes gives 
 The design estimates the predictive contribution of each assumption and their interaction.
 The global and fully incremental models fix $\kappa$ at zero and one, and the plan-guided model estimates one $\kappa$ shared across participants.
 Two further models refine the plan-guided architecture with participant-specific $\kappa_i$ under each semantic regime, so the main comparisons rest on eight fitted models.
-All models also allow participant variation in pragmatic optimality $\alpha_i$ and stable-order weight $\beta_i$.
+All models also allow participant variation in pragmatic rationality $\alpha_i$ and stable-order weight $\beta_i$.
 
 We fitted the eight models as hierarchical Bayesian models with the structure shown in \Cref{fig:production-inference-plate}.
 For participant $i$ on trial $n$, the model maps the display $C_{in}$ and the stable-order score $\Omega(u)$ to a probability $\pi_{in}(u)$ over the fifteen utterances, given by the speaker of the respective architecture (\Cref{eq:plan-guided-speaker}) with Laplace smoothing (\Cref{sec:appendix:model-specification}).
@@ -584,7 +584,7 @@ Bayesian inference was performed in NumPyro \citep{phan2019composable}, and post
   Solid circles represent estimated quantities, squares represent fixed model or trial inputs, the double circle represents the deterministic utterance distribution, and the shaded circle represents the observed response.
   The fixed variables $A$ and $R$ index the production architecture and the semantic regime.
   For participant $i$ on trial $n=1,\ldots,N_i$, the display $C_{in}$ and the stable-order score $\Omega(u)$ determine the probability $\pi_{in}(u)$ of each utterance $u$, from which the response $y_{in}$ is drawn.
-  The participant parameters are pragmatic optimality $\alpha_i$, which scales the weight of informativeness, the stable-order weight $\beta_i$, which scales the stable-order score, and the degree of planning $\kappa_i$.
+  The participant parameters are pragmatic rationality $\alpha_i$, which scales the weight of informativeness, the stable-order weight $\beta_i$, which scales the stable-order score, and the degree of planning $\kappa_i$.
   They are drawn from population distributions with locations $\alpha_0$, $\mu_{\log\beta}$, and $\mu_\kappa$ and scales $\tau_{\log\alpha}$, $\tau_\beta$, and $\tau_\kappa$.
   The vector $\boldsymbol\lambda$ collects the coefficients shared across participants, which weight salience and the length and selection terms.
   The dashed $\kappa$ hierarchy applies only to the plan-guided models with participant-specific $\kappa_i$; the other plan-guided models estimate one shared $\kappa$, and the global and fully incremental models fix $\kappa$ at zero and one.}
@@ -730,7 +730,7 @@ The full specification appears in \Cref{sec:appendix:sim-params,sec:appendix:con
 
 \begin{table}[!htbp]
 \centering
-\caption{Factors of the simulation. All factors are fully crossed. With the two orders, the global speaker was implemented as in the earlier simulations. In all speaker models, pragmatic optimality is $\alpha=1$, and the auxiliary components and the Laplace smoothing are omitted.}
+\caption{Factors of the simulation. All factors are fully crossed. With the two orders, the global speaker was implemented as in the earlier simulations. In all speaker models, pragmatic rationality is $\alpha=1$, and the auxiliary components and the Laplace smoothing are omitted.}
 \label{tab:simulation-design}
 \footnotesize
 \begin{tabularx}{0.92\textwidth}{lXr}
@@ -939,11 +939,9 @@ Acknowledgements, funding information, author contributions, and competing-inter
 
 \subsection{Participants}
 
-All studies were conducted online via Prolific, with compensation set slightly above the platform's median level.
-Participants reported German as their native language.
+The two slider studies recruited participants in the same way as the production experiment.
 
 \paragraph{Original slider study.}
-\label{sec:exp:slider}
 The original slider data are those reported by \citet{schlotterbeck2023incremental}.
 The retained sample included 70 participants in the low- and 64 in the high-discriminability group.
 Exclusions addressed missing records, extreme completion times, and failures on control or task-relevance checks (\Cref{tab:exclusion-transparency}).
@@ -953,7 +951,6 @@ Exclusions addressed missing records, extreme completion times, and failures on 
 The replication used the same task, conditions, and exclusion criteria, with newly generated items and an independent participant sample.
 
 \paragraph{Production experiment.}
-\label{sec:exp:production}
 The retained production sample comprised 60 participants with low size discriminability and 53 with high size discriminability.
 Participants from either slider study were ineligible.
 Exclusions addressed extreme completion times, missing or unannotatable responses, and more than $80\%$ identical responses.
@@ -1130,7 +1127,7 @@ For each posterior draw, posterior-predictive cell expectations were computed fo
 The planned contrasts were then evaluated on the rating or response-probability scale.
 
 
-\subsection{Detailed behavioural results}
+\subsection{Detailed Behavioural Results}
 \label{sec:appendix:behavioural-results}
 
 \Cref{tab:slider-behavioural-contrasts,tab:production-behavioural-contrasts} report posterior medians and $95\%$ credible intervals for the behavioural contrasts.
@@ -1138,7 +1135,7 @@ Slider estimates are in centred-rating units; production estimates are differenc
 The column $P$ reports the posterior probability of the direction stated in each row; a dash indicates that a directional probability was not separately reported for that contrast in the main analysis summary.
 Interaction estimates compare effects across contexts, whereas within-context contrasts compare the two discriminability groups in one context.
 
-\subsubsection{Slider ratings and replication}
+\subsubsection{Slider Ratings and Replication}
 
 Both slider studies supported the predicted referential-context gradient, including a residual size-first preference in colour-sufficient displays (\Cref{fig:slider-replication}).
 The original data also showed a credible interaction in the comparison of size-sufficient and both-necessary displays.
@@ -1146,19 +1143,16 @@ Higher discriminability was associated with a shift towards size-first ratings i
 The interaction therefore concerned the difference between these effects; each individual effect was less precisely estimated.
 The corresponding interaction between colour-sufficient and size-sufficient displays was less conclusive.
 
-The replication did not clearly reproduce either interaction contrast.
+The replication did not clearly replicate either interaction contrast.
 Its estimated effect of higher size discriminability was positive in all three contexts, with intervals above zero in size-sufficient and colour-sufficient displays and an interval spanning zero in both-necessary displays.
 Thus, clearer size differences could strengthen size-first preference in this replication, with uncertainty about variation in that effect across contexts.
-The two studies used the same Bayesian hierarchical model specification.
-Estimates in \Cref{tab:slider-behavioural-contrasts} are posterior medians, with contrasts expressed in centred-rating units; directional probabilities refer to the stated contrast under the fitted model.
 
 \begin{figure}[!htbp]
   \centering
   \includegraphics[width=0.95\textwidth]{study1_slider_replication.pdf}
   \caption{Ordering judgements in the original slider study and its replication by referential context and size discriminability.
   Points show posterior medians of expected centred ratings for a new participant; error bars show $95\%$ credible intervals.
-  Positive values indicate size-first preference; zero indicates neutrality.
-  The two studies use the same model specification and interval definition.}
+  Positive values indicate size-first preference; zero indicates neutrality.}
   \label{fig:slider-replication}
 \end{figure}
 
@@ -1196,7 +1190,7 @@ Replication & Discriminability: colour-sufficient & $.124$ & $[.016,.240]$ & ---
 
 The posterior probability of the graded context order was greater than $.999$ in the original study and $.999$ in the replication.
 Observed mean centred ratings in the replication were $.272$ in size-sufficient, $.197$ in both-necessary, and $.054$ in colour-sufficient contexts.
-\Cref{fig:slider-empirical} shows the observed ratings in the original study; \Cref{fig:slider-replication} shows fitted cell expectations with 95\% credible intervals for both slider studies.
+\Cref{fig:slider-empirical} shows the observed ratings in the original study; \Cref{fig:slider-replication} shows fitted cell expectations with 95\% CrIs for both slider studies.
 
 \begin{figure}[!htbp]
   \centering
@@ -1206,7 +1200,7 @@ Observed mean centred ratings in the replication were $.272$ in size-sufficient,
   \label{fig:slider-empirical}
 \end{figure}
 
-\subsubsection{Production contrasts}
+\subsubsection{Production Contrasts}
 
 The planned redundancy interaction showed a larger increase under low discriminability in size-sufficient displays than in the other two contexts (\Cref{fig:production-responses}, Panel B; \Cref{tab:production-behavioural-contrasts}).
 Within size-sufficient displays, lower discriminability increased redundant adjective use; the corresponding increases in both-necessary and colour-sufficient displays were smaller, and their credible intervals included zero.
@@ -1252,7 +1246,6 @@ The production model represents participant variation alongside the visual manip
 
 \section{Production Model Specification}
 \label{sec:appendix:model-specification}
-\label{sec:appendix:inventory}
 
 \subsection{Representation of Experimental Displays}
 
@@ -1278,7 +1271,7 @@ For an object of size $s_o$, graded membership is
 \end{equation}
 where $\Phi$ is the standard normal cumulative distribution function.
 The weighted quantiles are the first observed sizes at which cumulative comparison-class probability reaches $.20$ and $.80$.
-The same width $w$ is used in both discriminability groups; the recorded sizes enter this function directly.
+The same perceptual blur $w$ is used in both discriminability groups; the recorded sizes enter this function directly.
 For colour and form, matching objects receive membership $\nu$ and nonmatching objects $1-\nu$, with $\nu_{\mathrm C}=.59$ and $\nu_{\mathrm F}=.50$.
 Each prefix is interpreted from the uniform object prior, applying its modifiers once in noun-outward order.
 Context updating changes the comparison-class weights used for the size quantiles as inner modifiers are applied.
@@ -1298,7 +1291,7 @@ Component & Status & Role \\
 Observed display input & Fixed & All visible size, colour, and form values \\
 Size threshold and blur & Fixed constants & Graded size meaning in the display comparison class \\
 Colour reliability & Fixed & Graded support for matching colour \\
-Form reliability & Fixed, relaxed & Form production supported by the length and selection terms \\
+Form reliability & Fixed at $\nu_{\mathrm F}=.50$ & Form production supported by the length and selection terms \\
 Pragmatic rationality & Estimated, hierarchical & Participant variation in response concentration \\
 Stable-order score $\Omega$ & Fixed feature & Relative order expectation within adjective sets \\
 Stable-order weight $\beta_i$ & Estimated, hierarchical & Participant variation in stable order expectation \\
@@ -1310,12 +1303,12 @@ $\kappa$ or $\kappa_i$ & Estimated in plan-guided production & Weight of local a
 \end{table}
 
 The form semantics, stable-order feature, and length and selection terms were specified on the present data and are identical across all compared production architectures and semantic regimes.
-The population pragmatic-optimality parameter has prior $\alpha_0\sim\operatorname{HalfNormal}(3)$, and the population log stable-order weight has prior $\mu_{\log\beta}\sim\operatorname{Normal}(0,.35)$.
+The population pragmatic-rationality parameter has prior $\alpha_0\sim\operatorname{HalfNormal}(3)$, and the population log stable-order weight has prior $\mu_{\log\beta}\sim\operatorname{Normal}(0,.35)$.
 Participant effects are noncentred: $\alpha_i=\alpha_0\exp(\tau_{\log\alpha}z_{\alpha i})$ and $\beta_i=\exp(\mu_{\log\beta}+\tau_\beta z_{\beta i})$, with independent standard-normal $z$ values, $\tau_{\log\alpha}\sim\operatorname{HalfNormal}(.15)$, and $\tau_\beta\sim\operatorname{HalfNormal}(.5)$.
 The shared plan-guided weight has prior $\kappa\sim\operatorname{Uniform}(0,1)$.
 In the model with participant-specific $\kappa_i$, $\mu_\kappa\sim\operatorname{Uniform}(0,1)$ and $\kappa_i=\operatorname{logit}^{-1}(\operatorname{logit}(\mu_\kappa)+\tau_\kappa z_{\kappa i})$, with $\tau_\kappa\sim\operatorname{HalfNormal}(.5)$ and independent $z_{\kappa i}\sim\operatorname{Normal}(0,1)$.
-The salience coefficient has a $\operatorname{HalfNormal}(1)$ prior and the salience-continuation coefficient a $\operatorname{HalfNormal}(.75)$ prior.
-The sufficient-single-adjective and form-use coefficients each have a $\operatorname{HalfNormal}(1.5)$ prior; the three-adjective penalty and the two size-reliability coefficients each have a $\operatorname{HalfNormal}(1)$ prior.
+The salience coefficient has a $\operatorname{HalfNormal}(1)$ prior and the continuation-cost coefficient $\rho_{\mathrm{cont}}$ a $\operatorname{HalfNormal}(.75)$ prior.
+The sufficient-single-adjective and form-use coefficients each have a $\operatorname{HalfNormal}(1.5)$ prior; the three-adjective penalty and the two size-discriminability coefficients ($\lambda_{\mathrm S}$, $\lambda_{\mathrm{SF}}$) each have a $\operatorname{HalfNormal}(1)$ prior.
 Threshold selectivity is fixed at $\delta=.50$; colour reliability, form reliability, and perceptual blur take the values specified above.
 
 \Needspace{10\baselineskip}
@@ -1388,7 +1381,30 @@ A final Laplace smoothing step mixes this distribution with a uniform distributi
  p(y_{in}=u\mid C_{in})=(1-.003)\widetilde S_{\kappa_i}(u\mid C_{in})+\frac{.003}{15}.
 \end{equation}
 The matched global and fully incremental models fix $\kappa$ at zero and one, respectively; the matched plan-guided model estimates a shared $\kappa$; the model with participant-specific $\kappa_i$ estimates them for each participant.
-All models retain participant hierarchies for pragmatic optimality and stable-order weight, with the remaining task coefficients shared across participants.
+All models retain participant hierarchies for pragmatic rationality and stable-order weight, with the salience and length and selection coefficients shared across participants.
+
+\subsection{Local Normalisation and Model Endpoints}
+\label{sec:appendix:normalisation-audit}
+
+\paragraph{Local adjective competition.}
+Substituting \Cref{eq:global-speaker,eq:incremental-speaker} into \Cref{eq:plan-guided-speaker} and suppressing the shared referent and context arguments, the shared terms $\beta\Omega(u)+\Lambda(u,C)$ enter with weight one, and the remaining terms combine into the accumulated utility minus $\kappa$ times the local-normalisation term:
+\begin{equation}
+\begin{aligned}
+  &(1-\kappa)\sum_{t=0}^{T-1}U(w_{t+1}\mid w_{1:t})
+   +\kappa\sum_{t=0}^{T-1}\log
+   \frac{\exp U(w_{t+1}\mid w_{1:t})}
+        {\sum_{w'\in\mathcal A(w_{1:t})}\exp U(w'\mid w_{1:t})}\\
+  &\quad=\sum_{t=0}^{T-1}U(w_{t+1}\mid w_{1:t})
+   -\kappa\sum_{t=0}^{T-1}\log\!\sum_{w'\in\mathcal A(w_{1:t})}\exp U(w'\mid w_{1:t}).
+\end{aligned}
+\label{eq:local-normalisation}
+\end{equation}
+The normalising constants of $S_{\mathrm{G}}$ and $S_{\mathrm{I}}$ do not depend on $u$ and are absorbed by the renormalisation over the fifteen completed utterances.
+
+\paragraph{Relation between the endpoints.}
+At common parameter values, plan-guided production with $\kappa=0$ exactly recovers global production, and with $\kappa=1$ exactly recovers fully incremental production.
+The stable-order score, length and selection terms, and utterance space are identical across the three architectures.
+The interpolation in \Cref{eq:plan-guided-speaker} applies before the final Laplace smoothing described in \Cref{sec:appendix:model-specification}.
 
 \section{Production Model Comparison and Diagnostics}
 \label{sec:appendix:model-diagnostics}
@@ -1401,9 +1417,9 @@ The two global models retained 4{,}000 draws per chain at maximum tree depth 8; 
 The eight fits had zero divergences, maximum $\widehat R<1.01$, minimum bulk and tail effective sample sizes above 400, minimum Bayesian fraction of missing information (BFMI) above $.64$, and no observation with Pareto $k>.7$.
 
 The pointwise leave-one-out score vectors use the same trial ordering and response support.
-Because observations are repeated within participants, paired score contributions are first summed within participant.
+Observations are repeated within participants, so paired score contributions are first summed within participant.
 A participant-level Bayesian bootstrap then assigns Dirichlet weights to the 113 participant contributions over 200{,}000 draws.
-Reported uncertainty comprises 95\% credible intervals and posterior probabilities for directional contrasts.
+Reported uncertainty comprises 95\% CrIs and posterior probabilities for directional contrasts.
 The predictive target is another response from a participant represented in the dataset, with that participant's remaining trials available to estimate their participant-specific parameters.
 
 \begin{table}[H]
@@ -1413,25 +1429,25 @@ The predictive target is another response from a participant represented in the 
 \footnotesize
 \begin{tabularx}{\textwidth}{Xrrr}
 \toprule
-Contrast & $\Delta$ELPD & 95\% credible interval & $P(\Delta>0)$ \\
+Contrast & $\Delta$ELPD & 95\% CrI & $P(\Delta>0)$ \\
 \midrule
-Plan-guided, shared $\kappa$, minus average endpoints & $402.677$ & $[311.466,503.098]$ & $>.999$ \\
-Fully incremental minus global & $-291.596$ & $[-684.673,-1.321]$ & $.024$ \\
-Updating minus fixed, shared-$\kappa$ grid & $-43.527$ & $[-56.005,-31.770]$ & $<.001$ \\
-Participant $\kappa_i$ hierarchy, context-fixed & $364.742$ & $[248.178,520.967]$ & $>.999$ \\
-Participant $\kappa_i$ hierarchy, updating & $372.285$ & $[255.597,526.056]$ & $>.999$ \\
+Plan-guided, shared $\kappa$, minus average endpoints & $402.7$ & $[311.5,503.1]$ & $>.999$ \\
+Fully incremental minus global & $-291.6$ & $[-684.7,-1.3]$ & $.024$ \\
+Updating minus fixed, averaged over architectures & $-43.5$ & $[-56.0,-31.8]$ & $<.001$ \\
+Participant $\kappa_i$ hierarchy, context-fixed & $364.7$ & $[248.2,521.0]$ & $>.999$ \\
+Participant $\kappa_i$ hierarchy, updating & $372.3$ & $[255.6,526.1]$ & $>.999$ \\
 \midrule
 \multicolumn{4}{l}{\emph{Simple effects and interaction, shared $\kappa$}} \\
-Plan-guided minus global, context-fixed & $265.168$ & $[77.902,417.166]$ & $.994$ \\
-Plan-guided minus fully incremental, context-fixed & $567.420$ & $[364.061,815.282]$ & $>.999$ \\
-Plan-guided minus global, updating & $248.589$ & $[69.599,393.457]$ & $.994$ \\
-Plan-guided minus fully incremental, updating & $529.530$ & $[332.673,772.631]$ & $>.999$ \\
-Updating minus fixed, global & $-45.104$ & $[-60.182,-30.157]$ & $<.001$ \\
-Updating minus fixed, plan-guided & $-61.683$ & $[-80.920,-43.573]$ & $<.001$ \\
-Updating minus fixed, fully incremental & $-23.793$ & $[-32.383,-16.102]$ & $<.001$ \\
-Interaction, plan-guided minus global & $-16.579$ & $[-25.733,-6.678]$ & $.001$ \\
-Interaction, plan-guided minus fully incremental & $-37.890$ & $[-54.992,-21.627]$ & $<.001$ \\
-Interaction, global minus fully incremental & $-21.311$ & $[-36.263,-6.518]$ & $.003$ \\
+Plan-guided minus global, context-fixed & $265.2$ & $[77.9,417.2]$ & $.994$ \\
+Plan-guided minus fully incremental, context-fixed & $567.4$ & $[364.1,815.3]$ & $>.999$ \\
+Plan-guided minus global, updating & $248.6$ & $[69.6,393.5]$ & $.994$ \\
+Plan-guided minus fully incremental, updating & $529.5$ & $[332.7,772.6]$ & $>.999$ \\
+Updating minus fixed, global & $-45.1$ & $[-60.2,-30.2]$ & $<.001$ \\
+Updating minus fixed, plan-guided & $-61.7$ & $[-80.9,-43.6]$ & $<.001$ \\
+Updating minus fixed, fully incremental & $-23.8$ & $[-32.4,-16.1]$ & $<.001$ \\
+Interaction, plan-guided minus global & $-16.6$ & $[-25.7,-6.7]$ & $.001$ \\
+Interaction, plan-guided minus fully incremental & $-37.9$ & $[-55.0,-21.6]$ & $<.001$ \\
+Interaction, global minus fully incremental & $-21.3$ & $[-36.3,-6.5]$ & $.003$ \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -1456,9 +1472,9 @@ In the context-fixed plan-guided model, the posterior mean of the shared $\kappa
 \footnotesize
 \begin{tabularx}{\textwidth}{l X r r}
 \toprule
-Parameter & Description & Mean & 95\% credible interval \\
+Parameter & Description & Mean & 95\% CrI \\
 \midrule
-$\alpha_0$ & Population pragmatic optimality & $.924$ & $[.769,1.093]$ \\
+$\alpha_0$ & Population pragmatic rationality & $.924$ & $[.769,1.093]$ \\
 $\tau_{\log\alpha}$ & Participant scale of $\log\alpha_i$ & $.800$ & $[.688,.922]$ \\
 $\mu_{\log\beta}$ & Population log stable-order weight & $.962$ & $[.888,1.037]$ \\
 $\tau_\beta$ & Participant scale of $\log\beta_i$ & $.353$ & $[.297,.420]$ \\
@@ -1505,9 +1521,9 @@ $\lambda_{\mathrm{SF}}$ & $.135$ & $.110$ & $.081$ & $.107$ & $.087$ & $.078$ \\
 \subsection{Decomposing the Semantic Predictive Contrast}
 \label{sec:semantic-score-decomposition}
 
-The architecture-specific updating-minus-fixed effects were $-45.104$ ELPD for global production, $-61.683$ for plan-guided production, and $-23.793$ for fully incremental production.
-Each architecture-specific 95\% credible interval excluded zero.
-The sequentially updating participant-specific model was lower by $54.140$ ELPD, with a 95\% credible interval for updating minus fixed of $[-69.042,-39.733]$.
+The architecture-specific updating-minus-fixed effects were $-45.1$ ELPD for global production, $-61.7$ for plan-guided production, and $-23.8$ for fully incremental production.
+Each architecture-specific 95\% CrI excluded zero.
+The sequentially updating participant-specific model was lower by $54.1$ ELPD, with a 95\% CrI for updating minus fixed of $[-69.0,-39.7]$.
 
 Let $\ell(u)$ denote utterance length and $A(u)$ its unordered adjective set.
 For each held-out response, its predictive probability factors as
@@ -1518,12 +1534,12 @@ For each held-out response, its predictive probability factors as
   p_{-in}(u\mid A(u),C_{in}).
 \end{equation}
 We first integrate the fifteen-response distribution using the PSIS weights for leaving out that entire response, then obtain the length and adjective-set probabilities by summation.
-Taking logarithms yields three additive contributions to the original response score.
+Taking logarithms yields three additive contributions to the original response score (\Cref{fig:semantic-decomposition}).
 Paired differences are summed within participant, with 95\% intervals from 200{,}000 Dirichlet-bootstrap draws.
-For the participant-specific $\kappa_i$ pair, updating minus fixed was $-21.549$ ELPD for length, 95\% credible interval $[-30.933,-12.443]$, and $-31.068$ for adjective set conditional on length, $[-39.202,-23.530]$.
-The conditional-order contribution was $-1.524$ ELPD, with an interval of $[-4.879,1.774]$.
+For the participant-specific $\kappa_i$ pair, updating minus fixed was $-21.5$ ELPD for length, 95\% CrI $[-30.9,-12.4]$, and $-31.1$ for adjective set conditional on length, $[-39.2,-23.5]$.
+The conditional-order contribution was $-1.5$ ELPD, with an interval of $[-4.9,1.8]$.
 Across all four semantic pairs, adjective set conditional on length makes a negative contribution to updating minus fixed.
-For the same pair, the original response contrast sums to $-17.548$ ELPD in size--colour trials, $-51.172$ in size--form trials, and $14.580$ in colour--form trials.
+For the same pair, the original response contrast sums to $-17.5$ ELPD in size--colour trials, $-51.2$ in size--form trials, and $14.6$ in colour--form trials.
 
 \begin{figure}[!htbp]
   \centering
@@ -1537,14 +1553,14 @@ For the same pair, the original response contrast sums to $-17.548$ ELPD in size
 
 \paragraph{Response residuals.}
 For the two plan-guided models with participant-specific $\kappa_i$, mean absolute residuals across response cells were $3.04$ percentage points under context-fixed semantics and $3.08$ under updating.
-The largest between-model differences occurred in size-sufficient displays, in line with the held-out partition, which located the largest net disadvantage of updating in the size--form family.
+The largest between-model differences occurred in size-sufficient displays, consistent with the decomposition by adjective family, in which updating lost most in size--form trials ($-51.2$).
 
 \subsection{Posterior-Predictive Adequacy}
 
 The condition-wise response distributions appear in \Cref{fig:production-ppc-full-responses}.
 Across the 270 cells formed by the fifteen completed utterances, three adjective families, three referential contexts, and two size-discriminability conditions, the posterior predictions correlated with the observed proportions at $r=.909$, with a mean absolute error of $3.0$ percentage points and a root mean squared error of $6.0$ percentage points.
 
-In size--colour trials, the model reproduced the predominance of colour-only responses when colour was sufficient and the greater use of size alone when size was sufficient and highly discriminable.
+In size--colour trials, the model captured the predominance of colour-only responses when colour was sufficient and the greater use of size alone when size was sufficient and highly discriminable.
 The main remaining discrepancy concerned the balance between some two- and three-adjective utterances, with size--form responses overpredicted and size--colour--form responses underpredicted.
 
 \begin{figure}[!htbp]
@@ -1573,11 +1589,10 @@ The same comparison for size--form and colour--form trials appears in \Cref{fig:
 
 Seven robustness checks address the participant-level structure of the architecture comparison, its distribution across adjective families, the fixed colour reliability, the condition-specific length and selection terms, the prefix utility, the stable order term, and generalisation to new participants.
 Unless stated otherwise, contrasts are context-fixed, summed within participant, and summarised with the participant-level Bayesian bootstrap described above.
-In total, the comparisons rest on 72 fitted production models: the eight models in \Cref{sec:model:inference}, 50 cross-validation fits, and 14 refits for the robustness checks below.
 
 \paragraph{Endpoint mixture benchmark.}
 For each participant, the benchmark takes the higher held-out score of the global and the fully incremental model.
-Because this choice is made after seeing the scores, the benchmark favours an account in which participants differ only in which endpoint they resemble.
+This choice is made after seeing the scores, so the benchmark favours an account in which participants differ only in which endpoint they resemble.
 The plan-guided model with participant-specific $\kappa_i$ predicted better than this benchmark, whereas the plan-guided model with a shared $\kappa$ did not (\Cref{tab:robustness-checks}).
 The participant-specific model exceeded both endpoint models for 59 of the 113 participants.
 
@@ -1596,7 +1611,7 @@ These models predicted worse than their counterparts with the two terms, but pla
 The shared $\kappa$ remained between the endpoints (posterior mean $.50$, 95\% CrI $[.46,.55]$ under context-fixed semantics).
 
 \paragraph{Prefix utility.}
-The global and plan-guided models were refitted under both semantic regimes with a terminal utility, which scores a completed utterance only by its final target probability, while salience and local competition entered as before (\Cref{sec:appendix:controlled-simulation}).
+The global and plan-guided models were refitted under both semantic regimes with a terminal utility, which scores a completed utterance only by its final target probability, while salience and local competition entered as before.
 With the terminal utility, the global model predicted considerably worse than with the prefix utility, whereas the plan-guided model predicted about as well (\Cref{tab:robustness-checks}).
 The shared $\kappa$ rose to $.80$ (95\% CrI $[.75,.86]$), so that local competition took over the information that the prefix utility otherwise adds at each adjective position.
 Plan-guided production still predicted better than global production, and context-fixed semantics still predicted better than updating.
@@ -1665,18 +1680,18 @@ Updating minus fixed, plan-guided & $-53.8$ & $[-72.6, -34.8]$ \\
 
 \FloatBarrier
 
-\section{Participant Variation and Predictive Contributions}
+\subsection{Participant Variation and Predictive Contributions}
 \label{sec:appendix:participant-audit}
 
-The joint model estimates pragmatic optimality, $\kappa_i$, and stable-order weight for each participant.
+The joint model estimates pragmatic rationality, $\kappa_i$, and stable-order weight for each participant.
 \Cref{tab:final-architecture-contrasts} reports its predictive gain relative to the otherwise matched shared-$\kappa$ model under each semantic regime.
-In the best-predicting context-fixed model, the population location of the participant-specific $\kappa_i$ was $\mu_{\kappa}=.472$, with a 95\% credible interval of $[.337,.618]$.
-The participant distribution was broad, with an estimated logit-scale standard deviation of $2.720$, 95\% credible interval $[2.277,3.207]$.
+In the best-predicting context-fixed model, the population location of the participant-specific $\kappa_i$ was $\mu_{\kappa}=.472$, with a 95\% CrI $[.337,.618]$.
+The participant distribution was broad, with an estimated logit-scale standard deviation of $2.720$, 95\% CrI $[2.277,3.207]$.
 
-Participants whose posterior mean $\kappa_i$ lay farther from the shared $\kappa=.446$ gained more participant-level ELPD from the hierarchy.
-The observed correlation was $r=.618$, and the participant-level Bayesian-bootstrap mean was $.639$, with a 95\% credible interval of $[.525,.763]$ and posterior probability above zero greater than $.999$.
-At the response level, the hierarchy gained $229.372$ ELPD on two-adjective utterances, 95\% credible interval $[163.012,319.334]$, and $183.796$ ELPD on three-adjective utterances, 95\% credible interval $[100.757,304.826]$.
-Its contribution to one-adjective utterances was $-48.426$ ELPD (95\% credible interval $[-70.371,-28.666]$).
+Participants whose posterior mean $\kappa_i$ lay farther from the shared $\kappa=.446$ gained more participant-level ELPD from the hierarchy (\Cref{fig:production-kappa-hierarchy}, Panel A).
+The observed correlation was $r=.618$, and the participant-level Bayesian-bootstrap mean was $.639$, with a 95\% CrI $[.525,.763]$ and posterior probability above zero greater than $.999$.
+At the response level (\Cref{fig:production-kappa-hierarchy}, Panel B), the hierarchy gained $229.4$ ELPD on two-adjective utterances, 95\% CrI $[163.0,319.3]$, and $183.8$ ELPD on three-adjective utterances, 95\% CrI $[100.8,304.8]$.
+Its contribution to one-adjective utterances was $-48.4$ ELPD (95\% CrI $[-70.4,-28.7]$).
 
 \begin{figure}[!htbp]
   \centering
@@ -1685,39 +1700,15 @@ Its contribution to one-adjective utterances was $-48.426$ ELPD (95\% credible i
   Panel A relates each participant's leave-one-out gain from the $\kappa_i$ hierarchy to their posterior mean $\kappa_i$; the dashed line marks the shared-$\kappa$ estimate and the curve is a descriptive smooth.
   Panel B decomposes the total ELPD gain by observed response length.
   Intervals in Panel B are 95\% credible intervals from the participant-level Bayesian bootstrap.
-  Both panels use the best-predicting plan-guided model and its otherwise matched shared-$\kappa$ model to localise the held-out model contrast.}
+  Both panels compare the best-predicting plan-guided model with its otherwise matched shared-$\kappa$ model.}
   \label{fig:production-kappa-hierarchy}
 \end{figure}
-
-
-\section{Local Normalisation and Model Endpoints}
-\label{sec:appendix:normalisation-audit}
-
-\paragraph{Local adjective competition.}
-Substituting \Cref{eq:global-speaker,eq:incremental-speaker} into \Cref{eq:plan-guided-speaker} and suppressing the shared referent and context arguments, the shared terms $\beta\Omega(u)+\Lambda(u,C)$ enter with weight one, and the remaining terms combine into the accumulated utility minus $\kappa$ times the local-normalisation term:
-\begin{equation}
-\begin{aligned}
-  &(1-\kappa)\sum_{t=0}^{T-1}U(w_{t+1}\mid w_{1:t})
-   +\kappa\sum_{t=0}^{T-1}\log
-   \frac{\exp U(w_{t+1}\mid w_{1:t})}
-        {\sum_{w'\in\mathcal A(w_{1:t})}\exp U(w'\mid w_{1:t})}\\
-  &\quad=\sum_{t=0}^{T-1}U(w_{t+1}\mid w_{1:t})
-   -\kappa\sum_{t=0}^{T-1}\log\!\sum_{w'\in\mathcal A(w_{1:t})}\exp U(w'\mid w_{1:t}).
-\end{aligned}
-\label{eq:local-normalisation}
-\end{equation}
-The normalising constants of $S_{\mathrm{G}}$ and $S_{\mathrm{I}}$ do not depend on $u$ and are absorbed by the renormalisation over the fifteen completed utterances.
-
-\paragraph{Relation between the endpoints.}
-At common parameter values, plan-guided production with $\kappa=0$ exactly recovers global production, and with $\kappa=1$ exactly recovers fully incremental production.
-The stable-order score, length and selection terms, and utterance space are identical across the three architectures.
-The interpolation in \Cref{eq:plan-guided-speaker} applies before the final Laplace smoothing described in \Cref{sec:appendix:model-specification}.
 
 
 \section{Sequential Context Updating for Size}
 \label{sec:appendix:semantic-details}
 
-For the hierarchical semantic path, let $L_{t+1}$ be the interpretation after the syntactically inner modifiers have composed.
+Under hierarchical composition, let $L_{t+1}$ be the interpretation after the syntactically inner modifiers have composed.
 The semantic regime determines the comparison class used for size:
 \begin{subequations}
 \label{eq:hierarchical-size-regimes}
@@ -1731,192 +1722,112 @@ The semantic regime determines the comparison class used for size:
 \end{align}
 \end{subequations}
 where $\theta_{\delta}$ derives a graded size threshold from a comparison class and $C$ is the original display, represented by the uniform prior $P_0$.
-Under updating, the literal interpretation recomputes the size threshold from the hierarchically prior state; under context-fixed semantics, it anchors the threshold to the display prior.
+Under updating, the literal interpretation recomputes the size threshold from $L_{t+1}$, the interpretation after the inner modifiers; under context-fixed semantics, it anchors the threshold to the display prior.
 At each surface position, the production calculation evaluates the current prefix using this noun-outward interpretation.
 
-\section{Simulation Parameter Sweeps}
+\section{Simulation Specification}
 \label{sec:appendix:sim-params}
 
-The original two-order simulation compares a global rule based on completed-utterance utility with an incremental rule that includes continuation-versus-stop competition.
-We report its context construction, definitions, and parameter sweeps first.
-\Cref{sec:appendix:controlled-simulation} then introduces the production specification on the same contexts, as in the controlled comparison in \Cref{sec:simulation}.
-
-Each random display contains between 2 and 30 objects whose sizes are drawn from a normal distribution centred at $15.5$ and truncated to $[1,30]$.
+Each random context contains between 2 and 30 objects whose sizes are drawn from a normal distribution centred at $15.5$ and truncated to $[1,30]$.
 The largest object is designated as the target and assigned blue; each non-target object is independently assigned blue or non-blue with equal probability.
-Three levels of contextual size spread vary how distinctly the largest target differs from its competitors.
-The semantic grid varies colour reliability, size-threshold selectivity, and perceptual blur, which control the strength of colour-based restriction, how selectively \emph{big} applies, and how sharply size differences are represented.
+The three levels of size discriminability correspond to the three size spreads in \Cref{tab:simulation-design}.
+The semantic grid varies colour reliability, size-threshold selectivity, and perceptual blur, which control the strength of colour-based restriction, how selectively \emph{big} applies, and how sharply size differences are represented (\Cref{tab:simulation}).
 In the simulation notation, $k$ corresponds to threshold selectivity $\delta$ and $w_f$ to perceptual blur $w$ in \Cref{eq:size-threshold,eq:size-membership}.
 
-\Cref{fig:sim-k,fig:sim-wf,fig:sim-csv} show how the three fixed semantic parameters affect communicative success across the two speaker architectures.
-Each figure separates the semantic regimes and averages equally over the other parameter settings.
-For the two-order simulation, write $q(v,o)=L(o\mid v,C)^\alpha$, with $\alpha=1$ and equal utterance costs.
-For distinct adjectives $a,b$, denote the original global and incremental rules by $S_G$ and $S_I$:
-\begin{align}
- S_G(ab\mid o,C)&=\frac{q(ab,o)}{q(ab,o)+q(ba,o)},\\
- R_I(ab\mid o,C)&=\frac{q(a,o)}{q(a,o)+q(b,o)}
-                  \frac{q(ab,o)}{q(ab,o)+q(a,o)},\\
- S_I(ab\mid o,C)&=\frac{R_I(ab\mid o,C)}{R_I(ab\mid o,C)+R_I(ba\mid o,C)}.
-\end{align}
-The second factor of $R_I$ is the continuation-versus-stop choice, and the final normalisation conditions on producing a completed two-adjective order.
-The production global model accumulates utility across adjective positions; its incremental endpoint assigns utterance length through the completed-response distribution.
+With the two orders, the global speaker follows the earlier simulations \citep{franke2019subjectivity}.
+Writing $q(v,o)=L(o\mid v,C)^\alpha$, with $\alpha=1$ and equal utterance costs, it produces the order $ab$ of two distinct adjectives $a,b$ with probability
+\begin{equation}
+ S_G(ab\mid o,C)=\frac{q(ab,o)}{q(ab,o)+q(ba,o)}.
+\end{equation}
 The pragmatic listener uses a uniform referent prior, giving $L^{\mathrm{prag}}(o\mid ab,C)=S(ab\mid o,C)/\sum_r S(ab\mid r,C)$.
 
-The reproducible sweep uses seed 20260906 and samples 1{,}000 independent contexts for each combination of the number of objects and size spread.
-Each context is reused across semantic parameters, semantic regimes, and speakers, yielding 24{,}000 independent contexts and 12{,}000{,}000 model evaluations.
+The simulation uses seed 20260906 and samples 1{,}000 independent contexts for each combination of the number of objects and size spread.
+Each context is reused across semantic parameters, semantic regimes, and speaker models, yielding 24{,}000 contexts.
 Monte Carlo standard errors are calculated after averaging parameter settings within contexts; repeated evaluations of one context do not count as independent samples.
 
-\begin{figure}[!htbp]
-  \centering
-  \includegraphics[width=0.90\textwidth]{sim_advantage_nobj.pdf}
-  \caption{Size-first preference $\Delta_{\mathrm{SF}}$ across context size and contextual spread, shown for the original two-order global and incremental rules under context-fixed semantics and sequential context updating.
-  Wider size distributions make size a more reliable identifying cue; clustered distributions make it less reliable.
-  Each point averages over the semantic sensitivity settings; ribbons show $\pm1.96$ Monte Carlo standard errors calculated after averaging those settings within each sampled context.
-  The complete parameter grid appears in \Cref{tab:simulation}.
-  Positive values indicate a higher model-assigned target probability for the size-first order.
-  }
-  \label{fig:sim-nobj}
-\end{figure}
-
-\Cref{fig:sim-nobj} shows how the size-first preference changes across the broader random contexts, in which colour generally restricts the comparison class without uniquely identifying the target.
-Wider size distributions generally make the largest target more distinguishable from its competitors; clustered sizes reduce this distinction.
-
-The original global rule with context-fixed semantics provides a symmetry baseline: both orders have the same fixed intersective meaning and equal cost, so they yield the same target probability.
-Sequential context updating breaks this symmetry because \emph{big blue} interprets size relative to the comparison class established by colour, producing a size-first preference under global production.
-The preference is strongest in small contexts with widely separated sizes, where restricting the comparison class has the clearest consequences for which objects count as big, and weakens as contexts grow or sizes cluster.
-
-The original incremental rule adds a contribution from local informativity along the surface sequence.
-With closely clustered sizes, this rule yields a colour-first preference in pragmatic target recovery.
-As sizes spread apart, the colour-first preference weakens.
-After averaging over the semantic parameter settings in \Cref{fig:sim-nobj}, the original incremental rule yields colour-first preferences in some contexts; the original global rule remains symmetric under fixed semantics and yields a size-first preference under updating.
-Under the original incremental rule, sequential context updating increases the size-first preference in target recovery when the colour-restricted comparison class changes size interpretation sufficiently strongly.
-The parameter sweeps in \Cref{fig:sim-k,fig:sim-wf,fig:sim-csv} show that the same competition extends across colour reliability, size-threshold selectivity, and perceptual blur.
-
-
 \begin{table}[H]
-  \caption{Simulation parameter grid}
+  \caption{Semantic parameter grid of the simulation.}
   \label{tab:simulation}
   \centering
   \begin{tabularx}{0.92\textwidth}{lXl}
     \toprule
     \textbf{Parameter} & \textbf{Grid values} & \textbf{\# levels} \\
     \midrule
-    Original two-order rule & Incremental, global & 2 \\
-    Semantic regime & Context-updating, context-fixed & 2 \\
-    $n_\text{obj}$ & 2, 6, 10, 14, 18, 22, 26, 30 & 8 \\
-    $\sigma_\text{spread}$ & 2.0, 7.75, 15.0 & 3 \\
     Colour reliability $\nu$ & 0.90, 0.92, 0.94, 0.96, 0.98 & 5 \\
     Threshold selectivity $k$ & 0.10, 0.30, 0.50, 0.70, 0.90 & 5 \\
     Perceptual blur $w_f$ & 0.1, 0.2, 0.3, 0.5, 0.8 & 5 \\
     \midrule
-    Contexts per object-number/spread pair & 1{,}000 & \\
-    \midrule
-    \textbf{Total model evaluations} & \textbf{12{,}000{,}000} & \\
+    \textbf{Semantic settings} & & \textbf{125} \\
     \bottomrule
   \end{tabularx}
 \end{table}
-
-\begin{figure}[!htbp]
-  \centering
-  \includegraphics[width=0.86\textwidth]{sim_k.pdf}
-  \caption{Effect of the threshold parameter $k$ on pragmatic target recovery under the original two-order rules, separated by speaker and semantic regime. Curves average over the remaining settings; ribbons show $\pm1.96$ context-level Monte Carlo standard errors.}
-  \label{fig:sim-k}
-\end{figure}
-
-\begin{figure}[!htbp]
-  \centering
-  \includegraphics[width=0.86\textwidth]{sim_wf.pdf}
-  \caption{Effect of perceptual blur $w_f$ on pragmatic target recovery under the original two-order rules, separated by speaker and semantic regime. Curves average over the remaining settings; ribbons show $\pm1.96$ context-level Monte Carlo standard errors.}
-  \label{fig:sim-wf}
-\end{figure}
-
-\begin{figure}[!htbp]
-  \centering
-  \includegraphics[width=0.86\textwidth]{sim_colorsemval.pdf}
-  \caption{Effect of colour reliability $\nu$ on pragmatic target recovery under the original two-order rules, separated by speaker and semantic regime. Curves average over the remaining settings; ribbons show $\pm1.96$ context-level Monte Carlo standard errors.}
-  \label{fig:sim-csv}
-\end{figure}
-
-\FloatBarrier
 
 \subsection{Controlled Changes on the Same Random Contexts}
 \label{sec:appendix:controlled-simulation}
 
-The terminal utility differs from the prefix utility:
-\begin{align}
- U_{\mathrm{term}}(u,o,C)&=\alpha\log L(o\mid u,C),\\
- U_{\mathrm{prefix}}(u,o,C)&=\alpha\sum_{t=1}^{|u|}\log L(o\mid w_{1:t},C).
+The production models in the simulation use the prefix utility
+\begin{equation}
+ U_{\mathrm{prefix}}(u,o,C)=\alpha\sum_{t=1}^{|u|}\log L(o\mid w_{1:t},C),
  \label{eq:simulation-evaluation}
-\end{align}
-Both scores are globally normalised over completed utterances.
-The prefix score with $\kappa=0$ is the global model used in the main text; $\kappa=.5$ and $\kappa=1$ give the plan-guided and fully incremental simulation models.
-The terminal score supplies a control for the additional contribution of intermediate adjective information.
+\end{equation}
+globally normalised over completed utterances.
+With $\kappa=0$, $.5$, and $1$, this gives the global, plan-guided, and fully incremental speaker models.
 
-The controlled comparisons reuse all 24{,}000 contexts from the original sweep and the target-recovery measure in \Cref{eq:simulation-advantage}.
+The controlled comparisons reuse all 24{,}000 contexts and the target-recovery measure in \Cref{eq:simulation-advantage}.
 Each adjective retains the same extension when the intended referent changes; the referent prior is uniform.
 The response spaces contain two orders, four size--colour responses including the single adjectives, or the fifteen production responses.
 For expanded spaces, the pragmatic listener uses each order's probability under the full speaker distribution, without first conditioning on the two orders.
-The comparisons include the terminal utility and the prefix utility at $\kappa=0,.5,1$, using the original 125 semantic settings or the production constants.
+The comparisons use the 125 settings of the semantic grid or the production constants.
 Prefix scores and local candidate sets are recomputed for each utterance space.
 They retain the production convention of no separate STOP action and final normalisation over completed paths.
-This isolates the computational components without assigning fitted participant effects or experimental task labels to random contexts.
+This isolates the computational components without assigning fitted participant effects or experimental condition labels to random contexts.
 
-The main comparison holds pragmatic optimality at $\alpha=1$ and excludes stable-order expectations, salience, length and selection terms, and final Laplace smoothing.
+The main comparison holds pragmatic rationality at $\alpha=1$ and excludes stable-order expectations, salience, length and selection terms, and final Laplace smoothing.
 Form reliability is fixed at $.50$.
 \Cref{fig:simulation-controlled} shows the six speaker models under the three sets of alternatives and the semantic parameter grid, with the global speaker in the two-order condition implemented as in the earlier simulations.
 The production constants are colour reliability $.59$, threshold selectivity $.50$, and perceptual blur $.6856$.
-\Cref{tab:controlled-simulation-means} reports the mean preferences in both panels of \Cref{fig:simulation-controlled}.
-The prefix-utility rows specify the architecture through $\kappa$; the terminal utility uses global production.
+\Cref{tab:controlled-simulation-means} reports the mean preferences under the semantic grid, shown in \Cref{fig:simulation-controlled}, and at the production constants.
 For the fifteen-response global model at the production constants, the paired updating-minus-fixed difference was $0.0037$ percentage points, with a Monte Carlo interval of $[0.0007,0.0067]$.
 
 \begin{table}[H]
   \centering
-  \caption{Mean size-first preference in pragmatic target recovery in percentage points on the same 24{,}000 random contexts.}
+  \caption{Mean size-first preference in pragmatic target recovery in percentage points on the same 24{,}000 random contexts, under the semantic parameter grid and at the production constants.}
   \label{tab:controlled-simulation-means}
   \footnotesize
-  \begin{tabularx}{\textwidth}{lrXrr}
+  \begin{tabularx}{\textwidth}{lXrrrr}
     \toprule
-    Utility & Responses & Semantic settings & Context-fixed & Updating \\
+    & & \multicolumn{2}{c}{Parameter grid} & \multicolumn{2}{c}{Production constants} \\
+    \cmidrule(lr){3-4}\cmidrule(lr){5-6}
+    Architecture & Alternatives & Context-fixed & Updating & Context-fixed & Updating \\
     \midrule
-    Terminal & 2 & Parameter grid & $0.000$ & $1.141$ \\
-    Prefix ($\kappa=0$) & 2 & Parameter grid & $-2.718$ & $-1.838$ \\
-    Prefix ($\kappa=0$) & 4 & Parameter grid & $2.257$ & $2.772$ \\
-    Prefix ($\kappa=0$) & 15 & Parameter grid & $2.589$ & $3.104$ \\
-    Prefix ($\kappa=0$) & 15 & Production constants & $1.891$ & $1.894$ \\
-    Prefix ($\kappa=.5$) & 15 & Production constants & $1.455$ & $1.457$ \\
-    Prefix ($\kappa=1$) & 15 & Production constants & $0.960$ & $0.962$ \\
+    Global & Two orders & $0.00$ & $1.14$ & $0.00$ & $0.00$ \\
+    Global & With single adjectives & $2.26$ & $2.77$ & $1.89$ & $1.89$ \\
+    Global & Fifteen utterances & $2.59$ & $3.10$ & $1.89$ & $1.89$ \\
+    \addlinespace
+    Plan-guided & Two orders & $-2.72$ & $-2.21$ & $2.06$ & $2.06$ \\
+    Plan-guided & With single adjectives & $-1.67$ & $-1.20$ & $2.03$ & $2.03$ \\
+    Plan-guided & Fifteen utterances & $1.05$ & $1.56$ & $1.45$ & $1.46$ \\
+    \addlinespace
+    Fully incremental & Two orders & $-2.72$ & $-2.72$ & $2.06$ & $2.06$ \\
+    Fully incremental & With single adjectives & $-2.72$ & $-2.72$ & $2.06$ & $2.06$ \\
+    Fully incremental & Fifteen utterances & $0.64$ & $1.09$ & $0.96$ & $0.96$ \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
-The main figure uses the production semantic implementation, whose probability floors differ slightly from those of the original sweep in \Cref{fig:sim-nobj}.
-
-\Cref{fig:controlled-architectures} reports the fifteen-response comparison across utility rules and local-normalisation weights.
-The final panel adds the same stable-order coefficient, $\exp(.962357)$, to every model at the production semantic constants.
-This setting is the fixed model's population log-weight location.
-At $\kappa=0$, adding this term gives mean preferences of $2.154$ and $2.157$ percentage points for fixed and updating semantics, respectively.
+Adding the stable-order score with weight $\beta=\exp(.962)$, the population location of the stable-order weight in the best-predicting model, to the global model with all fifteen utterances at the production constants gives mean preferences of $2.15$ and $2.16$ percentage points for fixed and updating semantics, respectively.
 The positive preferences are already present without this term.
 All other salience, length, and selection terms remain zero, and $\alpha=1$ throughout.
 
 For every contrast, semantic parameter settings are averaged within each context before calculating Monte Carlo uncertainty.
 The overall mean gives equal weight to the 24 context-size and size-spread groups.
 
-\begin{figure}[!htbp]
-  \centering
-  \includegraphics[width=.98\textwidth]{simulation_controlled_architectures.pdf}
-  \caption{Controlled fifteen-response comparison across utility rules, semantic parameters, and a shared stable-order score.
-  The terminal utility uses only the final literal target probability.
-  The production models accumulate prefix scores: $\kappa=0$ gives global production, $\kappa=.5$ plan-guided production, and $\kappa=1$ fully incremental production.
-  Panels use the original semantic grid, the production semantic constants, and those constants with the stable-order score added.
-  Points and intervals show mean target-probability differences and $\pm1.96$ context-level Monte Carlo standard errors.
-  All comparisons use the same random contexts.}
-  \label{fig:controlled-architectures}
-\end{figure}
 \FloatBarrier
 
 \subsection{Postnominal Variant of the Controlled Simulation}
 \label{sec:appendix:postnominal}
 
-The postnominal variant reuses the contexts, semantic settings, and utility rules of \Cref{tab:controlled-simulation-means}.
+The postnominal variant reuses the contexts, semantic settings, and speaker models of \Cref{tab:controlled-simulation-means}.
 Only the direction of composition changes: the noun-adjacent adjective is the first adjective of the utterance, so sequential context updating proceeds in surface order.
 The prefix utility follows the surface order in both versions.
 Context-fixed meanings do not depend on the direction of composition, so the context-fixed column applies to both versions.
@@ -1926,64 +1837,25 @@ Context-fixed meanings do not depend on the direction of composition, so the con
   \caption{Mean size-first preference in pragmatic target recovery in percentage points for prenominal and postnominal composition on the same 24{,}000 random contexts.}
   \label{tab:postnominal-simulation-means}
   \footnotesize
-  \begin{tabularx}{\textwidth}{lrXrrr}
+  \begin{tabularx}{\textwidth}{lXlrrr}
     \toprule
-    Utility & Responses & Semantic settings & Context-fixed & Updating, prenominal & Updating, postnominal \\
+    Architecture & Alternatives & Semantic settings & Context-fixed & Updating, prenominal & Updating, postnominal \\
     \midrule
-    Terminal & 2 & Parameter grid & $0.000$ & $1.141$ & $-1.141$ \\
-    Prefix ($\kappa=0$) & 2 & Parameter grid & $-2.718$ & $-1.838$ & $-3.603$ \\
-    Prefix ($\kappa=0$) & 4 & Parameter grid & $2.257$ & $2.772$ & $1.830$ \\
-    Prefix ($\kappa=0$) & 15 & Parameter grid & $2.589$ & $3.104$ & $2.156$ \\
-    Prefix ($\kappa=0$) & 15 & Production constants & $1.891$ & $1.894$ & $1.887$ \\
-    Prefix ($\kappa=.5$) & 15 & Production constants & $1.455$ & $1.457$ & $1.452$ \\
-    Prefix ($\kappa=1$) & 15 & Production constants & $0.960$ & $0.962$ & $0.959$ \\
+    Global & Two orders & Parameter grid & $0.00$ & $1.14$ & $-1.14$ \\
+    Global & With single adjectives & Parameter grid & $2.26$ & $2.77$ & $1.83$ \\
+    Global & Fifteen utterances & Parameter grid & $2.59$ & $3.10$ & $2.16$ \\
+    Global & Fifteen utterances & Production constants & $1.89$ & $1.89$ & $1.89$ \\
+    Plan-guided & Fifteen utterances & Production constants & $1.45$ & $1.46$ & $1.45$ \\
+    Fully incremental & Fifteen utterances & Production constants & $0.96$ & $0.96$ & $0.96$ \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
-Under the terminal utility, the postnominal preference is the mirror image of the prenominal one.
+With the two orders, the postnominal preference of global production is the mirror image of the prenominal one.
 In the fifteen-response space, updating lowers the size-first preference in the postnominal version and raises it in the prenominal version by similar amounts.
 At the production semantic constants, updating changes the preference by less than $0.01$ percentage points in either version.
 Monte Carlo 95\% intervals are at most $\pm0.17$ percentage points.
-The contexts are regenerated from the seed of the original sweep by \texttt{simulation/run\_postnominal\_variant.py}.
-
-\subsection{Supplementary Predictions on Experimental Displays}
-\label{sec:appendix:fitted-bridge}
-
-The supplementary simulation uses the size--colour trials and all eight fitted production models.
-For each model, 50 evenly spaced retained draws from each of its four chains give 200 posterior parameter draws.
-The simulation preserves the fifteen named responses, fitted semantic constants, participant parameters, stable-order score, salience calculation, and length and selection terms.
-For each trial and posterior draw, each of the six objects is evaluated as the intended referent while the adjective extensions and observed task covariates remain fixed.
-Thus changing the candidate referent does not change which colour or form the uttered words denote.
-
-Let $S_{in}^{(d)}(u\mid o,C)$ be the resulting complete-response probability at posterior draw $d$.
-We evaluate the speaker's size-first probability conditional on the size--colour adjective set as
-\begin{equation}
- \frac{S_{in}^{(d)}(\mathrm{SC}\mid o^*,C)}
- {S_{in}^{(d)}(\mathrm{SC}\mid o^*,C)+S_{in}^{(d)}(\mathrm{CS}\mid o^*,C)}.
-\end{equation}
-Separately, the pragmatic listener normalises the full-response speaker probabilities over the six referents using a uniform prior.
-The listener therefore retains the fitted fifteen-response normalisation when evaluating each order.
-We average each quantity over the original size--colour trials within posterior draw, then report the posterior mean and central 95\% interval.
-
-\Cref{fig:fitted-simulation-bridge} reports the resulting speaker and listener predictions.
-In the plan-guided models with participant-specific $\kappa_i$, the mean size-first preference in target probability was $.0062$ under fixed semantics, 95\% posterior interval $[.0047,.0077]$, and $.0058$ under updating, $[.0045,.0072]$.
-The corresponding mean probabilities of size-first conditional on the size--colour adjective set were $.967$ and $.966$.
-Both fitted regimes therefore generate a size-first preference under this counterfactual listener calculation.
-In the response-score decomposition, the predictive difference between these models was concentrated in adjective content and length.
-The two calculations describe how the models differ in predicting which utterance is produced while both assigning a listener preference for size-first order.
-
-\begin{figure}[!htbp]
-  \centering
-  \includegraphics[width=.94\textwidth]{simulation_fitted_bridge.pdf}
-  \caption{Supplementary predictions from the fitted production models on the size--colour displays.
-  Panel A shows mean speaker probability of size-first conditional on selecting the size--colour adjective set.
-  Panel B shows the difference in pragmatic target probability between size-first and colour-first.
-  Both panels preserve the fitted fifteen-response distribution; the listener in Panel B uses a uniform prior over six referents.
-  Intervals are central 95\% posterior intervals over trial-averaged quantities using 200 posterior parameter draws per model.}
-  \label{fig:fitted-simulation-bridge}
-\end{figure}
-\FloatBarrier
+The contexts are regenerated from the same seed by \texttt{simulation/run\_postnominal\_variant.py}.
 
 % =============================================================================
 
