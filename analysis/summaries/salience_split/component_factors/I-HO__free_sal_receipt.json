@@ -1,0 +1,17 @@
+{
+  "label": "I-HO__free_sal",
+  "model": "I-HO",
+  "artifact": "/home/csp/Documents/00_HW/salience_split_20261110/fits/free_sal/I-HO.nc",
+  "drop_order_term": false,
+  "drop_informativeness": false,
+  "drop_prefix_salience": false,
+  "tuned": [
+    "split_salience",
+    "drop_salience_contrast",
+    "free_salience_base"
+  ],
+  "max_replay": 1.7763568394002505e-15,
+  "max_pareto_k": 0.43419005964886986,
+  "response_reconstruction_error": 5.218048215738236e-15,
+  "seconds": 15.277611088007689
+}

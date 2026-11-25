@@ -1,0 +1,13 @@
+{
+  "label": "K-UPD-HKO__primary",
+  "model": "K-UPD-HKO",
+  "artifact": "/home/csp/Documents/00_HW/numpyro_adjective_modelling_corrected_20260906/docs/superpowers/campaigns/2026-09-06-semantic-correction/primary/K-UPD-HKO.nc",
+  "drop_order_term": false,
+  "drop_informativeness": false,
+  "drop_prefix_salience": false,
+  "tuned": [],
+  "max_replay": 1.7763568394002505e-15,
+  "max_pareto_k": 0.4217219134716007,
+  "response_reconstruction_error": 4.551914400963142e-15,
+  "seconds": 15.928896948695183
+}

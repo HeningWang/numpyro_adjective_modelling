@@ -1,0 +1,11 @@
+{
+  "label": "I-HO__no_info",
+  "model": "I-HO",
+  "artifact": "/home/csp/Documents/00_HW/third_factor_20261104/c2_no_informativeness/primary/I-HO.nc",
+  "drop_order_term": false,
+  "drop_informativeness": true,
+  "max_replay": 8.881784197001252e-16,
+  "max_pareto_k": 0.27736960494924845,
+  "response_reconstruction_error": 5.10702591327572e-15,
+  "seconds": 14.794230989180505
+}

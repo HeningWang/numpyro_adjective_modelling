@@ -1,0 +1,12 @@
+{
+  "label": "G-HO__no_sal",
+  "model": "G-HO",
+  "artifact": "/home/csp/Documents/00_HW/third_factor_20261104/c3_no_prefix_salience/primary/G-HO.nc",
+  "drop_order_term": false,
+  "drop_informativeness": false,
+  "drop_prefix_salience": true,
+  "max_replay": 8.881784197001252e-16,
+  "max_pareto_k": 0.34271547175965583,
+  "response_reconstruction_error": 5.329070518200751e-15,
+  "seconds": 15.116236210800707
+}

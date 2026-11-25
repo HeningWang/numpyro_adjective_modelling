@@ -1,0 +1,13 @@
+{
+  "label": "K-HKO__no_order",
+  "model": "K-HKO",
+  "artifact": "/home/csp/Documents/00_HW/hkappa_20261124/fits_td8/no_order/K-HKO.nc",
+  "drop_order_term": true,
+  "drop_informativeness": false,
+  "drop_prefix_salience": false,
+  "tuned": [],
+  "max_replay": 1.7763568394002505e-15,
+  "max_pareto_k": 0.7660238224758522,
+  "response_reconstruction_error": 4.6629367034256575e-15,
+  "seconds": 16.02480643801391
+}

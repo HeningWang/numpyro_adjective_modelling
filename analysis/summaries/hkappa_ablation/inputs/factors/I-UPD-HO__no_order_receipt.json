@@ -1,0 +1,11 @@
+{
+  "label": "I-UPD-HO__no_order",
+  "model": "I-UPD-HO",
+  "artifact": "/home/csp/Documents/00_HW/third_factor_20261104/c1_no_order_term/primary/I-UPD-HO.nc",
+  "drop_order_term": true,
+  "drop_informativeness": false,
+  "max_replay": 1.7763568394002505e-15,
+  "max_pareto_k": 0.34083161070469825,
+  "response_reconstruction_error": 4.884981308350689e-15,
+  "seconds": 14.974214223213494
+}

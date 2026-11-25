@@ -1,0 +1,11 @@
+{
+  "label": "G-HO__order",
+  "model": "G-HO",
+  "artifact": "/home/csp/Documents/00_HW/numpyro_adjective_modelling_corrected_20260906/docs/superpowers/campaigns/2026-09-06-semantic-correction/primary/G-HO.nc",
+  "drop_order_term": false,
+  "drop_informativeness": false,
+  "max_replay": 8.881784197001252e-16,
+  "max_pareto_k": 0.3298914171653929,
+  "response_reconstruction_error": 4.676814491233472e-15,
+  "seconds": 15.620722278952599
+}

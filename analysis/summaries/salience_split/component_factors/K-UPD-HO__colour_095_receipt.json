@@ -1,0 +1,16 @@
+{
+  "label": "K-UPD-HO__colour_095",
+  "model": "K-UPD-HO",
+  "artifact": "/home/csp/Documents/00_HW/salience_split_20261110/fits/colour_095/K-UPD-HO.nc",
+  "drop_order_term": false,
+  "drop_informativeness": false,
+  "drop_prefix_salience": false,
+  "tuned": [
+    "split_salience",
+    "drop_salience_contrast"
+  ],
+  "max_replay": 1.7763568394002505e-15,
+  "max_pareto_k": 0.3954202099785468,
+  "response_reconstruction_error": 5.134781488891349e-15,
+  "seconds": 14.959305420517921
+}

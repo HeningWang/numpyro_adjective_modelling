@@ -1,0 +1,50 @@
+{
+  "model": "K-UPD-HKO",
+  "dataset_sha256": "44a41b44b83dfef7a2d1788c6ac399a637cb9cb48b63eb3751339ed849bf4ac1",
+  "encoded_input_sha256": null,
+  "warmup": 4000,
+  "samples": 1000,
+  "chains": 4,
+  "seed": 4711,
+  "target_accept": 0.9,
+  "max_tree_depth": 8,
+  "chain_method": "vectorized",
+  "artifact_role": "timing_pilot",
+  "colour_reliability": 0.59,
+  "colour_reliability_override": null,
+  "backend": "gpu",
+  "x64": true,
+  "devices": [
+    "cuda:0"
+  ],
+  "jax": "0.6.2",
+  "numpyro": "0.19.0",
+  "source_hashes": {
+    "run_corrected_primary.py": "0b1f9d5676eb9ff291a779cd9223347263f2f2e95541b015be73e02ddeb7e3f4",
+    "modelSpecification.py": "a19f907e651bce79d8c555c517a4414654538000d817186002bad26a448d11cc",
+    "helper.py": "6c280553c2bec7318522b37917ea720cbe8c2be67fc66b90190cda04f30e44cb",
+    "discovery.py": "3131cb589ea224d6281bc6b2928f75c20d34ffe6ca552a2cbd10406b2cba136a",
+    "principled_features.py": "12bf3079af50185e2e74ab0a5eb2373c3c750112463202c4e8d6d23f12beec5b"
+  },
+  "stage": "complete",
+  "complete": true,
+  "stage_seconds": {
+    "precompute": 0.8532847072929144,
+    "warmup": 1048.2463620007038,
+    "sampling": 187.13124588504434,
+    "prediction": 10.154187515377998,
+    "serialization": 5.517770020291209
+  },
+  "form_reliability": 0.5,
+  "form_reliability_override": null,
+  "drop_condition_terms": false,
+  "tuning": null,
+  "terminal_utility": false,
+  "drop_order_term": true,
+  "drop_informativeness": false,
+  "drop_prefix_salience": false,
+  "total_seconds": 1254.042206780985,
+  "replay_max_abs_loglik_difference": 0.0,
+  "batched_replay_max_abs_loglik_difference": 0.0,
+  "artifact_sha256": "785c822416cc2ab597ce5f2cdb1c5d3f10812c91b4c3ae8a4f163068f440c7dd"
+}

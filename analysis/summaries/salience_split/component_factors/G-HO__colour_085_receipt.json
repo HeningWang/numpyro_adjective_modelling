@@ -1,0 +1,16 @@
+{
+  "label": "G-HO__colour_085",
+  "model": "G-HO",
+  "artifact": "/home/csp/Documents/00_HW/salience_split_20261110/fits/colour_085/G-HO.nc",
+  "drop_order_term": false,
+  "drop_informativeness": false,
+  "drop_prefix_salience": false,
+  "tuned": [
+    "split_salience",
+    "drop_salience_contrast"
+  ],
+  "max_replay": 8.881784197001252e-16,
+  "max_pareto_k": 0.32664326373734437,
+  "response_reconstruction_error": 4.9960036108132044e-15,
+  "seconds": 15.180466094985604
+}

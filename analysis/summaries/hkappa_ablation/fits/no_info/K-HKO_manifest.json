@@ -1,0 +1,50 @@
+{
+  "model": "K-HKO",
+  "dataset_sha256": "44a41b44b83dfef7a2d1788c6ac399a637cb9cb48b63eb3751339ed849bf4ac1",
+  "encoded_input_sha256": null,
+  "warmup": 4000,
+  "samples": 1000,
+  "chains": 4,
+  "seed": 4711,
+  "target_accept": 0.9,
+  "max_tree_depth": 6,
+  "chain_method": "vectorized",
+  "artifact_role": "ablation",
+  "colour_reliability": 0.59,
+  "colour_reliability_override": null,
+  "backend": "gpu",
+  "x64": true,
+  "devices": [
+    "cuda:0"
+  ],
+  "jax": "0.6.2",
+  "numpyro": "0.19.0",
+  "source_hashes": {
+    "run_corrected_primary.py": "0b1f9d5676eb9ff291a779cd9223347263f2f2e95541b015be73e02ddeb7e3f4",
+    "modelSpecification.py": "a19f907e651bce79d8c555c517a4414654538000d817186002bad26a448d11cc",
+    "helper.py": "6c280553c2bec7318522b37917ea720cbe8c2be67fc66b90190cda04f30e44cb",
+    "discovery.py": "3131cb589ea224d6281bc6b2928f75c20d34ffe6ca552a2cbd10406b2cba136a",
+    "principled_features.py": "12bf3079af50185e2e74ab0a5eb2373c3c750112463202c4e8d6d23f12beec5b"
+  },
+  "stage": "complete",
+  "complete": true,
+  "stage_seconds": {
+    "precompute": 0.8169105462729931,
+    "warmup": 647.0799958985299,
+    "sampling": 144.67817006073892,
+    "prediction": 10.020067108795047,
+    "serialization": 5.325975112617016
+  },
+  "form_reliability": 0.5,
+  "form_reliability_override": null,
+  "drop_condition_terms": false,
+  "tuning": null,
+  "terminal_utility": false,
+  "drop_order_term": false,
+  "drop_informativeness": true,
+  "drop_prefix_salience": false,
+  "total_seconds": 809.9656177703291,
+  "replay_max_abs_loglik_difference": 0.0,
+  "batched_replay_max_abs_loglik_difference": 0.0,
+  "artifact_sha256": "1aaabbbec6d5cebc72d82ad3663b573b21f7cc40999946fe4ee479812a9f669b"
+}

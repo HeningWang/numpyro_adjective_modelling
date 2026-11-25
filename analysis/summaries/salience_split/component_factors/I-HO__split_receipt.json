@@ -1,0 +1,15 @@
+{
+  "label": "I-HO__split",
+  "model": "I-HO",
+  "artifact": "/home/csp/Documents/00_HW/salience_split_20261110/fits/split/I-HO.nc",
+  "drop_order_term": false,
+  "drop_informativeness": false,
+  "drop_prefix_salience": false,
+  "tuned": [
+    "split_salience"
+  ],
+  "max_replay": 1.7763568394002505e-15,
+  "max_pareto_k": 0.34682793251933375,
+  "response_reconstruction_error": 5.440092820663267e-15,
+  "seconds": 14.467546451836824
+}

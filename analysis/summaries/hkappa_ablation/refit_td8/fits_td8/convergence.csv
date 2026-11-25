@@ -1,0 +1,4 @@
+cell,model,max_rhat,min_ess_bulk,n_rhat_gt_101,divergences,frac_max_depth,chain_loglik
+no_order,K-HKO,1.53,7.0,89,0,0.0,-16113.6 -16115.2 -16105.6 -16112.4
+no_order,K-UPD-HKO,1.75,6.0,89,0,0.0,-16227.7 -16226.6 -16240.4 -16238.7
+no_sal,K-HKO,1.85,6.0,742,0,0.0,-15715.1 -15904.0 -15722.1 -15724.1

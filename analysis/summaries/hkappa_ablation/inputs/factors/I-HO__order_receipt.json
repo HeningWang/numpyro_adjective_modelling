@@ -1,0 +1,11 @@
+{
+  "label": "I-HO__order",
+  "model": "I-HO",
+  "artifact": "/home/csp/Documents/00_HW/numpyro_adjective_modelling_corrected_20260906/docs/superpowers/campaigns/2026-09-06-semantic-correction/primary/I-HO.nc",
+  "drop_order_term": false,
+  "drop_informativeness": false,
+  "max_replay": 1.7763568394002505e-15,
+  "max_pareto_k": 0.4994082347568748,
+  "response_reconstruction_error": 5.662137425588298e-15,
+  "seconds": 15.271852945908904
+}

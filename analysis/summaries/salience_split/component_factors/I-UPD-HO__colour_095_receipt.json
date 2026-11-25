@@ -1,0 +1,16 @@
+{
+  "label": "I-UPD-HO__colour_095",
+  "model": "I-UPD-HO",
+  "artifact": "/home/csp/Documents/00_HW/salience_split_20261110/fits/colour_095/I-UPD-HO.nc",
+  "drop_order_term": false,
+  "drop_informativeness": false,
+  "drop_prefix_salience": false,
+  "tuned": [
+    "split_salience",
+    "drop_salience_contrast"
+  ],
+  "max_replay": 8.881784197001252e-16,
+  "max_pareto_k": 0.33630362857864676,
+  "response_reconstruction_error": 5.329070518200751e-15,
+  "seconds": 15.159222086891532
+}

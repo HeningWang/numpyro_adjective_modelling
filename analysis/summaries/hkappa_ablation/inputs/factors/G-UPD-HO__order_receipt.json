@@ -1,0 +1,11 @@
+{
+  "label": "G-UPD-HO__order",
+  "model": "G-UPD-HO",
+  "artifact": "/home/csp/Documents/00_HW/numpyro_adjective_modelling_corrected_20260906/docs/superpowers/campaigns/2026-09-06-semantic-correction/primary/G-UPD-HO.nc",
+  "drop_order_term": false,
+  "drop_informativeness": false,
+  "max_replay": 1.7763568394002505e-15,
+  "max_pareto_k": 0.2669692647345242,
+  "response_reconstruction_error": 4.884981308350689e-15,
+  "seconds": 15.47429303266108
+}

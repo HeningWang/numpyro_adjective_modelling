@@ -1,0 +1,15 @@
+{
+  "label": "K-HO__split",
+  "model": "K-HO",
+  "artifact": "/home/csp/Documents/00_HW/salience_split_20261110/fits/split/K-HO.nc",
+  "drop_order_term": false,
+  "drop_informativeness": false,
+  "drop_prefix_salience": false,
+  "tuned": [
+    "split_salience"
+  ],
+  "max_replay": 1.7763568394002505e-15,
+  "max_pareto_k": 0.3428547483466759,
+  "response_reconstruction_error": 4.884981308350689e-15,
+  "seconds": 15.05508419778198
+}

@@ -1,11 +1,18 @@
-"""Tidy table of the matched contrasts of the baseline-only production models.
+"""Tidy table of the matched contrasts of the production models.
 
+The reference model is the intermediate speaker with participant-specific kappa
+(K-HKO) and primary salience (property baseline plus display contrast); the global
+and fully incremental speakers (G-HO, I-HO) use the same components with one kappa.
 Each row is one contrast A minus B (positive values favour A, the model with the
-component named in the contrast) on one measure: production content, production
-order, rated canonical preference, or rated context gradient. Production values
-are participant-bootstrap ELPD differences; rating values are reductions in
-the absolute error (logits) of the cross-task predictions for the observed average
-preference and context gradient (replication study).
+component named in the contrast) on one measure: which adjectives speakers produce
+(length and set given length), their order (order given set), rated canonical
+preference, rated context gradient or variance explained in the ratings. Production
+values are participant-bootstrap ELPD differences; rating values are reductions in
+the absolute error (logits) of the cross-task predictions (replication study) and
+differences in R2 under a linear link fitted on the original study.
+
+All inputs share one layout: factors/{model}__{label}_pointwise_factors.csv and
+slider/{label}/{model}_cells.csv, with labels primary, no_order, no_info, no_sal.
 """
 from __future__ import annotations
 
@@ -20,46 +27,43 @@ from robustness_utils import bootstrap_totals
 
 SEED = 20261110
 DRAWS = 20_000
-ARCHITECTURES = {"G": "Global", "K": "Plan-guided", "I": "Fully incremental"}
+ARCHITECTURES = {"G": "Global", "K": "Intermediate", "I": "Fully incremental"}
+MODELS = {"G": ("G-HO", "G-UPD-HO"), "K": ("K-HKO", "K-UPD-HKO"), "I": ("I-HO", "I-UPD-HO")}
 PAIRS = ("dimension_color", "dimension_form", "color_form")
-NO_ORDER = {"G": "base_no_order", "K": "base_no_order_modeA", "I": "base_no_order"}
-NO_SALIENCE = {"G": ("no_sal", "no_sal"), "K": ("no_sal_w4000", "no_sal_K"),
-               "I": ("no_sal", "no_sal")}
+
+
+def cell(model: str, label: str) -> tuple[str, str, str]:
+    """(model, factor label, slider label); both labels coincide in this layout."""
+    return (model, label, label)
 
 
 def component_contrasts() -> list[dict]:
-    """Contrasts evaluated within each architecture: (model, factor label, slider label)."""
+    """Contrasts evaluated within each architecture."""
     rows = []
     for a, name in ARCHITECTURES.items():
-        fixed, upd = f"{a}-HO", f"{a}-UPD-HO"
-        full = (fixed, "no_contrast", "no_contrast")
-        sal_factor, sal_slider = NO_SALIENCE[a]
+        fixed, upd = MODELS[a]
+        full = cell(fixed, "primary")
         rows += [
-            dict(contrast="Stable order term", architecture=name, a=full,
-                 b=(fixed, NO_ORDER[a], NO_ORDER[a])),
-            dict(contrast="Property baseline", architecture=name, a=full,
-                 b=(fixed, sal_factor, sal_slider)),
-            dict(contrast="Informativeness", architecture=name, a=full,
-                 b=(fixed, "base_no_info", "base_no_info")),
+            dict(contrast="Stable order term", architecture=name, a=full, b=cell(fixed, "no_order")),
+            dict(contrast="Salience", architecture=name, a=full, b=cell(fixed, "no_sal")),
+            dict(contrast="Informativeness", architecture=name, a=full, b=cell(fixed, "no_info")),
             dict(contrast="Sequential context updating", architecture=name,
-                 a=(upd, "base_upd", "base_upd"), b=full),
-            dict(contrast="Sequential context updating, no stable order term",
-                 architecture=name, a=(upd, NO_ORDER[a], NO_ORDER[a]),
-                 b=(fixed, NO_ORDER[a], NO_ORDER[a])),
+                 a=cell(upd, "primary"), b=full),
+            dict(contrast="Sequential context updating, no stable order term", architecture=name,
+                 a=cell(upd, "no_order"), b=cell(fixed, "no_order")),
         ]
     return rows
 
 
 def architecture_contrasts() -> list[dict]:
+    """The intermediate speaker against each endpoint, under both semantics."""
     rows = []
-    for other, claim in (("G", "Local competition (plan-guided vs global)"),
-                         ("I", "Complete-utterance evaluation (plan-guided vs fully incremental)")):
-        for condition, label in (("no_contrast", "no_contrast"), ("base_upd", "base_upd")):
-            suffix = "-UPD-HO" if condition == "base_upd" else "-HO"
-            rows.append(dict(
-                contrast=claim,
-                architecture="Updating" if condition == "base_upd" else "Context-fixed",
-                a=("K" + suffix, condition, label), b=(other + suffix, condition, label)))
+    for other, claim in (("G", "Local competition (intermediate vs global)"),
+                         ("I", "Complete-utterance evaluation (intermediate vs fully incremental)")):
+        for index, semantics in ((0, "Context-fixed"), (1, "Updating")):
+            rows.append(dict(contrast=claim, architecture=semantics,
+                             a=cell(MODELS["K"][index], "primary"),
+                             b=cell(MODELS[other][index], "primary")))
     return rows
 
 
@@ -74,8 +78,10 @@ def production(directory: Path, a: tuple, b: tuple) -> dict[str, dict]:
         raise ValueError(f"misaligned rows: {a} vs {b}")
     content = (fa.length + fa.set_given_length) - (fb.length + fb.set_given_length)
     order = fa.order_given_set - fb.order_given_set
+    total = fa.response - fb.response
     out = {}
-    for measure, diff in (("Production: content", content), ("Production: order", order)):
+    for measure, diff in (("Production: total", total), ("Production: which adjectives", content),
+                          ("Production: order", order)):
         boot = bootstrap_totals(diff.groupby(fa.id).sum(), draws=DRAWS, seed=SEED)
         out[measure] = dict(estimate=boot["estimate_elpd"], lower=boot["credible_lower_95"],
                             upper=boot["credible_upper_95"])

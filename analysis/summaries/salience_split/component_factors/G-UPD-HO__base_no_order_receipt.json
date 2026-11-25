@@ -1,0 +1,17 @@
+{
+  "label": "G-UPD-HO__base_no_order",
+  "model": "G-UPD-HO",
+  "artifact": "/home/csp/Documents/00_HW/salience_split_20261110/fits/base_no_order/G-UPD-HO.nc",
+  "drop_order_term": false,
+  "drop_informativeness": false,
+  "drop_prefix_salience": false,
+  "tuned": [
+    "split_salience",
+    "drop_salience_contrast",
+    "drop_order_term"
+  ],
+  "max_replay": 8.881784197001252e-16,
+  "max_pareto_k": 0.33988647480574524,
+  "response_reconstruction_error": 5.329070518200751e-15,
+  "seconds": 15.337364885024726
+}

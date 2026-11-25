@@ -1,0 +1,17 @@
+{
+  "label": "K-HO__base_no_order_modeA",
+  "model": "K-HO",
+  "artifact": "/home/csp/Documents/00_HW/salience_split_20261110/fits/base_no_order_modeA/K-HO.nc",
+  "drop_order_term": false,
+  "drop_informativeness": false,
+  "drop_prefix_salience": false,
+  "tuned": [
+    "split_salience",
+    "drop_salience_contrast",
+    "drop_order_term"
+  ],
+  "max_replay": 1.7763568394002505e-15,
+  "max_pareto_k": 0.484789323042853,
+  "response_reconstruction_error": 3.58046925441613e-15,
+  "seconds": 13.994172181002796
+}

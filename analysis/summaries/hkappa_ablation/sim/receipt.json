@@ -1,0 +1,110 @@
+{
+  "complete": true,
+  "seconds": 453.2044308204204,
+  "backend": "gpu",
+  "weights": {
+    "beta": 2.6178596967399868,
+    "salience": 2.0747,
+    "is_sharp": 1.0
+  },
+  "scene_files": 24,
+  "scenes_per_file": 1000,
+  "checks": [
+    {
+      "file": "scenes_n2_sd2.npz",
+      "reduction_error": 0.0
+    },
+    {
+      "file": "scenes_n2_sd7.75.npz",
+      "reduction_error": 0.0
+    },
+    {
+      "file": "scenes_n2_sd15.npz",
+      "reduction_error": 0.0
+    },
+    {
+      "file": "scenes_n6_sd2.npz",
+      "reduction_error": 0.0
+    },
+    {
+      "file": "scenes_n6_sd7.75.npz",
+      "reduction_error": 0.0
+    },
+    {
+      "file": "scenes_n6_sd15.npz",
+      "reduction_error": 0.0
+    },
+    {
+      "file": "scenes_n10_sd2.npz",
+      "reduction_error": 0.0
+    },
+    {
+      "file": "scenes_n10_sd7.75.npz",
+      "reduction_error": 0.0
+    },
+    {
+      "file": "scenes_n10_sd15.npz",
+      "reduction_error": 0.0
+    },
+    {
+      "file": "scenes_n14_sd2.npz",
+      "reduction_error": 0.0
+    },
+    {
+      "file": "scenes_n14_sd7.75.npz",
+      "reduction_error": 0.0
+    },
+    {
+      "file": "scenes_n14_sd15.npz",
+      "reduction_error": 0.0
+    },
+    {
+      "file": "scenes_n18_sd2.npz",
+      "reduction_error": 0.0
+    },
+    {
+      "file": "scenes_n18_sd7.75.npz",
+      "reduction_error": 0.0
+    },
+    {
+      "file": "scenes_n18_sd15.npz",
+      "reduction_error": 0.0
+    },
+    {
+      "file": "scenes_n22_sd2.npz",
+      "reduction_error": 0.0
+    },
+    {
+      "file": "scenes_n22_sd7.75.npz",
+      "reduction_error": 0.0
+    },
+    {
+      "file": "scenes_n22_sd15.npz",
+      "reduction_error": 0.0
+    },
+    {
+      "file": "scenes_n26_sd2.npz",
+      "reduction_error": 0.0
+    },
+    {
+      "file": "scenes_n26_sd7.75.npz",
+      "reduction_error": 0.0
+    },
+    {
+      "file": "scenes_n26_sd15.npz",
+      "reduction_error": 0.0
+    },
+    {
+      "file": "scenes_n30_sd2.npz",
+      "reduction_error": 0.0
+    },
+    {
+      "file": "scenes_n30_sd7.75.npz",
+      "reduction_error": 0.0
+    },
+    {
+      "file": "scenes_n30_sd15.npz",
+      "reduction_error": 0.0
+    }
+  ]
+}

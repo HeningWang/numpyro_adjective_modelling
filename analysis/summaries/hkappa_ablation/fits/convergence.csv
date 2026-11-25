@@ -1,0 +1,5 @@
+cell,model,max_rhat,min_ess_bulk,n_rhat_gt_101,n_params,divergences
+no_info,K-HKO,1.01,560.0,0,576,0
+no_order,K-HKO,1.12,23.0,23,576,0
+no_order,K-UPD-HKO,1.66,7.0,227,576,0
+no_sal,K-HKO,1.29,11.0,41,916,0

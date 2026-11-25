@@ -1,0 +1,15 @@
+{
+  "label": "G-HO__split",
+  "model": "G-HO",
+  "artifact": "/home/csp/Documents/00_HW/salience_split_20261110/fits/split/G-HO.nc",
+  "drop_order_term": false,
+  "drop_informativeness": false,
+  "drop_prefix_salience": false,
+  "tuned": [
+    "split_salience"
+  ],
+  "max_replay": 1.7763568394002505e-15,
+  "max_pareto_k": 0.5116403631086367,
+  "response_reconstruction_error": 4.884981308350689e-15,
+  "seconds": 15.445275287143886
+}

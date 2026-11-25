@@ -1,0 +1,17 @@
+{
+  "label": "K-UPD-HO__base_no_order_modeA",
+  "model": "K-UPD-HO",
+  "artifact": "/home/csp/Documents/00_HW/salience_split_20261110/fits/base_no_order_modeA/K-UPD-HO.nc",
+  "drop_order_term": false,
+  "drop_informativeness": false,
+  "drop_prefix_salience": false,
+  "tuned": [
+    "split_salience",
+    "drop_salience_contrast",
+    "drop_order_term"
+  ],
+  "max_replay": 1.7763568394002505e-15,
+  "max_pareto_k": 0.4149117315144534,
+  "response_reconstruction_error": 3.552713678800501e-15,
+  "seconds": 10.073803164064884
+}
