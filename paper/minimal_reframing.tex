@@ -496,53 +496,58 @@ In the model comparison, sequential context updating predicted order only for a 
 The proposed benefit of hierarchical composition, however, does not concern a single experiment, as even a small advantage for the listener across the many contexts of language use could make size-first order conventional over time \citep[p.~7:19]{scontras2019grammatical}.
 Earlier simulations found such an advantage when two complete orders were compared, defining communicative success as the probability that a listener identifies the intended object \citep{franke2019subjectivity}.
 Our experiment, by contrast, covers a limited set of displays, so predictive evidence from it need not reflect the advantage of an order across the many scenes of language use.
-We therefore asked whether sequential context updating gives size-first order an advantage for the listener across many randomly generated contexts, when the speaker is one of the production models and includes the other sources of the model comparison.
+We therefore first replicated the earlier simulations and then extended them step by step towards the production models, asking whether hierarchical composition still gives size-first order an advantage when the speaker can choose among the utterances that speakers produced and includes the other sources of the model comparison.
 
 \subsection{Method}
 \label{sec:simulation:method}
 
 Each context contained between 2 and 30 objects, with the largest object, which was blue, as the target, and the colours of the other objects assigned at random.
 The spread of object sizes varied at three levels, which correspond to low, standard and high size discriminability, and for each combination of the number of objects and size spread we generated $1{,}000$ contexts.
-The speakers were the global, intermediate and fully incremental speaker of the production models, each with context-fixed semantics and with sequential context updating, and each chose among the fifteen utterances of the production experiment.
-Every speaker valued informativeness, and we added the stable order term, salience or both at the weights estimated for the best-fitting model, so that the simulation crosses the same components as the model comparison.
-A pragmatic listener $L^{\mathrm{prag}}$ applies Bayes' rule to each speaker distribution, and the dependent measure is the difference in the listener's target probability after the two orders,
+A pragmatic listener $L^{\mathrm{prag}}$ applies Bayes' rule to the speaker distribution, and the dependent measure is the difference in the listener's target probability after the two orders,
 \begin{equation}
   \Delta_{\mathrm{SF}}
   =L^{\mathrm{prag}}(o^*\mid\text{\emph{big blue}})
   -L^{\mathrm{prag}}(o^*\mid\text{\emph{blue big}}),
   \label{eq:simulation-advantage}
 \end{equation}
-where positive values favour size-first order.
-Because the advantage of composition depends on how sharply the adjectives restrict the objects, every model was evaluated under 125 settings of the semantic parameters as well as at the values of the production models.
-The full specification, and a replication of the earlier simulations with fewer alternatives, appear in \Cref{app:simulation}.
+so that positive values favour size-first order.
+The contribution of hierarchical composition is the difference in $\Delta_{\mathrm{SF}}$ between sequential context updating and context-fixed semantics for the same speaker and context.
+
+The simulation proceeded in seven steps (\Cref{fig:simulation-steps}): in the first step, the global speaker compared the two orders as in the earlier simulations, while the intermediate and the fully incremental speaker of the production models compared the same two orders.
+The next two steps added alternatives, first \emph{big} alone and \emph{blue} alone and then all fifteen utterances of the production experiment.
+With all fifteen utterances, steps four to six added the stable order term, salience, or both, at the weights estimated for the best-fitting model, so that the speakers include the same components as in the model comparison.
+These six steps averaged over 125 settings of the semantic parameters, which vary how sharply the adjectives restrict the objects, and the last step used the semantic values of the production models instead (\Cref{app:simulation}).
 
 \subsection{Results}
 \label{sec:simulation:results}
 
-\Cref{fig:simulation-sources} shows the size-first advantage for each speaker as the components are added.
-Under the semantic parameter grid (Panel A), sequential context updating gave size-first order an advantage of about $0.5$ percentage points over context-fixed semantics for all three speakers, and this advantage hardly changed when the stable order term, salience or both were added ($0.4$ to $0.6$ percentage points).
-At the values of the production models (Panel B), the advantage of sequential context updating disappeared (less than $0.01$ percentage points), because colour then restricts the objects only weakly.
-Hierarchical composition thus gave the conventional order a small advantage for the listener that is independent of the other sources but depends on how sharply the adjectives restrict the objects.
+With the global speaker and the two orders, sequential context updating gave size-first order an advantage of about $1.1$ percentage points, whereas context-fixed semantics yielded no difference, as the two orders then have the same complete interpretation (\Cref{fig:simulation-steps}, step~1), which replicates the finding of the earlier simulations \citep{franke2019subjectivity}.
+The intermediate and the fully incremental speaker, by contrast, favoured colour-first order with the two orders, by about $2.7$ percentage points, in line with the incremental preference for placing the more discriminating adjective first.
+Adding alternatives shifted the advantage towards size-first order, and with all fifteen utterances all three speakers favoured size-first order already under context-fixed semantics, most strongly the global speaker ($2.6$ percentage points), followed by the intermediate ($1.0$) and the fully incremental speaker ($0.6$; steps~2 and~3).
+Composition added about $0.5$ percentage points to this advantage, except for the fully incremental speaker with few alternatives, who chooses the first adjective among single adjectives, whose interpretation is the same under both semantic regimes.
 
-Compared with composition, the other components had larger effects on the advantage of an order, and with informativeness alone, all three speakers favoured size-first order with all fifteen utterances, most strongly the global speaker ($2.6$ to $3.1$ percentage points), followed by the intermediate ($1.0$ to $1.6$) and the fully incremental speaker ($0.6$ to $1.1$), as in the earlier simulations with more alternatives (\Cref{app:simulation}).
-The stable order term increased this advantage by about $1$ percentage point.
-Salience had the largest effect, and its direction depended on the semantic values: under the parameter grid, it turned the advantage into a colour-first advantage of up to $5$ percentage points, whereas at the values of the production models it increased the size-first advantage of the intermediate and the fully incremental speaker, to about $2.7$ and $4.1$ percentage points.
+Adding the other components of the production models changed the size-first advantage considerably, but not the contribution of composition (steps~4 to~6).
+The stable order term increased the advantage by about $0.6$ to $1.0$ percentage points.
+Salience, which favours colour, turned it into a colour-first advantage of up to $5$ percentage points, and with both components the advantage remained on the colour-first side, while composition added $0.4$ to $0.6$ percentage points throughout.
+At the semantic values of the production models, under which colour restricts the objects only weakly, all three speakers with both components favoured size-first order ($1.7$ to $3.8$ percentage points), whereas the contribution of composition disappeared (less than $0.01$ percentage points; step~7).
 
 \begin{figure}[!htbp]
   \centering
-  \includegraphics[width=\textwidth]{figures/simulation_sources.pdf}
-  \caption{Size-first advantage for the listener on the same $24{,}000$ random contexts, with all fifteen utterances as alternatives, averaged over the semantic parameter grid (A) and at the values of the production models (B).
-  From left to right, the speaker values informativeness only, or additionally the stable order term, salience, or both.
-  Lines connect context-fixed semantics (circles) and sequential context updating (squares) within each speaker; their difference is the contribution of hierarchical composition.
-  Positive values indicate a size-first and negative values a colour-first advantage; Monte Carlo standard errors are at most $0.06$ percentage points and are not shown.}
-  \label{fig:simulation-sources}
+  \includegraphics[width=\textwidth]{figures/simulation_steps.pdf}
+  \caption{Size-first advantage for the listener on the same $24{,}000$ random contexts, from the replication of the earlier simulations (step~1) to speakers with the alternatives and components of the production models.
+  (A) Advantage under context-fixed semantics, that is, without hierarchical composition.
+  (B) Advantage added by sequential context updating, that is, by hierarchical composition.
+  Steps 1 to 3 add alternatives, steps 4 to 6 (shaded) add the stable order term, salience or both to the speaker with all fifteen utterances, and step 7 uses the semantic values of the production models with both components; steps 1 to 6 average over the semantic parameter grid.
+  In step 1, the global speaker is implemented as in the earlier simulations.
+  Monte Carlo standard errors are at most $0.16$ percentage points and are not shown.}
+  \label{fig:simulation-steps}
 \end{figure}
 
 \subsection{Interim discussion}
 
-Hierarchical composition gave size-first order a small advantage for the listener in principle, which held for every degree of planning and did not depend on the stable order term or salience.
-It disappeared, however, at the semantic values that predicted the production data, and it was small compared with the effects of the other components.
-A size-first advantage for the listener arose also without hierarchical composition once the speaker could choose among the utterances that speakers produced.
+Hierarchical composition gave size-first order a small but stable advantage for the listener in principle, which held for every degree of planning with enough alternatives and did not depend on the stable order term or salience.
+It disappeared, however, at the semantic values that predicted the production data, and it was small compared with the effects of the alternatives and the other components.
+The size-first advantage for the listener arose also without hierarchical composition once the speaker could choose among the utterances that speakers produced.
 The simulation thus supports the proposal that communication favours size-first order across many contexts, which could make this order conventional over repeated language use \citep[p.~7:19]{scontras2019grammatical}.
 It also shows how a small communicative advantage of size-first order can coexist with predictive evidence that does not favour hierarchical composition in a particular display.
 
@@ -1049,22 +1054,6 @@ In the main comparison, the stable order term, salience, the utterance cost and 
     \bottomrule
   \end{tabularx}
 \end{table}
-
-\subsection{Alternatives and the earlier simulations}
-
-To connect the simulation to the earlier simulations \citep{franke2019subjectivity}, each speaker without the stable order term and salience also chose among smaller sets of alternatives, the two orders and the two orders with \emph{big} alone and \emph{blue} alone (\Cref{fig:simulation-controlled}).
-With the global speaker and the two orders, sequential context updating gave size-first order an advantage of about $1.1$ percentage points, which replicates the earlier finding, whereas context-fixed semantics yielded no difference, as the two orders then have the same complete interpretation.
-In most other speaker models, sequential context updating shifted the advantage towards size-first order by about $0.5$ percentage points; for the fully incremental speaker with the two orders and with the single adjectives, it did not change the advantage, as this speaker chooses the first adjective among single adjectives, whose interpretation is the same under both semantic regimes.
-With the two orders, the intermediate and the fully incremental speaker favoured colour-first order, by about $2.2$ to $2.7$ percentage points, in line with the incremental preference for placing the more discriminating adjective first, and adding alternatives shifted the advantage towards size-first order for all three speakers.
-
-\begin{figure}[!htbp]
-  \centering
-  \includegraphics[width=0.8\textwidth]{figures/simulation_controlled_comparison.pdf}
-  \caption{Size-first advantage for the listener under the semantic parameter grid, with three sets of alternatives and without the stable order term and salience.
-  In the two-order condition, the global speaker reproduces the earlier simulations.
-  Lines connect context-fixed semantics (circles) and sequential context updating (squares) within each speaker; Monte Carlo standard errors are at most $0.16$ percentage points.}
-  \label{fig:simulation-controlled}
-\end{figure}
 
 \subsection{Stable order term and salience}
 

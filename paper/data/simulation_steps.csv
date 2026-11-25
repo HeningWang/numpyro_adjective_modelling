@@ -1,0 +1,43 @@
+step,architecture,panel,estimate
+3  All fifteen utterances,Global,A  Without composition,2.58863681977212
+3  All fifteen utterances,Global,B  Added by composition,0.5150101779076609
+2  + single adjectives,Global,A  Without composition,2.257226133192686
+2  + single adjectives,Global,B  Added by composition,0.5145692813896201
+3  All fifteen utterances,Intermediate,A  Without composition,1.049051864431461
+3  All fifteen utterances,Intermediate,B  Added by composition,0.509127968180741
+2  + single adjectives,Intermediate,A  Without composition,-1.6703257898526391
+2  + single adjectives,Intermediate,B  Added by composition,0.4681696864073631
+1  Two orders,Intermediate,A  Without composition,-2.717928958231966
+1  Two orders,Intermediate,B  Added by composition,0.5076993053048598
+3  All fifteen utterances,Fully incremental,A  Without composition,0.640278670728777
+3  All fifteen utterances,Fully incremental,B  Added by composition,0.45423222848864203
+2  + single adjectives,Fully incremental,A  Without composition,-2.7179289582319672
+2  + single adjectives,Fully incremental,B  Added by composition,0
+1  Two orders,Fully incremental,A  Without composition,-2.7179289582319672
+1  Two orders,Fully incremental,B  Added by composition,0
+1  Two orders,Global,A  Without composition,-4.80159893327207e-17
+1  Two orders,Global,B  Added by composition,1.140513183316894
+5  + salience,Global,A  Without composition,-1.6045967362371758
+5  + salience,Global,B  Added by composition,0.5162731147583678
+4  + stable order term,Global,A  Without composition,3.1907124726172977
+4  + stable order term,Global,B  Added by composition,0.6011129159514399
+6  + both,Global,A  Without composition,-1.0379720816283151
+6  + both,Global,B  Added by composition,0.6387692393836111
+7  Production values,Global,A  Without composition,1.718331750041589
+7  Production values,Global,B  Added by composition,0.004593005539473005
+5  + salience,Fully incremental,A  Without composition,-5.099281409105879
+5  + salience,Fully incremental,B  Added by composition,0.4164111953551347
+4  + stable order term,Fully incremental,A  Without composition,1.569906207852699
+4  + stable order term,Fully incremental,B  Added by composition,0.5161378426859708
+6  + both,Fully incremental,A  Without composition,-2.544760015436233
+6  + both,Fully incremental,B  Added by composition,0.4588354879809509
+7  Production values,Fully incremental,A  Without composition,3.794884022127714
+7  Production values,Fully incremental,B  Added by composition,-1.6026083288211979e-4
+5  + salience,Intermediate,A  Without composition,-4.610035836893145
+5  + salience,Intermediate,B  Added by composition,0.5042626854877725
+4  + stable order term,Intermediate,A  Without composition,2.084399016121433
+4  + stable order term,Intermediate,B  Added by composition,0.5819067533863391
+6  + both,Intermediate,A  Without composition,-2.633417900587037
+6  + both,Intermediate,B  Added by composition,0.5622192095742069
+7  Production values,Intermediate,A  Without composition,2.856896925440637
+7  Production values,Intermediate,B  Added by composition,0.002866057893518778
