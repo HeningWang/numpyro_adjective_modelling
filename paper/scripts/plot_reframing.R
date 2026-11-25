@@ -32,7 +32,11 @@ rows <- tribble(
   "Informativeness", "Intermediate",
   "Discriminatory strength\nA: with informativeness\nB: without",
   "Salience", "Intermediate",
-  "Availability\nA: with salience\nB: without"
+  "Availability\nA: with salience\nB: without",
+  "Local competition (intermediate vs global)", "Context-fixed",
+  "Incremental production\nA: intermediate speaker\nB: global speaker",
+  "Complete-utterance evaluation (intermediate vs fully incremental)", "Context-fixed",
+  "Planning ahead\nA: intermediate speaker\nB: fully incremental speaker"
 )
 
 contrasts <- read_csv("data/reframing_contrasts.csv", show_col_types = FALSE) %>%
@@ -73,7 +77,7 @@ overview_plot <- ggplot(overview, aes(x = measure, y = row)) +
     legend.text = element_text(size = 12),
     legend.title = element_text(size = 12)
   )
-save_csp_pdf(overview_plot, "figures/reframing_overview.pdf", width = 9.5, height = 5.2)
+save_csp_pdf(overview_plot, "figures/reframing_overview.pdf", width = 9.5, height = 7.2)
 
 # ---- Zoom-ins ---------------------------------------------------------------
 zoom_plot <- function(data, y_levels) {
