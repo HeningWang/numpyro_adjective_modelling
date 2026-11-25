@@ -8,12 +8,12 @@ shapes <- setNames(c(16,17),semantics_levels)
 prepare <- function(d) d %>% mutate(semantics=factor(recode(semantics,fixed='Context-fixed',updating='Context-updating'),levels=semantics_levels),estimate=100*mean,lower=100*lower_mc95,upper=100*upper_mc95)
 if (!('--architectures-only' %in% commandArgs(trailingOnly=TRUE))) {
 # Main figure: two orders (global speaker = reproduction of the earlier simulations;
-# plan-guided and fully incremental = production models), then the six speaker models
+# intermediate and fully incremental = production models), then the six speaker models
 # under two further sets of alternatives.
 # Lines connect context-fixed and context-updating semantics within an architecture.
 group_labels <- c('Two orders', 'Two orders +\nsingle adjectives', 'Fifteen\nutterances')
-arch_levels <- c('Global', 'Plan-guided', 'Fully incremental')
-arch_colours <- c('Global' = CSP_COLORS[['emphasis']], 'Plan-guided' = CSP_COLORS[['green']],
+arch_levels <- c('Global', 'Intermediate', 'Fully incremental')
+arch_colours <- c('Global' = CSP_COLORS[['emphasis']], 'Intermediate' = CSP_COLORS[['green']],
                   'Fully incremental' = CSP_COLORS[['gold_dark']])
 overview_data <- function(parameter_set_name) {
  models <- summaries %>%
@@ -21,7 +21,7 @@ overview_data <- function(parameter_set_name) {
          (rule %in% c('prefix_k0', 'prefix_k05', 'prefix_k1') & support %in% c('four', 'fifteen')) |
            (rule %in% c('prefix_k05', 'prefix_k1') & support == 'two')) %>%
   mutate(group = c(two = 1, four = 2, fifteen = 3)[support],
-         architecture = c(prefix_k0 = 'Global', prefix_k05 = 'Plan-guided', prefix_k1 = 'Fully incremental')[rule])
+         architecture = c(prefix_k0 = 'Global', prefix_k05 = 'Intermediate', prefix_k1 = 'Fully incremental')[rule])
  reproduction <- summaries %>%
   filter(order == 'neutral', parameter_set == parameter_set_name, rule == 'terminal', support == 'two') %>%
   mutate(group = 1, architecture = 'Global')
@@ -60,7 +60,7 @@ write_csv(bind_rows(mutate(main, setting = 'grid'), mutate(production, setting =
 save_csp_pdf(overview_plot(main), 'figures/simulation_controlled_comparison.pdf', 7.5, 4.6)
 }
 if (!('--main-only' %in% commandArgs(trailingOnly=TRUE))) {
-arch <- summaries %>% filter(support=='fifteen',(parameter_set=='original_grid' & order=='neutral') | parameter_set=='fitted_constants') %>% prepare() %>% mutate(setting=case_when(parameter_set=='original_grid'~'Original parameter grid',order=='neutral'~'Production constants',TRUE~'Constants + order score'),setting=factor(setting,levels=c('Original parameter grid','Production constants','Constants + order score')),rule=factor(rule,levels=c('terminal','prefix_k0','prefix_k05','prefix_k1'),labels=c('Terminal\nutility','Global','Plan-guided','Fully\nincremental')))
+arch <- summaries %>% filter(support=='fifteen',(parameter_set=='original_grid' & order=='neutral') | parameter_set=='fitted_constants') %>% prepare() %>% mutate(setting=case_when(parameter_set=='original_grid'~'Original parameter grid',order=='neutral'~'Production constants',TRUE~'Constants + order score'),setting=factor(setting,levels=c('Original parameter grid','Production constants','Constants + order score')),rule=factor(rule,levels=c('terminal','prefix_k0','prefix_k05','prefix_k1'),labels=c('Terminal\nutility','Global','Intermediate','Fully\nincremental')))
 stopifnot(nrow(arch)==24L,all(complete.cases(arch)))
 p <- ggplot(arch,aes(x=rule,y=estimate,colour=semantics,shape=semantics)) +
  geom_hline(yintercept=0,colour=CSP_COLORS[['text']],linetype='dashed',linewidth=.45) +

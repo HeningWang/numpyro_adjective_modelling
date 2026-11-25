@@ -8,10 +8,10 @@ suppressPackageStartupMessages({
 })
 source("scripts/csp_figure_style.R")
 
-measures <- c("Production: content", "Production: order",
+measures <- c("Production: which adjectives", "Production: order",
               "Ratings: canonical preference", "Ratings: context gradient",
               "Ratings: R2")
-measure_labels <- c("Production:\ncontent", "Production:\norder",
+measure_labels <- c("Production: which\nadjectives", "Production:\norder",
                     "Ratings: preference\nfor conventional order", "Ratings:\ncontext gradient", "Ratings:\nvariance explained")
 direction_levels <- c("A better", "no credible difference", "B better")
 direction_fill <- c("A better" = CSP_COLORS[["main_light"]],
@@ -31,13 +31,12 @@ rows <- tribble(
   "Hierarchical composition\nA: sequential context updating\nB: context-fixed",
   "Informativeness", "Intermediate",
   "Discriminatory strength\nA: with informativeness\nB: without",
-  "Property baseline", "Intermediate",
+  "Salience", "Intermediate",
   "Availability\nA: with salience\nB: without"
 )
 
 contrasts <- read_csv("data/reframing_contrasts.csv", show_col_types = FALSE) %>%
   mutate(
-    architecture = recode(architecture, "Plan-guided" = "Intermediate"),
     rating = grepl("^Ratings", measure),
     label = ifelse(rating,
                    sprintf("%+.2f\n[%.2f, %.2f]", estimate, lower, upper),
@@ -127,12 +126,12 @@ zoom(tribble(~contrast, ~panel,
      shown, architectures, "figures/reframing_zoom_incremental.pdf", 10.5, 3.3)
 
 zoom(tribble(~contrast, ~panel,
-             "Property baseline", "A: with salience\nB: without"),
+             "Salience", "A: with salience\nB: without"),
      shown, architectures, "figures/reframing_zoom_availability.pdf", 10.5, 3.3)
 
 zoom(tribble(~contrast, ~panel,
-             "Local competition (plan-guided vs global)",
+             "Local competition (intermediate vs global)",
              "Evaluating each adjective as produced\nA: intermediate\nB: global",
-             "Complete-utterance evaluation (plan-guided vs fully incremental)",
+             "Complete-utterance evaluation (intermediate vs fully incremental)",
              "Looking ahead to the complete utterance\nA: intermediate\nB: fully incremental"),
      shown, c("Context-fixed", "Updating"), "figures/reframing_zoom_architecture.pdf", 10.5, 4.2)
