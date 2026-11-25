@@ -492,63 +492,55 @@ Speakers therefore lie between the global speaker assumed in the composition acc
 \section{Simulation}
 \label{sec:simulation}
 
-In the model comparison, sequential context updating predicted order only for a global speaker without the stable order term, and not at all once the convention was represented.
-The proposed benefit of hierarchical composition, however, does not concern a single experiment, as even a small advantage for the listener across the many contexts of language use could make size-first order conventional over time \citep[p.~7:19]{scontras2019grammatical}.
-Earlier simulations found such an advantage when two complete orders were compared, defining communicative success as the probability that a listener identifies the intended object \citep{franke2019subjectivity}.
-Our experiment, by contrast, covers a limited set of displays, so predictive evidence from it need not reflect the advantage of an order across the many scenes of language use.
-We therefore first replicated the earlier simulations and then extended them step by step towards the production models, asking whether hierarchical composition still gives size-first order an advantage when the speaker can choose among the utterances that speakers produced and includes the other sources of the model comparison.
+The model comparison asks whether hierarchical composition helps to predict which utterances speakers produce in a given display, and the answer was negative once the convention was represented.
+The proposal that composition shaped the convention, however, concerns a different quantity, namely an advantage for the listener that accumulates over the many contexts of language use \citep[p.~7:19]{scontras2019grammatical}.
+Earlier simulations found such an advantage when a global speaker chose between two complete orders, defining communicative success as the probability that a listener identifies the intended object \citep{franke2019subjectivity}.
+The production models allow us to ask whether this advantage also holds for speakers like those in our experiment, who choose among the utterances that speakers actually produce and who plan their utterances only partially.
+If it does, the negative result of the model comparison is consistent with composition as a source of the convention, and the simulation can show why its advantage leaves no trace in the production data.
 
 \subsection{Method}
 \label{sec:simulation:method}
 
-Each context contained between 2 and 30 objects, with the largest object, which was blue, as the target, and the colours of the other objects assigned at random.
-The spread of object sizes varied at three levels, which correspond to low, standard and high size discriminability, and for each combination of the number of objects and size spread we generated $1{,}000$ contexts.
-A pragmatic listener $L^{\mathrm{prag}}$ applies Bayes' rule to the speaker distribution, and the dependent measure is the difference in the listener's target probability after the two orders,
+Each simulated context contained between 2 and 30 objects, with the largest object, which was blue, as the target, and the colours of the other objects assigned at random; for each combination of the number of objects and three levels of size discriminability, we generated $1{,}000$ contexts.
+We first replicated the earlier simulations with a global speaker who chooses between the two orders \emph{big blue} and \emph{blue big}.
+We then used the global, intermediate and fully incremental speakers of the production models, who choose among all fifteen utterances, each with context-fixed semantics and with sequential context updating.
+A pragmatic listener applies Bayes' rule to the speaker distribution, and the measure is the size-first advantage, the probability that the listener identifies the target after \emph{big blue} minus that after \emph{blue big},
 \begin{equation}
   \Delta_{\mathrm{SF}}
   =L^{\mathrm{prag}}(o^*\mid\text{\emph{big blue}})
-  -L^{\mathrm{prag}}(o^*\mid\text{\emph{blue big}}),
+  -L^{\mathrm{prag}}(o^*\mid\text{\emph{blue big}}).
   \label{eq:simulation-advantage}
 \end{equation}
-so that positive values favour size-first order.
-The contribution of hierarchical composition is the difference in $\Delta_{\mathrm{SF}}$ between sequential context updating and context-fixed semantics for the same speaker and context.
-
-The simulation proceeded in seven steps (\Cref{fig:simulation-steps}): in the first step, the global speaker compared the two orders as in the earlier simulations, while the intermediate and the fully incremental speaker of the production models compared the same two orders.
-The next two steps added alternatives, first \emph{big} alone and \emph{blue} alone and then all fifteen utterances of the production experiment.
-With all fifteen utterances, steps four to six added the stable order term, salience, or both, at the weights estimated for the best-fitting model, so that the speakers include the same components as in the model comparison.
-These six steps averaged over 125 settings of the semantic parameters, which vary how sharply the adjectives restrict the objects, and the last step used the semantic values of the production models instead (\Cref{app:simulation}).
+The contribution of composition is the difference in this advantage between sequential context updating and context-fixed semantics.
+As this contribution depends on how strongly a colour adjective restricts the objects, the results average over 125 settings of the semantic parameters, and we report separately the semantic values of the production models, under which colour restricts the objects only weakly (\Cref{app:simulation}).
 
 \subsection{Results}
 \label{sec:simulation:results}
 
-With the global speaker and the two orders, sequential context updating gave size-first order an advantage of about $1.1$ percentage points, whereas context-fixed semantics yielded no difference, as the two orders then have the same complete interpretation (\Cref{fig:simulation-steps}, step~1), which replicates the finding of the earlier simulations \citep{franke2019subjectivity}.
-The intermediate and the fully incremental speaker, by contrast, favoured colour-first order with the two orders, by about $2.7$ percentage points, in line with the incremental preference for placing the more discriminating adjective first.
-Adding alternatives shifted the advantage towards size-first order, and with all fifteen utterances all three speakers favoured size-first order already under context-fixed semantics, most strongly the global speaker ($2.6$ percentage points), followed by the intermediate ($1.0$) and the fully incremental speaker ($0.6$; steps~2 and~3).
-Composition added about $0.5$ percentage points to this advantage, except for the fully incremental speaker with few alternatives, who chooses the first adjective among single adjectives, whose interpretation is the same under both semantic regimes.
+With the global speaker and the two orders, sequential context updating gave size-first order an advantage of $1.1$ percentage points, whereas context-fixed semantics yielded none, as the two orders then have the same complete interpretation (\Cref{fig:simulation-main}), which replicates the finding of the earlier simulations \citep{franke2019subjectivity}.
+For the speakers of the production models, composition added a similar but smaller advantage of about $0.5$ percentage points, and it did so for every degree of planning.
+The advantage of composition thus holds for speakers like those in our experiment.
 
-Adding the other components of the production models changed the size-first advantage considerably, but not the contribution of composition (steps~4 to~6).
-The stable order term increased the advantage by about $0.6$ to $1.0$ percentage points.
-Salience, which favours colour, turned it into a colour-first advantage of up to $5$ percentage points, and with both components the advantage remained on the colour-first side, while composition added $0.4$ to $0.6$ percentage points throughout.
-At the semantic values of the production models, under which colour restricts the objects only weakly, all three speakers with both components favoured size-first order ($1.7$ to $3.8$ percentage points), whereas the contribution of composition disappeared (less than $0.01$ percentage points; step~7).
+Two results suggest why it leaves no trace in the production data.
+First, all three speakers favoured size-first order already under context-fixed semantics, by $0.6$ to $2.6$ percentage points, because a speaker who can identify the target with a single adjective changes what the use of two adjectives conveys to the listener.
+The contribution of composition is small compared with this advantage, which arises without it.
+Second, at the semantic values of the production models, the contribution of composition disappeared (less than $0.01$ percentage points), whereas the size-first advantage remained.
+Adding the stable order term or salience to the speakers changed the size-first advantage but not the contribution of composition (\Cref{app:simulation}).
 
 \begin{figure}[!htbp]
   \centering
-  \includegraphics[width=\textwidth]{figures/simulation_steps.pdf}
-  \caption{Size-first advantage for the listener on the same $24{,}000$ random contexts, from the replication of the earlier simulations (step~1) to speakers with the alternatives and components of the production models.
-  (A) Advantage under context-fixed semantics, that is, without hierarchical composition.
-  (B) Advantage added by sequential context updating, that is, by hierarchical composition.
-  Steps 1 to 3 add alternatives, steps 4 to 6 (shaded) add the stable order term, salience or both to the speaker with all fifteen utterances, and step 7 uses the semantic values of the production models with both components; steps 1 to 6 average over the semantic parameter grid.
-  In step 1, the global speaker is implemented as in the earlier simulations.
-  Monte Carlo standard errors are at most $0.16$ percentage points and are not shown.}
-  \label{fig:simulation-steps}
+  \includegraphics[width=.75\textwidth]{figures/simulation_main.pdf}
+  \caption{Size-first advantage for the listener, the probability of identifying the target after \emph{big blue} minus that after \emph{blue big}, on $24{,}000$ random contexts and averaged over the semantic parameter grid.
+  Left: replication of the earlier simulations, with a global speaker who chooses between the two orders.
+  Right: the speakers of the production models, who choose among all fifteen utterances.
+  The difference between the two bars of a speaker is the contribution of hierarchical composition; Monte Carlo standard errors are at most $0.04$ percentage points.}
+  \label{fig:simulation-main}
 \end{figure}
 
 \subsection{Interim discussion}
 
-Hierarchical composition gave size-first order a small but stable advantage for the listener in principle, which held for every degree of planning with enough alternatives and did not depend on the stable order term or salience.
-It disappeared, however, at the semantic values that predicted the production data, and it was small compared with the effects of the alternatives and the other components.
-The size-first advantage for the listener arose also without hierarchical composition once the speaker could choose among the utterances that speakers produced.
-The simulation thus supports the proposal that communication favours size-first order across many contexts, which could make this order conventional over repeated language use \citep[p.~7:19]{scontras2019grammatical}.
+Hierarchical composition gave size-first order a small but stable advantage for the listener, which held for every degree of planning when the speaker could choose among the utterances that speakers produce.
+The simulation thus supports the proposal that composition could make size-first order conventional over repeated language use \citep[p.~7:19]{scontras2019grammatical}, although a size-first advantage arose also without composition.
 It also shows how a small communicative advantage of size-first order can coexist with predictive evidence that does not favour hierarchical composition in a particular display.
 
 \section{General Discussion}
@@ -1057,7 +1049,7 @@ In the main comparison, the stable order term, salience, the utterance cost and 
 
 \subsection{Stable order term and salience}
 
-In the runs of Section~\ref{sec:simulation}, every speaker was crossed with the stable order term (absent or present) and salience (absent or present), on the same contexts and semantic settings, and with all three sets of alternatives.
+In additional runs, every speaker was crossed with the stable order term (absent or present) and salience (absent or present), on the same contexts and semantic settings, and with all three sets of alternatives.
 The stable order term enters with weight $\beta=\exp(.962)=2.62$ and salience with weight $\lambda=2.07$, the population values of the best-fitting model, with $\alpha=1$, close to its estimate of $.92$.
 Salience is computed as in the production models, with each object in turn treated as the target when the listener reasons about the speaker.
 In these runs, the global speaker with the two orders also uses the summed prefix utility, which is not symmetric between the two orders under context-fixed semantics, so its values differ from those of the earlier simulations.

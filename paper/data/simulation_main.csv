@@ -1,0 +1,19 @@
+group,semantics,estimate,mcse
+"Global
+speaker",Context-fixed,2.58863681977212,3.6977928091847e-4
+"Intermediate
+speaker",Context-fixed,1.049051864431461,3.4167361510262e-4
+"Fully incremental
+speaker",Context-fixed,0.640278670728777,2.2628049157653e-4
+"Earlier simulations
+(global speaker,
+two orders)",Context-fixed,-4.80159893327207e-17,2.1773971792774816e-20
+"Global
+speaker",Sequential context updating,3.103646997679781,3.6853460292706e-4
+"Intermediate
+speaker",Sequential context updating,1.5581798326122018,3.3208049936048e-4
+"Fully incremental
+speaker",Sequential context updating,1.094510899217419,2.1714979137122e-4
+"Earlier simulations
+(global speaker,
+two orders)",Sequential context updating,1.140513183316894,2.1716609650575e-4
