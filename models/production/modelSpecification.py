@@ -6462,17 +6462,20 @@ def form_reliability_model(model_name, form_semval):
 
 def utility_ablation_model(model_name, *, terminal_utility=False, drop_order_term=False,
                            drop_informativeness=False, drop_prefix_salience=False):
-    """Create a matched ablation cell of a registered shared-kappa model."""
+    """Create a matched ablation cell of a shared-kappa or participant-kappa model."""
     architecture, *rest = model_name.split("-")
-    if model_name not in {**V10_ORDER_MODELS, **V10_ORDER_UPD_MODELS}:
-        raise ValueError("Utility ablations support the six shared-kappa models only")
+    participant_kappa = {**V11_JOINT_PARTICIPANT_MODELS, **V12_UPDATING_JOINT_PARTICIPANT_MODELS}
+    if model_name not in {**V10_ORDER_MODELS, **V10_ORDER_UPD_MODELS, **participant_kappa}:
+        raise ValueError("Utility ablations support the shared- and participant-kappa models only")
+    variant = ("participant_kappa_order" if model_name in participant_kappa
+               else ARCHITECTURE_VARIANTS[architecture])
     if not (terminal_utility or drop_order_term or drop_informativeness
             or drop_prefix_salience):
         raise ValueError("Select at least one ablation")
     if drop_informativeness and terminal_utility:
         raise ValueError("Terminal utility is undefined without informativeness")
     return _make_discovery_model(
-        ARCHITECTURE_VARIANTS[architecture], recursive="UPD" in rest, prefix_mode="B",
+        variant, recursive="UPD" in rest, prefix_mode="B",
         form_spec="F0", order_source="O0", policy_light=False,
         terminal_utility=terminal_utility, drop_order_term=drop_order_term,
         drop_informativeness=drop_informativeness,

@@ -98,3 +98,32 @@ def test_prefix_salience_ablation_removes_only_lambda_salience():
         ablated = trace(model_for_run(name, drop_prefix_salience=True))
         assert latents(ablated) == latents(default) - {'lambda_salience'}
         np.testing.assert_allclose(ablated['obs']['fn'].probs.sum(axis=1), 1, atol=1e-12)
+
+
+def test_ablations_extend_to_participant_kappa_cells():
+    data = import_dataset_hier(file_path=ROOT/'data/production_model_input.csv',
+                               state_encoding='target_match')
+    args = dict(states=data['states_train'][:6], empirical=data['empirical_seq_flat'][:6],
+        participant_idx=np.zeros(6, dtype=int), n_participants=1,
+        sufficient_dim=data['sufficient_dim'][:6],
+        has_one_word_solution=data['has_one_word_solution'][:6],
+        is_sharp=data['sharpness_idx'][:6], is_colour_sufficient=data['is_colour_sufficient'][:6])
+    for name in ('K-HKO', 'K-UPD-HKO'):
+        kwargs = dict(args, precomputed_features=ms.precompute_principled_discovery_features(
+            args['states'], args['is_sharp'], recursive='UPD' in name))
+        def trace(model):
+            return handlers.trace(handlers.seed(model, 17)).get_trace(**kwargs)
+        def latents(result):
+            return {k for k, v in result.items() if v['type'] == 'sample' and not v['is_observed']}
+        default = trace(model_for_run(name))
+        no_order = trace(model_for_run(name, drop_order_term=True))
+        no_info = trace(model_for_run(name, drop_informativeness=True))
+        no_salience = trace(model_for_run(name, drop_prefix_salience=True))
+        kappa_sites = {k for k in latents(default) if 'kappa' in k}
+        assert len(kappa_sites) > 1  # participant-specific kappa hierarchy
+        assert latents(no_order) == latents(default) - ORDER_SITES
+        assert latents(no_info) == latents(default) - ALPHA_SITES
+        for result in (no_order, no_info, no_salience):
+            assert kappa_sites <= latents(result)
+            assert not np.allclose(result['obs']['fn'].probs, default['obs']['fn'].probs)
+            np.testing.assert_allclose(result['obs']['fn'].probs.sum(axis=1), 1, atol=1e-12)
