@@ -554,7 +554,8 @@ Across both tasks, speakers followed the size-first convention, adapted mainly w
 They themselves noted that studies of grounded adjectival modification could help to resolve this question.
 If the compositional pressure remains active, the noun-adjacent adjective should narrow the comparison class for size during production, so that \emph{big} in \emph{the big blue sticker} is evaluated among the blue objects.
 The present results favour the first of these options, as sequential context updating did not improve the prediction of production once the stable order term was included, and without this term it improved order only for a speaker who evaluates complete utterances, so that the compositional pressure appears to act through the conventional order and need not be recomputed for each utterance.
-The simulation adds that such a convention need not rest on composition alone, as a size-first advantage for the listener also arose from the alternatives that speakers produce.
+The simulation supports this reading from the other side, as composition still gave size-first order a small advantage for the listener when the speaker was one of the production models, so that it could have shaped the convention, while a size-first advantage also arose without composition from the alternatives that speakers produce.
+The same simulation showed that the advantage of composition depends on how strongly colour restricts the objects, and the colour meanings of the production models restrict them only weakly; with a stronger colour meaning, however, sequential context updating still predicted the production data worse than context-fixed semantics (\Cref{app:comparison}).
 Information-theoretic accounts likewise explain adjective order through properties of adjective and noun types, such as the mutual information between them \citep{Hahn_information_2018,futrell-etal-2020-determines}.
 As the noun was the same in every trial, such type-level pressures took the same value in every display, so in the present model they could act only through the stable order term.
 
@@ -562,6 +563,14 @@ A speaker could determine which objects count as big during scene apprehension a
 Our task may have favoured such a fixed comparison, because the full display and the marked target were visible before production began.
 In discourse, a subset of referents may become relevant through a preceding utterance, potentially changing the context against which size is evaluated.
 Varying when contextual information becomes available would help identify when speakers retain an initial comparison and when they revise it.
+
+\subsection{A language model as the convention}
+
+Of all components, the one that comes from a neural language model, the stable order term, made the largest contribution to the order that speakers produced.
+Combining a pragmatic model with a language model in this way gives each a separate role: the language model supplies the expectations about order that hold across the language, and the pragmatic components reason about the particular display, so that matched comparisons can estimate how much each contributes.
+Recent work has used language models as components of cognitive and statistical models of language use \citep{futrell2023information,franke2024bayesian,tsvilodub2024cognitive}, and the present models restrict this component to the order of adjectives, with a weight that is estimated for each participant.
+Because the language model is trained on text, the stable order term covers all language-level sources together, including frequency, the mutual information between adjectives and nouns and a conventionalised compositional advantage.
+Separating these sources would require replacing the single language-model score with predictors that each stand for one of them, as in the corpus analyses of \citet{dyer2023evaluating}.
 
 \subsection{Context-specific efficiency in which adjectives speakers produce}
 
@@ -583,7 +592,7 @@ The intermediate speaker motivates a hypothesis about how planning could be orga
 An utterance-level plan could specify the properties relevant to identifying the target, while the production of each adjective remains sensitive to the developing utterance and the properties still available for mention.
 This combination accords with evidence that conceptual planning and linguistic formulation can proceed with different scopes \citep{griffin2000eyes,ferreira2002incremental,konopka2014priming}, and with good-enough processing, in which representations can remain partial while serving the current task \citep{ferreira2002goodenough}.
 \citet{futrell2023information} proposed a model of incremental production in which the speaker combines a default policy, such as a language model, with communicative reward and a discounted value of future words.
-The intermediate speaker has a similar structure, in which the stable order term acts as the default and informativeness as the communicative reward, and its parameter $\kappa$ plays a role similar to the future discount.
+The intermediate speaker has a similar structure, in which the stable order term, also derived from a language model, acts as the default and informativeness as the communicative reward, and its parameter $\kappa$ plays a role similar to the future discount.
 Speakers varied widely in $\kappa_i$, suggesting that the balance between evaluating the complete utterance and producing each adjective in turn differs across speakers.
 The data consist of completed descriptions, so the degree of planning describes the scope of evaluation that best predicts these descriptions and does not show directly how planning unfolds in time.
 Manipulating planning time, and recording speech onset and eye movements, could test whether information in later adjectives affects which adjective speakers produce first.
@@ -604,7 +613,7 @@ What we have at the end is a complex but consistent picture.
 \begin{enumerate}
 \item In free production, speakers resolve the pressure from context-specific efficiency mainly in which adjectives they produce, not in their order.
 In the slider ratings, when they are forced to state a preference between two competing orders, they resolve it by a context-dependent gradient in their ratings, while keeping a robust baseline preference for the conventional size-first order.
-\item Conventionalised efficiency, represented by the stable order term, does not depend on the context and improves the prediction of both which adjectives speakers produce and their order in production, as well as of the ratings for the intermediate speaker.
+\item Conventionalised efficiency, represented by a stable order term derived from a language model, does not depend on the context and improves the prediction of both which adjectives speakers produce and their order in production, as well as of the ratings for the intermediate speaker.
 This means that speakers rely heavily on a convention that is not part of the referential context.
 \item Availability, represented by salience, improves the prediction of both which adjectives speakers produce and their order in production, but not of the ratings.
 It combines a fixed preference for colour with how strongly a property stands out in the display, and it favours mentioning salient properties early, but it does not distinguish the two orders of a given adjective pair.
@@ -614,7 +623,7 @@ The order of two given adjectives still shifts gradually with the context in the
 The data favour an intermediate speaker, which interpolates between the global and the fully incremental speaker: it produces incrementally while looking ahead to the complete utterance, in line with partial planning and good-enough production \citep{ferreira2002incremental,ferreira2002goodenough}.
 \item Hierarchical composition adds no benefit to the prediction of the data.
 Only for a global speaker without the stable order term does sequential context updating predict order better than context-fixed semantics, and this model still predicts the data much worse than a model with the stable order term.
-In simulations, it gave size-first order a small advantage for the listener across many contexts.
+In simulations, it still gave size-first order a small advantage for the listener when the speaker was one of the production models, but this advantage was small compared with one that arose without composition, and it disappeared at the semantic values that predicted the production data.
 This means that hierarchical composition does a similar job to the convention, only much more weakly, which motivates an account in which the compositional benefit has become conventionalised rather than computed in each context.
 \end{enumerate}
 
